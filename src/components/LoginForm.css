@@ -1,0 +1,39 @@
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon-div {
+    position:absolute;
+    left:60px;
+    top:40px;
+}
+
+.icon {
+    width:138px;
+}
+
+.login-form-wrapper {
+    display:flex;
+    flex-direction:column;
+    
+    width:100%;
+    max-width:540px;
+    justify-content:center;
+    min-height: 100vh;
+    min-height:100dvh;
+    
+}
+
+.login-form {
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    border:solid;
+    border-width:1px;
+    border-radius:30px;
+    border-color:#D1D1D1;
+    padding:40px 40px 40px 40px;
+}
