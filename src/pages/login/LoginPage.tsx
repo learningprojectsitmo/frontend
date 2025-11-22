@@ -1,15 +1,11 @@
-import { Link } from 'react-router';
+import LoginForm  from '../../components/LoginForm.tsx'
 import './LoginPage.css';
 
 export function LoginPage() {
 
   return (
     <>
-      <input></input>
-      <input></input>
-      <Link to="/homepage">
-        <button>Войти</button>
-      </Link>
+      <LoginForm />
     </>
   );
 }
