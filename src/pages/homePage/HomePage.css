@@ -1,0 +1,73 @@
+.page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.page-header p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+}
+
+.home-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-card {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.welcome-card h3 {
+    font-size: 24px;
+    margin: 0 0 16px 0;
+    color: #333;
+}
+
+.welcome-card p {
+    font-size: 16px;
+    margin: 0 0 32px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-top: 32px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1976d2;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
