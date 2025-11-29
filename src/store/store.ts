@@ -39,10 +39,10 @@ export default class Store {
 
     async login(email: string, password: string) {
         try {
-            const responce = await AuthService.login(email, password);
-            localStorage.setItem('token', responce.data.accessToken)
+            const response = await AuthService.login(email, password);
+            localStorage.setItem('token', response.data.accessToken)
             this.setAuth(true)
-            this.setUser(responce.data.user)
+            this.setUser(response.data.user)
         } catch(e) {
             this.setLoginFailed(true)//remove after integration with backend
             if (axios.isAxiosError(e)) {
@@ -57,10 +57,10 @@ export default class Store {
 
     async registration(firstName: string, middleName: string, lastName: string|undefined, ISU: number|undefined, email: string, password: string) {
         try {
-            const responce = await AuthService.registration(firstName, middleName, lastName, ISU, email, password);
-            localStorage.setItem('token', responce.data.accessToken)
+            const response = await AuthService.registration(firstName, middleName, lastName, ISU, email, password);
+            localStorage.setItem('token', response.data.accessToken)
             this.setAuth(true)
-            this.setUser(responce.data.user)
+            this.setUser(response.data.user)
         } catch(e) {
             this.setRegistrationFailed(true)//remove after integration with backend
             if (axios.isAxiosError(e)) {
@@ -74,7 +74,7 @@ export default class Store {
 
     async logout() {
         try {
-            const responce = await AuthService.logout();
+            await AuthService.logout();
             localStorage.removeItem('token')
             this.setAuth(false)
             this.setUser({} as IUser)
@@ -90,8 +90,8 @@ export default class Store {
     async checkAuth() {
         this.setLoading(true);
         try {
-            const responce = await axios.get<AuthResponce>(`${API_URL}/refresh`, {withCredentials: true})
-            localStorage.setItem('token', responce.data.accessToken)
+            const response = await axios.get<AuthResponce>(`${API_URL}/refresh`, {withCredentials: true})
+            localStorage.setItem('token', response.data.accessToken)
         } catch(e) {
             if (axios.isAxiosError(e)) {
                 console.log(e.response?.data?.message)

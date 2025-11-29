@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AuthResponce } from '../models/responce/AuthResponce';
 
-export const API_URL = "http://localhost:5000" // will change that later
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const $api = axios.create({
     withCredentials: true,
