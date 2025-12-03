@@ -25,6 +25,32 @@
     gap:30px;
 }
 
+.option {
+    display:flex;
+    flex-direction:row;
+    gap:10px;
+}
+
 .option-text {
-    
+    font-family: "Inter", sans-serif;
+    font-weight:400;
+    font-size:22px;
+    line-height: 120%;
+}
+
+.blue-color {
+    color: #1F4BC0;
+}
+
+.gray-color {
+    color:#5C5C5C;
+}
+
+.option-icon {
+    width:24px;
+    height:24px;
+}
+
+.link-underline {
+    text-decoration: none;
 }

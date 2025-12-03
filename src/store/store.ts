@@ -7,7 +7,7 @@ import type { AuthResponce } from "../models/responce/AuthResponce.ts";
 
 export default class Store {
     user = {} as IUser
-    isAuth = true
+    isAuth = false
     isLoading = false
 
     isLoginFailed = false

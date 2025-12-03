@@ -9,7 +9,7 @@ export function LoginPage() {
   return (
     <div className="wrapper">
       <div className="icon-div">
-        <img className="icon" src="../../public/itmo_logo.png"/>
+        <img className="icon" src="../../itmo_logo.png"/>
       </div>
       
       <div className="login-form-wrapper">
