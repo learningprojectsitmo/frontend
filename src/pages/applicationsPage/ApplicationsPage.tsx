@@ -1,21 +1,21 @@
 import './ApplicationsPage.css';
-import { BasePage } from '../../components/mainPage_components/BasePage';
+import '../pages.css'
+import { useContext } from 'react';
+import { Context } from '../../main';
+import { Sider } from '../../components/mainPage_components/Sider';
+import { Header } from '../../components/mainPage_components/Header'
 
 export function ApplicationsPage() {
+
+  const {store} =useContext(Context);
+
   return (
-    <BasePage>
-      <div className="page-content">
-        <div className="page-header">
-          <h1>Заявки</h1>
-          <p>Управление заявками на работу и стажировки</p>
-        </div>
-        <div className="applications-container">
-          <div className="placeholder">
-            <h3>📝 Страница заявок</h3>
-            <p>Здесь будет функционал для отслеживания заявок на работу</p>
-          </div>
-        </div>
+    <div className="outer-wrapper">
+      <Sider navbarOption={5} />
+      <div className="header-wrapper">
+        <Header pageName="Заявки" profileName="Иванов Иван"/>
+        <div></div>
       </div>
-    </BasePage>
+    </div>
   );
 }

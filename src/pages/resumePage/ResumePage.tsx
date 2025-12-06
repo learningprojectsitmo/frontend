@@ -1,21 +1,21 @@
 import './ResumePage.css';
-import { BasePage } from '../../components/mainPage_components/BasePage';
+import '../pages.css'
+import { useContext } from 'react';
+import { Context } from '../../main';
+import { Sider } from '../../components/mainPage_components/Sider';
+import { Header } from '../../components/mainPage_components/Header'
 
 export function ResumePage() {
+
+  const {store} =useContext(Context);
+
   return (
-    <BasePage>
-      <div className="page-content">
-        <div className="page-header">
-          <h1>Резюме</h1>
-          <p>Управление вашим резюме и профессиональной информацией</p>
-        </div>
-        <div className="resume-container">
-          <div className="placeholder">
-            <h3>📄 Страница резюме</h3>
-            <p>Здесь будет функционал для создания и редактирования резюме</p>
-          </div>
-        </div>
+    <div className="outer-wrapper">
+      <Sider navbarOption={3}/>
+      <div className="header-wrapper">
+        <Header pageName="Резюме" profileName="Иванов Иван"/>
+        <div></div>
       </div>
-    </BasePage>
+    </div>
   );
 }

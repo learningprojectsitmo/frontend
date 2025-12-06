@@ -1,21 +1,21 @@
 import './PersonasPage.css';
-import { BasePage } from '../../components/mainPage_components/BasePage';
+import '../pages.css'
+import { useContext } from 'react';
+import { Context } from '../../main';
+import { Sider } from '../../components/mainPage_components/Sider';
+import { Header } from '../../components/mainPage_components/Header'
 
 export function PersonasPage() {
+
+  const {store} =useContext(Context);
+
   return (
-    <BasePage>
-      <div className="page-content">
-        <div className="page-header">
-          <h1>Персоны</h1>
-          <p>Управление пользовательскими персонами и профилями</p>
-        </div>
-        <div className="personas-container">
-          <div className="placeholder">
-            <h3>👥 Страница персон</h3>
-            <p>Здесь будет функционал для создания и управления пользовательскими персонами</p>
-          </div>
-        </div>
+    <div className="outer-wrapper">
+      <Sider navbarOption={2}/>
+      <div className="header-wrapper">
+        <Header pageName="Контакты" profileName="Иванов Иван"/>
+        <div></div>
       </div>
-    </BasePage>
+    </div>
   );
 }

@@ -1,35 +1,21 @@
 import './HomePage.css';
-import { BasePage } from '../../components/mainPage_components/BasePage';
+import '../pages.css'
+import { useContext } from 'react';
+import { Context } from '../../main';
+import { Sider } from '../../components/mainPage_components/Sider';
+import { Header } from '../../components/mainPage_components/Header'
 
 export function HomePage() {
+
+  const {store} =useContext(Context);
+
   return (
-    <BasePage>
-      <div className="page-content">
-        <div className="page-header">
-          <h1>Добро пожаловать!</h1>
-          <p>Главная страница системы управления проектами</p>
-        </div>
-        <div className="home-container">
-          <div className="welcome-card">
-            <h3>🏠 Главная страница</h3>
-            <p>Добро пожаловать в систему управления проектами и задачами!</p>
-            <div className="stats">
-              <div className="stat-item">
-                <span className="stat-number">0</span>
-                <span className="stat-label">Задач</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">0</span>
-                <span className="stat-label">Проектов</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">0</span>
-                <span className="stat-label">Заявок</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="outer-wrapper">
+      <Sider navbarOption={1} />
+      <div className="header-wrapper">
+        <Header pageName="Главная" profileName="Иванов Иван"/>
+        <div></div>
       </div>
-    </BasePage>
+    </div>
   );
 }

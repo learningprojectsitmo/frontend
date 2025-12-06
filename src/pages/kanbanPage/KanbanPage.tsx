@@ -1,21 +1,21 @@
 import './KanbanPage.css';
-import { BasePage } from '../../components/mainPage_components/BasePage';
+import '../pages.css'
+import { useContext } from 'react';
+import { Context } from '../../main';
+import { Sider } from '../../components/mainPage_components/Sider';
+import { Header } from '../../components/mainPage_components/Header'
 
 export function KanbanPage() {
+
+  const {store} =useContext(Context);
+
   return (
-    <BasePage>
-      <div className="page-content">
-        <div className="page-header">
-          <h1>Канбан доска</h1>
-          <p>Визуальное управление задачами в формате канбан</p>
-        </div>
-        <div className="kanban-container">
-          <div className="placeholder">
-            <h3>📊 Канбан доска</h3>
-            <p>Здесь будет интерактивная канбан доска для управления задачами</p>
-          </div>
-        </div>
+    <div className="outer-wrapper">
+      <Sider navbarOption={7}/>
+      <div className="header-wrapper">
+        <Header pageName="Канбан" profileName="Иванов Иван"/>
+        <div></div>
       </div>
-    </BasePage>
+    </div>
   );
 }
