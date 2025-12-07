@@ -1,46 +1,22 @@
-.page-content {
-    max-width: 1200px;
-    margin: 0 auto;
+.top-bar {
+    display:flex;
+    flex-direction:row;
+    align-items: center;
+    gap:32px;
 }
 
-.page-header {
-    margin-bottom: 32px;
+.create-user-button  {
+    background-color:#1F4BC0;
+    color:white;
+    border-radius:10px;
+    padding:14px 22px 14px 22px;
+    border:none;
+    font-size:19px;
 }
 
-.page-header h1 {
-    font-size: 32px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 8px 0;
-}
-
-.page-header p {
-    font-size: 16px;
-    color: #666;
-    margin: 0;
-}
-
-.personas-container {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.placeholder {
-    text-align: center;
-    padding: 48px 24px;
-    color: #666;
-}
-
-.placeholder h3 {
-    font-size: 24px;
-    margin: 0 0 16px 0;
-    color: #333;
-}
-
-.placeholder p {
-    font-size: 16px;
-    margin: 0;
-    line-height: 1.5;
+.content-wrapper {
+    padding:29px 44px 29px 44px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
 }
