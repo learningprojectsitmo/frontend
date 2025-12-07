@@ -1,4 +1,4 @@
-import './createUserPage.css';
+import './CreateUserPage.css';
 import '../pages.css'
 //import { useContext } from 'react';
 //import { Context } from '../../main';

@@ -1,5 +1,4 @@
 import './Header.css';
-import React from 'react'
 
 interface Props {
   pageName: string,

@@ -16,8 +16,8 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
 
     const [lastName, setLastName ] = useState<string>('')
 
-    const [ISU, setISU ] = useState<number>()
-    const [ISUError, setISUError ] = useState<string>('')
+    const [isu, setIsu ] = useState<string>('')
+    const [isuError, setIsuError ] = useState<string>('')
 
     const [email, setEmail ] = useState<string>('')
     const [emailError, setEmailError ] = useState<string>('')
@@ -35,12 +35,13 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             setFormSent(true)
             e.preventDefault();
-            if (ISUError || emailError || firstNameError || middleNameError || passwordError || !email || !password || !firstName || !middleName) {
+            if (isuError || emailError || firstNameError || middleNameError || passwordError || !email || !password || !firstName || !middleName) {
                 alert("Неправильный ввод, пожалуйста проверьте корректность введенных данных");
             } else if (password !== secondPassword) {
                 alert("Пароли не совпадают, пожалуйста проверьте корректность введенных данных");
             } else {
-                 await store.registration(firstName, middleName, lastName, ISU, email, password)
+                 const isuNumber = isu ? parseInt(isu) : undefined
+                 await store.registration(firstName, middleName, lastName, email, password, isuNumber)
             }
             setFormSent(false)
         };
@@ -72,12 +73,12 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
                 setEmailError('');
             }
         };
-    const handleISUChange = (value: string) => {
-            setISU(Number(value));
-            if ((0 < value.length && value.length !== 6) || !/^\d*$/.test(value)) {
-                setISUError("Неправильный формат ИСУ");
+    const handleIsuChange = (value: string) => {
+            setIsu(value);
+            if (value && (value.length !== 6 || !/^\d{6}$/.test(value))) {
+                setIsuError("Неправильный формат ИСУ (должно быть 6 цифр)");
             } else {
-                setISUError('');
+                setIsuError('');
             }
         };
     const handlePasswordChange = (value: string) => {
@@ -102,7 +103,7 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(firstNameError)}
                 required
-                id="outlined-helperText"
+                id="registration-firstName"
                 label="Имя"
                 onChange={e => handleFirstNameChange(e.target.value)}
                 value={firstName}
@@ -111,30 +112,30 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(middleNameError)}
                 required
-                id="outlined-helperText"
+                id="registration-middleName"
                 label="Фамилия"
                 onChange={e => handleMiddleNameChange(e.target.value)}
                 value={middleName}
                 helperText={middleNameError}
             />
             <TextField
-                id="outlined-helperText"
+                id="registration-lastName"
                 label="Отчество"
                 onChange={e => setLastName(e.target.value)}
                 value={lastName}
             />
             <TextField
-                error={Boolean(ISUError)}
-                id="outlined-helperText"
+                error={Boolean(isuError)}
+                id="registration-ISU"
                 label="Номер ИСУ"
-                onChange={e => handleISUChange(e.target.value)}
-                value={ISU}
-                helperText={ISUError ? ISUError : "Если вы являетесь студентом ИТМО"}
+                onChange={e => handleIsuChange(e.target.value)}
+                value={isu}
+                helperText={isuError ? isuError : "Если вы являетесь студентом ИТМО"}
             />
             <TextField
                 error={Boolean(emailError)}
                 required
-                id="outlined-helperText"
+                id="registration-email"
                 label="Email"
                 onChange={e => handleEmailChange(e.target.value)}
                 value={email}
@@ -143,7 +144,7 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(passwordError)} 
                 required
-                id="outlined-helperText"
+                id="registration-password"
                 label="Пароль"
                 onChange={e => handlePasswordChange(e.target.value)}
                 value={password}
@@ -153,7 +154,7 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(secondPasswordError)} 
                 required
-                id="outlined-helperText"
+                id="registration-secondPassword"
                 label="Подтвердите пароль"
                 onChange={e => handleSecondPasswordChange(e.target.value)}
                 value={secondPassword}

@@ -1,12 +1,14 @@
 import type { FC } from 'react'
 import React, { useState, useContext } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Context } from "../../main"
 import { observer } from 'mobx-react-lite'
 import { Box, Button, TextField } from '@mui/material';
 import './CreateUserForm.css';
 
 const CreateUserForm: FC = () => {
+    const navigate = useNavigate();
+    const {store} = useContext(Context)
 
     const [firstName, setFirstName ] = useState<string>('')
     const [firstNameError, setFirstNameError] = useState<string>('')
@@ -28,9 +30,8 @@ const CreateUserForm: FC = () => {
     const [secondPassword, setSecondPassword ] = useState<string>('')
     const [secondPasswordError, setSecondPasswordError ] = useState<string>('')
    
-    const {store} = useContext(Context)
-
     const [formSent, setFormSent ] = useState<boolean>(false)
+    const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             setFormSent(true)
@@ -40,7 +41,12 @@ const CreateUserForm: FC = () => {
             } else if (password !== secondPassword) {
                 alert("Пароли не совпадают, пожалуйста проверьте корректность введенных данных");
             } else {
-                 await store.registration(firstName, middleName, lastName, ISU, email, password)
+                 await store.registration(firstName, middleName, lastName, email, password)
+                 // После успешной регистрации показываем сообщение и перенаправляем на логин
+                 setRegistrationSuccess(true);
+                 setTimeout(() => {
+                     navigate('/'); // Перенаправляем на главную страницу (которая покажет LoginPage)
+                 }, 2000);
             }
             setFormSent(false)
         };
@@ -96,6 +102,21 @@ const CreateUserForm: FC = () => {
                 setSecondPasswordError('');
             }
         };
+
+    // Если регистрация прошла успешно, показываем сообщение
+    if (registrationSuccess) {
+        return (
+            <Box className="login-form-create">
+                <div className="success-message">
+                    <h3>Пользователь успешно создан!</h3>
+                    <p>Вы будете перенаправлены на страницу входа через 2 секунды...</p>
+                    <Link to="/" className="link-underline">
+                        <Button variant="outlined">Перейти ко входу сейчас</Button>
+                    </Link>
+                </div>
+            </Box>
+        );
+    }
 
     return (
         <Box component="form" onSubmit={handleSubmit} noValidate className="login-form-create">

@@ -40,7 +40,7 @@ const LoginForm: FC<LoginFormProps> = ({setRegistration}) => {
     const handlePasswordChange = (value: string) => {
             setPassword(value);
             if (!/^(?=.*[0-9])(?=.*[~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,])(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,]{8,64}$/.test(value)) {
-                setPasswordError("Пароль должен быть длиной от 8 до 64 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы\nlol");
+                setPasswordError("Пароль должен быть длиной от 8 до 64 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы");
             } else {
                 setPasswordError('');
             }
@@ -51,7 +51,7 @@ const LoginForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(emailError)}
                 required
-                id="outlined-helperText"
+                id="login-email"
                 label="Email"
                 onChange={e => handleEmailChange(e.target.value)}
                 value={email}
@@ -60,7 +60,7 @@ const LoginForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(passwordError)} 
                 required
-                id="outlined-helperText"
+                id="login-password"
                 label="Пароль"
                 onChange={e => handlePasswordChange(e.target.value)}
                 value={password}

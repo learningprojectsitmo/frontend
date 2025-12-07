@@ -1,29 +1,44 @@
 import './PersonasPage.css';
 import '../pages.css'
 import { Persona } from './Persona'
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Context } from '../../main';
 import { Sider } from '../../components/mainPage_components/Sider';
 import { Header } from '../../components/mainPage_components/Header'
 import { Link } from 'react-router';
-
+import type { IUser } from '../../models/IUser';
 
 export function PersonasPage() {
-  const {store} =useContext(Context);
-  
-  async function getPersonaBlocks() {
-    const response = await store.getUsers()
+  const {store} = useContext(Context);
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const personasBlocks = [];
-    if (response) {
-      for (let user of response.data) {
-        personasBlocks.push(<Persona firstName={user.first_name} middleName={user.middle_name} lastName={user.last_name}/>)
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        setIsLoading(true);
+        const response = await store.getUsers();
+        if (response && response.data.items) {
+          setUsers(response.data.items);
+        }
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
-    
-    
-    return personasBlocks
-  }
+
+    loadUsers();
+  }, []); // Пустой массив зависимостей - выполнится только при монтировании
+
+  const getPersonaBlocks = () => {
+    return users.map(user => (
+      <Persona 
+        key={user.id}
+        user={user}
+      />
+    ));
+  };
 
   return (
     <div className="outer-wrapper">
@@ -37,7 +52,20 @@ export function PersonasPage() {
             </Link>
           </div>
           <div className="personas">
-            {getPersonaBlocks()}
+            {isLoading ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Загрузка пользователей...</p>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">👥</div>
+                <h3>Пользователи не найдены</h3>
+                <p>Пока что в системе нет зарегистрированных пользователей.</p>
+              </div>
+            ) : (
+              getPersonaBlocks()
+            )}
           </div>
         </div>
       </div>
