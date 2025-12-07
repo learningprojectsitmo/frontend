@@ -1,0 +1,42 @@
+.persona-block {
+    display:flex;
+    flex-direction:row;
+    gap:20px;
+    padding: 22px 22px 22px 22px;
+    border: solid;
+    border-width:1px;
+    border-radius:10px;
+    border-color:#D1D1D1;
+}
+
+.persona-info {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.persona-icon {
+    height:88px;
+}
+
+.persona-name {
+    font-size:20px;
+}
+
+.persona-group {
+    display:flex;
+    flex-direction:row;
+    gap:20px;
+}
+
+.persona-group-title {
+    font-weight:400;
+    font-size:18px;
+    color:#5C5C5C;
+}
+
+.persona-group-content {
+    font-weight:400;
+    font-size:18px;
+    color:#000000;
+}

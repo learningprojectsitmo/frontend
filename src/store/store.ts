@@ -1,6 +1,7 @@
 import type { IUser } from "../models/IUser";
 import { makeAutoObservable } from "mobx"
 import AuthService from '../services/AuthService.ts'
+import UserService from '../services/UserService.ts'
 import axios from 'axios';
 import API_URL from "../http/index.ts"
 import type { AuthResponce } from "../models/responce/AuthResponce.ts";
@@ -9,6 +10,7 @@ export default class Store {
     user = {} as IUser
     isAuth = true
     isLoading = false
+    isLoadingUsers = false
 
     isLoginFailed = false
     isRegistrationFailed = false
@@ -27,6 +29,10 @@ export default class Store {
 
     setLoading(bool: boolean) {
         this.isLoading = bool;
+    }
+
+    setLoadingUsers(bool: boolean) {
+        this.isLoadingUsers = bool;
     }
 
     setLoginFailed(bool: boolean) {
@@ -77,7 +83,6 @@ export default class Store {
             await AuthService.logout();
             localStorage.removeItem('token')
             this.setAuth(false)
-            this.setUser({} as IUser)
         } catch(e) {
             if (axios.isAxiosError(e)) {
                 console.log(e.response?.data?.message)
@@ -100,6 +105,21 @@ export default class Store {
             }
         } finally {
             this.setLoading(false)
+        }
+    }
+
+    async getUsers() {
+        this.setLoadingUsers(true);
+        try {
+            return await UserService.fetchUsers();
+        } catch(e) {
+            if (axios.isAxiosError(e)) {
+                console.log(e.response?.data?.message)
+            } else {
+                console.log(e)
+            }
+        } finally {
+            this.setLoadingUsers(false);
         }
     }
 }

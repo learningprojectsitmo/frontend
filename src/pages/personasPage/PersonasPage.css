@@ -20,3 +20,8 @@
     flex-direction:column;
     gap:26px;
 }
+
+.personas {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
