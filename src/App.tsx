@@ -12,6 +12,7 @@ import { ProjectsPage } from './pages/projectsPage/ProjectsPage';
 import { ApplicationsPage } from './pages/applicationsPage/ApplicationsPage';
 import { TasksPage } from './pages/tasksPage/TasksPage';
 import { KanbanPage } from './pages/kanbanPage/KanbanPage';
+import { CreateUserPage } from './pages/createUserPage/CreateUserPage'
 
 
 const App: React.FC = () => {
@@ -38,12 +39,13 @@ const App: React.FC = () => {
     <>
       <Routes>
         <Route index path="" element={<HomePage />} />
-        <Route path="/personas" element={<PersonasPage />} />
-        <Route path="/resume" element={<ResumePage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/applications" element={<ApplicationsPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/kanban" element={<KanbanPage />} />
+        <Route path="personas" element={<PersonasPage />} />
+        <Route path="personas/create" element={<CreateUserPage />} />
+        <Route path="resume" element={<ResumePage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="applications" element={<ApplicationsPage />} />
+        <Route path="tasks" element={<TasksPage />} />
+        <Route path="kanban" element={<KanbanPage />} />
       </Routes>
     </>
   )

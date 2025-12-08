@@ -1,12 +1,14 @@
 import type { FC } from 'react'
 import React, { useState, useContext } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { Context } from "../../main"
 import { observer } from 'mobx-react-lite'
-import { Box, Button, TextField, FormHelperText } from '@mui/material';
-import type { LoginFormProps } from '../../models/LoginPageProps';
-import './Form.css';
+import { Box, Button, TextField } from '@mui/material';
+import './CreateUserForm.css';
 
-const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
+const CreateUserForm: FC = () => {
+    const navigate = useNavigate();
+    const {store} = useContext(Context)
 
     const [firstName, setFirstName ] = useState<string>('')
     const [firstNameError, setFirstNameError] = useState<string>('')
@@ -16,8 +18,8 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
 
     const [lastName, setLastName ] = useState<string>('')
 
-    const [isu, setIsu ] = useState<string>('')
-    const [isuError, setIsuError ] = useState<string>('')
+    const [ISU, setISU ] = useState<number>()
+    const [ISUError, setISUError ] = useState<string>('')
 
     const [email, setEmail ] = useState<string>('')
     const [emailError, setEmailError ] = useState<string>('')
@@ -28,20 +30,23 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
     const [secondPassword, setSecondPassword ] = useState<string>('')
     const [secondPasswordError, setSecondPasswordError ] = useState<string>('')
    
-    const {store} = useContext(Context)
-
     const [formSent, setFormSent ] = useState<boolean>(false)
+    const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             setFormSent(true)
             e.preventDefault();
-            if (isuError || emailError || firstNameError || middleNameError || passwordError || !email || !password || !firstName || !middleName) {
+            if (ISUError || emailError || firstNameError || middleNameError || passwordError || !email || !password || !firstName || !middleName) {
                 alert("Неправильный ввод, пожалуйста проверьте корректность введенных данных");
             } else if (password !== secondPassword) {
                 alert("Пароли не совпадают, пожалуйста проверьте корректность введенных данных");
             } else {
-                 const isuNumber = isu ? parseInt(isu) : undefined
-                 await store.registration(firstName, middleName, lastName, email, password, isuNumber)
+                 await store.registration(firstName, middleName, lastName, email, password)
+                 // После успешной регистрации показываем сообщение и перенаправляем на логин
+                 setRegistrationSuccess(true);
+                 setTimeout(() => {
+                     navigate('/'); // Перенаправляем на главную страницу (которая покажет LoginPage)
+                 }, 2000);
             }
             setFormSent(false)
         };
@@ -73,12 +78,12 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
                 setEmailError('');
             }
         };
-    const handleIsuChange = (value: string) => {
-            setIsu(value);
-            if (value && (value.length !== 6 || !/^\d{6}$/.test(value))) {
-                setIsuError("Неправильный формат ИСУ (должно быть 6 цифр)");
+    const handleISUChange = (value: string) => {
+            setISU(Number(value));
+            if ((0 < value.length && value.length !== 6) || !/^\d*$/.test(value)) {
+                setISUError("Неправильный формат ИСУ");
             } else {
-                setIsuError('');
+                setISUError('');
             }
         };
     const handlePasswordChange = (value: string) => {
@@ -98,12 +103,27 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             }
         };
 
+    // Если регистрация прошла успешно, показываем сообщение
+    if (registrationSuccess) {
+        return (
+            <Box className="login-form-create">
+                <div className="success-message">
+                    <h3>Пользователь успешно создан!</h3>
+                    <p>Вы будете перенаправлены на страницу входа через 2 секунды...</p>
+                    <Link to="/" className="link-underline">
+                        <Button variant="outlined">Перейти ко входу сейчас</Button>
+                    </Link>
+                </div>
+            </Box>
+        );
+    }
+
     return (
-        <Box component="form" onSubmit={handleSubmit} noValidate className="login-form">
+        <Box component="form" onSubmit={handleSubmit} noValidate className="login-form-create">
             <TextField
                 error={Boolean(firstNameError)}
                 required
-                id="registration-firstName"
+                id="outlined-helperText"
                 label="Имя"
                 onChange={e => handleFirstNameChange(e.target.value)}
                 value={firstName}
@@ -112,30 +132,30 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(middleNameError)}
                 required
-                id="registration-middleName"
+                id="outlined-helperText"
                 label="Фамилия"
                 onChange={e => handleMiddleNameChange(e.target.value)}
                 value={middleName}
                 helperText={middleNameError}
             />
             <TextField
-                id="registration-lastName"
+                id="outlined-helperText"
                 label="Отчество"
                 onChange={e => setLastName(e.target.value)}
                 value={lastName}
             />
             <TextField
-                error={Boolean(isuError)}
-                id="registration-ISU"
+                error={Boolean(ISUError)}
+                id="outlined-helperText"
                 label="Номер ИСУ"
-                onChange={e => handleIsuChange(e.target.value)}
-                value={isu}
-                helperText={isuError ? isuError : "Если вы являетесь студентом ИТМО"}
+                onChange={e => handleISUChange(e.target.value)}
+                value={ISU}
+                helperText={ISUError ? ISUError : "Если является студентом ИТМО"}
             />
             <TextField
                 error={Boolean(emailError)}
                 required
-                id="registration-email"
+                id="outlined-helperText"
                 label="Email"
                 onChange={e => handleEmailChange(e.target.value)}
                 value={email}
@@ -144,7 +164,7 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(passwordError)} 
                 required
-                id="registration-password"
+                id="outlined-helperText"
                 label="Пароль"
                 onChange={e => handlePasswordChange(e.target.value)}
                 value={password}
@@ -154,18 +174,20 @@ const RegistrationForm: FC<LoginFormProps> = ({setRegistration}) => {
             <TextField
                 error={Boolean(secondPasswordError)} 
                 required
-                id="registration-secondPassword"
+                id="outlined-helperText"
                 label="Подтвердите пароль"
                 onChange={e => handleSecondPasswordChange(e.target.value)}
                 value={secondPassword}
                 type="password"
                 helperText={secondPasswordError}
             />
-            <FormHelperText sx={{ typography: { fontSize: 14 }, color: 'red' }}>{store.isRegistrationFailed ? 'Неверный логин/пароль' : ''}</FormHelperText>
-            <Button variant="contained" disabled={formSent} type="submit">Регистрация</Button>
-            <Button variant="outlined" disabled={formSent} onClick={() => setRegistration(false)}>Назад</Button>
+            <Button variant="contained" disabled={formSent} type="submit">Создать пользователя</Button>
+            <Link to="/personas" className="exit-button link-underline">
+                <Button variant="outlined" disabled={formSent}>Назад</Button>
+            </Link>
+            
         </Box>
     )
 };
 
-export default observer(RegistrationForm);
+export default observer(CreateUserForm);
