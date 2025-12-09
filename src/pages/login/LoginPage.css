@@ -1,23 +1,24 @@
 .wrapper {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction:column;
+    flex: 1 1 auto;
+    height: 100vh;
 }
 
-.login-form-wrapper {
+.outer-login-form-wrapper {
     display:flex;
     flex-direction:column;
-    
+    align-items: center;
+    justify-content:center;
+    height:100%;
+}
+
+.inner-login-form-wrapper {
     width:100%;
     max-width:540px;
-    justify-content:center;
-    min-height: 100vh;
-    min-height:100dvh;
-    
+    padding:0px 30px 0px 30px;
 }
 
 .icon-div {
-    position:absolute;
-    left:60px;
-    top:40px;
+    padding:40px 0px 0px 60px;
 }

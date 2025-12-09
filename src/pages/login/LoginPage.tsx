@@ -12,8 +12,10 @@ export function LoginPage() {
         <img className="icon" src="../../itmo_logo.png"/>
       </div>
       
-      <div className="login-form-wrapper">
+      <div className="outer-login-form-wrapper">
+        <div className="inner-login-form-wrapper">
           {registration ? <RegistrationForm setRegistration={setRegistration} /> : <LoginForm setRegistration={setRegistration} />}
+        </div>
       </div>
     </div>
   );

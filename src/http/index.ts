@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AuthResponce } from '../models/responce/AuthResponce';
 
-export const API_URL = "http://localhost:8000"
+export const API_URL = "http://fpin-projects.ru:12683"
 
 const $api = axios.create({
     withCredentials: true,
