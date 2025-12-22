@@ -1,10 +1,10 @@
-import type { IUser } from "../models/IUser";
+import type { IUser } from "../shared/types/entities/User.ts";
 import { makeAutoObservable } from "mobx"
 import axios from 'axios';
-import { API_URL } from "../http/index.ts"
-import type { AuthResponce } from "../models/responce/AuthResponce";
-import AuthService from "../services/AuthService";
-import UserService from "../services/UserService";
+import { API_URL } from "../api/interceptors.ts"
+import type { AuthResponce } from "../shared/types/responce/AuthResponce.ts";
+import AuthService from "../features/auth/services/AuthService.ts";
+import UserService from "../features/auth/services/UserService.ts";
 
 export default class Store {
     user = {} as IUser
@@ -24,7 +24,7 @@ export default class Store {
     }
 
     setUser(user: IUser) {
-        this.user = user
+        this.user = user;
     }
 
     setLoading(bool: boolean) {
