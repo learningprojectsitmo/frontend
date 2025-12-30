@@ -1,12 +1,12 @@
 .header {
-    display:flex;
-    position:sticky;
-    top:0px;
+    display: flex;
+    position: sticky;
+    top: 0px;
     padding: 0px 44px 0px 44px;
-    height:100px;
-    flex-direction:row;
-    justify-content:space-between;
-    align-items:center;
+    height: 100px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .page-title {
@@ -17,10 +17,10 @@
 }
 
 .profile {
-    display:flex;
-    flex-direction:row;
-    align-items:center;
-    gap:20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
 }
 
 .profile-name {

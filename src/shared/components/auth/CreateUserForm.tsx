@@ -1,63 +1,72 @@
-import type { FC } from 'react'
-import React, { useState, useContext } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { Context } from '../../../app/main'
-import { observer } from 'mobx-react-lite'
-import { Box, Button, TextField } from '@mui/material';
-import './CreateUserForm.css';
+import type { FC } from "react";
+import React, { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router";
+import { Context } from "../../../app/main";
+import { observer } from "mobx-react-lite";
+import { Box, Button, TextField } from "@mui/material";
+import "./CreateUserForm.css";
 
 const CreateUserForm: FC = () => {
     const navigate = useNavigate();
-    const { store } = useContext(Context)
+    const { store } = useContext(Context);
 
-    const [firstName, setFirstName] = useState<string>('')
-    const [firstNameError, setFirstNameError] = useState<string>('')
+    const [firstName, setFirstName] = useState<string>("");
+    const [firstNameError, setFirstNameError] = useState<string>("");
 
-    const [middleName, setMiddleName] = useState<string>('')
-    const [middleNameError, setMiddleNameError] = useState<string>('')
+    const [middleName, setMiddleName] = useState<string>("");
+    const [middleNameError, setMiddleNameError] = useState<string>("");
 
-    const [lastName, setLastName] = useState<string>('')
+    const [lastName, setLastName] = useState<string>("");
 
-    const [ISU, setISU] = useState<number>()
-    const [ISUError, setISUError] = useState<string>('')
+    const [ISU, setISU] = useState<number>();
+    const [ISUError, setISUError] = useState<string>("");
 
-    const [email, setEmail] = useState<string>('')
-    const [emailError, setEmailError] = useState<string>('')
+    const [email, setEmail] = useState<string>("");
+    const [emailError, setEmailError] = useState<string>("");
 
-    const [password, setPassword] = useState<string>('')
-    const [passwordError, setPasswordError] = useState<string>('')
+    const [password, setPassword] = useState<string>("");
+    const [passwordError, setPasswordError] = useState<string>("");
 
-    const [secondPassword, setSecondPassword] = useState<string>('')
-    const [secondPasswordError, setSecondPasswordError] = useState<string>('')
+    const [secondPassword, setSecondPassword] = useState<string>("");
+    const [secondPasswordError, setSecondPasswordError] = useState<string>("");
 
-    const [formSent, setFormSent] = useState<boolean>(false)
-    const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false)
+    const [formSent, setFormSent] = useState<boolean>(false);
+    const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        setFormSent(true)
+        setFormSent(true);
         e.preventDefault();
-        if (ISUError || emailError || firstNameError || middleNameError || passwordError || !email || !password || !firstName || !middleName) {
+        if (
+            ISUError ||
+            emailError ||
+            firstNameError ||
+            middleNameError ||
+            passwordError ||
+            !email ||
+            !password ||
+            !firstName ||
+            !middleName
+        ) {
             alert("Неправильный ввод, пожалуйста проверьте корректность введенных данных");
         } else if (password !== secondPassword) {
             alert("Пароли не совпадают, пожалуйста проверьте корректность введенных данных");
         } else {
-            await store.registration(firstName, middleName, lastName, email, password)
+            await store.registration(firstName, middleName, lastName, email, password);
             // После успешной регистрации показываем сообщение и перенаправляем на логин
             setRegistrationSuccess(true);
             setTimeout(() => {
-                navigate('/'); // Перенаправляем на главную страницу (которая покажет LoginPage)
+                navigate("/"); // Перенаправляем на главную страницу (которая покажет LoginPage)
             }, 2000);
         }
-        setFormSent(false)
+        setFormSent(false);
     };
-
 
     const handleFirstNameChange = (value: string) => {
         setFirstName(value);
         if (value.length < 1) {
             setFirstNameError("Это поле обязательно к заполнению");
         } else {
-            setFirstNameError('');
+            setFirstNameError("");
         }
     };
 
@@ -66,7 +75,7 @@ const CreateUserForm: FC = () => {
         if (value.length < 1) {
             setMiddleNameError("Это поле обязательно к заполнению");
         } else {
-            setMiddleNameError('');
+            setMiddleNameError("");
         }
     };
 
@@ -75,7 +84,7 @@ const CreateUserForm: FC = () => {
         if (!/^[a-zA-Z0-9._:$!%-]+@[a-zA-Z0-9.-]+.[a-zA-Z]$/.test(value)) {
             setEmailError("Неправильный формат почты");
         } else {
-            setEmailError('');
+            setEmailError("");
         }
     };
     const handleISUChange = (value: string) => {
@@ -83,25 +92,37 @@ const CreateUserForm: FC = () => {
         if ((0 < value.length && value.length !== 6) || !/^\d*$/.test(value)) {
             setISUError("Неправильный формат ИСУ");
         } else {
-            setISUError('');
+            setISUError("");
         }
     };
     const handlePasswordChange = (value: string) => {
         setPassword(value);
         // eslint-disable-next-line no-useless-escape
-        if (!/^(?=.*[0-9])(?=.*[~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,])(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9~!?@#$%^&*_\-+\\(\)\[\]\{\}><\/\\|"'. ,]{8,64}$/.test(value)) {
-            setPasswordError("Пароль должен быть не менее 8 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы");
+        if (
+            !/^(?=.*[0-9])(?=.*[~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,])(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9~!?@#$%^&*_\-+\\(\)\[\]\{\}><\/\\|"'. ,]{8,64}$/.test(
+                value,
+            )
+        ) {
+            setPasswordError(
+                "Пароль должен быть не менее 8 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы",
+            );
         } else {
-            setPasswordError('');
+            setPasswordError("");
         }
     };
     const handleSecondPasswordChange = (value: string) => {
         setSecondPassword(value);
         // eslint-disable-next-line no-useless-escape
-        if (!/^(?=.*[0-9])(?=.*[~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,])(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,]{8,64}$/.test(value)) {
-            setSecondPasswordError("Пароль должен быть не менее 8 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы");
+        if (
+            !/^(?=.*[0-9])(?=.*[~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,])(?=.*[A-Z])(?=.*[a-z])[A-Za-z0-9~!?@#$%^&*_\-+\(\)\[\]\{\}><\/\\|"'. ,]{8,64}$/.test(
+                value,
+            )
+        ) {
+            setSecondPasswordError(
+                "Пароль должен быть не менее 8 символов, включая символы в нижнем и верхнем регистрах, цифры и специальные символы",
+            );
         } else {
-            setSecondPasswordError('');
+            setSecondPasswordError("");
         }
     };
 
@@ -127,7 +148,7 @@ const CreateUserForm: FC = () => {
                 required
                 id="outlined-helperText"
                 label="Имя"
-                onChange={e => handleFirstNameChange(e.target.value)}
+                onChange={(e) => handleFirstNameChange(e.target.value)}
                 value={firstName}
                 helperText={firstNameError}
             />
@@ -136,21 +157,21 @@ const CreateUserForm: FC = () => {
                 required
                 id="outlined-helperText"
                 label="Фамилия"
-                onChange={e => handleMiddleNameChange(e.target.value)}
+                onChange={(e) => handleMiddleNameChange(e.target.value)}
                 value={middleName}
                 helperText={middleNameError}
             />
             <TextField
                 id="outlined-helperText"
                 label="Отчество"
-                onChange={e => setLastName(e.target.value)}
+                onChange={(e) => setLastName(e.target.value)}
                 value={lastName}
             />
             <TextField
                 error={Boolean(ISUError)}
                 id="outlined-helperText"
                 label="Номер ИСУ"
-                onChange={e => handleISUChange(e.target.value)}
+                onChange={(e) => handleISUChange(e.target.value)}
                 value={ISU}
                 helperText={ISUError ? ISUError : "Если является студентом ИТМО"}
             />
@@ -159,7 +180,7 @@ const CreateUserForm: FC = () => {
                 required
                 id="outlined-helperText"
                 label="Email"
-                onChange={e => handleEmailChange(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 value={email}
                 helperText={emailError}
             />
@@ -168,7 +189,7 @@ const CreateUserForm: FC = () => {
                 required
                 id="outlined-helperText"
                 label="Пароль"
-                onChange={e => handlePasswordChange(e.target.value)}
+                onChange={(e) => handlePasswordChange(e.target.value)}
                 value={password}
                 type="password"
                 helperText={passwordError}
@@ -178,18 +199,21 @@ const CreateUserForm: FC = () => {
                 required
                 id="outlined-helperText"
                 label="Подтвердите пароль"
-                onChange={e => handleSecondPasswordChange(e.target.value)}
+                onChange={(e) => handleSecondPasswordChange(e.target.value)}
                 value={secondPassword}
                 type="password"
                 helperText={secondPasswordError}
             />
-            <Button variant="contained" disabled={formSent} type="submit">Создать пользователя</Button>
+            <Button variant="contained" disabled={formSent} type="submit">
+                Создать пользователя
+            </Button>
             <Link to="/personas" className="exit-button link-underline">
-                <Button variant="outlined" disabled={formSent}>Назад</Button>
+                <Button variant="outlined" disabled={formSent}>
+                    Назад
+                </Button>
             </Link>
-
         </Box>
-    )
+    );
 };
 
 export default observer(CreateUserForm);
