@@ -1,13 +1,4 @@
 .sider-wrapper {
-<<<<<<< HEAD
-    position: sticky;
-    height: 100vh;
-    top: 0px;
-    width: 340px;
-    border-right: solid;
-    border-right-color: #d1d1d1;
-    border-right-width: 1px;
-=======
     position:sticky;
     height: 100vh;
     top:0px;
@@ -15,20 +6,10 @@
     border-right:solid;
     border-right-color:#D1D1D1;
     border-right-width:1px;
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 }
 
 .sider-container {
     padding: 20px 40px 20px 40px;
-<<<<<<< HEAD
-    display: flex;
-    flex-direction: column;
-    gap: 50px;
-}
-
-.icon {
-    width: 138px;
-=======
     display:flex;
     flex-direction:column;
     gap:50px;
@@ -36,21 +17,10 @@
 
 .icon {
     width:138px;
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 }
 
 .options-wrapper {
     display: flex;
-<<<<<<< HEAD
-    flex-direction: column;
-    gap: 30px;
-}
-
-.option {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-=======
     flex-direction:column;
     gap:30px;
 }
@@ -59,34 +29,16 @@
     display:flex;
     flex-direction:row;
     gap:10px;
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 }
 
 .option-text {
     font-family: "Inter", sans-serif;
-<<<<<<< HEAD
-    font-weight: 400;
-    font-size: 22px;
-=======
     font-weight:400;
     font-size:22px;
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
     line-height: 120%;
 }
 
 .blue-color {
-<<<<<<< HEAD
-    color: #1f4bc0;
-}
-
-.gray-color {
-    color: #5c5c5c;
-}
-
-.option-icon {
-    width: 24px;
-    height: 24px;
-=======
     color: #1F4BC0;
 }
 
@@ -97,13 +49,8 @@
 .option-icon {
     width:24px;
     height:24px;
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 }
 
 .link-underline {
     text-decoration: none;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
