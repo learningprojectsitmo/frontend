@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import axios from "axios";
 import type { AuthResponce } from "../shared/types/responce/AuthResponce";
+=======
+import axios from 'axios';
+import type { AuthResponce } from '../shared/types/responce/AuthResponce';
+>>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 
 // Используем localhost для разработки, но с возможностью переключения
 // Функция для получения правильного API URL в зависимости от окружения

@@ -1,7 +1,13 @@
 import type { IUser } from "../shared/types/entities/User.ts";
+<<<<<<< HEAD
 import { makeAutoObservable } from "mobx";
 import axios from "axios";
 import { API_URL } from "../api/interceptors.ts";
+=======
+import { makeAutoObservable } from "mobx"
+import axios from 'axios';
+import { API_URL } from "../api/interceptors.ts"
+>>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
 import type { AuthResponce } from "../shared/types/responce/AuthResponce.ts";
 import AuthService from "../features/auth/services/AuthService.ts";
 import UserService from "../features/auth/services/UserService.ts";

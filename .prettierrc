@@ -12,4 +12,8 @@
     "arrowParens": "always",
     "endOfLine": "lf",
     "proseWrap": "preserve"
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
