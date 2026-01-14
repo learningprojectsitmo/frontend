@@ -1,6 +1,13 @@
 .create-user-form-wrapper {
+<<<<<<< HEAD
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+=======
     display:flex;
     justify-content:center;
     align-items:center;
 
 }
+>>>>>>> f4f2c8820cab31cbbf6f704f7e3cf3519b1e31eb
