@@ -5,7 +5,7 @@ import type {
     RegistrationResponce,
 } from "../../../shared/types/responce/AuthResponce";
 import type { LoginFormType } from "../../../shared/types/forms/LoginFormType";
-import type { RegistrationBodyForRequest } from "../../../shared/types/forms/RegistrationFormType";
+import type { RegistrationBody, RegistrationBodyForRequest } from "../../../shared/types/forms/RegistrationFormType";
 
 export default class AuthService {
     static async login(data: LoginFormType): Promise<AxiosResponse<AuthResponce>> {
@@ -17,11 +17,11 @@ export default class AuthService {
     static async registration(
         data: RegistrationBodyForRequest,
     ): Promise<AxiosResponse<RegistrationResponce>> {
-        const payload: any = {
+        const payload: RegistrationBody = {
             email: data.email,
             first_name: data.firstName,
             middle_name: data.middleName,
-            password_string: data.password,
+            password: data.password,
         };
 
         if (data.lastName !== undefined) {

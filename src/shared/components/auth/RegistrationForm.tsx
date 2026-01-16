@@ -26,9 +26,9 @@ const RegistrationForm = ({ setRegistration, onRegistrationSuccess }: Registrati
         const body = {
             firstName: data.firstName,
             middleName: data.middleName,
-            lastName: data.lastName ? data.lastName : "",
+            lastName: data.lastName,
             email: data.email,
-            isuNumber: data.isuNumber ? data.isuNumber : "",
+            isuNumber: data.isuNumber,
             password: data.password
         } as RegistrationBodyForRequest
 
