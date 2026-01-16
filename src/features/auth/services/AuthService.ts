@@ -5,7 +5,7 @@ import type { AuthResponce, RegistrationResponce } from "../../../shared/types/r
 
 export default class AuthService {
     static async login(email: string, password: string): Promise<AxiosResponse<AuthResponce>> {
-        return $api.post('/auth/token', qs.stringify({"username": email, "password": password }), {headers: { 'Content-Type': 'application/x-www-form-urlencoded' }})
+        return $api.post('v1/auth/token', qs.stringify({"grant_type": "password", "username": email, "password": password }), {headers: { 'Content-Type': 'application/x-www-form-urlencoded' }})
     }
 
     static async registration(firstName: string, middleName: string, lastName: string | undefined, email: string, password: string, isuNumber?: number): Promise<AxiosResponse<RegistrationResponce>> {

@@ -29,11 +29,11 @@ const App: React.FC = () => {
     return <div>Загрузка...</div>
   }
 
-  // if (!store.isAuth) {
-  //   return (
-  //     <LoginPage />
-  //   )
-  // }
+  if (!store.isAuth) {
+    return (
+      <LoginPage />
+    )
+  }
 
   return (
     <>
