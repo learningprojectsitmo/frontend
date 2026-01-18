@@ -20,3 +20,10 @@ body {
     flex: 1 1 auto;
     padding: 0
 }
+
+.content-wrapper {
+    padding: 29px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}

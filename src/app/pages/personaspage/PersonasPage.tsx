@@ -6,8 +6,12 @@ import { Context } from '../../main';
 import { Link } from 'react-router';
 import type { IUser } from '../../../shared/types/entities/User';
 import { DefaultPageScreen } from '../../../shared/components/screens/DefaultPageScreen';
+import { PaginationBlock } from '../../../shared/components/pagination/Pagination';
 
 export function PersonasPage() {
+  const queryParams = new URLSearchParams(window.location.search)
+  const searchParam = queryParams.get("search") || '' //На будущее, когда появиться возможность отправлять запрос на список пользователей удовлетворяющих значению в поисковой строке 
+  const [page, setPage] = useState(Number(queryParams.get("page")) || 1)
   const {store} = useContext(Context);
   const [users, setUsers] = useState<IUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +20,7 @@ export function PersonasPage() {
     async function loadUsers() {
       try {
         setIsLoading(true);
-        const response = await store.getUsers();
+        const response = await store.getUsers(page);
         if (response && response.data.items) {
           setUsers(response.data.items);
         }
@@ -28,7 +32,7 @@ export function PersonasPage() {
     }
 
     loadUsers();
-  }, []); // Пустой массив зависимостей - выполнится только при монтировании
+  }, [page]); //тригер при каждом изменении значения page
 
   const getPersonaBlocks = () => {
     return users.map(user => (
@@ -63,6 +67,7 @@ export function PersonasPage() {
               getPersonaBlocks()
             )}
           </div>
+          <PaginationBlock page={page} setPage={setPage} pageName={"personas"}/>
         </div>
     </DefaultPageScreen>
   );

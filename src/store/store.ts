@@ -126,10 +126,10 @@ export default class Store {
         }
     }
 
-    async getUsers() {
+    async getUsers(page: number) {
         this.setLoadingUsers(true);
         try {
-            return await UserService.fetchUsers();
+            return await UserService.fetchUsers(page);
         } catch(e) {
             if (axios.isAxiosError(e)) {
                 console.log(e.response?.data?.message)

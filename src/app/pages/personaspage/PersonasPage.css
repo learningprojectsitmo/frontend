@@ -23,13 +23,6 @@
     box-shadow: 0 4px 12px rgba(31, 75, 192, 0.3);
 }
 
-.content-wrapper {
-    padding: 29px 44px;
-    display: flex;
-    flex-direction: column;
-    gap: 26px;
-}
-
 .personas {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
