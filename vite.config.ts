@@ -1,16 +1,30 @@
-import { defineConfig } from "vite";
+/// <reference types="vitest" />
+/// <reference types="vite/client" />
+
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import path from "path";
+import viteTsconfigPaths from "vite-tsconfig-paths";
+
+export const enableMocking = async () => {
+  if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_MOCK !== 'true') {
+    return;
+  }
+  // ...
+};
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler"]],
-      },
-    }),
-  ],
+  base: "./",
+  plugins: [react(), viteTsconfigPaths()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "msw": path.resolve(__dirname, "./node_modules/msw/lib/core/index.js"),
+    },
+  },
   server: {
+    port: 3000,
     allowedHosts: [
       "test.1855789-cn23133.twc1.net",
       "fpin-projects.ru",
@@ -19,5 +33,16 @@ export default defineConfig({
       "fpin-projects.ru:1268",
     ],
   },
+  preview: {
+    port: 3000,
+  },
+  optimizeDeps: { exclude: ["fsevents"] },
+  build: {
+    rollupOptions: {
+      external: ["fs/promises"],
+      output: {
+        experimentalMinChunkSize: 3500,
+      },
+    },
+  },
 });
-
