@@ -1,0 +1,39 @@
+/* Tailwind директивы */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Глобальные CSS переменные и базовые стили */
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 0 0% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 3.9%;
+        --primary: 0 0% 9%;
+        --primary-foreground: 0 0% 98%;
+        /* остальные переменные */
+    }
+
+    .dark {
+        --background: 0 0% 3.9%;
+        --foreground: 0 0% 98%;
+        /* остальные dark переменные */
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        margin: 0;
+        font-family: "Inter var", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    code {
+        font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+}
