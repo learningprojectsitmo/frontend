@@ -11,11 +11,10 @@ export const ContentLayout = ({ children, title }: ContentLayoutProps) => {
   return (
     <>
       <Head title={title} />
-      <div className="py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
-        </div>
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:px-8">
+      <div className="p-8">
+        {/* Контейнер теперь просто передает контент, 
+            сетку и заголовки мы верстаем внутри страниц */}
+        <div className="mx-auto max-w-[1400px]">
           {children}
         </div>
       </div>
