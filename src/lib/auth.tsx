@@ -10,10 +10,15 @@ import { api } from './api-client';
 // api call definitions for auth (types, schemas, requests):
 // these are not part of features as this is a module shared across features
 
-const getUser = async (): Promise<User> => {
-  const response = await api.get('/auth/me');
 
-  return response.data;
+const getUser = async (): Promise<User | null> => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return null;
+  }
+
+  return await api.get('/auth/me');
 };
 
 const logout = (): Promise<void> => {
@@ -79,16 +84,17 @@ const authConfig = {
     if (response.access_token) {
       localStorage.setItem('token', response.access_token);
     }
-    const user = await getUser();
-    return user;
+
+    return await getUser();
   },
-  // Добавляем отсутствующее свойство:
+
   registerFn: async (data: RegisterInput) => {
     const response = await registerWithEmailAndPassword(data);
-    // Аналогично логину, если регистрация сразу дает доступ:
+
     if (response.access_token) {
-        localStorage.setItem('token', response.access_token);
+      localStorage.setItem('token', response.access_token);
     }
+
     return response.user;
   },
   logoutFn: async () => {
@@ -96,6 +102,7 @@ const authConfig = {
     await logout();
   },
 };
+
 
 export const { useUser, useLogin, useLogout, useRegister, AuthLoader } =
   configureAuth(authConfig);
