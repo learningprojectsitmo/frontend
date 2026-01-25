@@ -1,55 +1,55 @@
-import Axios, { type InternalAxiosRequestConfig } from 'axios';
+import Axios, { type InternalAxiosRequestConfig } from "axios";
 
-import { useNotifications } from '@/components/ui/notifications';
-import { env } from '@/config/env';
-import { paths } from '@/config/paths';
+import { useNotifications } from "@/components/ui/notifications";
+import { env } from "@/config/env";
+// import { paths } from '@/config/paths';
 
 function authRequestInterceptor(config: InternalAxiosRequestConfig) {
-  if (config.headers) {
-    config.headers.Accept = 'application/json';
-    
-    const token = localStorage.getItem('token'); 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+    if (config.headers) {
+        config.headers.Accept = "application/json";
 
-  config.withCredentials = true;
-  return config;
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+
+    config.withCredentials = true;
+    return config;
 }
 
 export const api = Axios.create({
-  baseURL: env.API_URL,
+    baseURL: env.API_URL,
 });
 
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
-  (response) => {
-    return response.data;
-  },
-  (error) => {
-    let message = error.response?.data?.message || error.message;
-    
-    if (error.response?.status === 401) {
-      message = "401 Incorrect username or password";
-    }
-    
-    useNotifications.getState().addNotification({
-      type: 'error',
-      title: 'Error',
-      message,
-    });
-    if (error.response?.status === 401) {
-      console.log(message);
-    }
+    (response) => {
+        return response.data;
+    },
+    (error) => {
+        let message = error.response?.data?.message || error.message;
 
-    // if (error.response?.status === 401) {
-    //   const searchParams = new URLSearchParams();
-    //   const redirectTo =
-    //     searchParams.get('redirectTo') || window.location.pathname;
-    //   window.location.href = paths.auth.login.getHref(redirectTo);
-    // }
+        if (error.response?.status === 401) {
+            message = "401 Incorrect username or password";
+        }
 
-    return Promise.reject(error);
-  },
+        useNotifications.getState().addNotification({
+            type: "error",
+            title: "Error",
+            message,
+        });
+        if (error.response?.status === 401) {
+            console.log(message);
+        }
+
+        // if (error.response?.status === 401) {
+        //   const searchParams = new URLSearchParams();
+        //   const redirectTo =
+        //     searchParams.get('redirectTo') || window.location.pathname;
+        //   window.location.href = paths.auth.login.getHref(redirectTo);
+        // }
+
+        return Promise.reject(error);
+    },
 );

@@ -36,18 +36,19 @@ src/components/
 Используется для страниц аутентификации (логин, регистрация).
 
 ```tsx
-import { AuthLayout } from '@/components/layouts';
+import { AuthLayout } from "@/components/layouts";
 
 const LoginPage = () => {
-  return (
-    <AuthLayout title="Вход в систему">
-      <Form />
-    </AuthLayout>
-  );
+    return (
+        <AuthLayout title="Вход в систему">
+            <Form />
+        </AuthLayout>
+    );
 };
 ```
 
 **Особенности:**
+
 - Автоматический редирект авторизованных пользователей
 - Фоновое изображение
 - Поддержка `redirectTo` через query-параметры
@@ -57,14 +58,14 @@ const LoginPage = () => {
 Основной layout для защищённых страниц приложения.
 
 ```tsx
-import { spaseLayout } from '@/components/layouts';
+import { spaseLayout } from "@/components/layouts";
 
 const spasePage = () => {
-  return (
-    <spaseLayout>
-      <Content />
-    </spaseLayout>
-  );
+    return (
+        <spaseLayout>
+            <Content />
+        </spaseLayout>
+    );
 };
 ```
 
@@ -75,15 +76,14 @@ const spasePage = () => {
 Кастомный компонент на базе React Router.
 
 ```tsx
-import { Link } from '@/components/ui/link';
-import { paths } from '@/config/paths';
+import { Link } from "@/components/ui/link";
+import { paths } from "@/config/paths";
 
-<Link to={paths.auth.login.getHref()}>
-  Войти
-</Link>
+<Link to={paths.auth.login.getHref()}>Войти</Link>;
 ```
 
 **Props:**
+
 - Все стандартные `LinkProps` от React Router
 - Автоматическое применение классов: `text-slate-600 hover:text-slate-900`
 
@@ -94,17 +94,18 @@ import { paths } from '@/config/paths';
 Система уведомлений с глобальным состоянием.
 
 ```tsx
-import { useNotifications } from '@/components/ui/notifications';
+import { useNotifications } from "@/components/ui/notifications";
 
 // Добавление уведомления
 useNotifications.getState().addNotification({
-  type: 'error' | 'success' | 'info' | 'warning',
-  title: 'Заголовок',
-  message: 'Текст уведомления',
+    type: "error" | "success" | "info" | "warning",
+    title: "Заголовок",
+    message: "Текст уведомления",
 });
 ```
 
 **Компонент `<Notifications />`**:
+
 - Фиксированное позиционирование (правый верхний угол)
 - Автоматическое скрытие
 - Поддержка нескольких уведомлений одновременно
@@ -118,12 +119,12 @@ useNotifications.getState().addNotification({
 Компонент для отлова критических ошибок.
 
 ```tsx
-import { MainErrorFallback } from '@/components/errors/main';
+import { MainErrorFallback } from "@/components/errors/main";
 
 // Использование в ErrorBoundary
 <ErrorBoundary fallback={<MainErrorFallback />}>
-  <App />
-</ErrorBoundary>
+    <App />
+</ErrorBoundary>;
 ```
 
 ---
@@ -135,15 +136,12 @@ import { MainErrorFallback } from '@/components/errors/main';
 Объединение CSS-классов с разрешением конфликтов.
 
 ```tsx
-import { cn } from '@/utils/cn';
+import { cn } from "@/utils/cn";
 
-<div className={cn(
-  'base-class',
-  condition && 'conditional-class',
-  className
-)} />
+<div className={cn("base-class", condition && "conditional-class", className)} />;
 ```
 
 **Использует:**
+
 - `clsx` — для условных классов
 - `twMerge` — для разрешения конфликтов Tailwind

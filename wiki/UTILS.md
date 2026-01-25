@@ -15,29 +15,29 @@ src/utils/
 Файл: `src/utils/cn.ts`
 
 ```tsx
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+    return twMerge(clsx(inputs));
 }
 ```
 
 ### Использование
 
 ```tsx
-import { cn } from '@/utils/cn';
+import { cn } from "@/utils/cn";
 
 // Простые классы
-cn('px-4 py-2', 'bg-blue-500');
+cn("px-4 py-2", "bg-blue-500");
 // → "px-4 py-2 bg-blue-500"
 
 // Условные классы
-cn('base-class', condition && 'active-class');
+cn("base-class", condition && "active-class");
 // → "base-class active-class" или "base-class"
 
 // С пропсом className
-<div className={cn('btn', variant === 'primary' && 'btn-primary', className)} />
+<div className={cn("btn", variant === "primary" && "btn-primary", className)} />;
 ```
 
 ### Почему twMerge?
@@ -46,11 +46,11 @@ Tailwind позволяет дублировать классы с разным�
 
 ```tsx
 // Конфликт: оба устанавливают padding
-cn('p-2', 'p-4'); 
+cn("p-2", "p-4");
 // → "p-4" (twMerge разрешает конфликт)
 
 // clsx без twMerge оставит оба
-clsx('p-2', 'p-4'); 
+clsx("p-2", "p-4");
 // → "p-2 p-4" (конфликт!)
 ```
 
@@ -61,22 +61,21 @@ clsx('p-2', 'p-4');
 Файл: `src/utils/format.ts`
 
 ```tsx
-import { default as dayjs } from 'dayjs';
+import { default as dayjs } from "dayjs";
 
-export const formatDate = (date: number) =>
-  dayjs(date).format('MMMM D, YYYY h:mm A');
+export const formatDate = (date: number) => dayjs(date).format("MMMM D, YYYY h:mm A");
 ```
 
 ### Формат
 
-| Маркер | Описание |
-|--------|----------|
-| `MMMM` | Полное название месяца |
-| `D` | День месяца |
-| `YYYY` | Год (4 цифры) |
-| `h` | Час (12-часовой формат) |
-| `mm` | Минуты |
-| `A` | AM/PM |
+| Маркер | Описание                |
+| ------ | ----------------------- |
+| `MMMM` | Полное название месяца  |
+| `D`    | День месяца             |
+| `YYYY` | Год (4 цифры)           |
+| `h`    | Час (12-часовой формат) |
+| `mm`   | Минуты                  |
+| `A`    | AM/PM                   |
 
 ### Примеры
 
@@ -90,12 +89,12 @@ formatDate(1737800000000);
 Для дополнительных функций:
 
 ```tsx
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
-dayjs('2026-01-25').fromNow();
+dayjs("2026-01-25").fromNow();
 // → "2 hours ago"
 ```
 
@@ -106,12 +105,12 @@ dayjs('2026-01-25').fromNow();
 Условные CSS-классы:
 
 ```tsx
-import { clsx } from 'clsx';
+import { clsx } from "clsx";
 
-clsx('base', condition && 'active');
+clsx("base", condition && "active");
 // → "base active" или "base"
 
-clsx('a', 'b', ['c', false], { d: true });
+clsx("a", "b", ["c", false], { d: true });
 // → "a b c d"
 ```
 
@@ -123,11 +122,11 @@ clsx('a', 'b', ['c', false], { d: true });
 
 ```tsx
 // src/utils/new-util.ts
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function newUtil(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+    return twMerge(clsx(inputs));
 }
 ```
 

@@ -7,11 +7,11 @@
 ### Конфигурация
 
 ```tsx
-import { api } from '@/lib/api-client';
+import { api } from "@/lib/api-client";
 
 // Создание axios instance с базовым URL
 export const api = Axios.create({
-  baseURL: env.API_URL,
+    baseURL: env.API_URL,
 });
 ```
 
@@ -20,29 +20,31 @@ export const api = Axios.create({
 #### Request Interceptor
 
 Добавляет к каждому запросу:
+
 - `Accept: application/json`
 - `Authorization: Bearer {token}` из localStorage
 - `withCredentials: true`
 
 ```tsx
 function authRequestInterceptor(config: InternalAxiosRequestConfig) {
-  if (config.headers) {
-    config.headers.Accept = 'application/json';
-    
-    const token = localStorage.getItem('token'); 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (config.headers) {
+        config.headers.Accept = "application/json";
+
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
     }
-  }
-  
-  config.withCredentials = true;
-  return config;
+
+    config.withCredentials = true;
+    return config;
 }
 ```
 
 #### Response Interceptor
 
 Обрабатывает ответы и ошибки:
+
 - Извлекает `response.data`
 - Форматирует сообщения об ошибках
 - Показывает уведомления через `useNotifications`
@@ -50,22 +52,22 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
 
 ```tsx
 api.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    let message = error.response?.data?.message || error.message;
-    
-    if (error.response?.status === 401) {
-      message = "401 Incorrect username or password";
-    }
-    
-    useNotifications.getState().addNotification({
-      type: 'error',
-      title: 'Error',
-      message,
-    });
-    
-    return Promise.reject(error);
-  }
+    (response) => response.data,
+    (error) => {
+        let message = error.response?.data?.message || error.message;
+
+        if (error.response?.status === 401) {
+            message = "401 Incorrect username or password";
+        }
+
+        useNotifications.getState().addNotification({
+            type: "error",
+            title: "Error",
+            message,
+        });
+
+        return Promise.reject(error);
+    },
 );
 ```
 
@@ -79,11 +81,11 @@ api.interceptors.response.use(
 
 ```tsx
 export const queryConfig = {
-  queries: {
-    refetchOnWindowFocus: false,
-    retry: false,
-    staleTime: 1000 * 60, // 1 минута
-  },
+    queries: {
+        refetchOnWindowFocus: false,
+        retry: false,
+        staleTime: 1000 * 60, // 1 минута
+    },
 } satisfies DefaultOptions;
 ```
 
@@ -91,50 +93,46 @@ export const queryConfig = {
 
 ```tsx
 // Тип возвращаемого значения API-функции
-export type ApiFnReturnType<FnType extends (...args: any) => Promise<any>> =
-  Awaited<ReturnType<FnType>>;
+export type ApiFnReturnType<FnType extends (...args: any) => Promise<any>> = Awaited<
+    ReturnType<FnType>
+>;
 
 // Конфиг для query
 export type QueryConfig<T extends (...args: any[]) => any> = Omit<
-  ReturnType<T>,
-  'queryKey' | 'queryFn'
+    ReturnType<T>,
+    "queryKey" | "queryFn"
 >;
 
 // Конфиг для mutation
 export type MutationConfig<MutationFnType extends (...args: any) => Promise<any>> =
-  UseMutationOptions<
-    ApiFnReturnType<MutationFnType>,
-    Error,
-    Parameters<MutationFnType>[0]
-  >;
+    UseMutationOptions<ApiFnReturnType<MutationFnType>, Error, Parameters<MutationFnType>[0]>;
 ```
 
 ### Пример использования
 
 ```tsx
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { queryConfig } from '@/lib/react-query';
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import { queryConfig } from "@/lib/react-query";
 
 // Query
 export function useUsers() {
-  return useQuery({
-    queryKey: ['users'],
-    queryFn: () => api.get('/users'),
-    ...queryConfig.queries,
-  });
+    return useQuery({
+        queryKey: ["users"],
+        queryFn: () => api.get("/users"),
+        ...queryConfig.queries,
+    });
 }
 
 // Mutation
 export function useLogin() {
-  return useMutation({
-    mutationFn: (data: LoginParams) => 
-      api.post('/auth/login', data),
-    onSuccess: () => {
-      // Инвалидация кэша
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-  });
+    return useMutation({
+        mutationFn: (data: LoginParams) => api.post("/auth/login", data),
+        onSuccess: () => {
+            // Инвалидация кэша
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
+    });
 }
 ```
 
@@ -148,18 +146,18 @@ export function useLogin() {
 
 ```tsx
 export type BaseEntity = {
-  id: string;
-  createdAt: number;
+    id: string;
+    createdAt: number;
 };
 
 export type Entity<T> = {
-  [K in keyof T]: T[K];
+    [K in keyof T]: T[K];
 } & BaseEntity;
 
 export type Meta = {
-  page: number;
-  total: number;
-  totalPages: number;
+    page: number;
+    total: number;
+    totalPages: number;
 };
 ```
 
@@ -167,28 +165,28 @@ export type Meta = {
 
 ```tsx
 export type User = Entity<{
-  firstName: string;
-  lastName: string;
-  middle_name: string;
-  email: string;
+    firstName: string;
+    lastName: string;
+    middle_name: string;
+    email: string;
 }>;
 
 export type AuthResponse = {
-  access_token: any;
-  jwt: string;
-  user: User;
+    access_token: any;
+    jwt: string;
+    user: User;
 };
 
 export type Team = Entity<{
-  name: string;
-  description: string;
+    name: string;
+    description: string;
 }>;
 
 export type Discussion = Entity<{
-  title: string;
-  body: string;
-  teamId: string;
-  author: User;
+    title: string;
+    body: string;
+    teamId: string;
+    author: User;
 }>;
 ```
 
@@ -199,7 +197,7 @@ export type Discussion = Entity<{
 ### Получение токена
 
 ```tsx
-const token = localStorage.getItem('token');
+const token = localStorage.getItem("token");
 ```
 
 ### Логаут
@@ -208,6 +206,6 @@ const token = localStorage.getItem('token');
 
 ```tsx
 const searchParams = new URLSearchParams();
-const redirectTo = searchParams.get('redirectTo') || window.location.pathname;
+const redirectTo = searchParams.get("redirectTo") || window.location.pathname;
 window.location.href = paths.auth.login.getHref(redirectTo);
 ```

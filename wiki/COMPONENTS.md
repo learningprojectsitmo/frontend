@@ -11,11 +11,11 @@
 ## 🔘 Button
 
 ```tsx
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 <Button variant="primary" size="md">
-  Нажми меня
-</Button>
+    Нажми меня
+</Button>;
 ```
 
 ---
@@ -23,9 +23,9 @@ import { Button } from '@/components/ui/button';
 ## 🔗 Link
 
 ```tsx
-import { Link } from '@/components/ui/link';
+import { Link } from "@/components/ui/link";
 
-<Link to="/auth/login">Войти</Link>
+<Link to="/auth/login">Войти</Link>;
 ```
 
 **Стили по умолчанию:** `text-slate-600 hover:text-slate-900`
@@ -37,15 +37,13 @@ import { Link } from '@/components/ui/link';
 Radix UI компонент для переключателя.
 
 ```tsx
-import { Switch } from '@/components/ui/switch';
+import { Switch } from "@/components/ui/switch";
 
-<Switch 
-  checked={isEnabled}
-  onCheckedChange={setEnabled}
-/>
+<Switch checked={isEnabled} onCheckedChange={setEnabled} />;
 ```
 
 **CSS классы:**
+
 - `data-[state=checked]:bg-primary` — включённое состояние
 - `data-[state=unchecked]:bg-input` — выключенное состояние
 
@@ -56,12 +54,13 @@ import { Switch } from '@/components/ui/switch';
 Индикатор загрузки.
 
 ```tsx
-import { Spinner } from '@/components/ui/spinner';
+import { Spinner } from "@/components/ui/spinner";
 
-<Spinner className="size-8" />
+<Spinner className="size-8" />;
 ```
 
 **Props:**
+
 - Все стандартные SVG props
 - `className` — дополнительные классы
 
@@ -72,22 +71,22 @@ import { Spinner } from '@/components/ui/spinner';
 Система уведомлений.
 
 ```tsx
-import { useNotifications } from '@/components/ui/notifications';
+import { useNotifications } from "@/components/ui/notifications";
 
 // Добавление
 const { addNotification } = useNotifications();
 
 addNotification({
-  type: 'error',
-  title: 'Ошибка',
-  message: 'Не удалось сохранить данные',
+    type: "error",
+    title: "Ошибка",
+    message: "Не удалось сохранить данные",
 });
 ```
 
 ### Типы уведомлений
 
 ```tsx
-type NotificationType = 'error' | 'success' | 'info' | 'warning';
+type NotificationType = "error" | "success" | "info" | "warning";
 ```
 
 ### Компонент Notifications
@@ -95,12 +94,13 @@ type NotificationType = 'error' | 'success' | 'info' | 'warning';
 Размещается глобально (обычно в App):
 
 ```tsx
-import { Notifications } from '@/components/ui/notifications';
+import { Notifications } from "@/components/ui/notifications";
 
-<Notifications />
+<Notifications />;
 ```
 
 **Позиционирование:**
+
 - `fixed inset-0` — фиксированная позиция
 - `flex flex-col items-end` — правый верхний угол
 - `pointer-events-none` — не блокирует клики
@@ -110,7 +110,7 @@ import { Notifications } from '@/components/ui/notifications';
 ## 📅 Форматирование дат
 
 ```tsx
-import { formatDate } from '@/utils/format';
+import { formatDate } from "@/utils/format";
 
 formatDate(Date.now()); // "January 25, 2026 10:30 AM"
 ```
@@ -126,12 +126,12 @@ formatDate(Date.now()); // "January 25, 2026 10:30 AM"
 Объединение и мердж классов.
 
 ```tsx
-import { cn } from '@/utils/cn';
+import { cn } from "@/utils/cn";
 
 cn(
-  'px-4 py-2',           // базовые классы
-  isActive && 'bg-blue', // условные
-  className              // проп извне
+    "px-4 py-2", // базовые классы
+    isActive && "bg-blue", // условные
+    className, // проп извне
 );
 // → "px-4 py-2 bg-blue"
 ```
