@@ -30,14 +30,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     });
 
     const onSubmit = (values: LoginInput) => {
-        login.mutate(values, {
-            onSuccess: () => {
-                console.log("Login successful, navigating...");
-            },
-            onError: (err) => {
-                console.error("Login failed", err);
-            },
-        });
+        login.mutate(values);
     };
 
     return (
