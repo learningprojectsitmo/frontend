@@ -11,7 +11,17 @@ import prettier from "eslint-config-prettier";
 export default [
     // Игнор
     {
-        ignores: ["dist", "build", "node_modules"],
+        ignores: [
+            "dist",
+            "build",
+            "coverage",
+            "node_modules",
+            ".vite/",
+            "*.config.*",
+            ".eslintrc.*",
+            "*.md",
+            "*.tsbuildinfo",
+        ],
     },
 
     // База
