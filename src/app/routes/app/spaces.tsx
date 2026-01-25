@@ -8,9 +8,11 @@ import {
   Settings, 
   Search,
   Bell
-} from 'lucide-react'; // Используем иконки для современности
+} from 'lucide-react'; 
+import { Button } from '@/components/ui/button';
 
-const DashboardRoute = () => {
+
+const spaseRoute = () => {
   const user = useUser();
 
   // Имитация данных из макета (в будущем придет из API)
@@ -32,10 +34,10 @@ const DashboardRoute = () => {
               Управляйте своими образовательными проектами и инициативами
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+          <Button >
             <Plus size={18} />
             Создать проект
-          </button>
+          </Button>
         </div>
 
         {/* Spaces Grid */}
@@ -100,4 +102,4 @@ const DashboardRoute = () => {
   );
 };
 
-export default DashboardRoute;
+export default spaseRoute;

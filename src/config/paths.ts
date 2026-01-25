@@ -22,7 +22,7 @@ export const paths = {
       path: '/app',
       getHref: () => '/app',
     },
-    dashboard: {
+    spases: {
       path: '',
       getHref: () => '/app',
     },

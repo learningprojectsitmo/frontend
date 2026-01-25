@@ -2,8 +2,9 @@ import { NavLink, Outlet } from 'react-router';
 import { Home, LayoutGrid, Plus, Search, Bell, UserCircle } from 'lucide-react';
 import { paths } from '@/config/paths';
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/button';
 
-export function DashboardLayout({ children }: { children?: React.ReactNode }) {
+export function SpasesLayout({ children }: { children?: React.ReactNode }) {
   const disciplines = [
     { name: 'Управление проектами', count: 8, color: 'text-blue-500' },
     { name: 'Проектная деятельность', count: 5, color: 'text-indigo-500' },
@@ -17,18 +18,24 @@ export function DashboardLayout({ children }: { children?: React.ReactNode }) {
         <div className="p-6">
           <div className="text-2xl font-bold text-blue-600 mb-8">EduSpace</div>
           
-          <NavLink
-            to={paths.app.dashboard.getHref()}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all",
-                isActive ? "bg-[#0F1117] text-white" : "text-gray-600 hover:bg-gray-100"
-              )
-            }
-          >
-            <Home size={20} />
-            Все пространства
-          </NavLink>
+          <Button
+                variant="ghost"
+                asChild
+                className="w-full bg-[#0F1117] text-white justify-start gap-3 px-4 py-3"
+              >
+                <NavLink 
+                  to={paths.app.spases.getHref()}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center font-medium transition-all",
+                      isActive ? "bg-[#0F1117] text-white" : "text-gray-600 hover:bg-gray-100"
+                    )
+                  }
+                >
+                  <Home size={20} />
+                  Все пространства
+                </NavLink>
+            </Button>
 
           <div className="mt-8">
             <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
