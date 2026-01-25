@@ -23,12 +23,25 @@ const logout = (): Promise<void> => {
 export const loginInputSchema = z.object({
   email: z.string().min(1, 'Required').email('Invalid email'),
   password: z.string().min(5, 'Required'),
+  // grant_type: z.literal("password")
 });
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
-const loginWithEmailAndPassword = (data: LoginInput): Promise<AuthResponse> => {
-  return api.post('/auth/login', data);
+const loginWithEmailAndPassword = async (data: LoginInput) => {
+  const form = new URLSearchParams();
+  form.append('grant_type', 'password');
+  form.append('username', data.email);
+  form.append('password', data.password);
+
+  // Возвращаем response.data, чтобы в loginFn были токены
+  return await api.post('/auth/token', form, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+  // return response.data; 
 };
+
 
 export const registerInputSchema = z
   .object({
@@ -63,13 +76,25 @@ const authConfig = {
   userFn: getUser,
   loginFn: async (data: LoginInput) => {
     const response = await loginWithEmailAndPassword(data);
-    return response.user;
+    if (response.access_token) {
+      localStorage.setItem('token', response.access_token);
+    }
+    const user = await getUser();
+    return user;
   },
+  // Добавляем отсутствующее свойство:
   registerFn: async (data: RegisterInput) => {
     const response = await registerWithEmailAndPassword(data);
+    // Аналогично логину, если регистрация сразу дает доступ:
+    if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
+    }
     return response.user;
   },
-  logoutFn: logout,
+  logoutFn: async () => {
+    localStorage.removeItem('token');
+    await logout();
+  },
 };
 
 export const { useUser, useLogin, useLogout, useRegister, AuthLoader } =

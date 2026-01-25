@@ -12,7 +12,7 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form/form';
-import { Input } from '@/components/ui/Input/input';
+import { Input } from '@/components/ui/input/input';
 import { Checkbox } from '@/components/ui/checkbox/checkbox';
 import { paths } from '@/config/paths';
 import { useLogin, loginInputSchema, type LoginInput } from '@/lib/auth';
@@ -35,39 +35,52 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     },
   });
 
-  const onSubmit = (values: LoginInput) => {
-    login.mutate(values);
-  };
+const onSubmit = (values: LoginInput) => {
+  login.mutate(values, {
+    onSuccess: () => {
+      console.log("Login successful, navigating...");
+    },
+    onError: (err) => {
+      console.error("Login failed", err);
+    }
+  });
+};
 
   return (
-    <div className="w-full max-w-[400px] p-6 bg-white rounded-2xl shadow-sm">
+    <div className="bg-white w-full max-w-[560px] p-6 bg-white rounded-2xl ">
       <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="E-mail" {...field} className="h-12 border-gray-300" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              control={form.control}
+              name="email"
+              render={({ field, fieldState }) => ( 
+                <FormItem>
+                  <FormControl>
+                    <Input 
+                      placeholder="E-mail" 
+                      {...field} 
+                      error={!!fieldState.error} 
+                      className="h-12 border-gray-300"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[#FB2C36]" /> {/* Текст ошибки тоже красим */}
+                </FormItem>
+              )}
+            />
 
           <FormField
             control={form.control}
             name="password"
-            render={({ field }) => (
+            render={({ field, fieldState}) => (
               <FormItem>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Пароль"
+                      error={!!fieldState.error}
                       {...field}
                       className="h-12 border-gray-300 pr-10"
                     />
@@ -99,15 +112,15 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
           <Button 
             type="submit" 
-            className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
+            // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
+            className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
             disabled={login.isPending}
           >
             {login.isPending ? 'Вход...' : 'Вход'}
           </Button>
 
           <Button 
-            variant="outline" 
-            className="w-full h-12 border-gray-200 rounded-lg text-lg font-semibold"
+            variant="outline" className="w-full h-12 border-gray-200 text-lg font-semibold"
             asChild
           >
             <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
@@ -136,7 +149,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         </button>
       </div>
       
-      <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-center">
+      <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
          <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
             <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">?</span>
             Помощь и поддержка

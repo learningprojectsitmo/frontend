@@ -29,6 +29,7 @@ export default defineConfig({
       "test.1855789-cn23133.twc1.net",
       "fpin-projects.ru",
       "localhost",
+      "localhost:8000",
       "127.0.0.1",
       "fpin-projects.ru:1268",
     ],
