@@ -5,7 +5,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { HelmetProvider } from 'react-helmet-async';
 
 import { MainErrorFallback } from '@/components/errors/main';
-// import { Notifications } from '@/components/ui/notifications';
+import { Notifications } from '@/components/ui/notifications';
 // import { Spinner } from '@/components/ui/spinner';
 import { queryConfig } from '@/lib/react-query';
 import { Spinner } from '@/components/ui/spinner/spinner';
@@ -34,8 +34,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         <HelmetProvider>
           <QueryClientProvider client={queryClient}>
             {import.meta.env.DEV && <ReactQueryDevtools />}
-            {/* <Notifications /> */}
             {children}
+            <Notifications />
           </QueryClientProvider>
         </HelmetProvider>
       </ErrorBoundary>

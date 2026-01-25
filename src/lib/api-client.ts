@@ -1,6 +1,6 @@
 import Axios, { type InternalAxiosRequestConfig } from 'axios';
 
-// import { useNotifications } from '@/components/ui/notifications';
+import { useNotifications } from '@/components/ui/notifications';
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
 
@@ -28,12 +28,20 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // const message = error.response?.data?.message || error.message;
-    // useNotifications.getState().addNotification({
-    //   type: 'error',
-    //   title: 'Error',
-    //   message,
-    // });
+    let message = error.response?.data?.message || error.message;
+    
+    if (error.response?.status === 401) {
+      message = "401 Incorrect username or password";
+    }
+    
+    useNotifications.getState().addNotification({
+      type: 'error',
+      title: 'Error',
+      message,
+    });
+    if (error.response?.status === 401) {
+      console.log(message);
+    }
 
     // if (error.response?.status === 401) {
     //   const searchParams = new URLSearchParams();
