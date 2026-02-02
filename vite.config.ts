@@ -20,7 +20,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            msw: path.resolve(__dirname, "./node_modules/msw/lib/core/index.js"),
+            msw: path.resolve(__dirname, "./node_modules/msw/lib/core/index.ts"),
         },
     },
     server: {
