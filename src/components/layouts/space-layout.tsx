@@ -1,8 +1,9 @@
 import { NavLink, Outlet } from "react-router";
-import { Home, LayoutGrid, Plus, Search, Bell, UserCircle } from "lucide-react";
+import { Home, LayoutGrid, Plus, Search, Bell } from "lucide-react";
 import { paths } from "@/config/paths";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
+import { UserNav } from "@/features/spases/components/user-nav";
 
 export function SpasesLayout({ children }: { children?: React.ReactNode }) {
     const disciplines = [
@@ -90,7 +91,7 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                                 3
                             </span>
                         </div>
-                        <UserCircle className="text-gray-400 cursor-pointer" size={32} />
+                        <UserNav />
                     </div>
                 </header>
 
