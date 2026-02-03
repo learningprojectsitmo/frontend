@@ -1,7 +1,7 @@
-import { Link, useSearchParams } from "react-router";
+import { Link } from "react-router";//useSearchParams
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+//import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
@@ -15,7 +15,7 @@ type LoginFormProps = {
 };
 
 export const ResetForm = ({ onSuccess }: LoginFormProps) => {
-    const [showPassword, setShowPassword] = useState(false);
+    //const [showPassword, setShowPassword] = useState(false);
     const login = useLogin({ onSuccess });
     //const [searchParams] = useSearchParams();
     //const redirectTo = searchParams.get("redirectTo");
