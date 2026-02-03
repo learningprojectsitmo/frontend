@@ -100,7 +100,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                                 Запомнить меня
                             </label>
                         </div>
-                        <Link to={paths.auth.reset.getHref(redirectTo)} className="text-sm text-blue-600 hover:underline">
+                        <Link
+                            to={paths.auth.reset.getHref(redirectTo)}
+                            className="text-sm text-blue-600 hover:underline"
+                        >
                             Сбросить пароль
                         </Link>
                     </div>

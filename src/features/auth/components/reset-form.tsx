@@ -1,4 +1,4 @@
-import { Link } from "react-router";//useSearchParams
+import { Link } from "react-router"; //useSearchParams
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 //import { useState } from "react";
@@ -36,7 +36,9 @@ export const ResetForm = ({ onSuccess }: LoginFormProps) => {
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
             <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
             <h2 className="text-3xl font-semibold mb-8 text-grey-400">Сброс пароля</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">Введите свой адрес электронной почты, и вы получите инструкцию по смене пароля</h4>
+            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+                Введите свой адрес электронной почты, и вы получите инструкцию по смене пароля
+            </h4>
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
