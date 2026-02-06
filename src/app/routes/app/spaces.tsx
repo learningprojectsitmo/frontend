@@ -1,6 +1,6 @@
 import { ContentLayout } from "@/components/layouts";
-import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Users, LayoutGrid, Settings } from "lucide-react";
+import { PlusButton } from "@/components/ui/plus-button";
 
 const spaseRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
@@ -39,10 +39,7 @@ const spaseRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button>
-                        <Plus size={18} />
-                        Создать проект
-                    </Button>
+                    <PlusButton label="Создать проект" />
                 </div>
 
                 {/* Spaces Grid */}
