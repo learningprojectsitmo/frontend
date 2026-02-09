@@ -6,30 +6,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-//import { Checkbox } from "@/components/ui/checkbox/checkbox";
-//import { paths } from "@/config/paths";
-import { useLogin, loginInputSchema, type LoginInput } from "@/lib/auth";
+import { useResetWithEmail, resetWithEmailInputSchema, type ResetWithEmailInput } from "@/lib/auth";
 
-type LoginFormProps = {
-    onSuccess: () => void;
-};
-
-export const ResetForm = ({ onSuccess }: LoginFormProps) => {
-    //const [showPassword, setShowPassword] = useState(false);
-    const login = useLogin({ onSuccess });
-    //const [searchParams] = useSearchParams();
-    //const redirectTo = searchParams.get("redirectTo");
-
-    const form = useForm<LoginInput>({
-        resolver: zodResolver(loginInputSchema),
+export const ResetEmailForm = () => {
+    const resetEmail = useResetWithEmail();
+    const form = useForm<ResetWithEmailInput>({
+        resolver: zodResolver(resetWithEmailInputSchema),
         defaultValues: {
             email: "",
-            password: "",
         },
     });
 
-    const onSubmit = (values: LoginInput) => {
-        login.mutate(values);
+    const onSubmit = (values: ResetWithEmailInput) => {
+        resetEmail.mutate(values);
     };
 
     return (
@@ -65,18 +54,10 @@ export const ResetForm = ({ onSuccess }: LoginFormProps) => {
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
                         className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
-                        disabled={login.isPending}
+                        disabled={resetEmail.isPending || resetEmail.isSuccess}
                     >
-                        {login.isPending ? "Подтвердить..." : "Подтвердить"}
+                        {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>
-
-                    {/* <Button
-                        variant="outline"
-                        className="w-full h-12 border-gray-200 text-lg font-semibold"
-                        asChild
-                    >
-                        <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
-                    </Button> */}
                 </form>
             </Form>
 

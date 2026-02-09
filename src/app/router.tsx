@@ -32,17 +32,25 @@ export const createAppRouter = (queryClient: QueryClient) =>
             path: paths.home.path,
             lazy: () => import("./routes/landing").then(convert(queryClient)),
         },
-        // {
-        //   path: paths.auth.register.path,
-        //   lazy: () => import('./routes/auth/register').then(convert(queryClient)),
-        // },
+        {
+            path: paths.auth.register.path,
+            lazy: () => import("./routes/auth/register").then(convert(queryClient)),
+        },
+        {
+            path: paths.auth.registerContacts.path,
+            lazy: () => import("./routes/auth/register-contacts").then(convert(queryClient)),
+        },
         {
             path: paths.auth.login.path,
             lazy: () => import("./routes/auth/login").then(convert(queryClient)),
         },
         {
-            path: paths.auth.reset.path,
-            lazy: () => import("./routes/auth/reset").then(convert(queryClient)),
+            path: paths.auth.resetPassword.path,
+            lazy: () => import("./routes/auth/reset-password").then(convert(queryClient)),
+        },
+        {
+            path: paths.auth.resetEmail.path,
+            lazy: () => import("./routes/auth/reset-email").then(convert(queryClient)),
         },
         {
             path: paths.app.root.path,

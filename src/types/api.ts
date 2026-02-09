@@ -21,6 +21,5 @@ export type User = Entity<{
 
 export type AuthResponse = {
     access_token: string;
-    jwt: string;
     user: User;
 };
