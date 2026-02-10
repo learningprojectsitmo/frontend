@@ -3,9 +3,9 @@ import { Home, LayoutGrid, Plus, Search, Bell } from "lucide-react";
 import { paths } from "@/config/paths";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
-import { UserNav } from "@/features/spases/components/user-nav";
+import { UserNav } from "@/features/spaces/components/user-nav";
 
-export function SpasesLayout({ children }: { children?: React.ReactNode }) {
+export function SpaceLayout({ children }: { children?: React.ReactNode }) {
     const disciplines = [
         { name: "Управление проектами", count: 8, color: "text-blue-500" },
         { name: "Проектная деятельность", count: 5, color: "text-indigo-500" },
@@ -25,7 +25,7 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                         className="w-full bg-[#0F1117] text-white justify-start gap-3 px-4 py-3"
                     >
                         <NavLink
-                            to={paths.app.spases.getHref()}
+                            to={paths.app.spaces.getHref()}
                             className={({ isActive }) =>
                                 cn(
                                     "flex items-center font-medium transition-all",
