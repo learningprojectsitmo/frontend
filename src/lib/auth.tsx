@@ -77,8 +77,9 @@ const authConfig = {
     userFn: getUser,
     loginFn: async (data: LoginInput) => {
         const response = await loginWithEmailAndPassword(data);
-        if (response.data.access_token) {
-            localStorage.setItem("token", response.data.access_token);
+
+        if (response.access_token) {
+            localStorage.setItem("token", response.access_token);
         }
 
         return await getUser();
