@@ -13,7 +13,7 @@ const ResetRoute = () => {
         <AuthLayout title="Reset your password">
             <ResetForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spases.getHref()}`, {
+                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {
                         replace: true,
                     });
                 }}

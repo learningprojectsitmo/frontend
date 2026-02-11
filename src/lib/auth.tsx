@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router";
 import { z } from "zod";
 
 import { paths } from "@/config/paths";
-import type { AuthResponse, User } from "@/types/api";
+import type { AuthResponse, LoginResponse, User } from "@/types/api";
 
 import { api } from "./api-client";
 
@@ -31,7 +31,7 @@ export const loginInputSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
-const loginWithEmailAndPassword = async (data: LoginInput) => {
+const loginWithEmailAndPassword = async (data: LoginInput): Promise<LoginResponse> => {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
     form.append("username", data.email);
@@ -77,8 +77,9 @@ const authConfig = {
     userFn: getUser,
     loginFn: async (data: LoginInput) => {
         const response = await loginWithEmailAndPassword(data);
-        if (response.data.access_token) {
-            localStorage.setItem("token", response.data.access_token);
+
+        if (response.access_token) {
+            localStorage.setItem("token", response.access_token);
         }
 
         return await getUser();
