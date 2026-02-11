@@ -31,7 +31,7 @@ export const loginInputSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
-const loginWithEmailAndPassword = async (data: LoginInput): Promise<LoginResponse>  => {
+const loginWithEmailAndPassword = async (data: LoginInput): Promise<LoginResponse> => {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
     form.append("username", data.email);
