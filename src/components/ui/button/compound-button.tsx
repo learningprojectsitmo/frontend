@@ -1,13 +1,12 @@
-// CompoundButton.tsx
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
-import { IconButton } from "@/components/ui/button/icon-button.tsx";
+import { IconButton } from "./icon-button";
 
 const compoundButtonVariants = cva(
-    "inline-flex items-center justify-start gap-3 p-[10px_12px] rounded-[8px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-white hover:bg-gray-100 active:bg-white active:border active:border-[#0000001A] active:outline-none",
+    "inline-flex items-center justify-start gap-3 py-[10px] px-[12px] rounded-[8px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-[--btn-outline-bg] hover:bg-[--btn-outline-hover-bg] active:bg-[--btn-outline-bg] active:border active:border-[--btn-outline-border] active:outline-none",
     {
         variants: {
             width: {
@@ -48,23 +47,47 @@ const CompoundButton = React.forwardRef<HTMLButtonElement, CompoundButtonProps>(
     ) => {
         const Comp = asChild ? Slot : "button";
 
-        const content = (
+        // Create the compound button content
+        const compoundContent = (
             <>
                 <IconButton variant="compound" icon={icon} />
                 <div className="flex flex-col items-start min-w-0 flex-1">
-                    <span className="text-[13px] font-medium text-[#0A0A0A] leading-tight truncate">
+                    <span className="text-[13px] font-medium text-[--btn-outline-text] leading-tight truncate">
                         {title}
                     </span>
-                    <span className="text-[10px] text-[#6A7282] leading-tight truncate">
+                    <span className="text-[10px] text-[--color-gray-500] leading-tight truncate">
                         {subtitle}
                     </span>
                 </div>
             </>
         );
 
+        // Handle asChild mode - clone the child and inject our content
+        if (
+            asChild &&
+            React.isValidElement<{ className?: string; children?: React.ReactNode }>(children)
+        ) {
+            return (
+                <Comp
+                    ref={ref}
+                    className={cn(compoundButtonVariants({ width, className }))}
+                    {...props}
+                >
+                    {React.cloneElement(children, {
+                        className: cn(
+                            "flex items-center justify-start gap-3 w-full",
+                            children.props.className,
+                        ),
+                        children: compoundContent,
+                    })}
+                </Comp>
+            );
+        }
+
+        // Regular rendering without asChild
         return (
             <Comp ref={ref} className={cn(compoundButtonVariants({ width, className }))} {...props}>
-                {asChild ? children : content}
+                {asChild ? children : compoundContent}
             </Comp>
         );
     },

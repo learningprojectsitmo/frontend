@@ -46,39 +46,39 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             onChange?.(e);
         };
 
-        // Определяем цвет иконки слева
+        // Get left icon color based on state
         const getLeftIconColor = () => {
-            if (disabled) return "text-[#99A1AF]";
+            if (disabled) return "text-[--input-icon-default]";
             if (error) {
-                if (isFocused) return "text-[#0A0A0A]";
-                return "text-[#FB2C36]";
+                if (isFocused) return "text-[--input-icon-focus]";
+                return "text-[--error-text]";
             }
-            if (isFocused) return "text-[#0A0A0A]";
-            return "text-[#99A1AF]";
+            if (isFocused) return "text-[--input-icon-focus]";
+            return "text-[--input-icon-default]";
         };
 
-        // Определяем цвет иконки справа
+        // Get right icon color based on state
         const getRightIconColor = () => {
-            if (disabled) return "text-[#99A1AF]";
-            return "text-[#0A0A0A]";
+            if (disabled) return "text-[--input-icon-default]";
+            return "text-[--input-icon-focus]";
         };
 
-        // Определяем цвет плейсхолдера
+        // Get placeholder color based on state
         const getPlaceholderColor = () => {
-            if (disabled) return "placeholder:text-[#99A1AF]";
-            if (error) {
-                if (disabled) return "placeholder:text-[#FB2C3666]";
-                return "placeholder:text-[#FB2C36]";
-            }
-            if (isFocused && !hasValue) return "placeholder:text-[#00000033]";
-            return "placeholder:text-[#717182]";
+            // Check error + disabled combination first
+            if (disabled && error) return "placeholder:text-[--error-disabled-text]";
+            // Then check individual states
+            if (disabled) return "placeholder:text-[--input-disabled-text]";
+            if (error) return "placeholder:text-[--error-text]";
+            if (isFocused && !hasValue) return "placeholder:text-[--input-placeholder-focus-empty]";
+            return "placeholder:text-[--input-placeholder]";
         };
 
         return (
             <div className="w-full">
-                {/* Контейнер для инпута и иконок */}
+                {/* Container for input and icons */}
                 <div className="relative">
-                    {/* Левая иконка */}
+                    {/* Left icon */}
                     {icon && (
                         <div
                             className={cn(
@@ -90,7 +90,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         </div>
                     )}
 
-                    {/* Инпут */}
+                    {/* Input field */}
                     <input
                         type={type}
                         disabled={disabled}
@@ -100,41 +100,41 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         onBlur={handleBlur}
                         placeholder={placeholder}
                         className={cn(
-                            // Базовые стили
-                            "flex h-12 w-full rounded-[12px] border bg-white px-3 py-2 text-[14px] text-[#0A0A0A] transition-all",
+                            // Base styles
+                            "flex h-12 w-full rounded-[12px] border bg-[--input-bg] px-3 py-2 text-[14px] text-[--input-text] transition-all",
                             "outline-none",
                             "placeholder:text-[14px]",
 
                             // Border
-                            "border-[#00000033]",
+                            "border-[--input-border]",
 
-                            // Focus
-                            "focus:border-[#155DFC] focus:shadow-[0_0_0_2px_#155DFC26]",
+                            // Focus state
+                            "focus:border-[--input-focus-border] focus:shadow-[0_0_0_2px_var(--input-focus-shadow)]",
 
-                            // Disabled
-                            "disabled:cursor-not-allowed disabled:bg-[#00000033]",
+                            // Disabled state
+                            "disabled:cursor-not-allowed disabled:bg-[--input-disabled-bg]",
 
-                            // Иконки
+                            // Icon padding
                             icon && "pl-11",
                             rightIcon && "pr-11",
 
-                            // Error состояния
+                            // Error states
                             error && [
-                                "bg-[#FFF2F4]",
-                                "border-[#FB2C36]",
-                                "focus:border-[#FB2C36] focus:shadow-[0_0_0_2px_#FFE4E8]",
-                                "focus:bg-white",
+                                "bg-[--error-bg]",
+                                "border-[--error-border]",
+                                "focus:border-[--error-border] focus:shadow-[0_0_0_2px_var(--error-focus-shadow)]",
+                                "focus:bg-[--input-bg]",
                             ],
 
-                            // Error + Disabled
+                            // Error + Disabled states
                             error &&
                                 disabled && [
-                                    "bg-[#FFF2F4]",
-                                    "border-[#FB2C3633]",
-                                    "focus:shadow-none focus:border-[#FB2C3633]",
+                                    "bg-[--error-disabled-bg]",
+                                    "border-[--error-disabled-border]",
+                                    "focus:shadow-none focus:border-[--error-disabled-border]",
                                 ],
 
-                            // Плейсхолдер
+                            // Placeholder color
                             getPlaceholderColor(),
 
                             className,
@@ -144,7 +144,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         {...props}
                     />
 
-                    {/* Правая иконка */}
+                    {/* Right icon */}
                     {rightIcon && (
                         <div
                             className={cn(
@@ -157,14 +157,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     )}
                 </div>
 
-                {/* Подпись снизу */}
+                {/* Helper text below input */}
                 {helperText && (
                     <div
                         className={cn(
                             "flex items-center gap-[3px] mt-2 text-[12px]",
-                            error ? "text-[#FB2C36]" : "text-[#121212]",
-                            disabled && "text-[#99A1AF]",
-                            error && disabled && "text-[#FB2C3666]",
+                            error ? "text-[--error-text]" : "text-[--helper-text]",
+                            disabled && "text-[--input-disabled-text]",
+                            error && disabled && "text-[--error-disabled-text]",
                         )}
                     >
                         {error && (
@@ -172,7 +172,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                                 size={12}
                                 className={cn(
                                     "shrink-0",
-                                    disabled ? "text-[#FB2C3666]" : "text-[#FB2C36]",
+                                    disabled
+                                        ? "text-[--error-disabled-text]"
+                                        : "text-[--error-text]",
                                 )}
                             />
                         )}

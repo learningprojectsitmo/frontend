@@ -8,18 +8,19 @@ const iconButtonVariants = cva(
     {
         variants: {
             variant: {
-                // Для CompoundButton - 32x32, иконка 16x16, фон #3B82F6, иконка белая
-                compound: "w-8 h-8 bg-[#3B82F6] rounded-[10px] [&_svg]:size-4 [&_svg]:text-white",
+                // For CompoundButton - 32x32, icon 16x16, bg #3B82F6, white icon
+                compound:
+                    "w-8 h-8 bg-[--compound-icon-bg] rounded-[10px] [&_svg]:size-4 [&_svg]:text-white",
 
-                // Дефолтный - 36x36, иконка 20x20, белый фон, hover/pressed #ECECF0, иконка #0A0A0A
+                // Default - 36x36, icon 20x20, white bg, hover/pressed #ECECF0, icon #0A0A0A
                 default:
-                    "w-9 h-9 bg-white rounded-[8px] [&_svg]:size-5 [&_svg]:text-[#0A0A0A] hover:bg-[#ECECF0] active:bg-[#ECECF0]",
+                    "w-9 h-9 bg-[--btn-outline-bg] rounded-[8px] [&_svg]:size-5 [&_svg]:text-[--btn-outline-text] hover:bg-[--btn-outline-hover-bg] active:bg-[--btn-outline-hover-bg]",
 
-                // Синий вариант - 36x36, иконка 20x20, белый фон, hover/pressed #155DFC26, иконка #0A0A0A
-                blue: "w-9 h-9 bg-white rounded-[8px] [&_svg]:size-5 [&_svg]:text-[#0A0A0A] hover:bg-[#155DFC26] active:bg-[#155DFC26]",
+                // Blue variant - 36x36, icon 20x20, white bg, hover/pressed #155DFC26, icon #0A0A0A
+                blue: "w-9 h-9 bg-[--btn-outline-bg] rounded-[8px] [&_svg]:size-5 [&_svg]:text-[--btn-outline-text] hover:bg-[--color-blue-15] active:bg-[--color-blue-15]",
 
-                // Ghost - 36x36, без фона, иконка 20x20, hover #ECECF0, иконка #0A0A0A
-                ghost: "w-9 h-9 bg-transparent rounded-[8px] [&_svg]:size-5 [&_svg]:text-[#0A0A0A] hover:bg-[#ECECF0] active:bg-[#ECECF0]",
+                // Ghost - 36x36, no bg, icon 20x20, hover #ECECF0, icon #0A0A0A
+                ghost: "w-9 h-9 bg-transparent rounded-[8px] [&_svg]:size-5 [&_svg]:text-[--btn-outline-text] hover:bg-[--btn-outline-hover-bg] active:bg-[--btn-outline-hover-bg]",
             },
         },
         defaultVariants: {
@@ -46,12 +47,12 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         const content = (
             <div className="relative">
                 {icon}
-                {badge !== undefined && (
+                {badge !== undefined && badge !== 0 && (
                     <span
                         className={cn(
                             "absolute -top-[0.65rem] -right-[0.65rem] min-w-5 h-5 px-1",
                             "flex items-center justify-center",
-                            "bg-[#D4183D] text-white text-[12px] font-medium",
+                            "bg-[--badge-bg] text-white text-[12px] font-medium",
                             "rounded-[8px] border-2 border-white",
                             "shadow-sm",
                             badgeClassName,

@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const lineButtonVariants = cva(
-    "inline-flex items-center bg-transparent px-0 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+    "inline-flex items-center bg-transparent px-0 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] group",
     {
         variants: {
             width: {
@@ -41,31 +41,61 @@ const LineButton = React.forwardRef<HTMLButtonElement, LineButtonProps>(
         const Comp = asChild ? Slot : "button";
         const hasIcon = !!icon;
 
+        // Create the content with icons and styled text
         const content = (
             <>
                 {icon && iconPosition === "left" && (
-                    <span className="text-[#155DFC] group-hover:text-[#0A0A0A] group-active:text-[#0A0A0A] transition-colors">
+                    <span className="text-[--color-blue-primary] group-hover:text-[--btn-outline-text] group-active:text-[--btn-outline-text] transition-colors">
                         {icon}
                     </span>
                 )}
                 <span
                     className={cn(
                         "inline-block pb-0.5",
-                        "text-[#155DFC] group-hover:text-[#0A0A0A] group-active:text-[#0A0A0A]",
-                        "border-b border-transparent group-hover:border-[#0A0A0A] group-active:border-[#0A0A0A]",
+                        "text-[--color-blue-primary] group-hover:text-[--btn-outline-text] group-active:text-[--btn-outline-text]",
+                        "border-b border-transparent group-hover:border-[--btn-outline-text] group-active:border-[--btn-outline-text]",
                         "transition-colors",
                     )}
                 >
                     {children}
                 </span>
                 {icon && iconPosition === "right" && (
-                    <span className="text-[#155DFC] group-hover:text-[#0A0A0A] group-active:text-[#0A0A0A] transition-colors">
+                    <span className="text-[--color-blue-primary] group-hover:text-[--btn-outline-text] group-active:text-[--btn-outline-text] transition-colors">
                         {icon}
                     </span>
                 )}
             </>
         );
 
+        // When asChild is true, we need to clone the child and inject our content
+        if (asChild && React.isValidElement<{ className?: string }>(children)) {
+            return (
+                <Comp
+                    ref={ref}
+                    className={cn(
+                        lineButtonVariants({
+                            width,
+                            hasIcon,
+                            className,
+                        }),
+                    )}
+                    {...props}
+                >
+                    {React.cloneElement(
+                        children,
+                        {
+                            className: cn(
+                                children.props.className,
+                                // Add any additional classes if needed
+                            ),
+                        },
+                        content,
+                    )}
+                </Comp>
+            );
+        }
+
+        // Regular rendering without asChild
         return (
             <Comp
                 ref={ref}
@@ -75,11 +105,10 @@ const LineButton = React.forwardRef<HTMLButtonElement, LineButtonProps>(
                         hasIcon,
                         className,
                     }),
-                    "group",
                 )}
                 {...props}
             >
-                {asChild ? children : content}
+                {content}
             </Comp>
         );
     },

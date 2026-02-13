@@ -9,14 +9,14 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                dark: "bg-[#030213] text-white hover:bg-[#ECECF0] hover:text-[#0A0A0A] active:bg-white active:text-[#0A0A0A] active:border active:border-[#0000001A]",
+                dark: "bg-[--btn-dark-bg] text-[--btn-dark-text] hover:bg-[--btn-dark-hover-bg] hover:text-[--btn-dark-hover-text] active:bg-[--btn-dark-active-bg] active:text-[--btn-dark-active-text] active:border active:border-[--btn-dark-active-border]",
                 outline:
-                    "bg-white border border-[#0000001A] text-[#0A0A0A] hover:bg-[#ECECF0] hover:text-[#0A0A0A] active:bg-[#030213] active:text-white active:border-0",
+                    "bg-[--btn-outline-bg] border border-[--btn-outline-border] text-[--btn-outline-text] hover:bg-[--btn-outline-hover-bg] hover:text-[--btn-outline-hover-text] active:bg-[--btn-outline-active-bg] active:text-[--btn-outline-active-text] active:border-0",
                 darkTransparent:
-                    "bg-[#030213] text-white hover:bg-[#030213CC] hover:text-[#F9FAFB] active:bg-[#030213CC] active:text-[#F9FAFB]",
+                    "bg-[--btn-dark-transparent-bg] text-[--btn-dark-transparent-text] hover:bg-[--btn-dark-transparent-hover-bg] hover:text-[--btn-dark-transparent-hover-text] active:bg-[--btn-dark-transparent-active-bg] active:text-[--btn-dark-transparent-active-text]",
                 outlineSoft:
-                    "bg-white border border-[#0000001A] text-[#0A0A0A] hover:bg-[#ECECF0] hover:text-[#0A0A0A] active:bg-[#ECECF0] active:text-[#0A0A0A] active:border-[#0000001A]",
-                blue: "bg-[#155DFC] text-white hover:bg-[#3B82F6] hover:text-[#E8EDF6] active:bg-[#3B82F6] active:text-[#E8EDF6]",
+                    "bg-[--btn-outline-soft-bg] border border-[--btn-outline-soft-border] text-[--btn-outline-soft-text] hover:bg-[--btn-outline-soft-hover-bg] hover:text-[--btn-outline-soft-hover-text] active:bg-[--btn-outline-soft-active-bg] active:text-[--btn-outline-soft-active-text] active:border-[--btn-outline-soft-active-border]",
+                blue: "bg-[--btn-blue-bg] text-[--btn-blue-text] hover:bg-[--btn-blue-hover-bg] hover:text-[--btn-blue-hover-text] active:bg-[--btn-blue-active-bg] active:text-[--btn-blue-active-text]",
             },
             size: {
                 fixed36: "w-[223px] h-9 rounded-[8px] px-3 py-2",

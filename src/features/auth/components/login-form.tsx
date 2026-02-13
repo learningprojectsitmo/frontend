@@ -111,6 +111,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                     <Button
                         variant="dark"
                         size="fill48"
+                        type="submit"
                         className="text-lg font-semibold"
                         disabled={login.isPending}
                     >
