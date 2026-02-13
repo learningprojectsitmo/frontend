@@ -39,8 +39,7 @@ const spaceRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button>
-                        <Plus size={18} />
+                    <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
                         Создать проект
                     </Button>
                 </div>

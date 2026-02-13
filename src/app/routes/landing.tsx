@@ -115,15 +115,16 @@ const LandingRoute = () => {
                     </motion.p>
                     <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button
-                            size="lg"
-                            onClick={handleStart}
+                            size="fixed48"
+                            variant="dark"
                             className="transform transition-transform hover:scale-105"
+                            onClick={handleStart}
                         >
                             Начать работу
                         </Button>
                         <Button
                             variant="outline"
-                            size="lg"
+                            size="fixed48"
                             onClick={() => navigate("/auth/register")}
                         >
                             Регистрация
@@ -166,9 +167,10 @@ const LandingRoute = () => {
                     </p>
                     <div className="mt-8">
                         <Button
-                            size="lg"
-                            onClick={handleStart}
+                            size="hug56"
+                            variant="dark"
                             className="transform transition-transform hover:scale-105"
+                            onClick={handleStart}
                         >
                             Зарегистрироваться бесплатно
                         </Button>
