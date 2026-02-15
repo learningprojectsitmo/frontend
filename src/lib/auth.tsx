@@ -62,7 +62,7 @@ const logout = async () => {
     return await api.post("/auth/logout");
 };
 
-const loginWithEmailAndPassword = async (data: LoginInput):Promise<LoginResponse> => {
+const loginWithEmailAndPassword = async (data: LoginInput) : Promise<AuthResponse> => {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
     form.append("username", data.email);
@@ -89,7 +89,7 @@ const resetWithPassword = async (data: ResetWithPasswordInput) => {
 
 const authConfig = {
     userFn: getUser,
-    loginFn: async (data: LoginInput) => {
+    loginFn: async (data: LoginInput)  => {
         const response = await loginWithEmailAndPassword(data);
 
         if (response.access_token) {
