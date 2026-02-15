@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router";
 import { z } from "zod";
 
 import { paths } from "@/config/paths";
-import type { AuthResponse, LoginResponse, User } from "@/types/api";
+import type { LoginResponse, User } from "@/types/api";
 
 import { api } from "./api-client";
 
@@ -62,7 +62,7 @@ const logout = async () => {
     return await api.post("/auth/logout");
 };
 
-const loginWithEmailAndPassword = async (data: LoginInput) : Promise<AuthResponse> => {
+const loginWithEmailAndPassword = async (data: LoginInput) : Promise<LoginResponse> => {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
     form.append("username", data.email);
