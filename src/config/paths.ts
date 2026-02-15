@@ -36,7 +36,7 @@ export const paths = {
             path: "/app",
             getHref: () => "/app",
         },
-        spases: {
+        spaces: {
             path: "",
             getHref: () => "/app",
         },

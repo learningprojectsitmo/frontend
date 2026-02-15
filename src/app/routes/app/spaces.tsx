@@ -2,7 +2,7 @@ import { ContentLayout } from "@/components/layouts";
 import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const spaseRoute = () => {
+const spaceRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
     const spaces = [
         {
@@ -120,4 +120,4 @@ const spaseRoute = () => {
     );
 };
 
-export default spaseRoute;
+export default spaceRoute;
