@@ -4,6 +4,7 @@ import { paths } from "@/config/paths";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 import { UserNav } from "@/features/spaces/components/user-nav";
+import { IconButton } from "@/components/ui/button/icon-button.tsx";
 
 export function SpaceLayout({ children }: { children?: React.ReactNode }) {
     const disciplines = [
@@ -20,15 +21,17 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                     <div className="text-2xl font-bold text-blue-600 mb-8">EduSpace</div>
 
                     <Button
-                        variant="ghost"
+                        variant="dark"
+                        size="fixed36"
+                        align="left"
+                        hasIconAsChild={true}
                         asChild
-                        className="w-full bg-[#0F1117] text-white justify-start gap-3 px-4 py-3"
                     >
                         <NavLink
                             to={paths.app.spaces.getHref()}
                             className={({ isActive }) =>
                                 cn(
-                                    "flex items-center font-medium transition-all",
+                                    "flex items-center font-medium transition-all w-full",
                                     isActive
                                         ? "bg-[#0F1117] text-white"
                                         : "text-gray-600 hover:bg-gray-100",
@@ -62,10 +65,9 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                 </div>
 
                 <div className="mt-auto p-6 border-t border-gray-100">
-                    <button className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors">
-                        <Plus size={18} />
+                    <Button variant="outlineSoft" size="fixed36" icon={<Plus size={18} />}>
                         Создать пространство
-                    </button>
+                    </Button>
                 </div>
             </aside>
 
@@ -85,12 +87,7 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                         />
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Bell className="text-gray-500 cursor-pointer" size={22} />
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">
-                                3
-                            </span>
-                        </div>
+                        <IconButton variant="ghost" icon={<Bell size={20} />} badge={3} />
                         <UserNav />
                     </div>
                 </header>
