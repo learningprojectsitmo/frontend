@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Button, IconButton } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { paths } from "@/config/paths";
@@ -46,13 +46,14 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                             <FormItem>
                                 <FormControl>
                                     <Input
-                                        type="email"
                                         placeholder="E-mail"
-                                        error={!!fieldState.error}
-                                        helperText={fieldState.error?.message}
                                         {...field}
+                                        error={!!fieldState.error}
+                                        className="h-12 border-gray-300"
                                     />
                                 </FormControl>
+                                <FormMessage className="text-[#FB2C36]" />{" "}
+                                {/* Текст ошибки тоже красим */}
                             </FormItem>
                         )}
                     />
@@ -63,29 +64,28 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <FormItem>
                                 <FormControl>
-                                    <Input
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Введите пароль"
-                                        error={!!fieldState.error}
-                                        helperText={fieldState.error?.message}
-                                        rightIcon={
-                                            <IconButton
-                                                variant="ghost"
-                                                icon={
-                                                    showPassword ? (
-                                                        <EyeOffIcon size={18} />
-                                                    ) : (
-                                                        <EyeIcon size={18} />
-                                                    )
-                                                }
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                type="button"
-                                                className="text-[#0A0A0A] hover:bg-transparent active:bg-transparent"
-                                            />
-                                        }
-                                        {...field}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Пароль"
+                                            error={!!fieldState.error}
+                                            {...field}
+                                            className="h-12 border-gray-300 pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOffIcon size={20} />
+                                            ) : (
+                                                <EyeIcon size={20} />
+                                            )}
+                                        </button>
+                                    </div>
                                 </FormControl>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -109,19 +109,17 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                     </div>
 
                     <Button
-                        variant="dark"
-                        size="fill48"
                         type="submit"
-                        className="text-lg font-semibold"
+                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
+                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
                         disabled={login.isPending}
                     >
                         {login.isPending ? "Вход..." : "Вход"}
                     </Button>
 
                     <Button
-                        variant="outlineSoft"
-                        size="fill48"
-                        className="text-lg font-semibold"
+                        variant="outline"
+                        className="w-full h-12 border-gray-200 text-lg font-semibold"
                         asChild
                     >
                         <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
