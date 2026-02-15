@@ -23,9 +23,3 @@ export type LoginResponse = {
     access_token: string;
     token_type: string;
 };
-
-export type AuthResponse = {
-    access_token: string;
-    jwt: string;
-    user: User;
-};

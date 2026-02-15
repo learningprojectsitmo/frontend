@@ -10,15 +10,24 @@ export const paths = {
             getHref: (redirectTo?: string | null | undefined) =>
                 `/auth/register${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
+        registerContacts: {
+            path: "/auth/registercontacts",
+            getHref: (redirectTo?: string | null | undefined) =>
+                `/auth/registercontacts${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
         login: {
             path: "/auth/login",
             getHref: (redirectTo?: string | null | undefined) =>
                 `/auth/login${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
-        reset: {
-            path: "/auth/reset",
+        resetEmail: {
+            path: "/auth/resetemail",
             getHref: (redirectTo?: string | null | undefined) =>
-                `/auth/reset${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+                `/auth/resetemail${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
+        resetPassword: {
+            path: "/auth/resetpassword",
+            getHref: () => "/auth/resetpassword",
         },
     },
 
