@@ -20,7 +20,9 @@ export const TableRoles = ({ headerList, roles }: TableRolesProps) => {
                 <tbody className="divide-y divide-gray-200">
                     {roles.map((role) => (
                         <tr className="hover:bg-gray-50 transition">
-                            <td className="px-6 py-4 text-black-200 text-[15px]">{role.nameRole}</td>
+                            <td className="px-6 py-4 text-black-200 text-[15px]">
+                                {role.nameRole}
+                            </td>
                             <td className="px-6 py-4 text-black-200">
                                 <ul className="list-disc pl-5 text-[13px]">
                                     {role.responsibilities.map((item) => (
@@ -28,7 +30,9 @@ export const TableRoles = ({ headerList, roles }: TableRolesProps) => {
                                     ))}
                                 </ul>
                             </td>
-                            <td className="px-6 py-4 text-black-200 text-[15px]">{role.numberOfMembers}</td>
+                            <td className="px-6 py-4 text-black-200 text-[15px]">
+                                {role.numberOfMembers}
+                            </td>
                         </tr>
                     ))}
                 </tbody>

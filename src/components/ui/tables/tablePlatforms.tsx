@@ -21,8 +21,12 @@ export const TablePlatforms = ({ headerList, platforms, showMore }: TablePlatfor
                 <tbody className="divide-y divide-gray-200">
                     {platforms.map((platform) => (
                         <tr className="hover:bg-gray-50 transition">
-                            <td className="px-6 py-4 text-[#0A0A0A] text-[15px] font-semibold">{platform.name}</td>
-                            <td className="px-6 py-4 text-[#4A5565] text-[15px] font-regular">{platform.description}</td>
+                            <td className="px-6 py-4 text-[#0A0A0A] text-[15px] font-semibold">
+                                {platform.name}
+                            </td>
+                            <td className="px-6 py-4 text-[#4A5565] text-[15px] font-regular">
+                                {platform.description}
+                            </td>
                             <td className="px-6 py-4">
                                 <div className="bg-blue-500 rounded-xl px-1 py-1 text-[13px] font-semibold text-white text-center flex items-center justify-center">
                                     {platform.status}
@@ -37,9 +41,16 @@ export const TablePlatforms = ({ headerList, platforms, showMore }: TablePlatfor
                                     </div>
                                 ))}
                             </td>
-                            <td className="px-6 py-4 text-[#0A0A0A] text-[15px]">{platform.members}</td>
+                            <td className="px-6 py-4 text-[#0A0A0A] text-[15px]">
+                                {platform.members}
+                            </td>
                             <td className="px-6 py-4">
-                                <button onClick={() => showMore(platform)} className="font-medium text-gray-700 font-medium hover:text-gray-800 text-[15px]">...</button>
+                                <button
+                                    onClick={() => showMore(platform)}
+                                    className="font-medium text-gray-700 font-medium hover:text-gray-800 text-[15px]"
+                                >
+                                    ...
+                                </button>
                             </td>
                         </tr>
                     ))}

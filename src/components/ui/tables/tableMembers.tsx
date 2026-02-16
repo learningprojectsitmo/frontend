@@ -36,18 +36,14 @@ export const TableMembers = ({ headerList, members, removeMember }: TableProps) 
                                             src={member.avatarUrl}
                                             className="flex h-10 w-10 rounded-full bg-gray-100"
                                         />
-                                        <span className="text-gray-900">
-                                            {member.name}
-                                        </span>
+                                        <span className="text-gray-900">{member.name}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
                                             {getInitials(member.name)}
                                         </div>
-                                        <span className="text-gray-900">
-                                            {member.name}
-                                        </span>
+                                        <span className="text-gray-900">{member.name}</span>
                                     </div>
                                 )}
                             </td>
