@@ -1,5 +1,5 @@
 import { configureAuth } from "react-query-auth";
-import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult, type UseMutationOptions } from "@tanstack/react-query";
 import { Navigate, useLocation } from "react-router";
 import { z } from "zod";
 
@@ -11,28 +11,72 @@ import { api } from "./api-client";
 export const loginInputSchema = z.object({
     email: z.string().min(1, "Required").email("Invalid email"),
     password: z.string().min(5, "Required"),
+    rememberMe: z.boolean().default(false),
 });
+
+export const telegramSchema = z
+  .string()
+  .trim()
+  .refine(
+    (val) => {
+      // если поле не заполнено - ок
+      if (val === "") return true;
+      // иначе проверяем формат @ + латиница/цифры/_, длина 5-32
+      return /^@[a-zA-Z0-9_]{5,32}$/.test(val);
+    },
+    {
+      message:
+        'Username Telegram должен начинаться с @, содержать только латиницу, цифры или "_" и иметь длину от 5 до 32 символов',
+    }
+  )
+  
+
+export const vkSchema = z
+  .string()
+  .trim()
+  .refine(
+    (val) => {
+      if (val === '') return true;
+
+      if (!/^@[a-zA-Z0-9._-]{5,31}$/.test(val)) return false;
+
+      const username = val.slice(1);
+      if (/^[._-]|[._-]$/.test(username)) return false;
+      if (/[._-]{2,}/.test(username)) return false;
+
+      return true;
+    },
+    {
+      message:
+        'Username VK должен начинаться с @, может латиницу, цифры и символы . _ -, длиной 5–31 символ. ' +
+        'Запрещены начало/конец с . _ -, а также их повторение подряд.',
+    }
+  );
+  
 
 export const registerInputSchema = z
     .object({
         email: z.string().min(1, "Required"),
-        firstName: z.string().min(1, "Required"),
-        lastName: z.string().min(1, "Required"),
+        //firstName: z.string().min(1, "Required"),
+        //lastName: z.string().min(1, "Required"),
         password: z.string().min(5, "Required"),
+        telegram: telegramSchema,
+        vk: vkSchema,
+        showMyContacts: z.boolean().default(false),
     })
-    .and(
-        z
-            .object({
-                teamId: z.string().min(1, "Required"),
-                teamName: z.null().default(null),
-            })
-            .or(
-                z.object({
-                    teamName: z.string().min(1, "Required"),
-                    teamId: z.null().default(null),
-                }),
-            ),
-    );
+//    .and(
+//        z
+//            .object({
+//                teamId: z.string().min(1, "Required"),
+//                teamName: z.null().default(null),
+//            })
+//            .or(
+//                z.object({
+//                    teamName: z.string().min(1, "Required"),
+//                    teamId: z.null().default(null),
+//                }),
+//            ),
+//    );
 
 export const resetWithEmailInputSchema = z.object({
     email: z.string().min(1, "Required").email("Invalid email"),
@@ -66,6 +110,7 @@ const loginWithEmailAndPassword = async (data: LoginInput) => {
     form.append("grant_type", "password");
     form.append("username", data.email);
     form.append("password", data.password);
+    form.append("remember_me", data.rememberMe.toString());
 
     return await api.post("/auth/token", form, {
         headers: {
@@ -118,9 +163,10 @@ export const useResetWithEmail = (): UseMutationResult<void, Error, ResetWithEma
     });
 };
 
-export const useResetWithPassword = (): UseMutationResult<void, Error, ResetWithPasswordInput> => {
+export const useResetWithPassword = ( options?: UseMutationOptions<void, Error, ResetWithPasswordInput> ): UseMutationResult<void, Error, ResetWithPasswordInput> => {
     return useMutation({
         mutationFn: resetWithPassword,
+        ...options
     });
 };
 

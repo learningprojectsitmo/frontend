@@ -31,7 +31,7 @@ api.interceptors.response.use(
         let message = error.response?.data?.message || error.message;
 
         if (error.response?.status === 401) {
-            message = "401 Incorrect username or password";
+            message = "Incorrect username or password";
         }
 
         useNotifications.getState().addNotification({

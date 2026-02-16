@@ -13,7 +13,7 @@ const ResetPasswordRoute = () => {
         <AuthLayout title="Создание нового пароля">
             <ResetPasswordForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.auth.login.getHref()}`, {
+                    navigate(paths.auth.login.getHref(redirectTo), {
                         replace: true,
                     });
                 }}

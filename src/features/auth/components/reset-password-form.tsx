@@ -22,9 +22,13 @@ const resetPasswordFormSchema = z
 
 type ResetPasswordFormInput = z.infer<typeof resetPasswordFormSchema>;
 
-export const ResetPasswordForm = () => {
+type ResetPasswordFormProps = {
+    onSuccess: () => void;
+};
+
+export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
     const [showPassword, setShowPassword] = useState(false);
-    const resetEmail = useResetWithPassword();
+    const resetEmail = useResetWithPassword({onSuccess});
     const form = useForm<ResetPasswordFormInput>({
         resolver: zodResolver(resetPasswordFormSchema),
         defaultValues: {

@@ -1,14 +1,14 @@
-import { Link } from "react-router"; //useSearchParams
+import { Link, useNavigate, useSearchParams } from "react-router"; //useSearchParams
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
+import { paths } from "@/config/paths";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-import { useResetWithPassword, type ResetWithPasswordInput } from "@/lib/auth";
 
 const RegistrationFormSchema = z
     .object({
@@ -23,9 +23,11 @@ const RegistrationFormSchema = z
 
 type RegistrationFormInput = z.infer<typeof RegistrationFormSchema>;
 
-export const RegistrationFormForm = () => {
+export const RegistrationForm = () => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const redirectTo = searchParams.get("redirectTo");
     const [showPassword, setShowPassword] = useState(false);
-    const resetEmail = useResetWithPassword();
     const form = useForm<RegistrationFormInput>({
         resolver: zodResolver(RegistrationFormSchema),
         defaultValues: {
@@ -35,8 +37,9 @@ export const RegistrationFormForm = () => {
         },
     });
 
-    const onSubmit = (values: ResetWithPasswordInput) => {
-        resetEmail.mutate({ password: values.password });
+    const onSubmit = (values: RegistrationFormInput) => {
+        sessionStorage.setItem('register', JSON.stringify({email: values.email, password: values.password}));
+        navigate(paths.auth.registerContacts.getHref(redirectTo), {replace: true});
     };
 
     return (
@@ -134,9 +137,8 @@ export const RegistrationFormForm = () => {
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
                         className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
-                        disabled={resetEmail.isPending || resetEmail.isSuccess}
                     >
-                        {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
+                        Подтвердить
                     </Button>
                 </form>
             </Form>

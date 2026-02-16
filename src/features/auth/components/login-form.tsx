@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 
+import yandexlogo from '../../../assets/yandex-logo.png';
+import githublogo from '../../../assets/github-logo.png';
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
@@ -26,6 +28,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         defaultValues: {
             email: "",
             password: "",
+            rememberMe: false,
         },
     });
 
@@ -92,9 +95,23 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
                     <div className="flex items-center justify-between py-2">
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="remember" />
+                            <FormField
+                                control={form.control}
+                                name="rememberMe"
+                                render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                id="rememberMe"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
                             <label
-                                htmlFor="remember"
+                                htmlFor="rememberMe"
                                 className="text-sm font-medium leading-none cursor-pointer"
                             >
                                 Запомнить меня
@@ -137,15 +154,24 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             </div>
 
             <div className="flex justify-center space-x-8">
-                <button className="hover:opacity-80 transition-opacity">
-                    <span className="font-bold text-lg">ITMO ID</span>
-                </button>
-                <button className="hover:opacity-80 transition-opacity">
-                    <img src="/yandex-icon.svg" alt="Yandex" className="size-8" />
-                </button>
-                <button className="hover:opacity-80 transition-opacity">
-                    <img src="/github-icon.svg" alt="GitHub" className="size-8" />
-                </button>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <span className="font-bold text-lg">ITMO ID</span>
+                    </button>
+                </div>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <img src={yandexlogo} alt="Yandex" className="size-8" />
+                    </button>
+                </div>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <img src={githublogo} alt="GitHub" className="size-8" />
+                    </button>
+                </div>
+                
+                
+                
             </div>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
