@@ -3,6 +3,12 @@ import { Head } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
+export interface Role {
+    nameRole: string;
+    responsibilities: string[];
+    numberOfMembers: number;
+}
+
 const features = [
     {
         title: "Управление проектами",
