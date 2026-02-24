@@ -4,22 +4,25 @@ import { AuthLayout } from "@/components/layouts/auth-layout";
 import { paths } from "@/config/paths";
 import { LoginForm } from "@/features/auth/components/login-form";
 
-const LoginRoute = () => {
+const RegisterRoute = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
 
     return (
-        <AuthLayout title="Log in to your account">
+        <AuthLayout title="Создание нового аккаунта">
             <LoginForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {
-                        replace: true,
-                    });
+                    navigate(
+                        `${redirectTo ? `${redirectTo}` : paths.auth.registerContacts.getHref()}`,
+                        {
+                            replace: true,
+                        },
+                    );
                 }}
             />
         </AuthLayout>
     );
 };
 
-export default LoginRoute;
+export default RegisterRoute;

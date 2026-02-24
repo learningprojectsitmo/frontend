@@ -1,39 +1,148 @@
-/* Tailwind директивы */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Глобальные CSS переменные и базовые стили */
 @layer base {
     :root {
+        /* Existing HSL variables */
         --background: 0 0% 100%;
         --foreground: 0 0% 3.9%;
         --card: 0 0% 100%;
         --card-foreground: 0 0% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 3.9%;
         --primary: 0 0% 9%;
         --primary-foreground: 0 0% 98%;
-        /* остальные переменные */
+        --secondary: 0 0% 96.1%;
+        --secondary-foreground: 0 0% 9%;
+        --muted: 0 0% 96.1%;
+        --muted-foreground: 0 0% 45.1%;
+        --accent: 0 0% 96.1%;
+        --accent-foreground: 0 0% 9%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 89.8%;
+        --input: 0 0% 89.8%;
+        --ring: 0 0% 3.9%;
+        --radius: 0.5rem;
+
+        /* Custom colors from design system */
+        /* Base colors */
+        --color-black: #030213;
+        --color-white: #ffffff;
+        --color-blue-primary: #155dfc;
+        --color-blue-secondary: #3b82f6;
+        --color-red-error: #fb2c36;
+        --color-red-error-light: #fff2f4;
+
+        /* Gray shades */
+        --color-gray-100: #ececf0;
+        --color-gray-200: #e0e0e8;
+        --color-gray-300: #99a1af;
+        --color-gray-400: #717182;
+        --color-gray-500: #6a7282;
+        --color-gray-900: #0a0a0a;
+
+        /* Transparency colors */
+        --color-black-10: #0000001a;
+        --color-black-20: #00000033;
+        --color-black-80: #030213cc;
+        --color-blue-15: #155dfc26;
+        --color-red-20: #fb2c3633;
+        --color-red-40: #fb2c3666;
+
+        /* Semantic colors for buttons */
+        --btn-dark-bg: var(--color-black);
+        --btn-dark-text: var(--color-white);
+        --btn-dark-hover-bg: var(--color-gray-100);
+        --btn-dark-hover-text: var(--color-gray-900);
+        --btn-dark-active-bg: var(--color-white);
+        --btn-dark-active-text: var(--color-gray-900);
+        --btn-dark-active-border: var(--color-black-10);
+
+        --btn-outline-bg: var(--color-white);
+        --btn-outline-border: var(--color-black-10);
+        --btn-outline-text: var(--color-gray-900);
+        --btn-outline-hover-bg: var(--color-gray-100);
+        --btn-outline-hover-text: var(--color-gray-900);
+        --btn-outline-active-bg: var(--color-black);
+        --btn-outline-active-text: var(--color-white);
+
+        --btn-outline-soft-bg: var(--color-white);
+        --btn-outline-soft-border: var(--color-black-10);
+        --btn-outline-soft-text: var(--color-gray-900);
+        --btn-outline-soft-hover-bg: var(--color-gray-100);
+        --btn-outline-soft-hover-text: var(--color-gray-900);
+        --btn-outline-soft-active-bg: var(--color-gray-100);
+        --btn-outline-soft-active-text: var(--color-gray-900);
+        --btn-outline-soft-active-border: var(--color-black-10);
+
+        --btn-dark-transparent-bg: var(--color-black);
+        --btn-dark-transparent-text: var(--color-white);
+        --btn-dark-transparent-hover-bg: var(--color-black-80);
+        --btn-dark-transparent-hover-text: #f9fafb;
+        --btn-dark-transparent-active-bg: var(--color-black-80);
+        --btn-dark-transparent-active-text: #f9fafb;
+
+        --btn-blue-bg: var(--color-blue-primary);
+        --btn-blue-text: var(--color-white);
+        --btn-blue-hover-bg: var(--color-blue-secondary);
+        --btn-blue-hover-text: #e8edf6;
+        --btn-blue-active-bg: var(--color-blue-secondary);
+        --btn-blue-active-text: #e8edf6;
+
+        /* Input colors */
+        --input-bg: var(--color-white);
+        --input-border: var(--color-black-20);
+        --input-text: var(--color-gray-900);
+        --input-placeholder: var(--color-gray-400);
+        --input-placeholder-focus-empty: var(--color-black-20);
+        --input-focus-border: var(--color-blue-primary);
+        --input-focus-shadow: var(--color-blue-15);
+        --input-disabled-bg: var(--color-black-20);
+        --input-disabled-text: var(--color-gray-300);
+        --input-icon-default: var(--color-gray-300);
+        --input-icon-focus: var(--color-gray-900);
+
+        /* Error states */
+        --error-bg: var(--color-red-error-light);
+        --error-border: var(--color-red-error);
+        --error-text: var(--color-red-error);
+        --error-focus-shadow: #ffe4e8;
+        --error-disabled-bg: var(--color-red-error-light);
+        --error-disabled-border: var(--color-red-20);
+        --error-disabled-text: var(--color-red-40);
+
+        /* Helper text */
+        --helper-text: #121212;
+
+        /* Badge */
+        --badge-bg: #d4183d;
+
+        /* Compound Button */
+        --compound-icon-bg: var(--color-blue-secondary);
     }
 
+    /* Dark theme (empty for now, for future use) */
     .dark {
         --background: 0 0% 3.9%;
         --foreground: 0 0% 98%;
-        /* остальные dark переменные */
-    }
-
-    body {
-        @apply bg-background text-foreground;
-        margin: 0;
-        font-family: "Inter var", system-ui, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    * {
-        @apply border-border;
-    }
-
-    code {
-        font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+        --card: 0 0% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 0 0% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 0 0% 98%;
+        --primary-foreground: 0 0% 9%;
+        --secondary: 0 0% 14.9%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 0 0% 14.9%;
+        --muted-foreground: 0 0% 63.9%;
+        --accent: 0 0% 14.9%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 14.9%;
+        --input: 0 0% 14.9%;
+        --ring: 0 0% 83.1%;
     }
 }

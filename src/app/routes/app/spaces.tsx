@@ -2,7 +2,7 @@ import { ContentLayout } from "@/components/layouts";
 import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const spaseRoute = () => {
+const spaceRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
     const spaces = [
         {
@@ -39,8 +39,7 @@ const spaseRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button>
-                        <Plus size={18} />
+                    <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
                         Создать проект
                     </Button>
                 </div>
@@ -120,4 +119,4 @@ const spaseRoute = () => {
     );
 };
 
-export default spaseRoute;
+export default spaceRoute;
