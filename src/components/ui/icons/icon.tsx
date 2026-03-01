@@ -23,7 +23,6 @@ export const Icon: React.FC<IconProps> = ({
             try {
                 const importFn = iconImports[name];
                 if (!importFn) {
-                    console.error(`Icon "${name}" not found in iconImports`);
                     if (isMounted) setError(true);
                     return;
                 }
@@ -34,7 +33,6 @@ export const Icon: React.FC<IconProps> = ({
                     setError(false);
                 }
             } catch (err) {
-                console.error(`Failed to load icon: ${name}`, err);
                 if (isMounted) setError(true);
             }
         };
