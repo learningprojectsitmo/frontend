@@ -18,9 +18,9 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<TagVariant, string> = {
     default: "bg-[--color-gray-100] text-[--color-black]",
-    success: "bg-[#00C950] text-white", // Нет в CSS переменных
+    success: "bg-[#00C950] text-white",
     info: "bg-[--color-blue-primary] text-white",
-    warning: "bg-[#F0B100] text-white", // Нет в CSS переменных
+    warning: "bg-[#F0B100] text-white",
     secondary: "bg-[--color-gray-500] text-white",
     error: "bg-[--color-red-error] text-white",
     disabled: "bg-[--color-gray-300] text-white",
