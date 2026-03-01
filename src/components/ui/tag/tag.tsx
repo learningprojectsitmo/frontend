@@ -17,13 +17,13 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<TagVariant, string> = {
-    default: "bg-[#ECEEF2] text-[#030213]",
-    success: "bg-[#00C950] text-white",
-    info: "bg-[#2B7FFF] text-white",
-    warning: "bg-[#F0B100] text-white",
-    secondary: "bg-[#6A7282] text-white",
-    error: "bg-[#FB2C36] text-white",
-    disabled: "bg-[#8F8F8F] text-white",
+    default: "bg-[--color-gray-100] text-[--color-black]",
+    success: "bg-[#00C950] text-white", // Нет в CSS переменных
+    info: "bg-[--color-blue-primary] text-white",
+    warning: "bg-[#F0B100] text-white", // Нет в CSS переменных
+    secondary: "bg-[--color-gray-500] text-white",
+    error: "bg-[--color-red-error] text-white",
+    disabled: "bg-[--color-gray-300] text-white",
 };
 
 export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
@@ -33,19 +33,19 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
                 ref={ref}
                 className={cn(
                     "inline-flex items-center justify-center",
-                    "px-2 py-0.5", // padding: 2px 8px (py-0.5 = 2px, px-2 = 8px)
-                    "rounded-lg", // border-radius: 8px (rounded-lg = 8px)
+                    "px-2 py-0.5",
+                    "rounded-lg",
                     "text-sm font-medium",
                     "whitespace-nowrap",
                     variantStyles[variant],
-                    className
+                    className,
                 )}
                 {...props}
             >
-        {children}
-      </span>
+                {children}
+            </span>
         );
-    }
+    },
 );
 
 Tag.displayName = "Tag";

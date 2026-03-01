@@ -108,9 +108,7 @@ const spaceRoute = () => {
                                 </p>
                             </div>
                         </div>
-                        <Tag variant="info">
-                            В РАБОТЕ
-                        </Tag>
+                        <Tag variant="info">В РАБОТЕ</Tag>
                     </div>
                 </section>
             </div>

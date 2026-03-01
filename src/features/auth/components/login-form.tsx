@@ -36,12 +36,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
             <div className="flex justify-center mb-8">
-                <Icon
-                    name="logo-edu-flow"
-                    width={120}
-                    height={32}
-                    alt="EduFlow Logo"
-                />
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
             </div>
 
             <Form {...form}>
@@ -161,7 +156,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
                 <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
-                    <Icon name="help" size={16}/>
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>

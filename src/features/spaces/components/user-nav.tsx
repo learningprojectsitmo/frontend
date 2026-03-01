@@ -53,7 +53,11 @@ export function UserNav() {
 
                     <DropdownMenuGroup className="p-1">
                         <DropdownMenuItem className="cursor-pointer py-2.5 px-3 text-gray-900 focus:bg-gray-50 focus:text-gray-900">
-                            <Icon name="sign-out" size={16} className="mr-3 h-5 w-5 text-gray-500" />
+                            <Icon
+                                name="sign-out"
+                                size={16}
+                                className="mr-3 h-5 w-5 text-gray-500"
+                            />
                             <span className="text-[15px] font-medium">Выйти</span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
