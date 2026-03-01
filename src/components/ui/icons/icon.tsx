@@ -32,7 +32,7 @@ export const Icon: React.FC<IconProps> = ({
                     setIconComponent(() => module.default);
                     setError(false);
                 }
-            } catch (err) {
+            } catch {
                 if (isMounted) setError(true);
             }
         };
