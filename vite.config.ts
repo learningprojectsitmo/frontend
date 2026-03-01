@@ -17,11 +17,7 @@ export const enableMocking = async () => {
 // https://vite.dev/config/
 export default defineConfig({
     base: "./",
-    plugins: [
-        react(),
-        viteTsconfigPaths(),
-        svgr(),
-    ],
+    plugins: [react(), viteTsconfigPaths(), svgr()],
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),

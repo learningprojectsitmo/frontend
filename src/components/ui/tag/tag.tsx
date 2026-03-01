@@ -38,14 +38,14 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
                     "text-sm font-medium",
                     "whitespace-nowrap",
                     variantStyles[variant],
-                    className
+                    className,
                 )}
                 {...props}
             >
-        {children}
-      </span>
+                {children}
+            </span>
         );
-    }
+    },
 );
 
 Tag.displayName = "Tag";
