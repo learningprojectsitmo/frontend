@@ -45,7 +45,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         const Comp = asChild ? Slot : "button";
 
         const content = (
-            <div className="relative">
+            <div className="flex relative">
                 {icon}
                 {badge !== undefined && badge !== 0 && (
                     <span

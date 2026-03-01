@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useResetWithPassword, type ResetWithPasswordInput } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons";
 
 const resetPasswordFormSchema = z
     .object({
@@ -39,7 +40,9 @@ export const ResetPasswordForm = () => {
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
+            <div className="flex justify-center mb-8">
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+            </div>
             <h2 className="text-3xl font-semibold mb-8 text-grey-400">Создание нового пароля</h2>
             <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
                 Создайте новый пароль для своей учетной записи
@@ -142,9 +145,7 @@ export const ResetPasswordForm = () => {
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
                 <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>

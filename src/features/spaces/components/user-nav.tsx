@@ -1,5 +1,3 @@
-import { User, Settings, LifeBuoy, LogOut, UserCircle } from "lucide-react";
-
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,14 +7,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icons";
 
 export function UserNav() {
     return (
         <div className="flex items-center gap-4 p-4">
-            {/* Выпадающее меню уведомлений */} {/* Выпадающее меню профиля */}
+            {/* Выпадающее меню профиля */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <User className="text-gray-400 cursor-pointer" size={25} />
+                    <button className="outline-none">
+                        <Icon name="profile" size={25} className="text-gray-400 cursor-pointer" />
+                    </button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="w-64" align="end" forceMount>
@@ -27,19 +28,23 @@ export function UserNav() {
 
                     <DropdownMenuGroup className="p-1">
                         <DropdownMenuItem className="flex items-center px-4 py-3 rounded-[14px] cursor-pointer focus:bg-gray-50 group outline-none">
-                            <UserCircle className="mr-3 h-5 w-5 text-gray-800" strokeWidth={1.5} />
+                            <Icon name="profile" size={16} className="mr-3 h-5 w-5 text-gray-800" />
                             <span className="text-[15px] font-medium text-gray-900">
                                 Профиль и Резюме
                             </span>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer py-2.5 px-3 focus:bg-gray-50">
-                            <Settings className="mr-3 h-5 w-5 text-gray-500" />
+                            <Icon
+                                name="settings"
+                                size={16}
+                                className="mr-3 h-5 w-5 text-gray-500"
+                            />
                             <span className="text-[15px] font-medium">Настройки</span>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer py-2.5 px-3 focus:bg-gray-50">
-                            <LifeBuoy className="mr-3 h-5 w-5 text-gray-500" />
+                            <Icon name="help" size={16} className="mr-3 h-5 w-5 text-gray-500" />
                             <span className="text-[15px] font-medium">Помощь и поддержка</span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
@@ -48,7 +53,7 @@ export function UserNav() {
 
                     <DropdownMenuGroup className="p-1">
                         <DropdownMenuItem className="cursor-pointer py-2.5 px-3 text-gray-900 focus:bg-gray-50 focus:text-gray-900">
-                            <LogOut className="mr-3 h-5 w-5 text-gray-500" />
+                            <Icon name="sign-out" size={16} className="mr-3 h-5 w-5 text-gray-500" />
                             <span className="text-[15px] font-medium">Выйти</span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>

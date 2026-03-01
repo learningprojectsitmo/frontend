@@ -1,6 +1,7 @@
 import { ContentLayout } from "@/components/layouts";
 import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tag } from "@/components/ui/tag";
 
 const spaceRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
@@ -57,9 +58,7 @@ const spaceRoute = () => {
                                     <div className={`${space.color} rounded-lg p-3 text-white`}>
                                         <BookOpen size={24} />
                                     </div>
-                                    <span className="border bg-gray-50 px-2 py-1 text-xs font-medium text-gray-500 rounded">
-                                        {space.category}
-                                    </span>
+                                    <Tag variant="default">{space.category}</Tag>
                                 </div>
 
                                 <h3 className="mb-2 text-lg font-bold">{space.title}</h3>
@@ -109,9 +108,9 @@ const spaceRoute = () => {
                                 </p>
                             </div>
                         </div>
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+                        <Tag variant="info">
                             В РАБОТЕ
-                        </span>
+                        </Tag>
                     </div>
                 </section>
             </div>
