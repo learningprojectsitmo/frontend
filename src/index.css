@@ -26,7 +26,64 @@
         --ring: 0 0% 3.9%;
         --radius: 0.5rem;
 
-        /* Custom colors from design system */
+        /* ============ CUSTOM COLORS FROM DESIGN SYSTEM ============ */
+
+        /* ----- Azure ----- */
+        --azure-34: #4a5565;
+        --azure-46: #6a7282;
+        --azure-54: #155dfc;
+        --azure-54-15: #155dfc26; /* 15% opacity */
+        --azure-57: #155dfc; /* 57% - возможно это тот же цвет */
+        --azure-58: #2b7fff;
+        --azure-60: #3b82f6;
+        --azure-24: #e8edf6;
+        --azure-64: #99a1af;
+
+        /* ----- Grey ----- */
+        --grey-4: #0a0a0a;
+        --grey-7: #121212;
+        --grey-27: #424148;
+        --grey-48: #717182;
+        --grey-56: #8f8f8f;
+        --grey-90: #cfcfcf;
+        --grey-93: #ececf0;
+        --grey-94: #eceef2;
+        --grey-96: #f3f3f5;
+        --grey-98: #f9fafb;
+
+        /* ----- Red ----- */
+        --red-46: #d4183d;
+        --red-58: #fb2c36;
+        --red-58-40: #fb2c3666; /* 40% opacity */
+        --red-58-20: #fb2c3633; /* 20% opacity */
+        --red-60: #ef4444;
+        --red-25: #ffe4e8;
+        --red-24: #fff2f4;
+
+        /* ----- Black ----- */
+        --black-100: #000000;
+        --black-90: #000000e6; /* 90% opacity */
+        --black-60: #00000099; /* 60% opacity */
+        --black-50: #00000080; /* 50% opacity */
+        --black-20: #00000033; /* 20% opacity */
+        --black-10: #0000001a; /* 10% opacity */
+        --black-0: #00000000; /* 0% opacity */
+
+        /* ----- Blue ----- */
+        --blue-4: #030213;
+        --blue-4-80: #030213cc; /* 80% opacity */
+        --blue-4-20: #03021333; /* 20% opacity */
+        --blue-64: #4d49fc;
+        --blue-66: #8b5cf6;
+
+        /* ----- Orange/Yellow/Purple/Green ----- */
+        --orange-50: #f59e0b;
+        --orange-47: #f0b100;
+        --pink-60: #ec4899;
+        --green-39: #00c950;
+        --solid-white: #ffffff;
+
+        /* Legacy section - keeping existing color variables */
         /* Base colors */
         --color-black: #030213;
         --color-white: #ffffff;

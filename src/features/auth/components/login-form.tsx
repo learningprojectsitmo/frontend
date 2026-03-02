@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button, IconButton } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { paths } from "@/config/paths";
 import { useLogin, loginInputSchema, type LoginInput } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons";
 
 type LoginFormProps = {
     onSuccess: () => void;
@@ -35,7 +35,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
+            <div className="flex justify-center mb-8">
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+            </div>
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -73,9 +75,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                                                 variant="ghost"
                                                 icon={
                                                     showPassword ? (
-                                                        <EyeOffIcon size={18} />
+                                                        <Icon name="eye-off" size={24} />
                                                     ) : (
-                                                        <EyeIcon size={18} />
+                                                        <Icon name="eye-on" size={24} />
                                                     )
                                                 }
                                                 onClick={() => setShowPassword(!showPassword)}
@@ -139,22 +141,22 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             </div>
 
             <div className="flex justify-center space-x-8">
-                <button className="hover:opacity-80 transition-opacity">
-                    <span className="font-bold text-lg">ITMO ID</span>
+                <button className="hover:opacity-80 transition-opacity flex items-center gap-2">
+                    <Icon name="itmo-id" width={120} height={36} />
                 </button>
+
                 <button className="hover:opacity-80 transition-opacity">
-                    <img src="/yandex-icon.svg" alt="Yandex" className="size-8" />
+                    <Icon name="yandex" size={32} className="size-8" alt="Yandex" />
                 </button>
+
                 <button className="hover:opacity-80 transition-opacity">
-                    <img src="/github-icon.svg" alt="GitHub" className="size-8" />
+                    <Icon name="github" size={32} className="size-8" alt="GitHub" />
                 </button>
             </div>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
                 <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>
