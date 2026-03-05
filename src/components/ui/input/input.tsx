@@ -21,7 +21,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     type={type}
                     className={cn(
                         // Базовые стили и скругление 2xl для соответствия EduSpace
-                        "flex h-12 w-full rounded-2xl border border-input bg-transparent px-4 py-2 text-base shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 md:text-sm",
+                        "flex h-12 w-full rounded-2xl border border-input bg-transparent px-4 py-2 shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 text-input-message font-medium font-sans",
                         icon && "pl-11",
                         rightIcon && "pr-11",
 

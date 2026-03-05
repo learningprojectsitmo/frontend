@@ -1,13 +1,12 @@
 import { AuthLayout } from "@/components/layouts/auth-layout";
-import { RegistrationForm } from "@/features/auth/components/registration-form";
+import { CreateAccForm } from "@/features/auth/components/create-acc-form";
 
-const RegisterRoute = () => {
-
+const CreateAccRoute = () => {
     return (
         <AuthLayout title="Создание нового аккаунта">
-            <RegistrationForm/>
+            <CreateAccForm />
         </AuthLayout>
     );
 };
 
-export default RegisterRoute;
+export default CreateAccRoute;

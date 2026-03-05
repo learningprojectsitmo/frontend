@@ -1,8 +1,7 @@
-import { useNavigate, useSearchParams } from "react-router";
-
 import { AuthLayout } from "@/components/layouts/auth-layout";
 import { paths } from "@/config/paths";
-import { RegistrationContactsForm } from "@/features/auth/components/registration-contacts-form";
+import { RegistrationContactsForm } from "@/features/auth/components/register-contacts-form";
+import { useNavigate, useSearchParams } from "react-router";
 
 const RegisterContactsRoute = () => {
     const navigate = useNavigate();

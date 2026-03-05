@@ -23,9 +23,13 @@ export const ResetEmailForm = () => {
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
-            <h2 className="text-3xl font-semibold mb-8 text-grey-400">Сброс пароля</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
+                EduSpace
+            </h1>
+            <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
+                Сброс пароля
+            </h2>
+            <h4 className="mb-8 text-body font-medium font-sans text-[#4A5565]">
                 Введите свой адрес электронной почты, и вы получите инструкцию по смене пароля
             </h4>
 
@@ -44,16 +48,14 @@ export const ResetEmailForm = () => {
                                         className="h-12 border-gray-300"
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
 
                     <Button
                         type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
+                        className="w-full h-12 bg-[#030213] text-white"
                         disabled={resetEmail.isPending || resetEmail.isSuccess}
                     >
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
@@ -61,8 +63,11 @@ export const ResetEmailForm = () => {
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
+                <Link
+                    to="#"
+                    className="text-blue-600 flex items-center gap-2 font-semibold font-sans text-signature"
+                >
                     <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
                         ?
                     </span>

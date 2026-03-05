@@ -9,8 +9,9 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
+import { useCreateAcc } from "@/lib/auth";
 
-const RegistrationFormSchema = z
+const CreateAccFormSchema = z
     .object({
         email: z.string().min(1, "Required").email("Invalid email"),
         password: z.string().min(8, "Пароль должен быть минимум 8 символов"),
@@ -21,15 +22,29 @@ const RegistrationFormSchema = z
         path: ["passwordConfirmation"],
     });
 
-type RegistrationFormInput = z.infer<typeof RegistrationFormSchema>;
+type CreateAccFormInput = z.infer<typeof CreateAccFormSchema>;
 
-export const RegistrationForm = () => {
+export const CreateAccForm = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
+
+    const createAcc = useCreateAcc({
+        onSuccess: () => {
+            sessionStorage.setItem(
+                "register",
+                JSON.stringify({
+                    email: form.getValues("email"),
+                }),
+            );
+
+            navigate(paths.auth.registerConfirm.getHref(redirectTo), { replace: true });
+        },
+    });
+
     const [showPassword, setShowPassword] = useState(false);
-    const form = useForm<RegistrationFormInput>({
-        resolver: zodResolver(RegistrationFormSchema),
+    const form = useForm<CreateAccFormInput>({
+        resolver: zodResolver(CreateAccFormSchema),
         defaultValues: {
             email: "",
             password: "",
@@ -37,16 +52,22 @@ export const RegistrationForm = () => {
         },
     });
 
-    const onSubmit = (values: RegistrationFormInput) => {
-        sessionStorage.setItem('register', JSON.stringify({email: values.email, password: values.password}));
-        navigate(paths.auth.registerContacts.getHref(redirectTo), {replace: true});
+    const onSubmit = (values: CreateAccFormInput) => {
+        createAcc.mutate({
+            email: values.email,
+            password: values.password,
+        });
     };
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
-            <h2 className="text-3xl font-semibold mb-8 text-grey-400">Создание нового аккаунта</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
+                EduSpace
+            </h1>
+            <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
+                Создание нового аккаунта
+            </h2>
+            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
                 Введите свой адрес электронной почты и создайте пароль
             </h4>
 
@@ -64,8 +85,7 @@ export const RegistrationForm = () => {
                                         className="h-12 border-gray-300"
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -96,7 +116,7 @@ export const RegistrationForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -128,7 +148,7 @@ export const RegistrationForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -136,15 +156,18 @@ export const RegistrationForm = () => {
                     <Button
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
+                        className="w-full h-12 bg-[#030213] text-white"
                     >
                         Подтвердить
                     </Button>
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
+                <Link
+                    to="#"
+                    className="text-blue-600 text-sm flex items-center gap-2 font-semibold font-sans text-signature"
+                >
                     <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
                         ?
                     </span>

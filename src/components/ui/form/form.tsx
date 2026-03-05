@@ -13,6 +13,7 @@ import {
 } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 import { Label } from "@/components/ui/label/label";
 
 const Form = FormProvider;
@@ -154,7 +155,7 @@ const FormMessage = React.forwardRef<
         <p
             ref={ref}
             id={formMessageId}
-            className={cn("text-[0.8rem] font-medium text-destructive", className)}
+            className={cn("font-normal font-sans text-signature-small ml-1", className)}
             {...props}
         >
             {body}

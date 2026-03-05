@@ -29,9 +29,9 @@ export const Notification = ({
                     <div className="flex items-start">
                         <div className="shrink-0">{icons[type]}</div>
                         <div className="ml-3 w-0 flex-1 pt-0.5">
-                            <p className="text-sm font-semibold text-gray-900">{title}</p>
+                            <p className="text-sm font-sans font-semibold text-gray-900">{title}</p>
                             {message && (
-                                <p className="mt-1 text-sm text-gray-500 leading-relaxed">
+                                <p className="mt-1 text-sm font-sans text-gray-500 leading-relaxed">
                                     {message}
                                 </p>
                             )}

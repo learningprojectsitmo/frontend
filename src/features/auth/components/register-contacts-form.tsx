@@ -7,26 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
-import { telegramSchema, vkSchema, useRegister } from "@/lib/auth";
+import { useAddContacts, telegramSchema, vkSchema } from "@/lib/auth";
 
-type RegistrationContactsFormProps = {
-    onSuccess: () => void;
-};
+const registerContactsInputSchema = z.object({
+    telegram: telegramSchema,
+    vk: vkSchema,
+    showMyContacts: z.boolean().default(false),
+});
 
-const RegistrationContactsFormSchema = z
-    .object({
-        telegram: telegramSchema,
-        vk: vkSchema,
-        showMyContacts: z.boolean().default(false),
-    })
+type RegisterContactsFormInput = z.infer<typeof registerContactsInputSchema>;
 
-export type RegistrationContactsFormInput = z.infer<typeof RegistrationContactsFormSchema>;
+export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void }) => {
+    const addContacts = useAddContacts({ onSuccess });
 
-export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsFormProps) => {
-    const register = useRegister({ onSuccess });
-
-    const form = useForm<RegistrationContactsFormInput>({
-        resolver: zodResolver(RegistrationContactsFormSchema),
+    const form = useForm<RegisterContactsFormInput>({
+        resolver: zodResolver(registerContactsInputSchema),
         defaultValues: {
             telegram: "",
             vk: "",
@@ -34,22 +29,24 @@ export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsForm
         },
     });
 
-    const onSubmit = (values: RegistrationContactsFormInput) => {
-        const sessionData = JSON.parse(sessionStorage.getItem('register') || '{}');
-        register.mutate({
-            email: sessionData.email || "", 
-            password: sessionData.password || "", 
-            telegram: values.telegram, 
+    const onSubmit = (values: RegisterContactsFormInput) => {
+        addContacts.mutate({
+            email: JSON.parse(sessionStorage.getItem("register") || "{}").email,
+            telegram: values.telegram,
             vk: values.vk,
-            showMyContacts: values.showMyContacts || false,
+            showMyContacts: values.showMyContacts,
         });
     };
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
-            <h2 className="text-3xl font-semibold mb-8 text-grey-400">Поделитесь своими контактами</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
+                EduSpace
+            </h1>
+            <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
+                Поделитесь своими контактами
+            </h2>
+            <h4 className="mb-12 text-body font-medium font-sans text-[#4A5565]">
                 Введите свой никнейм. По умолчанию ваши контакты видны другим пользователям
             </h4>
 
@@ -68,8 +65,7 @@ export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsForm
                                         className="h-12 border-gray-300"
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -89,7 +85,7 @@ export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsForm
                                         />
                                     </div>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -113,7 +109,7 @@ export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsForm
                             />
                             <label
                                 htmlFor="showMyContacts"
-                                className="text-sm font-medium leading-none cursor-pointer"
+                                className="font-normal font-sans text-signature leading-none cursor-pointer"
                             >
                                 Показывать мои контакты другим пользователям
                             </label>
@@ -123,26 +119,29 @@ export const RegistrationContactsForm = ({ onSuccess }: RegistrationContactsForm
                     <Button
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
-                        disabled={register.isPending}
+                        className="w-full h-12 bg-[#030213] text-white"
+                        disabled={addContacts.isPending}
                     >
-                        {register.isPending ? "Сохранить..." : "Сохранить"}
+                        {addContacts.isPending ? "Сохранить..." : "Сохранить"}
                     </Button>
 
                     <Button
                         type="submit"
                         variant="outline"
-                        className="w-full h-12 border-gray-200 text-lg font-semibold"
+                        className="w-full h-12 border-gray-200"
                         asChild
-                        disabled={register.isPending}
+                        disabled={addContacts.isPending}
                     >
-                        {register.isPending ? "Пропустить..." : "Пропустить"}
+                        {addContacts.isPending ? "Пропустить..." : "Пропустить"}
                     </Button>
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
+                <Link
+                    to="#"
+                    className="text-blue-600 flex items-center gap-2 font-semibold font-sans text-signature"
+                >
                     <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
                         ?
                     </span>

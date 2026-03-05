@@ -11,7 +11,7 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
         const token = localStorage.getItem("token");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-        }
+        } // добавляем токен авторизации в заголовки запроса, если он есть в localStorage
     }
 
     config.withCredentials = true;
@@ -38,7 +38,7 @@ api.interceptors.response.use(
             type: "error",
             title: "Error",
             message,
-        });
+        }); // добавляем уведомление об ошибке
 
         // if (error.response?.status === 401) {
         //   const searchParams = new URLSearchParams();

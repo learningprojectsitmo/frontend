@@ -8,7 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-import { useResetWithPassword, type ResetWithPasswordInput } from "@/lib/auth";
+import { useResetWithPassword } from "@/lib/auth";
 
 const resetPasswordFormSchema = z
     .object({
@@ -26,9 +26,9 @@ type ResetPasswordFormProps = {
     onSuccess: () => void;
 };
 
-export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
+export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
     const [showPassword, setShowPassword] = useState(false);
-    const resetEmail = useResetWithPassword({onSuccess});
+    const resetEmail = useResetWithPassword({ onSuccess });
     const form = useForm<ResetPasswordFormInput>({
         resolver: zodResolver(resetPasswordFormSchema),
         defaultValues: {
@@ -37,15 +37,22 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
         },
     });
 
-    const onSubmit = (values: ResetWithPasswordInput) => {
-        resetEmail.mutate({ password: values.password });
+    const onSubmit = (values: ResetPasswordFormInput) => {
+        resetEmail.mutate({
+            password: values.password,
+            special_token: "12345678-1234-1234-1234-123456789012",
+        }); //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
     };
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
-            <h2 className="text-3xl font-semibold mb-8 text-grey-400">Создание нового пароля</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
+                EduSpace
+            </h1>
+            <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
+                Создание нового пароля
+            </h2>
+            <h4 className="mb-12 text-body font-medium font-sans text-[#4A5565]">
                 Создайте новый пароль для своей учетной записи
             </h4>
 
@@ -64,8 +71,7 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
                                         disabled
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -96,7 +102,7 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -128,7 +134,7 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -136,7 +142,7 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
                     <Button
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
+                        className="w-full h-12 bg-[#030213] text-white"
                         disabled={resetEmail.isPending || resetEmail.isSuccess}
                     >
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
@@ -144,8 +150,11 @@ export const ResetPasswordForm = ({onSuccess}: ResetPasswordFormProps) => {
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
+                <Link
+                    to="#"
+                    className="text-blue-600 flex items-center gap-2 font-semibold font-sans text-signature"
+                >
                     <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
                         ?
                     </span>
