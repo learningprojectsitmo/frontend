@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 
 import yandexlogo from '../../../assets/yandex-logo.png';
@@ -12,6 +11,7 @@ import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { paths } from "@/config/paths";
 import { useLogin, loginInputSchema, type LoginInput } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons";
 
 type LoginFormProps = {
     onSuccess: () => void;
@@ -38,7 +38,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
     return (
         <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
+            <div className="flex justify-center mb-8">
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+            </div>
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -49,14 +51,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                             <FormItem>
                                 <FormControl>
                                     <Input
+                                        type="email"
                                         placeholder="E-mail"
-                                        {...field}
                                         error={!!fieldState.error}
-                                        className="h-12 border-gray-300"
+                                        helperText={fieldState.error?.message}
+                                        {...field}
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
                             </FormItem>
                         )}
                     />
@@ -67,28 +68,29 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <FormItem>
                                 <FormControl>
-                                    <div className="relative">
-                                        <Input
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder="Пароль"
-                                            error={!!fieldState.error}
-                                            {...field}
-                                            className="h-12 border-gray-300 pr-10"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                        >
-                                            {showPassword ? (
-                                                <EyeOffIcon size={20} />
-                                            ) : (
-                                                <EyeIcon size={20} />
-                                            )}
-                                        </button>
-                                    </div>
+                                    <Input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Введите пароль"
+                                        error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}
+                                        rightIcon={
+                                            <IconButton
+                                                variant="ghost"
+                                                icon={
+                                                    showPassword ? (
+                                                        <Icon name="eye-off" size={24} />
+                                                    ) : (
+                                                        <Icon name="eye-on" size={24} />
+                                                    )
+                                                }
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                type="button"
+                                                className="text-[#0A0A0A] hover:bg-transparent active:bg-transparent"
+                                            />
+                                        }
+                                        {...field}
+                                    />
                                 </FormControl>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -126,17 +128,19 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                     </div>
 
                     <Button
+                        variant="dark"
+                        size="fill48"
                         type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
+                        className="text-lg font-semibold"
                         disabled={login.isPending}
                     >
                         {login.isPending ? "Вход..." : "Вход"}
                     </Button>
 
                     <Button
-                        variant="outline"
-                        className="w-full h-12 border-gray-200 text-lg font-semibold"
+                        variant="outlineSoft"
+                        size="fill48"
+                        className="text-lg font-semibold"
                         asChild
                     >
                         <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
@@ -176,9 +180,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
                 <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>

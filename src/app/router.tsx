@@ -62,7 +62,7 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ErrorBoundary: AppRootErrorBoundary,
             children: [
                 {
-                    path: paths.app.spases.path,
+                    path: paths.app.spaces.path,
                     lazy: () => import("./routes/app/spaces").then(convert(queryClient)),
                 },
             ],
