@@ -1,11 +1,11 @@
-import { SpasesLayout } from "@/components/layouts";
+import { SpaceLayout } from "@/components/layouts";
 
 export const ErrorBoundary = () => {
     return <div>Something went wrong!</div>;
 };
 
 const AppRoot = () => {
-    return <SpasesLayout />;
+    return <SpaceLayout />;
 };
 
 export default AppRoot;

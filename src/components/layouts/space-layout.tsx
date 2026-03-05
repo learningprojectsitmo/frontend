@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router";
-import { Home, LayoutGrid, Plus, Search, Bell } from "lucide-react";
 import { paths } from "@/config/paths";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
-import { UserNav } from "@/features/spases/components/user-nav";
+import { UserNav } from "@/features/spaces/components/user-nav";
+import { IconButton } from "@/components/ui/button/icon-button.tsx";
+import { Icon } from "@/components/ui/icons";
 
-export function SpasesLayout({ children }: { children?: React.ReactNode }) {
+export function SpaceLayout({ children }: { children?: React.ReactNode }) {
     const disciplines = [
         { name: "Управление проектами", count: 8, color: "text-blue-500" },
         { name: "Проектная деятельность", count: 5, color: "text-indigo-500" },
@@ -17,25 +18,29 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
             {/* Sidebar */}
             <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
                 <div className="p-6">
-                    <div className="text-2xl font-bold text-blue-600 mb-8">EduSpace</div>
+                    <div className="flex mb-8">
+                        <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                    </div>
 
                     <Button
-                        variant="ghost"
+                        variant="dark"
+                        size="fixed36"
+                        align="left"
+                        hasIconAsChild={true}
                         asChild
-                        className="w-full bg-[#0F1117] text-white justify-start gap-3 px-4 py-3"
                     >
                         <NavLink
-                            to={paths.app.spases.getHref()}
+                            to={paths.app.spaces.getHref()}
                             className={({ isActive }) =>
                                 cn(
-                                    "flex items-center font-medium transition-all",
+                                    "flex items-center font-medium transition-all w-full",
                                     isActive
                                         ? "bg-[#0F1117] text-white"
                                         : "text-gray-600 hover:bg-gray-100",
                                 )
                             }
                         >
-                            <Home size={20} />
+                            <Icon name="home" size={20} />
                             Все пространства
                         </NavLink>
                     </Button>
@@ -51,7 +56,7 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                                     className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <LayoutGrid size={16} className={item.color} />
+                                        <Icon name="grid" size={16} className={item.color} />
                                         <span className="truncate">{item.name}</span>
                                     </div>
                                     <span className="text-xs text-gray-400">{item.count}</span>
@@ -62,10 +67,13 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                 </div>
 
                 <div className="mt-auto p-6 border-t border-gray-100">
-                    <button className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors">
-                        <Plus size={18} />
+                    <Button
+                        variant="outlineSoft"
+                        size="fixed36"
+                        icon={<Icon name="plus" size={18} />}
+                    >
                         Создать пространство
-                    </button>
+                    </Button>
                 </div>
             </aside>
 
@@ -74,7 +82,8 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                 {/* Header / Topbar */}
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
                     <div className="relative w-96">
-                        <Search
+                        <Icon
+                            name="magnifier"
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                             size={18}
                         />
@@ -85,12 +94,11 @@ export function SpasesLayout({ children }: { children?: React.ReactNode }) {
                         />
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Bell className="text-gray-500 cursor-pointer" size={22} />
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">
-                                3
-                            </span>
-                        </div>
+                        <IconButton
+                            variant="ghost"
+                            icon={<Icon name="bell" size={20} />}
+                            badge={3}
+                        />
                         <UserNav />
                     </div>
                 </header>
