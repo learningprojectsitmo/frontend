@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import yandexlogo from "../../../assets/yandex-logo.png";
 import githublogo from "../../../assets/github-logo.png";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
@@ -41,10 +41,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             <div className="flex justify-center mb-8">
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
             </div>
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl">
-            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
-                EduSpace
-            </h1>
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -137,7 +133,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         variant="dark"
                         size="fill48"
                         type="submit"
-                        className="text-lg font-semibold"
                         className="w-full h-12 bg-[#030213] text-white"
                         disabled={login.isPending}
                     >
@@ -150,8 +145,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         className="text-lg font-semibold"
                         asChild
                     >
-                        <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
-                    <Button variant="outline" className="w-full h-12 border-gray-200" asChild>
                         <Link to={paths.auth.createAcc.getHref(redirectTo)}>Регистрация</Link>
                     </Button>
                 </form>
@@ -189,15 +182,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
                 <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
                     <Icon name="help" size={16} />
-            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
-                <Link
-                    to="#"
-                    className="text-blue-600 text-sm flex items-center gap-2 font-semibold font-sans text-signature"
-                >
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
-                    Помощь и поддержка
                 </Link>
             </div>
         </div>
