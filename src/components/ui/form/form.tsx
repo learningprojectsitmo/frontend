@@ -13,7 +13,6 @@ import {
 } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
-import { cva } from "class-variance-authority";
 import { Label } from "@/components/ui/label/label";
 
 const Form = FormProvider;
