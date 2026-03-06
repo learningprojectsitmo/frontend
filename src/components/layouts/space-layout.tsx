@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserNav } from "@/features/spaces/components/user-nav";
 import { IconButton } from "@/components/ui/button/icon-button.tsx";
 import { Icon } from "@/components/ui/icons";
+import { SearchBar } from "../ui/search-bar";
 
 export function SpaceLayout({ children }: { children?: React.ReactNode }) {
     const disciplines = [
@@ -81,16 +82,17 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
             <div className="flex-1 flex flex-col">
                 {/* Header / Topbar */}
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-                    <div className="relative w-96">
-                        <Icon
-                            name="magnifier"
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            size={18}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Ищите проекты, пространства..."
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 transition-all"
+          <div className="relative w-full md:w-96 lg:w-[400px]">
+                        <SearchBar
+                            placeholder="Search projects, spaces, or members..."
+                            suggestions={[
+                                "Mobile App",
+                                "Mobile App Learning",
+                                "Mobile App X",
+                                "Web Development",
+                                "UI/UX Design",
+                            ]}
+                            onSearch={(val) => console.log("Searching for:", val)}
                         />
                     </div>
                     <div className="flex items-center gap-4">
