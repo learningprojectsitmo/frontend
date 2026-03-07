@@ -178,7 +178,10 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             </div>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
                     <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>

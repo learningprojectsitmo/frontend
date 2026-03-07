@@ -9,8 +9,7 @@ email: string
 password: string (длина от 5 до 64 символов)
 remember_me: boolean
 
-Response: access_token: string
----
+## Response: access_token: string
 
 - /auth/createacc
 
@@ -50,13 +49,12 @@ email: string
 
 Content-Type: application/json
 
-email: string             
-telegram: '@yournickname' 
-vk: '@yournickname'       
-showMyContacts: boolean 
+email: string  
+telegram: '@yournickname'
+vk: '@yournickname'  
+showMyContacts: boolean
 
-Response: access_token: string
----
+## Response: access_token: string
 
 - /auth/resetemail
 

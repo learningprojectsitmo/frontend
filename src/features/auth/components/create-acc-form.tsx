@@ -10,12 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
-import { Icon } from "@/components/ui/icons"
+import { Icon } from "@/components/ui/icons";
 
 const CreateAccFormSchema = z
     .object({
         email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
-        password: z.string().min(5, "Пароль должен быть минимум 5 символов").max(64, "Слишком большой пароль"),
+        password: z
+            .string()
+            .min(5, "Пароль должен быть минимум 5 символов")
+            .max(64, "Слишком большой пароль"),
         passwordConfirmation: z.string().min(5, "Подтвердите пароль"),
     })
     .refine((data) => data.password === data.passwordConfirmation, {
@@ -63,8 +66,11 @@ export const CreateAccForm = () => {
     return (
         <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
-                <Link to={paths.auth.login.getHref(redirectTo)} className="w-9 h-9 flex items-center">
-                    <Icon name="arrow-left" width={20} height={20}/>
+                <Link
+                    to={paths.auth.login.getHref(redirectTo)}
+                    className="w-9 h-9 flex items-center"
+                >
+                    <Icon name="arrow-left" width={20} height={20} />
                 </Link>
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
                 <div className="w-9 h-9"></div>
@@ -169,7 +175,10 @@ export const CreateAccForm = () => {
             </Form>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
                     <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>

@@ -52,8 +52,11 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
     return (
         <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
-                <Link to={paths.auth.createAcc.getHref(redirectTo)} className="w-9 h-9 flex items-center">
-                    <Icon name="arrow-left" width={20} height={20}/>
+                <Link
+                    to={paths.auth.createAcc.getHref(redirectTo)}
+                    className="w-9 h-9 flex items-center"
+                >
+                    <Icon name="arrow-left" width={20} height={20} />
                 </Link>
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
                 <div className="w-9 h-9"></div>
@@ -80,21 +83,20 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
                                     />
                                 </FormControl>
                                 <div className="flex flex-row items-center">
-                                    {fieldState.error ? 
-                                    <AlertCircle
-                                        size={12}
-                                        className={cn(
-                                            "shrink-0",
-                                            !fieldState.error
-                                                ? "text-[--error-disabled-text]"
-                                                : "text-[--error-text]",
-                                        )}
-                                    />
-                                    : null}
-                                    
+                                    {fieldState.error ? (
+                                        <AlertCircle
+                                            size={12}
+                                            className={cn(
+                                                "shrink-0",
+                                                !fieldState.error
+                                                    ? "text-[--error-disabled-text]"
+                                                    : "text-[--error-text]",
+                                            )}
+                                        />
+                                    ) : null}
+
                                     <FormMessage className="text-red-500" />
                                 </div>
-                                
                             </FormItem>
                         )}
                     />
@@ -117,7 +119,10 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
             </Form>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
                     <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>

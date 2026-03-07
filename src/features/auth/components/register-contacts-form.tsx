@@ -65,7 +65,13 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                         error={!!fieldState.error}
                                         className="h-12 border-gray-300"
                                         helperText={fieldState.error?.message}
-                                        icon={<Icon name="telegram" size={18} className="absolute -top-2" />}
+                                        icon={
+                                            <Icon
+                                                name="telegram"
+                                                size={18}
+                                                className="absolute -top-2"
+                                            />
+                                        }
                                     />
                                 </FormControl>
                             </FormItem>
@@ -85,7 +91,13 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                             {...field}
                                             className="h-12 border-gray-300 pr-10"
                                             helperText={fieldState.error?.message}
-                                            icon={<Icon name="vk" size={18} className="absolute -top-2" />}
+                                            icon={
+                                                <Icon
+                                                    name="vk"
+                                                    size={18}
+                                                    className="absolute -top-2"
+                                                />
+                                            }
                                         />
                                     </div>
                                 </FormControl>
@@ -141,7 +153,10 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
             </Form>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
                     <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
