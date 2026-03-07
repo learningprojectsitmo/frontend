@@ -82,7 +82,7 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
             <div className="flex-1 flex flex-col">
                 {/* Header / Topbar */}
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-          <div className="relative w-full md:w-96 lg:w-[400px]">
+                    <div className="relative w-full md:w-96 lg:w-[400px]">
                         <SearchBar
                             placeholder="Search projects, spaces, or members..."
                             suggestions={[
@@ -92,7 +92,6 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                                 "Web Development",
                                 "UI/UX Design",
                             ]}
-                            onSearch={(val) => console.log("Searching for:", val)}
                         />
                     </div>
                     <div className="flex items-center gap-4">

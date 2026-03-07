@@ -2,18 +2,18 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import { AuthLayout } from "@/components/layouts/auth-layout";
 import { paths } from "@/config/paths";
-import { ResetPasswordForm } from "@/features/auth/components/reset-password-form";
+import { RegisterConfirmForm } from "@/features/auth/components/register-confirm-form";
 
-const ResetPasswordRoute = () => {
+const RegisterConfirmRoute = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
 
     return (
-        <AuthLayout title="Создание нового пароля">
-            <ResetPasswordForm
+        <AuthLayout title="Введите код из письма">
+            <RegisterConfirmForm
                 onSuccess={() => {
-                    navigate(paths.auth.login.getHref(redirectTo), {
+                    navigate(`${paths.auth.registerContacts.getHref(redirectTo)}`, {
                         replace: true,
                     });
                 }}
@@ -22,4 +22,4 @@ const ResetPasswordRoute = () => {
     );
 };
 
-export default ResetPasswordRoute;
+export default RegisterConfirmRoute;

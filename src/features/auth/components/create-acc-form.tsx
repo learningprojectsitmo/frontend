@@ -1,33 +1,54 @@
-import { Link } from "react-router"; //useSearchParams
+import { Link, useNavigate, useSearchParams } from "react-router"; //useSearchParams
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
+import { paths } from "@/config/paths";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-import { useResetWithPassword, type ResetWithPasswordInput } from "@/lib/auth";
+import { useCreateAcc } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons";
 
-const RegistrationFormSchema = z
+const CreateAccFormSchema = z
     .object({
-        email: z.string().min(1, "Required").email("Invalid email"),
-        password: z.string().min(8, "Пароль должен быть минимум 8 символов"),
-        passwordConfirmation: z.string().min(1, "Подтвердите пароль"),
+        email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+        password: z
+            .string()
+            .min(5, "Пароль должен быть минимум 5 символов")
+            .max(64, "Слишком большой пароль"),
+        passwordConfirmation: z.string().min(5, "Подтвердите пароль"),
     })
     .refine((data) => data.password === data.passwordConfirmation, {
         message: "Пароли не совпадают",
         path: ["passwordConfirmation"],
     });
 
-type RegistrationFormInput = z.infer<typeof RegistrationFormSchema>;
+type CreateAccFormInput = z.infer<typeof CreateAccFormSchema>;
 
-export const RegistrationFormForm = () => {
+export const CreateAccForm = () => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const redirectTo = searchParams.get("redirectTo");
+
+    const createAcc = useCreateAcc({
+        onSuccess: () => {
+            sessionStorage.setItem(
+                "register",
+                JSON.stringify({
+                    email: form.getValues("email"),
+                }),
+            );
+
+            navigate(paths.auth.registerConfirm.getHref(redirectTo), { replace: true });
+        },
+    });
+
     const [showPassword, setShowPassword] = useState(false);
-    const resetEmail = useResetWithPassword();
-    const form = useForm<RegistrationFormInput>({
-        resolver: zodResolver(RegistrationFormSchema),
+    const form = useForm<CreateAccFormInput>({
+        resolver: zodResolver(CreateAccFormSchema),
         defaultValues: {
             email: "",
             password: "",
@@ -35,15 +56,29 @@ export const RegistrationFormForm = () => {
         },
     });
 
-    const onSubmit = (values: ResetWithPasswordInput) => {
-        resetEmail.mutate({ password: values.password });
+    const onSubmit = (values: CreateAccFormInput) => {
+        createAcc.mutate({
+            email: values.email,
+            password: values.password,
+        });
     };
 
     return (
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">EduSpace</h1>
-            <h2 className="text-3xl font-semibold mb-8 text-grey-400">Создание нового аккаунта</h2>
-            <h4 className="mb-16 text-xl text-grey-400 text-[#4A5565]">
+        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+            <div className="flex place-content-between width-full mb-8">
+                <Link
+                    to={paths.auth.login.getHref(redirectTo)}
+                    className="w-9 h-9 flex items-center"
+                >
+                    <Icon name="arrow-left" width={20} height={20} />
+                </Link>
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <div className="w-9 h-9"></div>
+            </div>
+            <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
+                Создание нового аккаунта
+            </h2>
+            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
                 Введите свой адрес электронной почты и создайте пароль
             </h4>
 
@@ -58,11 +93,10 @@ export const RegistrationFormForm = () => {
                                         placeholder="E-mail"
                                         {...field}
                                         error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}
                                         className="h-12 border-gray-300"
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />{" "}
-                                {/* Текст ошибки тоже красим */}
                             </FormItem>
                         )}
                     />
@@ -78,6 +112,7 @@ export const RegistrationFormForm = () => {
                                             placeholder="Пароль"
                                             error={!!fieldState.error}
                                             {...field}
+                                            helperText={fieldState.error?.message}
                                             className="h-12 border-gray-300 pr-10"
                                         />
                                         <button
@@ -93,7 +128,6 @@ export const RegistrationFormForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -110,6 +144,7 @@ export const RegistrationFormForm = () => {
                                             placeholder="Подтвердите пароль"
                                             error={!!fieldState.error}
                                             {...field}
+                                            helperText={fieldState.error?.message}
                                             className="h-12 border-gray-300 pr-10"
                                         />
                                         <button
@@ -125,7 +160,6 @@ export const RegistrationFormForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -133,19 +167,19 @@ export const RegistrationFormForm = () => {
                     <Button
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white text-lg font-semibold"
-                        disabled={resetEmail.isPending || resetEmail.isSuccess}
+                        className="w-full h-12 bg-[#030213] text-white"
                     >
-                        {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
+                        Подтвердить
                     </Button>
                 </form>
             </Form>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>
