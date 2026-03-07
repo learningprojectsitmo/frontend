@@ -7,15 +7,16 @@ import { paths } from "@/config/paths";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons"
 
 const CreateAccFormSchema = z
     .object({
-        email: z.string().min(1, "Required").email("Invalid email"),
-        password: z.string().min(8, "Пароль должен быть минимум 8 символов"),
-        passwordConfirmation: z.string().min(1, "Подтвердите пароль"),
+        email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+        password: z.string().min(5, "Пароль должен быть минимум 5 символов").max(64, "Слишком большой пароль"),
+        passwordConfirmation: z.string().min(5, "Подтвердите пароль"),
     })
     .refine((data) => data.password === data.passwordConfirmation, {
         message: "Пароли не совпадают",
@@ -60,10 +61,14 @@ export const CreateAccForm = () => {
     };
 
     return (
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
-                EduSpace
-            </h1>
+        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+            <div className="flex place-content-between width-full mb-8">
+                <Link to={paths.auth.login.getHref(redirectTo)} className="w-9 h-9 flex items-center">
+                    <Icon name="arrow-left" width={20} height={20}/>
+                </Link>
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <div className="w-9 h-9"></div>
+            </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Создание нового аккаунта
             </h2>
@@ -82,10 +87,10 @@ export const CreateAccForm = () => {
                                         placeholder="E-mail"
                                         {...field}
                                         error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}
                                         className="h-12 border-gray-300"
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -101,6 +106,7 @@ export const CreateAccForm = () => {
                                             placeholder="Пароль"
                                             error={!!fieldState.error}
                                             {...field}
+                                            helperText={fieldState.error?.message}
                                             className="h-12 border-gray-300 pr-10"
                                         />
                                         <button
@@ -116,7 +122,6 @@ export const CreateAccForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -133,6 +138,7 @@ export const CreateAccForm = () => {
                                             placeholder="Подтвердите пароль"
                                             error={!!fieldState.error}
                                             {...field}
+                                            helperText={fieldState.error?.message}
                                             className="h-12 border-gray-300 pr-10"
                                         />
                                         <button
@@ -148,7 +154,6 @@ export const CreateAccForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -163,14 +168,9 @@ export const CreateAccForm = () => {
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
-                <Link
-                    to="#"
-                    className="text-blue-600 text-sm flex items-center gap-2 font-semibold font-sans text-signature"
-                >
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
+                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>

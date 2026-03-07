@@ -4,11 +4,12 @@
 
 Content-Type: application/x-www-form-urlencoded
 
-grant_type: password | Response:
-email: string | access_token: string
-password: string (длина от 5 до 64 символов) |  
-remember_me: boolean |
+grant_type: password
+email: string
+password: string (длина от 5 до 64 символов)
+remember_me: boolean
 
+Response: access_token: string
 ---
 
 - /auth/createacc
@@ -49,11 +50,12 @@ email: string
 
 Content-Type: application/json
 
-email: string | Response:
-telegram: '@yournickname' | access_token: string
-vk: '@yournickname' |
-showMyContacts: boolean |
+email: string             
+telegram: '@yournickname' 
+vk: '@yournickname'       
+showMyContacts: boolean 
 
+Response: access_token: string
 ---
 
 - /auth/resetemail
@@ -73,7 +75,7 @@ email: string
 Content-Type: application/json
 
 password: string (длина от 5 до 64 символов)
-special_token: string `нужен какой нибудь ключ чтобы сторонний пользователь не мог просто так вызвать этот эндпоинт и сбросить пароль, например, uuid, который придет в ссылке на почту`
+special_token: string `нужен какой нибудь ключ чтобы сторонний пользователь не мог просто так вызвать этот эндпоинт и сбросить пароль, например, uuid, который придет в теле ссылки на почту`
 
 ---
 

@@ -115,7 +115,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                             "disabled:cursor-not-allowed disabled:bg-[--input-disabled-bg]",
 
                             // Icon padding
-                            icon && "pl-11",
+                            icon && "pl-9",
                             rightIcon && "pr-11",
 
                             // Error states

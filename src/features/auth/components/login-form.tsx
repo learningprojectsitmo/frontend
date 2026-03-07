@@ -6,7 +6,7 @@ import { useState } from "react";
 import yandexlogo from "../../../assets/yandex-logo.png";
 import githublogo from "../../../assets/github-logo.png";
 import { Button, IconButton } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { paths } from "@/config/paths";
@@ -37,7 +37,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     };
 
     return (
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
             <div className="flex justify-center mb-8">
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
             </div>
@@ -58,7 +58,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                                         {...field}
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -92,7 +91,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                                         {...field}
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -180,8 +178,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             </div>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
                     <Icon name="help" size={16} />
+                    Помощь и поддержка
                 </Link>
             </div>
         </div>

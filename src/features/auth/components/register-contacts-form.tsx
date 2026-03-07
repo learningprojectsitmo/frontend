@@ -4,10 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { useAddContacts, telegramSchema, vkSchema } from "@/lib/auth";
+import { Icon } from "@/components/ui/icons";
 
 const registerContactsInputSchema = z.object({
     telegram: telegramSchema,
@@ -39,10 +40,10 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
     };
 
     return (
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
-            <h1 className="text-heading-4 font-sans font-semibold text-center text-blue-600 mb-8">
-                EduSpace
-            </h1>
+        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+            <div className="flex justify-center mb-8">
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+            </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Поделитесь своими контактами
             </h2>
@@ -63,9 +64,10 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                         {...field}
                                         error={!!fieldState.error}
                                         className="h-12 border-gray-300"
+                                        helperText={fieldState.error?.message}
+                                        icon={<Icon name="telegram" size={18} className="absolute -top-2" />}
                                     />
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -82,10 +84,11 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                             error={!!fieldState.error}
                                             {...field}
                                             className="h-12 border-gray-300 pr-10"
+                                            helperText={fieldState.error?.message}
+                                            icon={<Icon name="vk" size={18} className="absolute -top-2" />}
                                         />
                                     </div>
                                 </FormControl>
-                                <FormMessage className="text-[#FB2C36]" />
                             </FormItem>
                         )}
                     />
@@ -137,14 +140,9 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                 </form>
             </Form>
 
-            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-left">
-                <Link
-                    to="#"
-                    className="text-blue-600 flex items-center gap-2 font-semibold font-sans text-signature"
-                >
-                    <span className="rounded-full border border-blue-600 w-4 h-4 flex items-center justify-center text-[10px]">
-                        ?
-                    </span>
+            <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
+                <Link to="#" className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2">
+                    <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>
             </div>
