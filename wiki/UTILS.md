@@ -136,3 +136,34 @@ export function newUtil(...inputs: ClassValue[]) {
 - Форматирование дат → `formatDate()`
 - Валидация → создать утилиту в `utils/`
 - Константы → `config/`
+
+### Шрифты
+
+Класс шрифта
+
+- `font-sans`
+
+Три типа жирности:
+
+- font-normal (400)
+- font-medium (500)
+- font-semibold (600)
+
+Типы размера шрифта и letter-spacing, line-height:
+
+- text-heading-1: 48px , lineHeight:1.2 , letterSpacing:-0.02em
+- text-heading-2: 36px
+- text-heading-3: 30px ,lineHeight:1.3 , letterSpacing:-0.01em
+- text-heading-4: 24px ,lineHeight:1.3 , letterSpacing:-0.01em
+- text-subheading: 20px ,lineHeight:1.4 , letterSpacing:0
+- text-body-large: 18px ,lineHeight:1.5 , letterSpacing:0
+- text-body: 16px ,lineHeight:1.5 , letterSpacing:0
+- text-button-large: 18px , lineHeight:1.5 , letterSpacing:0.02em
+- text-button: 16px , lineHeight:1.5 , letterSpacing:0.02em
+- text-input: 16px , lineHeight:1.5 , letterSpacing:0
+- text-input-message: 14px , lineHeight:1.4 , letterSpacing:0
+- text-signature: 14px , lineHeight:1.4 , letterSpacing:0
+- text-signature-small: 12px , lineHeight:1.4 , letterSpacing:0
+- text-link: 16px , lineHeight:1.5 , letterSpacing:0
+
+это также можно посмотреть и настроить в tailwind.config.js

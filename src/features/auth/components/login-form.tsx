@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 
+import yandexlogo from "../../../assets/yandex-logo.png";
+import githublogo from "../../../assets/github-logo.png";
 import { Button, IconButton } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
@@ -26,6 +28,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         defaultValues: {
             email: "",
             password: "",
+            rememberMe: false,
         },
     });
 
@@ -34,7 +37,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     };
 
     return (
-        <div className="bg-white w-full max-w-[560px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
             <div className="flex justify-center mb-8">
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
             </div>
@@ -94,17 +97,31 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
                     <div className="flex items-center justify-between py-2">
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="remember" />
+                            <FormField
+                                control={form.control}
+                                name="rememberMe"
+                                render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                id="rememberMe"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
                             <label
-                                htmlFor="remember"
-                                className="text-sm font-medium leading-none cursor-pointer"
+                                htmlFor="rememberMe"
+                                className="font-sans text-signature font-normal cursor-pointer"
                             >
                                 Запомнить меня
                             </label>
                         </div>
                         <Link
                             to={paths.auth.resetEmail.getHref(redirectTo)}
-                            className="text-sm text-blue-600 hover:underline"
+                            className="text-blue-600 hover:underline font-semibold font-sans text-signature"
                         >
                             Сбросить пароль
                         </Link>
@@ -114,7 +131,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         variant="dark"
                         size="fill48"
                         type="submit"
-                        className="text-lg font-semibold"
+                        className="w-full h-12 bg-[#030213] text-white"
                         disabled={login.isPending}
                     >
                         {login.isPending ? "Вход..." : "Вход"}
@@ -126,7 +143,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         className="text-lg font-semibold"
                         asChild
                     >
-                        <Link to={paths.auth.register.getHref(redirectTo)}>Регистрация</Link>
+                        <Link to={paths.auth.createAcc.getHref(redirectTo)}>Регистрация</Link>
                     </Button>
                 </form>
             </Form>
@@ -136,26 +153,35 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                     <span className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500">или войдите с помощью</span>
+                    <span className="bg-white px-2 text-gray-500 font-normal font-sans text-signature">
+                        или войдите с помощью
+                    </span>
                 </div>
             </div>
 
             <div className="flex justify-center space-x-8">
-                <button className="hover:opacity-80 transition-opacity flex items-center gap-2">
-                    <Icon name="itmo-id" width={120} height={36} />
-                </button>
-
-                <button className="hover:opacity-80 transition-opacity">
-                    <Icon name="yandex" size={32} className="size-8" alt="Yandex" />
-                </button>
-
-                <button className="hover:opacity-80 transition-opacity">
-                    <Icon name="github" size={32} className="size-8" alt="GitHub" />
-                </button>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <span className="font-bold text-lg tracking-wide">ITMO ID</span>
+                    </button>
+                </div>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <img src={yandexlogo} alt="Yandex" className="size-8" />
+                    </button>
+                </div>
+                <div className="flex justify-center w-32">
+                    <button className="hover:opacity-80 transition-opacity">
+                        <img src={githublogo} alt="GitHub" className="size-8" />
+                    </button>
+                </div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-left">
-                <Link to="#" className="text-blue-600 text-sm flex items-center gap-2">
+                <Link
+                    to="#"
+                    className="text-blue-600 font-semibold font-sans text-signature flex items-center gap-2"
+                >
                     <Icon name="help" size={16} />
                     Помощь и поддержка
                 </Link>

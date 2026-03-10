@@ -33,8 +33,12 @@ export const createAppRouter = (queryClient: QueryClient) =>
             lazy: () => import("./routes/landing").then(convert(queryClient)),
         },
         {
-            path: paths.auth.register.path,
-            lazy: () => import("./routes/auth/register").then(convert(queryClient)),
+            path: paths.auth.createAcc.path,
+            lazy: () => import("./routes/auth/create-acc").then(convert(queryClient)),
+        },
+        {
+            path: paths.auth.registerConfirm.path,
+            lazy: () => import("./routes/auth/register-confirm").then(convert(queryClient)),
         },
         {
             path: paths.auth.registerContacts.path,

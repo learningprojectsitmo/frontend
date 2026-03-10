@@ -1,10 +1,11 @@
-import type { Config } from "tailwindcss";
-
-const defaultTheme = require("tailwindcss/defaultTheme");
+/** @type {import('tailwindcss').Config} */
+import tailwindcssAnimate from "tailwindcss-animate";
+import typography from "@tailwindcss/typography";
 
 export default {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+    safelist: ["text-signature-small"],
     theme: {
         container: {
             center: true,
@@ -15,7 +16,33 @@ export default {
         },
         extend: {
             fontFamily: {
-                sans: ["Inter var", ...defaultTheme.fontFamily.sans],
+                sans: [
+                    "Inter",
+                    "system-ui",
+                    "-apple-system",
+                    "Segoe UI",
+                    "Roboto",
+                    "Helvetica Neue",
+                    "Arial",
+                    "sans-serif",
+                ],
+            },
+            // Кастомные размеры текста с именами из дизайна
+            fontSize: {
+                "heading-1": ["48px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+                "heading-2": ["36px"],
+                "heading-3": ["30px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+                "heading-4": ["24px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+                subheading: ["20px", { lineHeight: "1.4", letterSpacing: "0" }],
+                "body-large": ["18px", { lineHeight: "1.5", letterSpacing: "0" }],
+                body: ["16px", { lineHeight: "1.5", letterSpacing: "0" }],
+                "button-large": ["18px", { lineHeight: "1.5", letterSpacing: "0.02em" }],
+                button: ["16px", { lineHeight: "1.5", letterSpacing: "0.02em" }],
+                input: ["16px", { lineHeight: "1.5", letterSpacing: "0" }],
+                "input-message": ["14px", { lineHeight: "1.4", letterSpacing: "0" }],
+                signature: ["14px", { lineHeight: "1.4", letterSpacing: "0" }],
+                "signature-small": ["12px", { lineHeight: "1.4", letterSpacing: "0" }],
+                link: ["16px", { lineHeight: "1.5", letterSpacing: "0" }],
             },
             colors: {
                 border: "hsl(var(--border))",
@@ -52,11 +79,11 @@ export default {
                     foreground: "hsl(var(--card-foreground))",
                 },
                 chart: {
-                    "1": "hsl(var(--chart-1))",
-                    "2": "hsl(var(--chart-2))",
-                    "3": "hsl(var(--chart-3))",
-                    "4": "hsl(var(--chart-4))",
-                    "5": "hsl(var(--chart-5))",
+                    1: "hsl(var(--chart-1))",
+                    2: "hsl(var(--chart-2))",
+                    3: "hsl(var(--chart-3))",
+                    4: "hsl(var(--chart-4))",
+                    5: "hsl(var(--chart-5))",
                 },
             },
             borderRadius: {
@@ -88,5 +115,5 @@ export default {
             },
         },
     },
-    plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
-} satisfies Config;
+    plugins: [tailwindcssAnimate, typography],
+};

@@ -5,10 +5,15 @@ export const paths = {
     },
 
     auth: {
-        register: {
-            path: "/auth/register",
+        createAcc: {
+            path: "/auth/createacc",
             getHref: (redirectTo?: string | null | undefined) =>
-                `/auth/register${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+                `/auth/createacc${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
+        registerConfirm: {
+            path: "/auth/registerconfirm",
+            getHref: (redirectTo?: string | null | undefined) =>
+                `/auth/registerconfirm${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
         registerContacts: {
             path: "/auth/registercontacts",

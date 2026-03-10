@@ -1,8 +1,7 @@
-import { useNavigate, useSearchParams } from "react-router";
-
 import { AuthLayout } from "@/components/layouts/auth-layout";
 import { paths } from "@/config/paths";
-import { LoginForm } from "@/features/auth/components/login-form";
+import { RegistrationContactsForm } from "@/features/auth/components/register-contacts-form";
+import { useNavigate, useSearchParams } from "react-router";
 
 const RegisterContactsRoute = () => {
     const navigate = useNavigate();
@@ -11,9 +10,9 @@ const RegisterContactsRoute = () => {
 
     return (
         <AuthLayout title="Создание нового аккаунта">
-            <LoginForm
+            <RegistrationContactsForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {
+                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spases.getHref()}`, {
                         replace: true,
                     });
                 }}
