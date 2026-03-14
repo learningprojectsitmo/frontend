@@ -1,8 +1,9 @@
 import { ContentLayout } from "@/components/layouts";
 import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tag } from "@/components/ui/tag";
 
-const spaseRoute = () => {
+const spaceRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
     const spaces = [
         {
@@ -39,8 +40,7 @@ const spaseRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button>
-                        <Plus size={18} />
+                    <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
                         Создать проект
                     </Button>
                 </div>
@@ -58,9 +58,7 @@ const spaseRoute = () => {
                                     <div className={`${space.color} rounded-lg p-3 text-white`}>
                                         <BookOpen size={24} />
                                     </div>
-                                    <span className="border bg-gray-50 px-2 py-1 text-xs font-medium text-gray-500 rounded">
-                                        {space.category}
-                                    </span>
+                                    <Tag variant="default">{space.category}</Tag>
                                 </div>
 
                                 <h3 className="mb-2 text-lg font-bold">{space.title}</h3>
@@ -110,9 +108,7 @@ const spaseRoute = () => {
                                 </p>
                             </div>
                         </div>
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-                            В РАБОТЕ
-                        </span>
+                        <Tag variant="info">В РАБОТЕ</Tag>
                     </div>
                 </section>
             </div>
@@ -120,4 +116,4 @@ const spaseRoute = () => {
     );
 };
 
-export default spaseRoute;
+export default spaceRoute;

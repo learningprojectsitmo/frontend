@@ -21,7 +21,7 @@ export const AuthLayout = ({ children, title }: LayoutProps) => {
 
     useEffect(() => {
         if (user.data) {
-            navigate(redirectTo ? redirectTo : paths.app.spases.getHref(), {
+            navigate(redirectTo ? redirectTo : paths.app.spaces.getHref(), {
                 replace: true,
             });
         }

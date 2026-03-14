@@ -5,20 +5,34 @@ export const paths = {
     },
 
     auth: {
-        register: {
-            path: "/auth/register",
+        createAcc: {
+            path: "/auth/createacc",
             getHref: (redirectTo?: string | null | undefined) =>
-                `/auth/register${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+                `/auth/createacc${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
+        registerConfirm: {
+            path: "/auth/registerconfirm",
+            getHref: (redirectTo?: string | null | undefined) =>
+                `/auth/registerconfirm${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
+        registerContacts: {
+            path: "/auth/registercontacts",
+            getHref: (redirectTo?: string | null | undefined) =>
+                `/auth/registercontacts${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
         login: {
             path: "/auth/login",
             getHref: (redirectTo?: string | null | undefined) =>
                 `/auth/login${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
-        reset: {
-            path: "/auth/reset",
+        resetEmail: {
+            path: "/auth/resetemail",
             getHref: (redirectTo?: string | null | undefined) =>
-                `/auth/reset${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+                `/auth/resetemail${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
+        resetPassword: {
+            path: "/auth/resetpassword",
+            getHref: () => "/auth/resetpassword",
         },
     },
 
@@ -27,7 +41,7 @@ export const paths = {
             path: "/app",
             getHref: () => "/app",
         },
-        spases: {
+        spaces: {
             path: "",
             getHref: () => "/app",
         },

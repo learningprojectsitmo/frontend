@@ -19,8 +19,6 @@ export type User = Entity<{
     email: string;
 }>;
 
-export type AuthResponse = {
+export type LoginResponse = {
     access_token: string;
-    jwt: string;
-    user: User;
 };
