@@ -57,6 +57,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
             lazy: () => import("./routes/auth/reset-email").then(convert(queryClient)),
         },
         {
+            path: "*",
+            lazy: () => import("./routes/not-found").then(convert(queryClient)),
+        },
+        {
             path: paths.app.root.path,
             element: (
                 <ProtectedRoute>
@@ -69,11 +73,15 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     path: paths.app.spaces.path,
                     lazy: () => import("./routes/app/spaces").then(convert(queryClient)),
                 },
+                {
+                    path: paths.app.space.path,
+                    lazy: () => import("./routes/app/space").then(convert(queryClient)),
+                },
+                {
+                    path: paths.app.kanban.path,
+                    lazy: () => import("./routes/app/kanban").then(convert(queryClient)),
+                },
             ],
-        },
-        {
-            path: "*",
-            lazy: () => import("./routes/not-found").then(convert(queryClient)),
         },
     ]);
 

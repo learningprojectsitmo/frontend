@@ -8,19 +8,14 @@ COPY package*.json ./
 COPY tsconfig*.json ./
 COPY vite.config.ts ./
 
+# Install dependencies
+RUN npm install
+
 # Copy source code
 COPY . .
 
-# Install dependencies
-RUN npm install
-# Build the application for production
-RUN npm run build
+# Expose Vite dev server port
+EXPOSE 5173
 
-# Install serve to run the built application
-RUN npm install -g serve
-
-# Expose port
-EXPOSE 80
-
-# Start the production server
-CMD ["serve", "-s", "dist", "-l", "80"]
+# Start Vite dev server with hot reload
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
