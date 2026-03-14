@@ -22,3 +22,62 @@ export type User = Entity<{
 export type LoginResponse = {
     access_token: string;
 };
+
+export interface ApiUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    email?: string;
+    role?: {
+        id: number;
+        name: string;
+    };
+}
+
+export type ApiTaskStatus = 'not_started' | 'in_progress' | 'review' | 'done';
+export type ApiTaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface ApiTask {
+    id: number;
+    title: string;
+    description?: string;
+    status: ApiTaskStatus;
+    priority: ApiTaskPriority;
+    order: number;
+    project_id: number;
+    created_by_id: number;
+    assignees: ApiUser[];
+    created_by?: ApiUser;
+    due_date?: string;
+    tags?: string[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ApiColumn {
+    id: number;
+    project_id: number;
+    name: string;
+    color: string;
+    order: number;
+    task_status: ApiTaskStatus;
+    allowed_roles: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ApiColumnWithTasks extends ApiColumn {
+    tasks: ApiTask[];
+    task_count: number;
+}
+
+export interface ApiTaskHistory {
+    id: number;
+    task_id: number;
+    changed_by: ApiUser;
+    old_status?: ApiTaskStatus;
+    new_status?: ApiTaskStatus;
+    change_type: string;
+    created_at: string;
+}
