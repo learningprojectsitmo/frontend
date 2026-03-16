@@ -66,7 +66,6 @@ const RolesSettingsPage = () => {
 
     const handleSave = () => {
         // Здесь будет API вызов для сохранения
-        console.log("Saving permissions for role:", selectedRoleId, permissions);
         setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
         setHasChanges(false);
         alert("Изменения сохранены");
