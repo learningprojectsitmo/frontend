@@ -5,7 +5,7 @@ import { SpacesCard } from "@/components/ui/card/spaces-card.tsx";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState } from "react";
-import type { IconName } from "@/components/ui/icons";
+import { type IconName } from "@/components/ui/icons";
 
 const SpaceRoute = () => {
     const [activeTab, setActiveTab] = useState("all");

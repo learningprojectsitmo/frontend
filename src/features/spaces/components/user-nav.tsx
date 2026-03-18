@@ -9,8 +9,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
+import { paths } from "@/config/paths.ts";
+import { useNavigate } from "react-router";
 
 export function UserNav() {
+    const navigate = useNavigate();
+
     return (
         <div className="flex items-center gap-4">
             {/* Выпадающее меню профиля */}
@@ -39,9 +43,16 @@ export function UserNav() {
                             </span>
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2">
-                            <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
-                            <span className="text-[13px] font-sans font-medium">Настройки</span>
+                        <DropdownMenuItem
+                            className="cursor-pointer py-2.5 px-3 focus:bg-gray-50"
+                            onClick={() => navigate(paths.app.settings.roles.getHref())}
+                        >
+                            <Icon
+                                name="settings"
+                                size={16}
+                                className="mr-3 h-5 w-5 text-gray-500"
+                            />
+                            <span className="text-[15px] font-medium">Настройки</span>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-1.5">
