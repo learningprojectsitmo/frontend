@@ -217,7 +217,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                             </button>
                         )}
                     </div>
-                </div>            
+                </div>
                 {showSuggestions && (
                     <ul className="flex flex-col pt-9 max-h-64 overflow-y-auto absolute left-0 right-0 mt-1 bg-gray-50 border border-gray-300 rounded-[12px] shadow-lg">
                         {filteredSuggestions.map((suggestion, index) => (

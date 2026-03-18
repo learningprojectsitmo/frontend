@@ -14,12 +14,13 @@ export function UserNav() {
     return (
         <div className="flex items-center gap-4">
             {/* Выпадающее меню профиля */}
-            <DropdownMenu modal={false}>{/* modal=false чтобы меню не блокировало фокус при открытии */}
+            <DropdownMenu modal={false}>
+                {/* modal=false чтобы меню не блокировало фокус при открытии */}
                 <DropdownMenuTrigger asChild>
-                    <IconButton 
-                    className="outline-none w-9 h-9 flex items-center justify-center cursor-pointer" 
-                    icon={<Icon name="profile" size={20} />}
-                    variant="ghost"
+                    <IconButton
+                        className="outline-none w-9 h-9 flex items-center justify-center cursor-pointer"
+                        icon={<Icon name="profile" size={20} />}
+                        variant="ghost"
                     />
                 </DropdownMenuTrigger>
 
@@ -28,7 +29,7 @@ export function UserNav() {
                         Мой аккаунт
                     </DropdownMenuLabel>
 
-                    <DropdownMenuSeparator className="bg-gray-200 my-0"/>
+                    <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
                     <DropdownMenuGroup className="p-[6px] gap-1 flex flex-col">
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2">
@@ -39,21 +40,19 @@ export function UserNav() {
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2">
-                            <Icon
-                                name="settings"
-                                size={16}
-                                className="h-5 w-5 text-gray-500"
-                            />
+                            <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
                             <span className="text-[13px] font-sans font-medium">Настройки</span>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-1.5">
                             <Icon name="help" size={16} className=" h-5 w-5 text-gray-500" />
-                            <span className="text-[13px] font-sans font-medium">Помощь и поддержка</span>
+                            <span className="text-[13px] font-sans font-medium">
+                                Помощь и поддержка
+                            </span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
 
-                    <DropdownMenuSeparator className="bg-gray-200 my-0"/>
+                    <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
                     <DropdownMenuGroup>
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 text-gray-900 focus:bg-gray-50 focus:text-gray-900 gap-2 h-[40px]">
