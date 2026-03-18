@@ -8,7 +8,8 @@ export type TagVariant =
     | "warning"
     | "secondary"
     | "error"
-    | "disabled";
+    | "disabled"
+    | "type";
 
 export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
     variant?: TagVariant;
@@ -24,6 +25,7 @@ const variantStyles: Record<TagVariant, string> = {
     secondary: "bg-[--color-gray-500] text-white",
     error: "bg-[--color-red-error] text-white",
     disabled: "bg-[--color-gray-300] text-white",
+    type: "bg-white border border-[--color-black-10] text-[--grey-4] rounded-[8px]",
 };
 
 export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
@@ -34,8 +36,7 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
                 className={cn(
                     "inline-flex items-center justify-center",
                     "px-2 py-0.5",
-                    "rounded-lg",
-                    "text-sm font-medium",
+                    "rounded-lg text-sm font-medium",
                     "whitespace-nowrap",
                     variantStyles[variant],
                     className,
