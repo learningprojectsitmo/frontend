@@ -13,12 +13,8 @@ import { useDebounce } from "../../utils/debounce";
 import { getSuggestions, useSpacesList, useNotificationsList } from "@/lib/spaces";
 
 export function SpaceLayout({ children }: { children?: React.ReactNode }) {
-    const { data: spacesData, isLoading: isLoadingSpaces, error: errorSpaces } = useSpacesList();
-    const {
-        data: notificationsData,
-        isLoading: isLoadingNotifications,
-        error: errorNotifications,
-    } = useNotificationsList();
+    const { data: spacesData } = useSpacesList();// isLoading: isLoadingSpaces, error: errorSpaces
+    const { data: notificationsData } = useNotificationsList(); // isLoading: isLoadingNotifications, error: errorNotifications,
 
     const categories = useMemo(() => {
         //if (!spacesData) return [];

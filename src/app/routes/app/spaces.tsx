@@ -14,12 +14,8 @@ const SpaceRoute = () => {
     const [activeTab, setActiveTab] = useState("all");
     const [activeView, setActiveView] = useState("grid");
 
-    const { data: dataSpaces, isLoading: isLoadingSpaces, error: errorSpaces } = useSpacesList();
-    const {
-        data: dataProjects,
-        isLoading: isLoadingProjects,
-        error: errorProjects,
-    } = useProjectsList();
+    const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
+    const { data: dataProjects } = useProjectsList();// isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
 
