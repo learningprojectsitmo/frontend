@@ -199,7 +199,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                                 placeholder={placeholder}
                                 disabled={disabled}
                                 className={cn(
-                                    "relative z-10 w-full bg-transparent border-none outline-none font-medium font-sans text-[14px] text-[#717182]",
+                                    "relative z-10 w-full bg-transparent border-none outline-none font-medium font-sans text-[14px] text-[#0A0A0A]",
                                     "placeholder:text-[--color-gray-400]",
                                 )}
                                 onKeyDown={handleKeyDown}

@@ -167,3 +167,10 @@ export function newUtil(...inputs: ClassValue[]) {
 - text-link: 16px , lineHeight:1.5 , letterSpacing:0
 
 это также можно посмотреть и настроить в tailwind.config.js
+
+---
+
+### Debounce
+
+import { useDebounce } from '../../utils/debounce';
+const debouncedSearch = useDebounce(value, delay); (delay = 500ms)
