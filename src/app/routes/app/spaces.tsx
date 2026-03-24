@@ -15,7 +15,7 @@ const SpaceRoute = () => {
     const [activeView, setActiveView] = useState("grid");
 
     const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
-    const { data: dataProjects } = useProjectsList();// isLoading: isLoadingProjects, error: errorProjects
+    const { data: dataProjects } = useProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
 

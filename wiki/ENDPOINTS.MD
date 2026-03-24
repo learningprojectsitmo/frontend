@@ -85,19 +85,19 @@ special_token: string `нужен какой нибудь ключ чтобы с
 - api.get("/app/spaces");
 
 export type Space = {
-  id: number;
-  title: string;
-  projectsCount: number;
-  membersCount: number;
-  color: string;
-  category: string;
-  description: string;
+id: number;
+title: string;
+projectsCount: number;
+membersCount: number;
+color: string;
+category: string;
+description: string;
 }
 
 export type SpacesListResponce = {
-  categories: {name: string}[],
-  spaces: Space[]
-  role: "root" | "admin" | "manager" | "member"
+categories: {name: string}[],
+spaces: Space[]
+role: "root" | "admin" | "manager" | "member"
 }
 
 # Search Bar suggestions
@@ -115,14 +115,14 @@ Responce: Notification[]
 export type NotificationType = "mention" | "request" | "join";
 
 export interface Notification {
-  id: number;
-  type: NotificationType;
-  name: string;
-  action: string;
-  project: string;
-  time: string;
-  avatar: string;
-  read: boolean;
+id: number;
+type: NotificationType;
+name: string;
+action: string;
+project: string;
+time: string;
+avatar: string;
+read: boolean;
 }
 
 # Projects
@@ -132,15 +132,15 @@ export interface Notification {
 Responce: Project[]
 
 export type Project = {
-  id: number;
-  tag: string;
-  tagVariant: "error" | "type" | "disabled" | "default" | "info" | "warning" | "success" | "secondary" | undefined
-  title: string;
-  description: string;
-  progressValue: number;
-  dateText: string;
-  tags: { text: string }[],
-  membersCount: number;
-  users: { name: string }[],
-  archived: boolean,
+id: number;
+tag: string;
+tagVariant: "error" | "type" | "disabled" | "default" | "info" | "warning" | "success" | "secondary" | undefined
+title: string;
+description: string;
+progressValue: number;
+dateText: string;
+tags: { text: string }[],
+membersCount: number;
+users: { name: string }[],
+archived: boolean,
 }
