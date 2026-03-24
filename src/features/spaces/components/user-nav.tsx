@@ -44,15 +44,11 @@ export function UserNav() {
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                            className="cursor-pointer py-2.5 px-3 focus:bg-gray-50"
+                            className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
                             onClick={() => navigate(paths.app.settings.roles.getHref())}
                         >
-                            <Icon
-                                name="settings"
-                                size={16}
-                                className="mr-3 h-5 w-5 text-gray-500"
-                            />
-                            <span className="text-[15px] font-medium">Настройки</span>
+                            <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
+                            <span className="text-[13px] font-sans font-medium">Настройки</span>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-1.5">

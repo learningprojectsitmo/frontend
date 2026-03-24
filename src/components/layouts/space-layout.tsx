@@ -8,23 +8,78 @@ import { NotificationsNav } from "@/features/spaces/components/notifications";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
 import { GraduationCapIcon } from "lucide-react";
 
+import { useEffect, useState, useMemo } from "react";
+import { useDebounce } from "../../utils/debounce";
+import { getSuggestions, useSpacesList, useNotificationsList } from "@/lib/spaces";
+
 export function SpaceLayout({ children }: { children?: React.ReactNode }) {
-    const categories = [
+    const { data: spacesData, isLoading: isLoadingSpaces, error: errorSpaces } = useSpacesList();
+    const {
+        data: notificationsData,
+        isLoading: isLoadingNotifications,
+        error: errorNotifications,
+    } = useNotificationsList();
+
+    const categories = useMemo(() => {
+        //if (!spacesData) return [];
+        return spacesData?.categories.map((cat) => ({
+            name: cat.name,
+            spaces: spacesData.spaces.filter((space) => space.category === cat.name),
+        }));
+    }, [spacesData]);
+
+    const categoriesExample = [
         {
             name: "Дисциплины",
             spaces: [
-                { name: "Управление проектами", count: 8, color: "bg-blue-500" },
-                { name: "Проектная деятельность", count: 5, color: "bg-indigo-500" },
-                { name: "Введение в профдеятельность", count: 7, color: "bg-orange-500" },
-                { name: "Управление процессами", count: 12, color: "bg-red-500" },
-                { name: "Основы управления", count: 9, color: "bg-pink-500" },
+                { id: 1, title: "Управление проектами", projectsCount: 8, color: "bg-blue-500" },
+                {
+                    id: 2,
+                    title: "Проектная деятельность",
+                    projectsCount: 5,
+                    color: "bg-indigo-500",
+                },
+                {
+                    id: 3,
+                    title: "Введение в профдеятельность",
+                    projectsCount: 7,
+                    color: "bg-orange-500",
+                },
+                { id: 4, title: "Управление процессами", projectsCount: 12, color: "bg-red-500" },
+                { id: 5, title: "Основы управления", projectsCount: 9, color: "bg-pink-500" },
             ],
         },
         {
             name: "Общеуниверситетские проекты",
-            spaces: [{ name: "Центр студенческих инициатив", count: 512, color: "bg-green-500" }],
+            spaces: [
+                {
+                    id: 6,
+                    title: "Центр студенческих инициатив",
+                    projectsCount: 512,
+                    color: "bg-green-500",
+                },
+            ],
         },
     ];
+
+    const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search);
+    const [suggestions, setSuggestions] = useState<string[]>([
+        "Mobile App",
+        "Mobile App Learning",
+        "Mobile App X",
+        "Web Development",
+        "UI/UX Design",
+    ]);
+
+    useEffect(() => {
+        const loadSuggestions = async () => {
+            const suggestions = await getSuggestions(debouncedSearch);
+            setSuggestions(suggestions);
+        };
+
+        loadSuggestions();
+    }, [debouncedSearch]);
 
     return (
         <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
@@ -37,19 +92,15 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                     <div className="relative w-full md:w-96 lg:w-[415px]">
                         <SearchBar
                             placeholder="Ищите проекты, пространства или участников..."
-                            suggestions={[
-                                "Mobile App",
-                                "Mobile App Learning",
-                                "Mobile App X",
-                                "Web Development",
-                                "UI/UX Design",
-                            ]}
+                            onChange={setSearch}
+                            suggestions={suggestions}
+                            value={search}
                         />
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <NotificationsNav />
+                    <NotificationsNav notifications={notificationsData} />
                     <UserNav />
                 </div>
             </header>
@@ -81,7 +132,7 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                     {/* список пространств */}
                     <div className="flex flex-col grow min-h-0 overflow-y-auto overflow-x-hidden">
                         <div className="p-4 flex flex-col gap-6 bg-gray-50 flex-1 ">
-                            {categories.map((category) => (
+                            {(categories || categoriesExample).map((category) => (
                                 <div>
                                     <h3 className=" text-signature-small font-semibold font-sans text-gray-400 uppercase tracking-wider mb-4">
                                         {category.name}
@@ -89,7 +140,7 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                                     <nav className="space-y-1">
                                         {category.spaces.map((space) => (
                                             <button
-                                                key={space.name}
+                                                key={space.title}
                                                 className="w-full flex flex-col items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-white hover:border-gray-200 hover:border-1 border border-gray-50 rounded-[14px] transition duration-150"
                                             >
                                                 <div className="flex items-center gap-3 ">
@@ -100,10 +151,10 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[13px] font-sans font-semibold w-[156px] truncate text-left">
-                                                            {space.name}
+                                                            {space.title}
                                                         </span>
                                                         <span className="text-[10px] text-gray-400 font-sans font-medium truncate text-left">
-                                                            {space.count} проектов
+                                                            {space.projectsCount} проектов
                                                         </span>
                                                     </div>
                                                 </div>
@@ -116,18 +167,22 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                     </div>
 
                     {/* footer */}
-                    <div className="flex h-[69px] border-t border-gray-200 flex-none">
-                        <div className="m-4 shrink-0 flex-none">
-                            <Button
-                                variant="outlineSoft"
-                                size="fixed36"
-                                icon={<Icon name="plus" size={16} />}
-                                className="text-[13px] font-semibold font-sans justify-start"
-                            >
-                                Создать пространство
-                            </Button>
+                    {spacesData?.role !== "manager" && spacesData?.role !== "member" ? (
+                        <div className="flex h-[69px] border-t border-gray-200 flex-none">
+                            <div className="m-4 shrink-0 flex-none">
+                                <Button
+                                    variant="outlineSoft"
+                                    size="fixed36"
+                                    icon={<Icon name="plus" size={16} />}
+                                    className="text-[13px] font-semibold font-sans justify-start"
+                                >
+                                    Создать пространство
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        ""
+                    )}
                 </aside>
 
                 <main className="flex-1 overflow-y-auto ml-64">{children || <Outlet />}</main>

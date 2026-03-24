@@ -231,9 +231,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const user = useUser();
     const location = useLocation();
 
-    if (!user.data) {
-        return <Navigate to={paths.auth.login.getHref(location.pathname)} replace />; // если пользователь не авторизован, перенаправляем на страницу логина, при этом сохраняем текущий путь в параметре redirect для последующего возвращения после успешного входа
-    }
+    //if (!user.data) {
+    //    return <Navigate to={paths.auth.login.getHref(location.pathname)} replace />; // если пользователь не авторизован, перенаправляем на страницу логина, при этом сохраняем текущий путь в параметре redirect для последующего возвращения после успешного входа
+    //}
 
     return children;
 };

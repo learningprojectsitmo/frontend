@@ -4,34 +4,91 @@ import { Button } from "@/components/ui/button";
 import { SpacesCard } from "@/components/ui/card/spaces-card.tsx";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { type IconName } from "@/components/ui/icons";
+import { useSpacesList } from "@/lib/spaces";
+import { useProjectsList } from "@/lib/projects";
+import { Icon } from "@/components/ui/icons";
 
 const SpaceRoute = () => {
     const [activeTab, setActiveTab] = useState("all");
     const [activeView, setActiveView] = useState("grid");
 
+    const { data: dataSpaces, isLoading: isLoadingSpaces, error: errorSpaces } = useSpacesList();
+    const {
+        data: dataProjects,
+        isLoading: isLoadingProjects,
+        error: errorProjects,
+    } = useProjectsList();
+
+    const [visibleCount, setVisibleCount] = useState(6);
+
+    const visibleSpaces = useMemo(() => {
+        return dataSpaces?.spaces.slice(0, visibleCount);
+    }, [dataSpaces, visibleCount]);
+
+    //const hasMore = visibleCount < (dataSpaces?.spaces || []).length;
+    const hasMore = true;
+    const handleLoadMore = () => {
+        setVisibleCount((prev) => prev + 6);
+    };
+
     const spaces = [
         {
+            id: 1,
             title: "Управление проектами",
-            projects: 8,
-            members: 24,
+            projectsCount: 8,
+            membersCount: 24,
             color: "bg-blue-500",
             category: "Дисциплина",
+            description: "Проекты по планированию, организации и контролю проектной работы",
         },
         {
+            id: 2,
             title: "Проектная деятельность",
-            projects: 5,
-            members: 12,
+            projectsCount: 5,
+            membersCount: 12,
             color: "bg-indigo-500",
             category: "Дисциплина",
+            description:
+                "Практические проекты, направленные на командную работу и применение знаний",
         },
         {
+            id: 3,
             title: "Управление процессами",
-            projects: 12,
-            members: 128,
+            projectsCount: 12,
+            membersCount: 128,
             color: "bg-red-500",
             category: "Дисциплина",
+            description: "Проекты для знакомства с профессией и основами профессиональной работы",
+        },
+        {
+            id: 1,
+            title: "Управление проектами",
+            projectsCount: 8,
+            membersCount: 24,
+            color: "bg-blue-500",
+            category: "Дисциплина",
+            description: "Проекты по планированию, организации и контролю проектной работы",
+        },
+        {
+            id: 2,
+            title: "Проектная деятельность",
+            projectsCount: 5,
+            membersCount: 12,
+            color: "bg-indigo-500",
+            category: "Дисциплина",
+            description:
+                "Практические проекты, направленные на командную работу и применение знаний",
+        },
+        {
+            id: 3,
+            title: "Управление процессами",
+            projectsCount: 12,
+            membersCount: 128,
+            color: "bg-red-500",
+            category: "Дисциплина",
+            description: "Проекты для знакомства с профессией и основами профессиональной работы",
         },
     ];
 
@@ -104,26 +161,41 @@ const SpaceRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
-                        Создать проект
-                    </Button>
+                    {dataSpaces?.role !== "member" ? (
+                        <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
+                            Создать проект
+                        </Button>
+                    ) : (
+                        ""
+                    )}
                 </div>
 
                 <section className="mb-12">
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {spaces.map((space, idx) => (
+                        {(visibleSpaces || spaces).map((space) => (
                             <SpacesCard
-                                key={idx}
+                                key={space.id}
                                 iconName="discipline"
                                 iconColor={space.color}
                                 tag={space.category}
                                 title={space.title}
-                                description="Проекты по планированию, организации и контролю проектной работы..."
-                                firstMetricText={`${space.projects} проектов`}
-                                secondMetricText={`${space.members} участника`}
+                                description={space.description}
+                                firstMetricText={`${space.projectsCount} проектов`}
+                                secondMetricText={`${space.membersCount} участника`}
                             />
                         ))}
+                    </div>
+                    <div className="w-full flex justify-center">
+                        {hasMore && (
+                            <button
+                                onClick={handleLoadMore}
+                                className="mt-4 px-4 py-2 font-sans text-[13px] font-semibold text-blue-600 rounded flex align-items gap-1"
+                            >
+                                <Icon name="arrow-down" width={16} height={16} />
+                                Загрузить ещё
+                            </button>
+                        )}
                     </div>
                 </section>
 
@@ -174,7 +246,7 @@ const SpaceRoute = () => {
                     </div>
 
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {projects.map((project) => (
+                        {(dataProjects || projects).map((project) => (
                             <ProjectCard
                                 key={project.id}
                                 tag={project.tag}

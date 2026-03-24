@@ -11,23 +11,10 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/utils/cn";
 import { LineButton } from "@/components/ui/button";
-
-// Типы уведомлений
-type NotificationType = "mention" | "request" | "join";
-
-interface Notification {
-    id: number;
-    type: NotificationType;
-    name: string;
-    action: string;
-    project: string;
-    time: string;
-    avatar: string;
-    read: boolean;
-}
+import { type Notification } from "@/types/api";
 
 // Моковые данные
-const notifications: Notification[] = [
+const notificationsMock: Notification[] = [
     {
         id: 1,
         type: "mention",
@@ -160,27 +147,29 @@ const tabs = [
 
 type TabKey = (typeof tabs)[number]["key"];
 
-export function NotificationsNav() {
+export function NotificationsNav({ notifications }: { notifications: Notification[] | undefined }) {
     const [activeTab, setActiveTab] = React.useState<TabKey>("all");
+
+    const data = notifications || notificationsMock; //пока что будут mock данные
 
     // Подсчёт количества для каждого таба (для отображения рядом с названием)
     const counts = React.useMemo(() => {
-        const all = notifications.length;
-        const mentions = notifications.filter((n) => n.type === "mention").length;
-        const requests = notifications.filter((n) => n.type === "request").length;
+        const all = data.length;
+        const mentions = data.filter((n) => n.type === "mention").length;
+        const requests = data.filter((n) => n.type === "request").length;
         // Для archive пока всегда 0, так как тип archive отсутствует
         const archive = 0;
         return { all, mentions, requests, archive };
-    }, []);
+    }, [data]);
 
     // Фильтрация уведомлений по активному табу
     const filteredNotifications = React.useMemo(() => {
-        if (activeTab === "all") return notifications;
-        if (activeTab === "mentions") return notifications.filter((n) => n.type === "mention");
-        if (activeTab === "requests") return notifications.filter((n) => n.type === "request");
+        if (activeTab === "all") return data;
+        if (activeTab === "mentions") return data.filter((n) => n.type === "mention");
+        if (activeTab === "requests") return data.filter((n) => n.type === "request");
         if (activeTab === "archive") return []; // В архиве пока пусто
         return [];
-    }, [activeTab]);
+    }, [data, activeTab]);
 
     // Отметить все как прочитанные
     const handleMarkAllAsRead = () => {
@@ -193,7 +182,7 @@ export function NotificationsNav() {
     //};
 
     // Количество непрочитанных для бейджа
-    const unreadCount = notifications.filter((n) => !n.read).length;
+    const unreadCount = data.filter((n) => !n.read).length;
 
     return (
         <DropdownMenu modal={false}>
