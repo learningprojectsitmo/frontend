@@ -182,7 +182,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
 
                         <div className="relative flex-1 h-full flex items-center ml-2.5">
                             {showGhostText && (
-                                <div className="absolute inset-0 flex items-center pointer-events-none text-[14px] text-sans whitespace-pre">
+                                <div className="absolute inset-0 flex items-center pointer-events-none text-[14px] text-sans whitespace-nowrap overflow-hidden">
                                     <span className="opacity-0">{internalValue}</span>
                                     <span className="text-[--color-gray-400]">
                                         {ghostTextRemainder}

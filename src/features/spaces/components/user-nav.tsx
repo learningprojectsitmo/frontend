@@ -11,9 +11,18 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths.ts";
 import { useNavigate } from "react-router";
+import { useLogout } from "@/lib/auth";
 
 export function UserNav() {
     const navigate = useNavigate();
+    const logout = useLogout();
+    const handleLogout = () => {
+        logout.mutate(undefined, {
+            onSuccess: () => {
+                navigate("/auth/login");
+            },
+        });
+    };
 
     return (
         <div className="flex items-center gap-4">
@@ -62,13 +71,18 @@ export function UserNav() {
                     <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
                     <DropdownMenuGroup>
-                        <DropdownMenuItem className="cursor-pointer px-2 py-1 text-gray-900 focus:bg-gray-50 focus:text-gray-900 gap-2 h-[40px]">
-                            <Icon
-                                name="sign-out"
-                                size={16}
-                                className="h-5 ml-1 w-5 text-gray-500"
-                            />
-                            <span className="text-[13px] font-sans font-medium">Выйти</span>
+                        <DropdownMenuItem>
+                            <button
+                                className="cursor-pointer px-2 py-1 text-gray-900 focus:bg-gray-50 focus:text-gray-900 gap-2 h-[40px]"
+                                onClick={handleLogout}
+                            >
+                                <Icon
+                                    name="sign-out"
+                                    size={16}
+                                    className="h-5 ml-1 w-5 text-gray-500"
+                                />
+                                <span className="text-[13px] font-sans font-medium">Выйти</span>
+                            </button>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>

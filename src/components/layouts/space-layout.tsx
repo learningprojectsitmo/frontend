@@ -9,12 +9,18 @@ import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
 import { GraduationCapIcon } from "lucide-react";
 
 import { useEffect, useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { useSearchParams } from "react-router";
 import { useDebounce } from "../../utils/debounce";
 import { getSuggestions, useSpacesList, useNotificationsList } from "@/lib/spaces";
+import { Link } from "react-router";
 
 export function SpaceLayout({ children }: { children?: React.ReactNode }) {
     const { data: spacesData } = useSpacesList(); // isLoading: isLoadingSpaces, error: errorSpaces
     const { data: notificationsData } = useNotificationsList(); // isLoading: isLoadingNotifications, error: errorNotifications,
+
+    const [searchParams] = useSearchParams();
+    const urlId = searchParams.get("id");
 
     const categories = useMemo(() => {
         //if (!spacesData) return [];
@@ -73,8 +79,9 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
             const suggestions = await getSuggestions(debouncedSearch);
             setSuggestions(suggestions);
         };
-
-        loadSuggestions();
+        if (debouncedSearch) {
+            loadSuggestions();
+        }
     }, [debouncedSearch]);
 
     return (
@@ -135,26 +142,33 @@ export function SpaceLayout({ children }: { children?: React.ReactNode }) {
                                     </h3>
                                     <nav className="space-y-1">
                                         {category.spaces.map((space) => (
-                                            <button
-                                                key={space.title}
-                                                className="w-full flex flex-col items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-white hover:border-gray-200 hover:border-1 border border-gray-50 rounded-[14px] transition duration-150"
-                                            >
-                                                <div className="flex items-center gap-3 ">
-                                                    <div
-                                                        className={`${space.color} rounded-lg  text-white h-[32px] w-[32px] flex items-center justify-center`}
-                                                    >
-                                                        <GraduationCapIcon size={16} />
+                                            <Link to={paths.app.space.getHref(space.id)}>
+                                                <button
+                                                    key={space.title}
+                                                    className={cn(
+                                                        "w-full flex flex-col items-center justify-between px-4 py-2 text-sm rounded-[14px] transition duration-150 mb-1",
+                                                        urlId === String(space.id)
+                                                            ? "bg-white border-gray-200 border-1 border"
+                                                            : "text-gray-700 hover:bg-white hover:border-gray-200 hover:border-1 border border-gray-50",
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-3 ">
+                                                        <div
+                                                            className={`${space.color} rounded-lg  text-white h-[32px] w-[32px] flex items-center justify-center`}
+                                                        >
+                                                            <GraduationCapIcon size={16} />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[13px] font-sans font-semibold w-[156px] truncate text-left">
+                                                                {space.title}
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-400 font-sans font-medium truncate text-left">
+                                                                {space.projectsCount} проектов
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[13px] font-sans font-semibold w-[156px] truncate text-left">
-                                                            {space.title}
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-400 font-sans font-medium truncate text-left">
-                                                            {space.projectsCount} проектов
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </button>
+                                                </button>
+                                            </Link>
                                         ))}
                                     </nav>
                                 </div>

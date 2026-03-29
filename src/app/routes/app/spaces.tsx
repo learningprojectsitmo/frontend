@@ -7,15 +7,17 @@ import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
 import { type IconName } from "@/components/ui/icons";
 import { useSpacesList } from "@/lib/spaces";
-import { useProjectsList } from "@/lib/projects";
+import { useRecentProjectsList } from "@/lib/projects";
 import { Icon } from "@/components/ui/icons";
+import { Link } from "react-router";
+import { paths } from "@/config/paths";
 
-const SpaceRoute = () => {
+const SpacesRoute = () => {
     const [activeTab, setActiveTab] = useState("all");
     const [activeView, setActiveView] = useState("grid");
 
     const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
-    const { data: dataProjects } = useProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
+    const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
 
@@ -59,7 +61,7 @@ const SpaceRoute = () => {
             description: "Проекты для знакомства с профессией и основами профессиональной работы",
         },
         {
-            id: 1,
+            id: 4,
             title: "Управление проектами",
             projectsCount: 8,
             membersCount: 24,
@@ -68,7 +70,7 @@ const SpaceRoute = () => {
             description: "Проекты по планированию, организации и контролю проектной работы",
         },
         {
-            id: 2,
+            id: 5,
             title: "Проектная деятельность",
             projectsCount: 5,
             membersCount: 12,
@@ -78,7 +80,7 @@ const SpaceRoute = () => {
                 "Практические проекты, направленные на командную работу и применение знаний",
         },
         {
-            id: 3,
+            id: 6,
             title: "Управление процессами",
             projectsCount: 12,
             membersCount: 128,
@@ -158,7 +160,12 @@ const SpaceRoute = () => {
                         </p>
                     </div>
                     {dataSpaces?.role !== "member" ? (
-                        <Button variant="dark" size="hug36" icon={<Plus size={18} />}>
+                        <Button
+                            variant="dark"
+                            size="hug36"
+                            icon={<Plus size={18} />}
+                            className="font-sans text-[13px] font-semibold gap-2"
+                        >
                             Создать проект
                         </Button>
                     ) : (
@@ -170,16 +177,18 @@ const SpaceRoute = () => {
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                         {(visibleSpaces || spaces).map((space) => (
-                            <SpacesCard
-                                key={space.id}
-                                iconName="discipline"
-                                iconColor={space.color}
-                                tag={space.category}
-                                title={space.title}
-                                description={space.description}
-                                firstMetricText={`${space.projectsCount} проектов`}
-                                secondMetricText={`${space.membersCount} участника`}
-                            />
+                            <Link to={paths.app.space.getHref(space.id)}>
+                                <SpacesCard
+                                    key={space.id}
+                                    iconName="discipline"
+                                    iconColor={space.color}
+                                    tag={space.category}
+                                    title={space.title}
+                                    description={space.description}
+                                    firstMetricText={`${space.projectsCount} проектов`}
+                                    secondMetricText={`${space.membersCount} участника`}
+                                />
+                            </Link>
                         ))}
                     </div>
                     <div className="w-full flex justify-center">
@@ -242,21 +251,23 @@ const SpaceRoute = () => {
                     </div>
 
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {(dataProjects || projects).map((project) => (
-                            <ProjectCard
-                                key={project.id}
-                                tag={project.tag}
-                                tagVariant={project.tagVariant}
-                                title={project.title}
-                                description={project.description}
-                                progressValue={project.progressValue}
-                                dateText={project.dateText}
-                                tags={project.tags}
-                                membersCount={project.membersCount}
-                                users={project.users}
-                                archived={project.archived}
-                                onKebabClick={() => alert(`Menu opened for ${project.title}`)}
-                            />
+                        {(dataRecentProjects || projects).map((project) => (
+                            <Link to={paths.app.project.getHref(project.id)}>
+                                <ProjectCard
+                                    key={project.id}
+                                    tag={project.tag}
+                                    tagVariant={project.tagVariant}
+                                    title={project.title}
+                                    description={project.description}
+                                    progressValue={project.progressValue}
+                                    dateText={project.dateText}
+                                    tags={project.tags}
+                                    membersCount={project.membersCount}
+                                    users={project.users}
+                                    archived={project.archived}
+                                    onKebabClick={() => alert(`Menu opened for ${project.title}`)}
+                                />
+                            </Link>
                         ))}
                     </div>
                 </section>
@@ -265,4 +276,4 @@ const SpaceRoute = () => {
     );
 };
 
-export default SpaceRoute;
+export default SpacesRoute;
