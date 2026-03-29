@@ -1,5 +1,5 @@
 import { ContentLayout } from "@/components/layouts";
-import { Ellipsis, PencilLine } from "lucide-react";
+import { Dot, Ellipsis, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
@@ -426,16 +426,7 @@ const SpaceRoute = () => {
                             <div className="self-stretch flex flex-col justify-start items-start gap-5">
                                 <div className="self-stretch flex flex-col justify-start items-start">
                                     <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
-                                        Tasker — учебный проект по разработке веб-сервиса для
-                                        управления задачами и проектами. Сервис предназначен для
-                                        планирования задач, распределения ролей в команде, работы с
-                                        дедлайнами и отслеживания прогресса выполнения проекта.
-                                        <br />В рамках проекта прорабатываются основные этапы
-                                        создания веб-приложения: формирование требований,
-                                        проектирование пользовательских сценариев и интерфейсов,
-                                        разработка ключевого функционала и организация командной
-                                        работы. Tasker ориентирован на использование в
-                                        образовательной среде и поддержку учебных проектных команд.
+                                        {projectmockdata.descriptionExtended}
                                     </div>
                                 </div>
                                 <div className="self-stretch inline-flex justify-start items-start gap-1 flex-wrap content-start">
@@ -480,62 +471,33 @@ const SpaceRoute = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
-                                <div className="self-stretch inline-flex justify-start items-center gap-5">
-                                    <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                            Backend Developer
+                                {projectmockdata.roles.map((role) => (
+                                    <>
+                                        <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
+                                        <div className="self-stretch inline-flex justify-start items-center gap-5">
+                                            <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                    {role.title}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 px-1 py-2 flex justify-start items-center">
+                                                <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
+                                                    {role.tasks.map((task) => (
+                                                        <div className="flex items-center">
+                                                            <Dot />
+                                                            <span>{task}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                    {role.count}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                        <div className="flex-1 justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
-                                            Проектирование и реализация серверной логики платформы
-                                            <br />
-                                            Разработка и поддержка API для взаимодействия с
-                                            фронтендом
-                                            <br />
-                                            Работа с базой данных и бизнес-логикой проектов и
-                                            пользователей
-                                            <br />
-                                            Обеспечение безопасности и контроля доступа
-                                            <br />
-                                            Оптимизация производительности и стабильности системы
-                                        </div>
-                                    </div>
-                                    <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                            2
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
-                                <div className="self-stretch inline-flex justify-start items-center gap-5">
-                                    <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                            Frontend Developer
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                        <div className="flex-1 justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
-                                            Разработка пользовательского интерфейса платформы
-                                            <br />
-                                            Реализация пользовательских сценариев и взаимодействий
-                                            <br />
-                                            Интеграция интерфейса с серверной частью через API
-                                            <br />
-                                            Обеспечение адаптивности и корректного отображения
-                                            интерфейса
-                                            <br />
-                                            Совместная работа с дизайнером и тестировщиком над
-                                            улучшением UX
-                                        </div>
-                                    </div>
-                                    <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                            3
-                                        </div>
-                                    </div>
-                                </div>
+                                    </>
+                                ))}
                             </div>
                         </section>
 
