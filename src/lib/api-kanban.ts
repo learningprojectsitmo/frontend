@@ -13,9 +13,89 @@ interface PaginatedResponse<T> {
     total_pages: number;
 }
 
+// Тип для ответа /users
+interface UsersResponse {
+    items: Array<{
+        id: number;
+        email: string;
+        first_name: string;
+        last_name: string;
+        middle_name: string;
+        isu_number: number;
+        tg_nickname: string | null;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+}
+
+// Тип для создания колонки (преобразование snake_case в camelCase)
+interface CreateColumnPayload {
+    project_id: number;
+    name: string;
+    color: string;
+    wip_limit?: number;
+}
+
+// Тип для обновления колонки
+interface UpdateColumnPayload {
+    name?: string;
+    color?: string;
+    position?: number;
+    wip_limit?: number;
+}
+
+// Тип для создания задачи
+interface CreateTaskPayload {
+    title: string;
+    description?: string;
+    column_id: number;
+    priority?: string;
+    assignee_ids?: number[];
+    due_date?: string;
+    tags?: string[];
+}
+
+// Тип для обновления задачи
+interface UpdateTaskPayload {
+    title?: string;
+    description?: string;
+    priority?: string;
+    assignee_ids?: number[];
+    due_date?: string;
+    tags?: string[];
+}
+
+// Тип для перемещения задачи
+interface MoveTaskPayload {
+    column_id: number;
+    position: number;
+}
+
+// Тип для создания подзадачи
+interface CreateSubtaskPayload {
+    task_id: number;
+    title: string;
+    is_completed?: boolean;
+}
+
+// Тип для обновления подзадачи
+interface UpdateSubtaskPayload {
+    title?: string;
+    is_completed?: boolean;
+    position?: number;
+}
+
+// Тип для переупорядочивания
+interface ReorderPayload {
+    tasks?: { id: number; position: number }[];
+    subtasks?: { id: number; position: number }[];
+}
+
 export const kanbanApi = {
     // Todo нужны участники команды, а не все пользователи
-    getAllUsers: (): Promise<any> => {
+    getAllUsers: (): Promise<UsersResponse> => {
         return api.get('/users');
     },
 
@@ -32,7 +112,7 @@ export const kanbanApi = {
     },
 
     createColumn: (data: CreateColumnDto): Promise<ApiColumn> => {
-        const payload: Record<string, any> = {
+        const payload: CreateColumnPayload = {
             project_id: data.projectId,
             name: data.name,
             color: data.color,
@@ -46,7 +126,7 @@ export const kanbanApi = {
     },
 
     updateColumn: (columnId: number, data: UpdateColumnDto): Promise<ApiColumn> => {
-        const payload: Record<string, any> = {};
+        const payload: UpdateColumnPayload = {};
         
         if (data.name !== undefined) payload.name = data.name;
         if (data.color !== undefined) payload.color = data.color;
@@ -61,9 +141,8 @@ export const kanbanApi = {
     },
 
     reorderColumns: (projectId: number, columnOrders: { id: number; position: number }[]): Promise<void> => {
-        return api.post(`${KANBAN_URL}/columns/project/${projectId}/reorder`, { 
-            tasks: columnOrders 
-        });
+        const payload: ReorderPayload = { tasks: columnOrders };
+        return api.post(`${KANBAN_URL}/columns/project/${projectId}/reorder`, payload);
     },
 
     // ========== ЗАДАЧИ ==========
@@ -73,7 +152,7 @@ export const kanbanApi = {
     },
 
     createTask: (data: CreateTaskDto): Promise<ApiTask> => {
-        const payload: Record<string, any> = {
+        const payload: CreateTaskPayload = {
             title: data.title,
             description: data.description,
             column_id: data.columnId,
@@ -90,7 +169,7 @@ export const kanbanApi = {
     },
 
     updateTask: (taskId: number, data: UpdateTaskDto): Promise<ApiTask> => {
-        const payload: Record<string, any> = {};
+        const payload: UpdateTaskPayload = {};
         
         if (data.title !== undefined) payload.title = data.title;
         if (data.description !== undefined) payload.description = data.description;
@@ -109,7 +188,7 @@ export const kanbanApi = {
     },
 
     moveTask: (taskId: number, data: MoveTaskDto): Promise<ApiTask> => {
-        const payload = {
+        const payload: MoveTaskPayload = {
             column_id: data.columnId,
             position: data.position,
         };
@@ -118,9 +197,8 @@ export const kanbanApi = {
     },
 
     reorderTasksInColumn: (columnId: number, taskOrders: { id: number; position: number }[]): Promise<void> => {
-        return api.post(`${KANBAN_URL}/tasks/column/${columnId}/reorder`, { 
-            tasks: taskOrders 
-        });
+        const payload: ReorderPayload = { tasks: taskOrders };
+        return api.post(`${KANBAN_URL}/tasks/column/${columnId}/reorder`, payload);
     },
 
     // ========== ПОДЗАДАЧИ ==========
@@ -134,7 +212,7 @@ export const kanbanApi = {
     },
 
     createSubtask: (data: CreateSubtaskDto): Promise<ApiSubtask> => {
-        const payload: Record<string, any> = {
+        const payload: CreateSubtaskPayload = {
             task_id: data.taskId,
             title: data.title,
         };
@@ -144,7 +222,7 @@ export const kanbanApi = {
     },
 
     updateSubtask: (subtaskId: number, data: UpdateSubtaskDto): Promise<ApiSubtask> => {
-        const payload: Record<string, any> = {};
+        const payload: UpdateSubtaskPayload = {};
         
         if (data.title !== undefined) payload.title = data.title;
         if (data.isCompleted !== undefined) payload.is_completed = data.isCompleted;
@@ -162,9 +240,8 @@ export const kanbanApi = {
     },
 
     reorderSubtasks: (taskId: number, subtaskOrders: { id: number; position: number }[]): Promise<void> => {
-        return api.post(`${KANBAN_URL}/tasks/${taskId}/subtasks/reorder`, { 
-            subtasks: subtaskOrders 
-        });
+        const payload: ReorderPayload = { subtasks: subtaskOrders };
+        return api.post(`${KANBAN_URL}/tasks/${taskId}/subtasks/reorder`, payload);
     },
 
     // ========== ФИЛЬТРЫ ==========

@@ -108,8 +108,8 @@ export const KanbanRoute = () => {
             toast.success('Задача успешно обновлена');
             closeModal();
             refetch();
-          } catch (error) {
-            console.error('Error updating subtasks:', error);
+          } catch {
+            // console.error('Error updating subtasks:', error);
             toast.error('Ошибка при обновлении подзадач');
             closeModal();
             refetch();
@@ -141,8 +141,8 @@ export const KanbanRoute = () => {
             toast.success('Задача успешно создана');
             closeModal();
             refetch();
-          } catch (error) {
-            console.error('Error creating subtasks:', error);
+          } catch {
+            // console.error('Error creating subtasks:', error);
             toast.warning('Задача создана, но ошибка при создании подзадач');
             closeModal();
             refetch();

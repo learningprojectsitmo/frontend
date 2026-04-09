@@ -8,7 +8,7 @@ export const useUsers = () => {
             const response = await kanbanApi.getAllUsers();
             const items = response.items || [];
             
-            return items.map((user: any) => ({
+            return items.map((user) => ({
                 id: user.id,
                 firstName: user.first_name,
                 lastName: user.last_name,

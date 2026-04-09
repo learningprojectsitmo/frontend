@@ -80,11 +80,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         },
     });
 
-    const selectedAssigneeIds = watch('assigneeIds') || [];
+    const selectedAssigneeIds = watch('assigneeIds');
 
     // Получаем выбранных ответственных для отображения
     const selectedAssignees = React.useMemo(() => {
-        return projectMembers.filter(member => selectedAssigneeIds.includes(member.id));
+        const ids = selectedAssigneeIds ?? [];
+        return projectMembers.filter(member => ids.includes(member.id));
     }, [selectedAssigneeIds, projectMembers]);
 
     // Сброс формы при открытии/закрытии
@@ -159,14 +160,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     // Добавление ответственного
     const handleAddAssignee = (memberId: string) => {
         const id = parseInt(memberId);
-        if (!selectedAssigneeIds.includes(id)) {
-            setValue('assigneeIds', [...selectedAssigneeIds, id]);
+        const currentIds = selectedAssigneeIds ?? [];
+        if (!currentIds.includes(id)) {
+            setValue('assigneeIds', [...currentIds, id]);
         }
     };
 
     // Удаление ответственного
     const handleRemoveAssignee = (memberId: number) => {
-        setValue('assigneeIds', selectedAssigneeIds.filter(id => id !== memberId));
+        const currentIds = selectedAssigneeIds ?? [];
+        setValue('assigneeIds', currentIds.filter(id => id !== memberId));
     };
 
     // Получение инициалов
@@ -269,7 +272,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                             </SelectTrigger>
                             <SelectContent>
                                 {projectMembers
-                                    .filter(member => !selectedAssigneeIds.includes(member.id))
+                                    .filter(member => !(selectedAssigneeIds ?? []).includes(member.id))
                                     .map((member) => (
                                         <SelectItem key={member.id} value={member.id.toString()}>
                                             <div className="flex items-center gap-2">

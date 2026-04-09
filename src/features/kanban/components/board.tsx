@@ -142,8 +142,8 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     onDragEnd(`column-${sourceColumn.id}`, `column-${targetColumnId}`);
                     announce(`Колонка "${sourceColumn.name}" перемещена ${oldIndex < newIndex ? 'после' : 'перед'} колонкой "${targetColumnName}"`);
                 }
-            } catch (error) {
-                console.error('Failed to parse column data:', error);
+            } catch {
+                // console.error('Failed to parse column data:', error);
             }
 
             setActiveColumnId(undefined);
@@ -227,8 +227,8 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     onDragEnd(`task-${task.id}`, `column-${columnId}`);
                     announce(`Задача "${task.title}" помещена в колонку "${columnName}"`);
                 }
-            } catch (error) {
-                console.error('Failed to parse task data:', error);
+            } catch {
+                // console.error('Failed to parse task data:', error);
             }
 
             setActiveTaskId(undefined);
@@ -286,8 +286,8 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     onDragEnd(`task-${activeTask.id}`, `task-${targetTaskId}`);
                     announce(`Задача "${activeTask.title}" перемещена ${direction === 'top' ? 'перед' : 'после'} задачи "${targetTask.title}"`);
                 }
-            } catch (error) {
-                console.error('Failed to parse task data:', error);
+            } catch {
+                // console.error('Failed to parse task data:', error);
             }
 
             setActiveTaskId(undefined);
