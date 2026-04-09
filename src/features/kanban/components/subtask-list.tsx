@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const MAX_SUBTASKS_PER_TASK = 5;
 
@@ -20,7 +20,10 @@ interface SubtaskListProps {
         _tempId: string;
     }>;
     onAddSubtask: (title: string) => void;
-    onUpdateSubtask: (index: number, subtask: Partial<{ title: string; isCompleted: boolean }>) => void;
+    onUpdateSubtask: (
+        index: number,
+        subtask: Partial<{ title: string; isCompleted: boolean }>,
+    ) => void;
     onDeleteSubtask: (index: number) => void;
 }
 
@@ -30,9 +33,9 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
     onUpdateSubtask,
     onDeleteSubtask,
 }) => {
-    const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [editingTitle, setEditingTitle] = useState('');
+    const [editingTitle, setEditingTitle] = useState("");
 
     const canAddSubtask = subtasks.length < MAX_SUBTASKS_PER_TASK;
     const remainingSlots = MAX_SUBTASKS_PER_TASK - subtasks.length;
@@ -46,11 +49,11 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
         if (!newSubtaskTitle.trim()) return;
 
         onAddSubtask(newSubtaskTitle.trim());
-        setNewSubtaskTitle('');
+        setNewSubtaskTitle("");
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && newSubtaskTitle.trim() && canAddSubtask) {
+        if (e.key === "Enter" && newSubtaskTitle.trim() && canAddSubtask) {
             handleAddSubtask();
         }
     };
@@ -65,12 +68,12 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
             onUpdateSubtask(index, { title: editingTitle.trim() });
         }
         setEditingIndex(null);
-        setEditingTitle('');
+        setEditingTitle("");
     };
 
     const cancelEditing = () => {
         setEditingIndex(null);
-        setEditingTitle('');
+        setEditingTitle("");
     };
 
     const handleToggleSubtask = (index: number, currentCompleted: boolean) => {
@@ -78,9 +81,9 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
     };
 
     const handleKeyDownEdit = (e: React.KeyboardEvent, index: number) => {
-        if (e.key === 'Enter') {
+        if (e.key === "Enter") {
             saveEditing(index);
-        } else if (e.key === 'Escape') {
+        } else if (e.key === "Escape") {
             cancelEditing();
         }
     };
@@ -89,10 +92,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <Label>Подзадачи</Label>
-                <span className={cn(
-                    'text-xs',
-                    !canAddSubtask && 'text-red-500'
-                )}>
+                <span className={cn("text-xs", !canAddSubtask && "text-red-500")}>
                     {subtasks.length}/{MAX_SUBTASKS_PER_TASK}
                 </span>
             </div>
@@ -100,18 +100,18 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
             {/* Список подзадач */}
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
                 {subtasks.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-4">
-                        Нет подзадач
-                    </p>
+                    <p className="text-sm text-gray-400 text-center py-4">Нет подзадач</p>
                 ) : (
                     subtasks.map((subtask, index) => (
                         <div key={subtask._tempId} className="flex items-center gap-2">
                             <Checkbox
                                 checked={subtask.isCompleted}
-                                onCheckedChange={() => handleToggleSubtask(index, subtask.isCompleted)}
+                                onCheckedChange={() =>
+                                    handleToggleSubtask(index, subtask.isCompleted)
+                                }
                                 className="w-4 h-4"
                             />
-                            
+
                             {editingIndex === index ? (
                                 <>
                                     <Input
@@ -140,10 +140,12 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                 </>
                             ) : (
                                 <>
-                                    <span className={cn(
-                                        'flex-1 text-sm',
-                                        subtask.isCompleted && 'line-through text-gray-400'
-                                    )}>
+                                    <span
+                                        className={cn(
+                                            "flex-1 text-sm",
+                                            subtask.isCompleted && "line-through text-gray-400",
+                                        )}
+                                    >
                                         {subtask.title}
                                     </span>
                                     <Button
@@ -156,7 +158,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                     </Button>
                                 </>
                             )}
-                            
+
                             <Button
                                 type="button"
                                 variant="outline"
@@ -201,7 +203,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
             )}
             {canAddSubtask && remainingSlots > 0 && remainingSlots <= 2 && (
                 <p className="text-xs text-orange-500">
-                    Можно добавить еще {remainingSlots} подзадач{remainingSlots === 1 ? 'у' : 'и'}
+                    Можно добавить еще {remainingSlots} подзадач{remainingSlots === 1 ? "у" : "и"}
                 </p>
             )}
         </div>

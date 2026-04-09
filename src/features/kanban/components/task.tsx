@@ -1,31 +1,26 @@
 // task.tsx
-import React, { useState } from 'react';
-import { AlarmClockCheck, GripVertical, Trash2  } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { KanbanTaskProps } from '../types';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import React, { useState } from "react";
+import { AlarmClockCheck, GripVertical, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { KanbanTaskProps } from "../types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-export const KanbanTask: React.FC<KanbanTaskProps> = ({ 
-    task, 
-    isDragging = false, 
+export const KanbanTask: React.FC<KanbanTaskProps> = ({
+    task,
+    isDragging = false,
     onClick,
     onDragStart,
     onDelete,
-    onToggleSubtask 
+    onToggleSubtask,
 }) => {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // Обработчик начала перетаскивания
     const handleTaskDragStart = (event: React.DragEvent<HTMLDivElement>) => {
         onDragStart?.(event);
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.dropEffect = 'move';
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.dropEffect = "move";
     };
 
     // Обработчик клика по задаче
@@ -54,10 +49,10 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     const formatDate = (dateString?: string) => {
         if (!dateString) return null;
         const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
+        return date.toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
         });
     };
 
@@ -65,7 +60,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
 
     // Обработка тегов (если строка)
-    const tagsArray = task.tags ? task.tags.split(',').map(tag => tag.trim()) : [];
+    const tagsArray = task.tags ? task.tags.split(",").map((tag) => tag.trim()) : [];
 
     return (
         <>
@@ -78,7 +73,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     "hover:shadow-md transition-all",
                     "relative group cursor-grab active:cursor-grabbing",
                     isDragging && "opacity-50 shadow-lg rotate-[2deg] scale-105",
-                    "mb-2 overflow-hidden"
+                    "mb-2 overflow-hidden",
                 )}
             >
                 <div className="p-3 bg-gray-100">
@@ -86,31 +81,29 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     <div className="flex items-center justify-between mb-2">
                         {/* Дедлайн */}
                         {task.dueDate && (
-                            <div className={cn("flex items-center",
-                                "px-1 py-0.5 rounded-lg text-xs font-medium",
-                                isOverdue 
-                                    ? "bg-red-400 text-white" 
-                                    : "bg-orange-400 text-white"
-                            )}>
+                            <div
+                                className={cn(
+                                    "flex items-center",
+                                    "px-1 py-0.5 rounded-lg text-xs font-medium",
+                                    isOverdue
+                                        ? "bg-red-400 text-white"
+                                        : "bg-orange-400 text-white",
+                                )}
+                            >
                                 <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
                                 {formatDate(task.dueDate)}
                             </div>
                         )}
                         {!task.dueDate && <div />}
-                        
+
                         {/* Drag Handle */}
-                        <div 
-                            data-drag-handle="task"
-                            className="cursor-grab active:cursor-grabbing"
-                        >
+                        <div data-drag-handle="task" className="cursor-grab active:cursor-grabbing">
                             <GripVertical className="h-4 w-4 text-gray-400" />
                         </div>
                     </div>
 
                     {/* Название задачи */}
-                    <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                        {task.title}
-                    </h4>
+                    <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">{task.title}</h4>
 
                     {/* Ответственные (аватарки) */}
                     {task.assignees && task.assignees.length > 0 && (
@@ -121,7 +114,8 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                     className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700"
                                     title={`${assignee.firstName} ${assignee.lastName}`}
                                 >
-                                    {assignee.firstName?.[0]}{assignee.lastName?.[0]}
+                                    {assignee.firstName?.[0]}
+                                    {assignee.lastName?.[0]}
                                 </div>
                             ))}
                         </div>
@@ -143,10 +137,12 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                         }}
                                         className="w-3.5 h-3.5 rounded border-gray-300"
                                     />
-                                    <span className={cn(
-                                        "text-sm text-gray-600",
-                                        subtask.isCompleted && "line-through text-gray-400"
-                                    )}>
+                                    <span
+                                        className={cn(
+                                            "text-sm text-gray-600",
+                                            subtask.isCompleted && "line-through text-gray-400",
+                                        )}
+                                    >
                                         {subtask.title}
                                     </span>
                                 </div>
@@ -183,13 +179,15 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Приоритет (цветной индикатор) */}
                 {task.priority && (
-                    <div className={cn(
-                        "absolute top-2 right-2 w-2 h-2 rounded-full",
-                        task.priority === 'urgent' && "bg-red-500",
-                        task.priority === 'high' && "bg-orange-500",
-                        task.priority === 'medium' && "bg-yellow-500",
-                        task.priority === 'low' && "bg-green-500"
-                    )} />
+                    <div
+                        className={cn(
+                            "absolute top-2 right-2 w-2 h-2 rounded-full",
+                            task.priority === "urgent" && "bg-red-500",
+                            task.priority === "high" && "bg-orange-500",
+                            task.priority === "medium" && "bg-yellow-500",
+                            task.priority === "low" && "bg-green-500",
+                        )}
+                    />
                 )}
 
                 {/* Кнопки действий (при наведении) */}
@@ -222,10 +220,10 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                         <Button variant="outline" size="hug36" onClick={handleDeleteCancel}>
                             Отмена
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="hug36" 
-                            onClick={handleDeleteConfirm} 
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            onClick={handleDeleteConfirm}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                             Удалить

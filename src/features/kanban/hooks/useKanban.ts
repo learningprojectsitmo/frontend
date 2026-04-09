@@ -1,29 +1,40 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { kanbanApi } from '@/lib/api-kanban';
-import camelcaseKeys from 'camelcase-keys';
-import type { 
-    CreateColumnDto, UpdateColumnDto, 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { kanbanApi } from "@/lib/api-kanban";
+import camelcaseKeys from "camelcase-keys";
+import type {
+    CreateColumnDto,
+    UpdateColumnDto,
     ColumnWithTasksAndSubtasks,
-    CreateTaskDto, UpdateTaskDto, MoveTaskDto, 
-    TaskFilters, 
-    CreateSubtaskDto, UpdateSubtaskDto,
+    CreateTaskDto,
+    UpdateTaskDto,
+    MoveTaskDto,
+    TaskFilters,
+    CreateSubtaskDto,
+    UpdateSubtaskDto,
     SubtaskListResponse,
     ColumnWithTasks,
-    Task
-} from '@/types/tables/forTables';
-import type { ApiBoard, ApiTask, ApiSubtask, ApiSubtaskListResponse, ApiTaskHistory, ApiProjectStats } from '@/types/api';
+    Task,
+} from "@/types/tables/forTables";
+import type {
+    ApiBoard,
+    ApiTask,
+    ApiSubtask,
+    ApiSubtaskListResponse,
+    ApiTaskHistory,
+    ApiProjectStats,
+} from "@/types/api";
 
 // ===== Ключи для кэширования =====
 export const kanbanKeys = {
-    all: ['kanban'] as const,
-    boards: () => [...kanbanKeys.all, 'board'] as const,
+    all: ["kanban"] as const,
+    boards: () => [...kanbanKeys.all, "board"] as const,
     board: (projectId: number) => [...kanbanKeys.boards(), projectId] as const,
-    tasks: () => [...kanbanKeys.all, 'task'] as const,
+    tasks: () => [...kanbanKeys.all, "task"] as const,
     task: (taskId: number) => [...kanbanKeys.tasks(), taskId] as const,
-    columns: () => [...kanbanKeys.all, 'column'] as const,
+    columns: () => [...kanbanKeys.all, "column"] as const,
     columnsByProject: (projectId: number) => [...kanbanKeys.columns(), projectId] as const,
-    history: (taskId: number) => [...kanbanKeys.all, 'history', taskId] as const,
-    stats: (projectId: number) => [...kanbanKeys.all, 'stats', projectId] as const,
+    history: (taskId: number) => [...kanbanKeys.all, "history", taskId] as const,
+    stats: (projectId: number) => [...kanbanKeys.all, "stats", projectId] as const,
 };
 
 // ========== ХУКИ ДЛЯ ДОСКИ ==========
@@ -66,10 +77,10 @@ export const useCreateColumn = () => {
         mutationFn: (data: CreateColumnDto) => kanbanApi.createColumn(data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.columnsByProject(variables.projectId)
+                queryKey: kanbanKeys.columnsByProject(variables.projectId),
             });
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.board(variables.projectId)
+                queryKey: kanbanKeys.board(variables.projectId),
             });
         },
     });
@@ -83,10 +94,10 @@ export const useUpdateColumn = () => {
             kanbanApi.updateColumn(columnId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.columns()
+                queryKey: kanbanKeys.columns(),
             });
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.boards()
+                queryKey: kanbanKeys.boards(),
             });
         },
     });
@@ -99,10 +110,10 @@ export const useDeleteColumn = () => {
         mutationFn: (columnId: number) => kanbanApi.deleteColumn(columnId),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.columns()
+                queryKey: kanbanKeys.columns(),
             });
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.boards()
+                queryKey: kanbanKeys.boards(),
             });
         },
     });
@@ -116,7 +127,7 @@ export const useReorderColumns = (projectId: number) => {
             kanbanApi.reorderColumns(projectId, columnOrders),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.board(projectId)
+                queryKey: kanbanKeys.board(projectId),
             });
         },
     });
@@ -141,7 +152,7 @@ export const useCreateTask = () => {
         onSuccess: (_, variables) => {
             if (variables.columnId) {
                 queryClient.invalidateQueries({
-                    queryKey: kanbanKeys.boards()
+                    queryKey: kanbanKeys.boards(),
                 });
             }
         },
@@ -156,14 +167,11 @@ export const useUpdateTask = () => {
             kanbanApi.updateTask(taskId, data),
         onSuccess: (updatedTask, variables) => {
             const converted = camelcaseKeys(updatedTask, { deep: true });
-            
-            queryClient.setQueryData(
-                kanbanKeys.task(variables.taskId),
-                converted
-            );
+
+            queryClient.setQueryData(kanbanKeys.task(variables.taskId), converted);
             if (converted.projectId) {
                 queryClient.invalidateQueries({
-                    queryKey: kanbanKeys.board(converted.projectId)
+                    queryKey: kanbanKeys.board(converted.projectId),
                 });
             }
         },
@@ -177,10 +185,10 @@ export const useDeleteTask = () => {
         mutationFn: (taskId: number) => kanbanApi.deleteTask(taskId),
         onSuccess: (_, taskId) => {
             queryClient.removeQueries({
-                queryKey: kanbanKeys.task(taskId)
+                queryKey: kanbanKeys.task(taskId),
             });
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.boards()
+                queryKey: kanbanKeys.boards(),
             });
         },
     });
@@ -194,31 +202,28 @@ export const useMoveTask = () => {
             kanbanApi.moveTask(taskId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.boards()
+                queryKey: kanbanKeys.boards(),
             });
         },
         onMutate: async ({ taskId, data }) => {
             await queryClient.cancelQueries({ queryKey: kanbanKeys.boards() });
             const previousTask = queryClient.getQueryData(kanbanKeys.task(taskId));
-            
+
             queryClient.setQueryData<Task>(kanbanKeys.task(taskId), (old) => {
                 if (!old) return undefined;
-                
+
                 return {
                     ...old,
                     columnId: data.columnId,
                     position: data.position,
                 };
             });
-            
+
             return { previousTask };
         },
         onError: (_err, variables, context) => {
             if (context?.previousTask) {
-                queryClient.setQueryData(
-                    kanbanKeys.task(variables.taskId),
-                    context.previousTask
-                );
+                queryClient.setQueryData(kanbanKeys.task(variables.taskId), context.previousTask);
             }
         },
     });
@@ -228,11 +233,16 @@ export const useReorderTasksInColumn = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ columnId, taskOrders }: { columnId: number; taskOrders: { id: number; position: number }[] }) =>
-            kanbanApi.reorderTasksInColumn(columnId, taskOrders),
+        mutationFn: ({
+            columnId,
+            taskOrders,
+        }: {
+            columnId: number;
+            taskOrders: { id: number; position: number }[];
+        }) => kanbanApi.reorderTasksInColumn(columnId, taskOrders),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: kanbanKeys.boards()
+                queryKey: kanbanKeys.boards(),
             });
         },
     });
@@ -242,10 +252,10 @@ export const useReorderTasksInColumn = () => {
 
 export const useSubtasks = (taskId: number) => {
     return useQuery({
-        queryKey: [...kanbanKeys.tasks(), 'subtasks', taskId],
+        queryKey: [...kanbanKeys.tasks(), "subtasks", taskId],
         queryFn: () => kanbanApi.getSubtasksByTask(taskId),
         enabled: !!taskId,
-        select: (data: ApiSubtaskListResponse): SubtaskListResponse['items'] => {
+        select: (data: ApiSubtaskListResponse): SubtaskListResponse["items"] => {
             const converted = camelcaseKeys(data, { deep: true });
             return converted.items;
         },
@@ -254,7 +264,7 @@ export const useSubtasks = (taskId: number) => {
 
 export const useSubtask = (subtaskId: number) => {
     return useQuery({
-        queryKey: [...kanbanKeys.all, 'subtask', subtaskId],
+        queryKey: [...kanbanKeys.all, "subtask", subtaskId],
         queryFn: () => kanbanApi.getSubtaskById(subtaskId),
         enabled: !!subtaskId,
         select: (data: ApiSubtask) => camelcaseKeys(data, { deep: true }),
@@ -268,7 +278,7 @@ export const useCreateSubtask = () => {
         mutationFn: (data: CreateSubtaskDto) => kanbanApi.createSubtask(data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: [...kanbanKeys.tasks(), 'subtasks', variables.taskId]
+                queryKey: [...kanbanKeys.tasks(), "subtasks", variables.taskId],
             });
         },
     });
@@ -283,7 +293,7 @@ export const useUpdateSubtask = () => {
         onSuccess: (updatedSubtask) => {
             const converted = camelcaseKeys(updatedSubtask, { deep: true });
             queryClient.invalidateQueries({
-                queryKey: [...kanbanKeys.tasks(), 'subtasks', converted.taskId]
+                queryKey: [...kanbanKeys.tasks(), "subtasks", converted.taskId],
             });
         },
     });
@@ -296,7 +306,7 @@ export const useDeleteSubtask = () => {
         mutationFn: (subtaskId: number) => kanbanApi.deleteSubtask(subtaskId),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: [...kanbanKeys.tasks(), 'subtasks']
+                queryKey: [...kanbanKeys.tasks(), "subtasks"],
             });
         },
     });
@@ -306,11 +316,16 @@ export const useReorderSubtasks = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ taskId, subtaskOrders }: { taskId: number; subtaskOrders: { id: number; position: number }[] }) =>
-            kanbanApi.reorderSubtasks(taskId, subtaskOrders),
+        mutationFn: ({
+            taskId,
+            subtaskOrders,
+        }: {
+            taskId: number;
+            subtaskOrders: { id: number; position: number }[];
+        }) => kanbanApi.reorderSubtasks(taskId, subtaskOrders),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: [...kanbanKeys.tasks(), 'subtasks', variables.taskId]
+                queryKey: [...kanbanKeys.tasks(), "subtasks", variables.taskId],
             });
         },
     });
@@ -324,7 +339,7 @@ export const useToggleSubtask = () => {
         onSuccess: (updatedSubtask) => {
             const converted = camelcaseKeys(updatedSubtask, { deep: true });
             queryClient.invalidateQueries({
-                queryKey: [...kanbanKeys.tasks(), 'subtasks', converted.taskId]
+                queryKey: [...kanbanKeys.tasks(), "subtasks", converted.taskId],
             });
         },
     });
@@ -336,10 +351,10 @@ export const useFilterTasks = (
     projectId: number,
     filters?: TaskFilters,
     page: number = 1,
-    pageSize: number = 50
+    pageSize: number = 50,
 ) => {
     return useQuery({
-        queryKey: [...kanbanKeys.tasks(), 'filter', projectId, filters, page, pageSize],
+        queryKey: [...kanbanKeys.tasks(), "filter", projectId, filters, page, pageSize],
         queryFn: () => kanbanApi.filterTasks(projectId, filters, page, pageSize),
         enabled: !!projectId,
         select: (data) => camelcaseKeys(data, { deep: true }),

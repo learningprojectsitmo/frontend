@@ -26,7 +26,7 @@ export interface Platform {
     members: number;
 }
 
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 // Участник команды
 export interface ProjectMember {
@@ -53,14 +53,14 @@ export interface Column {
     name: string;
     color: string;
     position: number;
-    wipLimit?: number;       
-    createdAt: string;       
-    updatedAt: string;       
+    wipLimit?: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface ColumnWithTasks extends Column {
     tasks: Task[];
-    taskCount: number;       
+    taskCount: number;
 }
 
 export interface ColumnWithTasksAndSubtasks extends Column {
@@ -69,7 +69,7 @@ export interface ColumnWithTasksAndSubtasks extends Column {
 }
 
 export interface CreateColumnDto {
-    projectId: number;       
+    projectId: number;
     name: string;
     color: string;
     wipLimit?: number;
@@ -90,22 +90,22 @@ export interface Task {
     description?: string;
     priority?: TaskPriority;
     position: number;
-    columnId: number;        
-    projectId: number;       
-    createdById: number;     
+    columnId: number;
+    projectId: number;
+    createdById: number;
     assignees: ProjectMember[];
-    createdBy?: ProjectMember;      
-    dueDate?: string;        
+    createdBy?: ProjectMember;
+    dueDate?: string;
     tags?: string;
-    createdAt: string;       
-    updatedAt: string;   
+    createdAt: string;
+    updatedAt: string;
     subtasks?: Subtask[];
     subtaskCount?: number;
 }
 
 export interface TaskWithSubtasks extends Task {
     subtasks: Subtask[];
-    subtaskCount: number;    
+    subtaskCount: number;
 }
 
 export interface CreateTaskDto {
@@ -113,7 +113,7 @@ export interface CreateTaskDto {
     description?: string;
     priority?: TaskPriority;
     columnId: number;
-    assigneeIds?: number[];  
+    assigneeIds?: number[];
     dueDate?: string;
     tags?: string[];
 }
@@ -190,7 +190,7 @@ export interface TaskHistory {
     changedBy: ProjectMember;
     oldColumnId?: number;
     newColumnId?: number;
-    changeType: 'move' | 'title' | 'description' | 'assignees';
+    changeType: "move" | "title" | "description" | "assignees";
     changeData?: Record<string, unknown>;
     createdAt: string;
 }
@@ -215,7 +215,7 @@ export interface ProjectStats {
 
 export interface DragItem {
     id: number;
-    type: 'task' | 'column';
+    type: "task" | "column";
     columnId?: number;
     position?: number;
 }

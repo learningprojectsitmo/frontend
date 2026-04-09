@@ -1,13 +1,19 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { KanbanColumn } from './column';
-import { DndMonitorProvider, useAnnouncement, useDndEvents, LiveRegion, HiddenInstructions } from './accessibility';
-import type { KanbanBoardProps } from '../types';
-import type { ColumnWithTasksAndSubtasks, Task } from '@/types/tables/forTables';
+import React, { useCallback, useState, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { KanbanColumn } from "./column";
+import {
+    DndMonitorProvider,
+    useAnnouncement,
+    useDndEvents,
+    LiveRegion,
+    HiddenInstructions,
+} from "./accessibility";
+import type { KanbanBoardProps } from "../types";
+import type { ColumnWithTasksAndSubtasks, Task } from "@/types/tables/forTables";
 
 const DATA_TRANSFER_TYPES = {
-    TASK: 'kanban-board-task',
-    COLUMN: 'kanban-board-column',
+    TASK: "kanban-board-task",
+    COLUMN: "kanban-board-column",
 };
 
 const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
@@ -24,10 +30,12 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     className,
 }) => {
     const [activeTaskId, setActiveTaskId] = useState<number | undefined>(undefined);
-    const [activeTaskTitle, setActiveTaskTitle] = useState<string>('');
+    const [activeTaskTitle, setActiveTaskTitle] = useState<string>("");
     const [activeColumnId, setActiveColumnId] = useState<number | undefined>(undefined);
-    const [activeColumnTitle, setActiveColumnTitle] = useState<string>('');
-    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<Map<number, 'left' | 'right'>>(new Map());
+    const [activeColumnTitle, setActiveColumnTitle] = useState<string>("");
+    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<
+        Map<number, "left" | "right">
+    >(new Map());
     const { announce, announcement } = useAnnouncement();
     const { onDragStart, onDragOver, onDragEnd, onDragCancel } = useDndEvents();
     const activeIdRef = useRef<string | null>(null);
@@ -37,7 +45,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
         (columnId: number): ColumnWithTasksAndSubtasks | undefined => {
             return columns.find((col) => col.id === columnId);
         },
-        [columns]
+        [columns],
     );
 
     // Поиск задачи по ID
@@ -49,7 +57,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             }
             return undefined;
         },
-        [columns]
+        [columns],
     );
 
     // ========== ОБРАБОТЧИКИ ДЛЯ КОЛОНОК ==========
@@ -61,26 +69,29 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                 event.preventDefault();
                 return;
             }
-            
+
             event.stopPropagation();
-            
+
             setActiveColumnId(columnId);
             setActiveColumnTitle(columnName);
             activeIdRef.current = `column-${columnId}`;
 
-            event.dataTransfer.setData(DATA_TRANSFER_TYPES.COLUMN, JSON.stringify({ id: columnId, name: columnName }));
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.dropEffect = 'move';
+            event.dataTransfer.setData(
+                DATA_TRANSFER_TYPES.COLUMN,
+                JSON.stringify({ id: columnId, name: columnName }),
+            );
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.dropEffect = "move";
 
             onDragStart(`column-${columnId}`);
             announce(`Начато перетаскивание колонки "${columnName}"`);
         },
-        [onDragStart, announce]
+        [onDragStart, announce],
     );
 
     // Функция для установки направления для колонки
-    const setDropDirection = useCallback((columnId: number, direction: 'left' | 'right' | null) => {
-        setDropDirectionForColumn(prev => {
+    const setDropDirection = useCallback((columnId: number, direction: "left" | "right" | null) => {
+        setDropDirectionForColumn((prev) => {
             const newMap = new Map(prev);
             if (direction === null) {
                 newMap.delete(columnId);
@@ -95,20 +106,22 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const handleColumnDragOver = useCallback(
         (event: React.DragEvent<HTMLElement>, columnId: number, columnName: string) => {
             event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
+            event.dataTransfer.dropEffect = "move";
 
             if (event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.COLUMN)) {
                 const rect = event.currentTarget.getBoundingClientRect();
                 const mouseX = event.clientX;
                 const midpoint = (rect.left + rect.right) / 2;
-                const direction = mouseX <= midpoint ? 'left' : 'right';
-                
+                const direction = mouseX <= midpoint ? "left" : "right";
+
                 setDropDirection(columnId, direction);
-                onDragOver(activeIdRef.current || '', `column-${columnId}`);
-                announce(`Колонка будет перемещена ${direction === 'left' ? 'перед' : 'после'} колонки "${columnName}"`);
+                onDragOver(activeIdRef.current || "", `column-${columnId}`);
+                announce(
+                    `Колонка будет перемещена ${direction === "left" ? "перед" : "после"} колонки "${columnName}"`,
+                );
             }
         },
-        [onDragOver, announce, setDropDirection]
+        [onDragOver, announce, setDropDirection],
     );
 
     // Обработка падения колонки
@@ -124,32 +137,34 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
 
             try {
                 const sourceColumn = JSON.parse(columnData);
-                
-                const oldIndex = columns.findIndex(col => col.id === sourceColumn.id);
-                const newIndex = columns.findIndex(col => col.id === targetColumnId);
-                
+
+                const oldIndex = columns.findIndex((col) => col.id === sourceColumn.id);
+                const newIndex = columns.findIndex((col) => col.id === targetColumnId);
+
                 if (oldIndex !== -1 && newIndex !== -1) {
                     const newColumns = [...columns];
                     const [movedColumn] = newColumns.splice(oldIndex, 1);
                     newColumns.splice(newIndex, 0, movedColumn);
-                    
+
                     const columnOrders = newColumns.map((col, index) => ({
                         id: col.id,
                         position: index,
                     }));
-                    
+
                     onReorderColumns(columnOrders);
                     onDragEnd(`column-${sourceColumn.id}`, `column-${targetColumnId}`);
-                    announce(`Колонка "${sourceColumn.name}" перемещена ${oldIndex < newIndex ? 'после' : 'перед'} колонкой "${targetColumnName}"`);
+                    announce(
+                        `Колонка "${sourceColumn.name}" перемещена ${oldIndex < newIndex ? "после" : "перед"} колонкой "${targetColumnName}"`,
+                    );
                 }
             } catch {
                 // console.error('Failed to parse column data:', error);
             }
 
             setActiveColumnId(undefined);
-            setActiveColumnTitle('');
+            setActiveColumnTitle("");
         },
-        [columns, onReorderColumns, onDragEnd, announce, setDropDirection]
+        [columns, onReorderColumns, onDragEnd, announce, setDropDirection],
     );
 
     // ========== ОБРАБОТЧИКИ ДЛЯ ЗАДАЧ ==========
@@ -161,19 +176,19 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             if (!task) return;
 
             event.stopPropagation();
-            
+
             setActiveTaskId(taskId);
             setActiveTaskTitle(taskTitle);
             activeIdRef.current = `task-${taskId}`;
 
             event.dataTransfer.setData(DATA_TRANSFER_TYPES.TASK, JSON.stringify(task));
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.dropEffect = 'move';
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.dropEffect = "move";
 
             onDragStart(`task-${taskId}`);
             announce(`Начато перетаскивание задачи "${taskTitle}"`);
         },
-        [findTask, onDragStart, announce]
+        [findTask, onDragStart, announce],
     );
 
     // Обработка перетаскивания задачи над задачей
@@ -181,21 +196,23 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
         (event: React.DragEvent<HTMLElement>, taskId: number, taskTitle: string) => {
             event.preventDefault();
             event.stopPropagation();
-            event.dataTransfer.dropEffect = 'move';
+            event.dataTransfer.dropEffect = "move";
 
             if (event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.TASK)) {
                 const rect = event.currentTarget.getBoundingClientRect();
                 const mouseY = event.clientY;
                 const midpoint = (rect.top + rect.bottom) / 2;
-                const direction = mouseY <= midpoint ? 'top' : 'bottom';
+                const direction = mouseY <= midpoint ? "top" : "bottom";
 
-                onDragOver(activeIdRef.current || '', `task-${taskId}`);
-                announce(`Задача будет перемещена ${direction === 'top' ? 'перед' : 'после'} задачи "${taskTitle}"`);
+                onDragOver(activeIdRef.current || "", `task-${taskId}`);
+                announce(
+                    `Задача будет перемещена ${direction === "top" ? "перед" : "после"} задачи "${taskTitle}"`,
+                );
 
-                event.dataTransfer.setData('text/plain', direction);
+                event.dataTransfer.setData("text/plain", direction);
             }
         },
-        [onDragOver, announce]
+        [onDragOver, announce],
     );
 
     // Обработка падения задачи на колонку
@@ -214,14 +231,16 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     // Проверка WIP лимита
                     const wipLimit = targetColumn.wipLimit;
                     const currentTaskCount = targetColumn.tasks?.length || 0;
-                    
+
                     if (wipLimit && currentTaskCount >= wipLimit) {
-                        announce(`Невозможно переместить задачу. В колонке "${columnName}" достигнут лимит задач (${wipLimit})`);
+                        announce(
+                            `Невозможно переместить задачу. В колонке "${columnName}" достигнут лимит задач (${wipLimit})`,
+                        );
                         setActiveTaskId(undefined);
-                        setActiveTaskTitle('');
+                        setActiveTaskTitle("");
                         return;
                     }
-                    
+
                     const newPosition = targetColumn.tasks?.length || 0;
                     onTaskMove(task.id, columnId, newPosition);
                     onDragEnd(`task-${task.id}`, `column-${columnId}`);
@@ -232,9 +251,9 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             }
 
             setActiveTaskId(undefined);
-            setActiveTaskTitle('');
+            setActiveTaskTitle("");
         },
-        [onTaskMove, findColumn, onDragEnd, announce]
+        [onTaskMove, findColumn, onDragEnd, announce],
     );
 
     // Обработка падения задачи на задачу
@@ -244,7 +263,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             event.stopPropagation();
 
             const taskData = event.dataTransfer.getData(DATA_TRANSFER_TYPES.TASK);
-            const direction = event.dataTransfer.getData('text/plain');
+            const direction = event.dataTransfer.getData("text/plain");
 
             if (!taskData || !onTaskMove) return;
 
@@ -255,7 +274,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                 let targetTask: Task | undefined;
 
                 for (const column of columns) {
-                    const task = column.tasks?.find(t => t.id === targetTaskId);
+                    const task = column.tasks?.find((t) => t.id === targetTaskId);
                     if (task) {
                         targetColumn = column;
                         targetTask = task;
@@ -266,34 +285,38 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                 if (targetColumn && targetTask) {
                     // Проверка WIP лимита при перемещении в другую колонку
                     const isMovingToDifferentColumn = activeTask.columnId !== targetColumn.id;
-                    
+
                     if (isMovingToDifferentColumn && targetColumn.wipLimit) {
                         const currentTaskCount = targetColumn.tasks?.length || 0;
                         if (currentTaskCount >= targetColumn.wipLimit) {
-                            announce(`Невозможно переместить задачу. В колонке "${targetColumn.name}" достигнут лимит задач (${targetColumn.wipLimit})`);
+                            announce(
+                                `Невозможно переместить задачу. В колонке "${targetColumn.name}" достигнут лимит задач (${targetColumn.wipLimit})`,
+                            );
                             setActiveTaskId(undefined);
-                            setActiveTaskTitle('');
+                            setActiveTaskTitle("");
                             return;
                         }
                     }
-                    
+
                     let newPosition = targetTask.position;
-                    if (direction === 'bottom') {
+                    if (direction === "bottom") {
                         newPosition = targetTask.position + 1;
                     }
 
                     onTaskMove(activeTask.id, targetColumn.id, newPosition);
                     onDragEnd(`task-${activeTask.id}`, `task-${targetTaskId}`);
-                    announce(`Задача "${activeTask.title}" перемещена ${direction === 'top' ? 'перед' : 'после'} задачи "${targetTask.title}"`);
+                    announce(
+                        `Задача "${activeTask.title}" перемещена ${direction === "top" ? "перед" : "после"} задачи "${targetTask.title}"`,
+                    );
                 }
             } catch {
                 // console.error('Failed to parse task data:', error);
             }
 
             setActiveTaskId(undefined);
-            setActiveTaskTitle('');
+            setActiveTaskTitle("");
         },
-        [columns, onTaskMove, onDragEnd, announce]
+        [columns, onTaskMove, onDragEnd, announce],
     );
 
     // ========== ОСТАЛЬНОЕ ==========
@@ -311,10 +334,18 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
         }
         setDropDirectionForColumn(new Map());
         setActiveTaskId(undefined);
-        setActiveTaskTitle('');
+        setActiveTaskTitle("");
         setActiveColumnId(undefined);
-        setActiveColumnTitle('');
-    }, [activeTaskId, activeTaskTitle, activeColumnId, activeColumnTitle, findTask, onDragCancel, announce]);
+        setActiveColumnTitle("");
+    }, [
+        activeTaskId,
+        activeTaskTitle,
+        activeColumnId,
+        activeColumnTitle,
+        findTask,
+        onDragCancel,
+        announce,
+    ]);
 
     // Генерируем уникальный ID для инструкций
     const instructionsId = React.useId();
@@ -343,10 +374,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             <LiveRegion announcement={announcement} />
 
             <div
-                className={cn(
-                    'flex gap-4 pb-4 overflow-x-auto min-h-[500px]',
-                    className
-                )}
+                className={cn("flex gap-4 pb-4 overflow-x-auto min-h-[500px]", className)}
                 role="region"
                 aria-label="Канбан-доска"
                 aria-describedby={instructionsId}
@@ -359,14 +387,14 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                         onDragOver={(e) => handleColumnDragOver(e, column.id, column.name)}
                         onDrop={(e) => handleColumnDrop(e, column.id, column.name)}
                         className={cn(
-                            'relative transition-all duration-200',
-                            activeColumnId === column.id && 'opacity-50'
+                            "relative transition-all duration-200",
+                            activeColumnId === column.id && "opacity-50",
                         )}
                     >
-                        {dropDirectionForColumn.get(column.id) === 'left' && (
+                        {dropDirectionForColumn.get(column.id) === "left" && (
                             <div className="absolute -left-2 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full shadow-lg z-10" />
                         )}
-                        {dropDirectionForColumn.get(column.id) === 'right' && (
+                        {dropDirectionForColumn.get(column.id) === "right" && (
                             <div className="absolute -right-2 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full shadow-lg z-10" />
                         )}
                         <KanbanColumn

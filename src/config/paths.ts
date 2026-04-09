@@ -56,7 +56,7 @@ export const paths = {
             },
         },
         kanban: {
-            path: 'kanban/:spaceId',
+            path: "kanban/:spaceId",
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,
         },
     },
