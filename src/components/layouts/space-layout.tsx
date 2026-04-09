@@ -7,6 +7,7 @@ import { SearchBar } from "../ui/search-bar";
 import { NotificationsNav } from "@/features/spaces/components/notifications";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
 import { GraduationCapIcon } from "lucide-react";
+import { cn } from "@/utils/cn";
 
 import { useEffect, useState, useMemo } from "react";
 import { useDebounce } from "../../utils/debounce";

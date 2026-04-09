@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import { ContentLayout } from "@/components/layouts";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
