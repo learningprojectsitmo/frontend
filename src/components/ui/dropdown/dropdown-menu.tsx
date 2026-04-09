@@ -56,18 +56,16 @@ const DropdownMenuContent = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => (
-    <DropdownMenuPrimitive.Portal>
-        <DropdownMenuPrimitive.Content
-            ref={ref}
-            sideOffset={sideOffset}
-            className={cn(
-                "z-[100] min-w-[15rem] overflow-hidden rounded-[22px] border border-black/10 bg-white p-1.5 text-popover-foreground shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)]",
-                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2",
-                className,
-            )}
-            {...props}
-        />
-    </DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+        ref={ref}
+        sideOffset={sideOffset}
+        className={cn(
+            "z-[100] overflow-hidden rounded-[22px] border border-black/10 bg-white p-1.5 text-popover-foreground shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)]",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2",
+            className,
+        )}
+        {...props}
+    />
 ));
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 

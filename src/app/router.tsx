@@ -77,6 +77,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     path: paths.app.kanban.path,
                     lazy: () => import("./routes/app/kanban").then(convert(queryClient)),
                 },
+                {
+                    path: paths.app.settings.roles.path,
+                    lazy: () => import("./routes/app/settings/roles").then(convert(queryClient)),
+                },
             ],
         },
     ]);

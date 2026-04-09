@@ -17,18 +17,18 @@ const escapeRegExp = (string: string) => {
 };
 
 const HighlightMatch = ({ text, highlight }: { text: string; highlight: string }) => {
-    if (!highlight) return <span className="text-[#0A0A0A] font-medium">{text}</span>;
+    if (!highlight) return <span className="text-[#0A0A0A] font-medium font-sans">{text}</span>;
 
     const parts = text.split(new RegExp(`(${escapeRegExp(highlight)})`, "gi"));
     return (
         <span>
             {parts.map((part, i) =>
                 part.toLowerCase() === highlight.toLowerCase() ? (
-                    <strong key={i} className="font-bold text-black">
+                    <strong key={i} className="font-bold text-black font-sans">
                         {part}
                     </strong>
                 ) : (
-                    <span key={i} className="text-[#0A0A0A] font-normal">
+                    <span key={i} className="text-[#0A0A0A] font-normal font-sans">
                         {part}
                     </span>
                 ),
@@ -45,7 +45,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
             onChange,
             onSearch,
             suggestions = [],
-            placeholder = "Search projects, spaces, or members...",
+            placeholder = "Ищите проекты, пространства или участников...",
             disabled,
             ...props
         },
@@ -155,10 +155,10 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
         };
 
         return (
-            <div ref={wrapperRef} className={cn("relative w-full h-12 z-50", className)}>
+            <div ref={wrapperRef} className={cn("relative w-full h-9 z-50", className)}>
                 <div
                     className={cn(
-                        "absolute top-0 left-0 w-full flex flex-col transition-all duration-200 z-[100] overflow-hidden rounded-[16px] border",
+                        "absolute top-0 left-0 w-full flex flex-col transition-all duration-200 z-[100] overflow-hidden rounded-[12px] border",
                         disabled
                             ? "bg-[--input-disabled-bg] border-transparent opacity-70"
                             : isFocused
@@ -168,21 +168,21 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                 >
                     <div
                         className={cn(
-                            "flex items-center h-12 px-4 shrink-0 transition-colors",
+                            "flex items-center h-9 px-4 shrink-0 transition-colors",
                             isFocused ? "bg-white" : "bg-transparent",
                         )}
                     >
                         <Search
                             className={cn(
-                                "shrink-0 transition-colors z-10",
+                                "shrink-0 transition-colors z-10 text-sans",
                                 isFocused ? "text-[#0A0A0A]" : "text-[--color-gray-400]",
                             )}
-                            size={20}
+                            size={18}
                         />
 
                         <div className="relative flex-1 h-full flex items-center ml-2.5">
                             {showGhostText && (
-                                <div className="absolute inset-0 flex items-center pointer-events-none text-[15px] whitespace-pre">
+                                <div className="absolute inset-0 flex items-center pointer-events-none text-[14px] text-sans whitespace-pre">
                                     <span className="opacity-0">{internalValue}</span>
                                     <span className="text-[--color-gray-400]">
                                         {ghostTextRemainder}
@@ -199,7 +199,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                                 placeholder={placeholder}
                                 disabled={disabled}
                                 className={cn(
-                                    "relative z-10 w-full bg-transparent border-none outline-none text-[15px] text-[#0A0A0A]",
+                                    "relative z-10 w-full bg-transparent border-none outline-none font-medium font-sans text-[14px] text-[#0A0A0A]",
                                     "placeholder:text-[--color-gray-400]",
                                 )}
                                 onKeyDown={handleKeyDown}
@@ -217,32 +217,31 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                             </button>
                         )}
                     </div>
-
-                    {showSuggestions && (
-                        <ul className="flex flex-col py-3 max-h-64 overflow-y-auto">
-                            {filteredSuggestions.map((suggestion, index) => (
-                                <li
-                                    key={index}
-                                    onMouseEnter={() => setSelectedIndex(index)}
-                                    onClick={() => {
-                                        setInternalValue(suggestion);
-                                        onChange?.(suggestion);
-                                        onSearch?.(suggestion);
-                                        setIsFocused(false);
-                                    }}
-                                    className={cn(
-                                        "pl-[46px] pr-4 py-2.5 text-[15px] cursor-pointer transition-colors",
-                                        selectedIndex === index
-                                            ? "bg-gray-200/60"
-                                            : "hover:bg-gray-200/40",
-                                    )}
-                                >
-                                    <HighlightMatch text={suggestion} highlight={internalValue} />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
                 </div>
+                {showSuggestions && (
+                    <ul className="flex flex-col pt-9 max-h-64 overflow-y-auto absolute left-0 right-0 mt-1 bg-gray-50 border border-gray-300 rounded-[12px] shadow-lg">
+                        {filteredSuggestions.map((suggestion, index) => (
+                            <li
+                                key={index}
+                                onMouseEnter={() => setSelectedIndex(index)}
+                                onClick={() => {
+                                    setInternalValue(suggestion);
+                                    onChange?.(suggestion);
+                                    onSearch?.(suggestion);
+                                    setIsFocused(false);
+                                }}
+                                className={cn(
+                                    "pl-[46px] pr-4 py-2.5 text-[14px] text-sans cursor-pointer transition-colors",
+                                    selectedIndex === index
+                                        ? "bg-gray-200/60"
+                                        : "hover:bg-gray-200/40",
+                                )}
+                            >
+                                <HighlightMatch text={suggestion} highlight={internalValue} />
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         );
     },
