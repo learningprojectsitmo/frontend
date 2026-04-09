@@ -45,6 +45,16 @@ export const paths = {
             path: "",
             getHref: () => "/app",
         },
+        settings: {
+            root: {
+                path: "/app/settings",
+                getHref: () => "/app/settings",
+            },
+            roles: {
+                path: "/app/settings/roles",
+                getHref: () => "/app/settings/roles",
+            },
+        },
         kanban: {
             path: 'kanban/:spaceId',
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,
