@@ -1,3 +1,6 @@
-export { KanbanBoard } from './kanban-board';
-export { KanbanColumn } from './kanban-column';
-export { TaskCard } from './task-card';
+export { KanbanBoard } from './board';
+export { KanbanColumn } from './column';
+export { ColumnModal } from './column-modal';
+export { KanbanTask } from './task';
+export { TaskModal } from './task-modal';
+export { SubtaskList } from './subtask-list';

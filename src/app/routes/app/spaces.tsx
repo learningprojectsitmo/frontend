@@ -1,12 +1,15 @@
+import { Link } from 'react-router';
 import { ContentLayout } from "@/components/layouts";
 import { BookOpen, Users, LayoutGrid, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
+import { paths } from "@/config/paths";
 
 const spaceRoute = () => {
     // Имитация данных из макета (в будущем придет из API)
     const spaces = [
         {
+            id: 1,
             title: "Управление проектами",
             projects: 8,
             members: 24,
@@ -14,6 +17,7 @@ const spaceRoute = () => {
             category: "Дисциплина",
         },
         {
+            id: 2,
             title: "Проектная деятельность",
             projects: 5,
             members: 12,
@@ -21,6 +25,7 @@ const spaceRoute = () => {
             category: "Дисциплина",
         },
         {
+            id: 3,
             title: "Управление процессами",
             projects: 12,
             members: 128,
@@ -49,35 +54,38 @@ const spaceRoute = () => {
                 <section className="mb-12">
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {spaces.map((space, idx) => (
-                            <div
-                                key={idx}
-                                className="border border-gray-100 bg-white rounded-xl p-6 shadow-sm transition-shadow hover:shadow-md"
+                        {spaces.map((space) => (
+                            <Link
+                                key={space.id}
+                                to={paths.app.kanban.getHref(space.id)}
+                                className="block transition-transform hover:scale-[1.02]"
                             >
-                                <div className="mb-4 flex items-start justify-between">
-                                    <div className={`${space.color} rounded-lg p-3 text-white`}>
-                                        <BookOpen size={24} />
+                                <div className="border border-gray-100 bg-white rounded-xl p-6 shadow-sm transition-shadow hover:shadow-md">
+                                    <div className="mb-4 flex items-start justify-between">
+                                        <div className={`${space.color} rounded-lg p-3 text-white`}>
+                                            <BookOpen size={24} />
+                                        </div>
+                                        <Tag variant="default">{space.category}</Tag>
                                     </div>
-                                    <Tag variant="default">{space.category}</Tag>
-                                </div>
 
-                                <h3 className="mb-2 text-lg font-bold">{space.title}</h3>
-                                <p className="mb-6 leading-relaxed text-sm text-gray-500">
-                                    Проекты по планированию, организации и контролю проектной
-                                    работы...
-                                </p>
+                                    <h3 className="mb-2 text-lg font-bold">{space.title}</h3>
+                                    <p className="mb-6 leading-relaxed text-sm text-gray-500">
+                                        Проекты по планированию, организации и контролю проектной
+                                        работы...
+                                    </p>
 
-                                <div className="flex items-center gap-4 text-sm text-gray-400">
-                                    <div className="flex items-center gap-1.5">
-                                        <LayoutGrid size={16} />
-                                        <span>{space.projects} проектов</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Users size={16} />
-                                        <span>{space.members} участника</span>
+                                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                                        <div className="flex items-center gap-1.5">
+                                            <LayoutGrid size={16} />
+                                            <span>{space.projects} проектов</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Users size={16} />
+                                            <span>{space.members} участника</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </section>

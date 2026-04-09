@@ -13,8 +13,8 @@ export type Entity<T> = {
 
 export type User = Entity<{
     id: number;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     middle_name: string;
     email: string;
 }>;
@@ -23,61 +23,102 @@ export type LoginResponse = {
     access_token: string;
 };
 
-export interface ApiUser {
-    id: number;
-    first_name: string;
-    last_name: string;
-    middle_name?: string;
-    email?: string;
-    role?: {
-        id: number;
-        name: string;
-    };
-}
+// ========== ДОСКА ==========
 
-export type ApiTaskStatus = 'not_started' | 'in_progress' | 'review' | 'done';
-export type ApiTaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-
-export interface ApiTask {
-    id: number;
-    title: string;
-    description?: string;
-    status: ApiTaskStatus;
-    priority: ApiTaskPriority;
-    order: number;
+export interface ApiBoard {
     project_id: number;
-    created_by_id: number;
-    assignees: ApiUser[];
-    created_by?: ApiUser;
-    due_date?: string;
-    tags?: string[];
-    created_at: string;
-    updated_at: string;
+    project_name: string;
+    columns: ApiColumnWithTasksAndSubtasks[];
 }
+
+// ========== КОЛОНКА ==========
 
 export interface ApiColumn {
     id: number;
     project_id: number;
     name: string;
     color: string;
-    order: number;
-    task_status: ApiTaskStatus;
-    allowed_roles: string;
+    position: number;
+    wip_limit?: number;
     created_at: string;
     updated_at: string;
 }
 
-export interface ApiColumnWithTasks extends ApiColumn {
-    tasks: ApiTask[];
+export interface ApiColumnWithTasksAndSubtasks extends ApiColumn {
+    tasks: ApiTaskWithSubtasks[];
     task_count: number;
 }
+
+// ========== ЗАДАЧИ ==========
+
+export type ApiTaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface ApiTask {
+    id: number;
+    title: string;
+    description?: string;
+    priority?: ApiTaskPriority;
+    position: number;
+    column_id: number;
+    project_id: number;
+    created_by_id: number;
+    assignees: User[];
+    created_by?: User;
+    due_date?: string;
+    tags?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ApiTaskWithSubtasks extends ApiTask {
+    subtasks?: ApiSubtask[];
+    subtask_count?: number;
+}
+
+// ========== ПОДЗАДАЧИ ==========
+
+export interface ApiSubtask {
+    id: number;
+    task_id: number;
+    title: string;
+    is_completed: boolean;
+    position: number;
+    created_by_id: number;
+    created_by?: User;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ApiSubtaskListResponse {
+    items: ApiSubtask[];
+    total: number;
+}
+
+// ========== ИСТОРИЯ ==========
 
 export interface ApiTaskHistory {
     id: number;
     task_id: number;
-    changed_by: ApiUser;
-    old_status?: ApiTaskStatus;
-    new_status?: ApiTaskStatus;
+    changed_by: User;
+    old_column_id?: number;
+    new_column_id?: number;
     change_type: string;
+    change_data?: Record<string, unknown>;
     created_at: string;
+}
+
+// ========== СТАТИСТИКА ==========
+
+export interface ApiProjectStats {
+    total: number;
+    by_column: Record<number, number>;
+    by_priority: {
+        low: number;
+        medium: number;
+        high: number;
+        urgent: number;
+    };
+    overdue: number;
+    without_assignee: number;
+    column_names: Record<number, string>;
 }

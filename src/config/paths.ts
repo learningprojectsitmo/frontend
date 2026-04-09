@@ -45,10 +45,6 @@ export const paths = {
             path: "",
             getHref: () => "/app",
         },
-        space: {
-            path: 'spaces/:spaceId',
-            getHref: (spaceId: string | number) => `/app/spaces/${spaceId}`,
-        },
         kanban: {
             path: 'kanban/:spaceId',
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,

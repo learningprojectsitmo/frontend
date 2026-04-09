@@ -2,32 +2,44 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { SubtaskList } from './subtask-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { ApiTask, ApiUser } from '@/types/api';
+import { X } from 'lucide-react';
+import type { Task, ProjectMember } from '@/types/tables/forTables';
 
 const taskSchema = z.object({
     title: z.string().min(1, 'Название обязательно').max(200, 'Слишком длинное название'),
     description: z.string().optional(),
-    priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+    priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().default('low'),
     assigneeIds: z.array(z.number()).optional().default([]),
     dueDate: z.string().optional(),
     tags: z.string().optional(),
 });
 
-type TaskFormData = z.infer<typeof taskSchema>;
+export type TaskFormData = z.infer<typeof taskSchema> & {
+    subtasks?: Array<{
+        id?: number;
+        title: string;
+        isCompleted: boolean;
+        position: number;
+        taskId?: number;
+        _tempId?: string;
+    }>;
+};
 
 interface TaskModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: TaskFormData) => void;
-    task?: ApiTask;
-    projectId: number;
-    teamMembers?: ApiUser[];
+    onSubmit: (data: TaskFormData, columnId: number) => void;
+    task?: Task;
+    columnId: number;
+    projectId?: number;
+    projectMembers?: ProjectMember[];
     isLoading?: boolean;
 }
 
@@ -36,9 +48,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     onClose,
     onSubmit,
     task,
-    teamMembers = [],
+    columnId,
+    projectMembers = [],
     isLoading = false,
 }) => {
+    const [subtasks, setSubtasks] = React.useState<Array<{
+        id?: number;
+        title: string;
+        isCompleted: boolean;
+        position: number;
+        taskId?: number;
+        _tempId: string;
+    }>>([]);
+
     const {
         register,
         handleSubmit,
@@ -51,48 +73,105 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         defaultValues: {
             title: task?.title || '',
             description: task?.description || '',
-            priority: task?.priority || 'medium',
+            priority: task?.priority || 'low',
             assigneeIds: task?.assignees?.map(a => a.id) || [],
-            dueDate: task?.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
-            tags: task?.tags?.join(', ') || '',
+            dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',  
+            tags: task?.tags || '',
         },
     });
 
+    const selectedAssigneeIds = watch('assigneeIds') || [];
+
+    // Получаем выбранных ответственных для отображения
+    const selectedAssignees = React.useMemo(() => {
+        return projectMembers.filter(member => selectedAssigneeIds.includes(member.id));
+    }, [selectedAssigneeIds, projectMembers]);
+
+    // Сброс формы при открытии/закрытии
     React.useEffect(() => {
         if (isOpen) {
             if (task) {
                 reset({
                     title: task.title,
                     description: task.description || '',
-                    priority: task.priority,
+                    priority: task.priority || 'low',
                     assigneeIds: task.assignees?.map(a => a.id) || [],
-                    dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
-                    tags: task.tags?.join(', ') || '',
+                    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',  
+                    tags: task.tags || '',
                 });
+                
+                // Загружаем существующие подзадачи с _tempId
+                if (task.subtasks && task.subtasks.length > 0) {
+                    const formattedSubtasks = task.subtasks.map(subtask => ({
+                        id: subtask.id,
+                        title: subtask.title,
+                        isCompleted: subtask.isCompleted,
+                        position: subtask.position,
+                        taskId: subtask.taskId,
+                        _tempId: `existing_${subtask.id}`
+                    }));
+                    setSubtasks(formattedSubtasks);
+                } else {
+                    setSubtasks([]);
+                }
             } else {
                 reset({
                     title: '',
                     description: '',
-                    priority: 'medium',
+                    priority: 'low',
                     assigneeIds: [],
                     dueDate: '',
                     tags: '',
                 });
+                setSubtasks([]);
             }
         }
     }, [isOpen, task, reset]);
 
-    const selectedAssigneeIds = watch('assigneeIds') || [];
-
     const handleFormSubmit = (data: TaskFormData) => {
-        onSubmit(data);
+        onSubmit({ ...data, subtasks }, columnId);
     };
 
-    const toggleAssignee = (memberId: number) => {
-        const newIds = selectedAssigneeIds.includes(memberId)
-            ? selectedAssigneeIds.filter(id => id !== memberId)
-            : [...selectedAssigneeIds, memberId];
-        setValue('assigneeIds', newIds);
+    const handleAddSubtask = (title: string) => {
+        const newSubtask = {
+            title,
+            isCompleted: false,
+            position: subtasks.length,
+            taskId: task?.id || 0,
+            _tempId: `new_${Date.now()}_${Math.random()}`
+        };
+        setSubtasks([...subtasks, newSubtask]);
+    };
+
+    const handleUpdateSubtask = (index: number, updatedSubtask: Partial<{
+        title: string;
+        isCompleted: boolean;
+    }>) => {
+        const newSubtasks = [...subtasks];
+        newSubtasks[index] = { ...newSubtasks[index], ...updatedSubtask };
+        setSubtasks(newSubtasks);
+    };
+
+    const handleDeleteSubtask = (index: number) => {
+        setSubtasks(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Добавление ответственного
+    const handleAddAssignee = (memberId: string) => {
+        const id = parseInt(memberId);
+        if (!selectedAssigneeIds.includes(id)) {
+            setValue('assigneeIds', [...selectedAssigneeIds, id]);
+        }
+    };
+
+    // Удаление ответственного
+    const handleRemoveAssignee = (memberId: number) => {
+        setValue('assigneeIds', selectedAssigneeIds.filter(id => id !== memberId));
+    };
+
+    // Получение инициалов
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
     };
 
     return (
@@ -107,7 +186,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
                     {/* Название */}
                     <div className="space-y-2">
-                        <Label htmlFor="title">Название *</Label>
+                        <Label htmlFor="title">
+                            Название <span className="text-red-500">*</span>
+                        </Label>
                         <Input
                             id="title"
                             {...register('title')}
@@ -132,18 +213,20 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
                     {/* Приоритет */}
                     <div className="space-y-2">
-                        <Label htmlFor="priority">Приоритет</Label>
+                        <Label htmlFor="priority">
+                            Приоритет <span className="text-red-500">*</span>
+                        </Label>
                         <Select
+                            value={watch('priority') || 'low'}
                             onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => 
                                 setValue('priority', value)
                             }
-                            defaultValue={task?.priority || 'medium'}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Выберите приоритет" />
+                                <SelectValue placeholder="Низкий (по умолчанию)" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="low">Низкий</SelectItem>
+                                <SelectItem value="low">Низкий (по умолчанию)</SelectItem>
                                 <SelectItem value="medium">Средний</SelectItem>
                                 <SelectItem value="high">Высокий</SelectItem>
                                 <SelectItem value="urgent">Срочный</SelectItem>
@@ -152,24 +235,63 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     </div>
 
                     {/* Ответственные */}
-                    {teamMembers.length > 0 && (
-                        <div className="space-y-2">
-                            <Label>Ответственные</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {teamMembers.map((member) => (
-                                    <Button
+                    <div className="space-y-2">
+                        <Label>Ответственные</Label>
+                        
+                        {/* Список выбранных ответственных */}
+                        {selectedAssignees.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {selectedAssignees.map((member) => (
+                                    <div
                                         key={member.id}
-                                        type="button"
-                                        variant={selectedAssigneeIds.includes(member.id) ? 'blue' : 'outline'}
-                                        size="hug36"
-                                        onClick={() => toggleAssignee(member.id)}
+                                        className="flex items-center gap-1 bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-sm"
                                     >
-                                        {member.first_name} {member.last_name}
-                                    </Button>
+                                        <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center text-xs">
+                                            {getInitials(member.firstName, member.lastName)}
+                                        </div>
+                                        <span>{member.firstName} {member.lastName}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveAssignee(member.id)}
+                                            className="ml-1 hover:text-blue-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
+                        
+                        {/* Выбор нового ответственного */}
+                        <Select onValueChange={handleAddAssignee} value="">
+                            <SelectTrigger>
+                                <SelectValue placeholder="Добавить ответственного" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {projectMembers
+                                    .filter(member => !selectedAssigneeIds.includes(member.id))
+                                    .map((member) => (
+                                        <SelectItem key={member.id} value={member.id.toString()}>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                                    {getInitials(member.firstName, member.lastName)}
+                                                </div>
+                                                {member.firstName} {member.lastName}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                {projectMembers.length === 0 && (
+                                    <div className="px-2 py-1.5 text-sm text-gray-500">
+                                        Нет участников команды
+                                    </div>
+                                )}
+                            </SelectContent>
+                        </Select>
+                        
+                        <p className="text-xs text-gray-500">
+                            Выберите одного или нескольких ответственных за задачу
+                        </p>
+                    </div>
 
                     {/* Дедлайн */}
                     <div className="space-y-2">
@@ -188,6 +310,20 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                             id="tags"
                             {...register('tags')}
                             placeholder="Например: frontend, bug, срочно"
+                        />
+                        <p className="text-xs text-gray-500">
+                            Введите теги через запятую
+                        </p>
+                    </div>
+
+                    {/* Подзадачи */}
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <SubtaskList 
+                            taskId={task?.id} 
+                            subtasks={subtasks}
+                            onAddSubtask={handleAddSubtask}
+                            onUpdateSubtask={handleUpdateSubtask}
+                            onDeleteSubtask={handleDeleteSubtask}
                         />
                     </div>
 

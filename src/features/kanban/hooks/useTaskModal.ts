@@ -1,30 +1,44 @@
-import { useState } from 'react';
-import type { ApiTask } from '@/types/api';
+import { useState, useCallback } from 'react';
+import type { Task } from '@/types/tables/forTables';
 
-export const useTaskModal = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<ApiTask | undefined>();
+interface UseTaskModalReturn {
+  isOpen: boolean;
+  editingTask: Task | undefined;
+  targetColumnId: number | undefined;
+  openCreateModal: (columnId: number) => void;
+  openEditModal: (task: Task) => void;
+  closeModal: () => void;
+}
 
-    const openCreateModal = () => {
-        setEditingTask(undefined);
-        setIsOpen(true);
-    };
+export const useTaskModal = (): UseTaskModalReturn => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [targetColumnId, setTargetColumnId] = useState<number | undefined>();
 
-    const openEditModal = (task: ApiTask) => {
-        setEditingTask(task);
-        setIsOpen(true);
-    };
+  const openCreateModal = useCallback((columnId: number) => {
+    setEditingTask(undefined);
+    setTargetColumnId(columnId);
+    setIsOpen(true);
+  }, []);
 
-    const closeModal = () => {
-        setIsOpen(false);
-        setEditingTask(undefined);
-    };
+  const openEditModal = useCallback((task: Task) => {
+    setEditingTask(task);
+    setTargetColumnId(task.columnId);
+    setIsOpen(true);
+  }, []);
 
-    return {
-        isOpen,
-        editingTask,
-        openCreateModal,
-        openEditModal,
-        closeModal,
-    };
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+    setEditingTask(undefined);
+    setTargetColumnId(undefined);
+  }, []);
+
+  return {
+    isOpen,
+    editingTask,
+    targetColumnId,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  };
 };
