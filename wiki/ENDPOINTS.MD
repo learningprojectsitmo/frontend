@@ -125,9 +125,9 @@ avatar: string;
 read: boolean;
 }
 
-# Projects
+# Recent Projects
 
-- api.get("/app/projects");
+- api.get("/app/recentprojects");
 
 Responce: Project[]
 

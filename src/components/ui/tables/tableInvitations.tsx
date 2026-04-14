@@ -1,4 +1,4 @@
-import type { Member } from "@/types/tables/forTables";
+import type { Replycant } from "@/types/tables/forTables";
 
 const getInitials = (name: string) => {
     return name
@@ -10,29 +10,25 @@ const getInitials = (name: string) => {
 
 interface TableInvitationsProps {
     headerList: string[];
-    members: Member[];
-    addToTeam: (id: string) => void;
-    teamList: string[];
+    members: Replycant[];
+    addToTeam?: (id: number) => void;
 }
 
-export const TableInvitations = ({
-    headerList,
-    members,
-    addToTeam,
-    teamList,
-}: TableInvitationsProps) => {
+export const TableInvitations = ({ headerList, members, addToTeam }: TableInvitationsProps) => {
     return (
         <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <table className="w-full text-left">
-                <thead className="bg-gray-50 text-[#0A0A0A] text-black-500 border-b border-gray-200">
+                <thead className="text-[#0A0A0A] text-black-500 border-b border-gray-200">
                     <tr>
                         {headerList.map((header) => (
-                            <th className="px-6 py-4 text-[17px]">{header}</th>
+                            <th className="px-6 py-4 text-[15px] font-sans font-semibold">
+                                {header}
+                            </th>
                         ))}
                     </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 text-[15px]">
+                <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
                     {members.map((member) => (
                         <tr className="hover:bg-gray-50 transition">
                             <td className="px-6 py-4">
@@ -61,26 +57,23 @@ export const TableInvitations = ({
                                     href={member.resumeUrl}
                                     className="font-medium text-blue-600 hover:text-blue-700"
                                 >
-                                    Open
+                                    Открыть
                                 </a>
                             </td>
                             <td className="px-6 py-4 text-gray-900">{member.responseDate}</td>
-                            {teamList.includes(member.id) ? (
+                            {member.status === "invited" ? (
                                 <td className="px-6 py-4">
-                                    <button
-                                        onClick={() => addToTeam(member.id)}
-                                        className="font-medium text-blue-600 hover:text-blue-700"
-                                    >
-                                        Invitation sent
+                                    <button className="font-medium text-blue-600 hover:text-blue-700">
+                                        Приглашение отправлено
                                     </button>
                                 </td>
                             ) : (
                                 <td className="px-6 py-4">
                                     <button
-                                        onClick={() => addToTeam(member.id)}
+                                        onClick={() => addToTeam?.(member.id)}
                                         className="font-medium text-blue-600 hover:text-blue-700"
                                     >
-                                        Add from team
+                                        Добавить в команду
                                     </button>
                                 </td>
                             )}

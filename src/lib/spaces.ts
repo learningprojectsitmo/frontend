@@ -17,6 +17,7 @@ export const useSpacesList = () => {
         staleTime: 5 * 60 * 1000, // 10 минут
         gcTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
     });
 };
 
