@@ -1,13 +1,23 @@
 export interface Member {
-    id: string;
+    id: number;
     name: string;
     role: string;
-    priority: number;
     contacts: string;
     resumeUrl: string;
     dateAdded: string;
+    avatarUrl?: string;
+    status: "default" | "delete";
+}
+
+export interface Replycant {
+    id: number;
+    name: string;
+    priority: number;
+    contacts: string;
+    resumeUrl: string;
     responseDate: string;
     avatarUrl?: string;
+    status: "invite" | "invited";
 }
 
 export interface Role {

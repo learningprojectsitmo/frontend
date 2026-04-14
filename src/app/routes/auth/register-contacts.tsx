@@ -12,7 +12,7 @@ const RegisterContactsRoute = () => {
         <AuthLayout title="Создание нового аккаунта">
             <RegistrationContactsForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spases.getHref()}`, {
+                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {
                         replace: true,
                     });
                 }}
