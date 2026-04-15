@@ -187,7 +187,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
         <>
             <div
                 className={cn(
-                    "w-80 flex-shrink-0 rounded-lg flex flex-col",
+                    "w-[260px] flex-shrink-0 rounded-lg flex flex-col",
                     "border shadow-sm transition-all duration-200 overflow-hidden",
                     "h-[70vh]",
                     baseColor.white.bg,

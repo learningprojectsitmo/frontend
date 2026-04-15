@@ -1,7 +1,7 @@
 export const baseColor = {
     white: {
         bg: "bg-white",
-        header: "bg-white",
+        header: "bg-[hsl(218,45%,94%)]",
         text: "text-gray-900",
         border: "border-gray-300",
         label: "Белый",

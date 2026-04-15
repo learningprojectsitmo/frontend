@@ -68,7 +68,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                 onDragStart={handleTaskDragStart}
                 onClick={handleClick}
                 className={cn(
-                    "bg-gray-50 rounded-lg shadow-sm border border-gray-200",
+                    "rounded-lg shadow-sm border border-gray-200",
                     "hover:shadow-md transition-all",
                     "relative group cursor-grab active:cursor-grabbing",
                     isDragging && "cursor-grabbing",
@@ -77,32 +77,37 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
             >
                 <div
                     className={cn(
-                        task.priority === "urgent" && "bg-red-100",
-                        task.priority === "high" && "bg-orange-100",
-                        task.priority === "medium" && "bg-yellow-100",
-                        task.priority === "low" && "bg-green-100",
-                        task.priority === "default" && "bg-gray-100",
+                        task.priority === "urgent" && "bg-red-50",
+                        task.priority === "high" && "bg-orange-50",
+                        task.priority === "medium" && "bg-yellow-50",
+                        task.priority === "low" && "bg-green-50",
+                        task.priority === "default" && "bg-[hsl(218,45%,94%)]",
                         "p-3",
                     )}
                 >
-                    {/* Верхняя строка: дедлайн + drag handle */}
+                    {/* Верхняя строка: id + дедлайн + drag handle */}
                     <div className="flex items-center justify-between mb-2">
-                        {/* Дедлайн */}
-                        {task.dueDate && (
-                            <div
-                                className={cn(
-                                    "flex items-center",
-                                    "px-1 py-0.5 rounded-lg text-xs font-medium",
-                                    isOverdue
-                                        ? "bg-red-400 text-white"
-                                        : "bg-orange-400 text-white",
-                                )}
-                            >
-                                <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
-                                {formatDate(task.dueDate)}
+                        <div className="flex items-center gap-2">
+                            {/* ID задачи */}
+                            <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-white text-black">
+                                {"#" + task.id}
                             </div>
-                        )}
-                        {!task.dueDate && <div />}
+                            {/* Дедлайн */}
+                            {task.dueDate && (
+                                <div
+                                    className={cn(
+                                        "flex items-center",
+                                        "px-1 py-0.5 rounded-lg text-xs font-medium",
+                                        isOverdue
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-white text-black",
+                                    )}
+                                >
+                                    <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
+                                    {formatDate(task.dueDate)}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Drag Handle */}
                         <div data-drag-handle="task" className="cursor-grab active:cursor-grabbing">
@@ -166,7 +171,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Теги (нижняя часть) - показываем только если есть теги */}
                 {tagsArray.length > 0 && (
-                    <div className="p-3 pt-2 bg-gray-100">
+                    <div className="p-3 pt-2 bg-[hsl(218,45%,94%)]">
                         <div className="flex flex-wrap gap-2">
                             {tagsArray.slice(0, 3).map((tag, idx) => (
                                 <span
