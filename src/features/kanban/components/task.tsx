@@ -140,7 +140,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     <div className="bg-white border-t border-b border-gray-100 py-3 px-3">
                         <div className="space-y-2">
                             {task.subtasks.slice(0, 3).map((subtask) => (
-                                <div key={subtask.id} className="flex items-center gap-2">
+                                <div key={subtask.id} className="flex items-center gap-2 min-w-0">
                                     <input
                                         type="checkbox"
                                         checked={subtask.isCompleted}
@@ -148,11 +148,11 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                             e.stopPropagation();
                                             onToggleSubtask?.(subtask.id);
                                         }}
-                                        className="w-3.5 h-3.5 rounded border-gray-300"
+                                        className="w-4 h-4 rounded border-gray-300 flex-shrink-0"
                                     />
                                     <span
                                         className={cn(
-                                            "text-sm text-gray-600",
+                                            "text-sm text-gray-600 truncate",
                                             subtask.isCompleted && "line-through text-gray-400",
                                         )}
                                     >

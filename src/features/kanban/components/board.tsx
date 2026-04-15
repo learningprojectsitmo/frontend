@@ -1,5 +1,8 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
+import { Plus, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { KanbanColumn } from "./column";
 import {
     DndMonitorProvider,
@@ -26,6 +29,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     onChangeColor,
     onDeleteColumn,
     onReorderColumns,
+    onCreateColumn,
     isLoading,
     className,
 }) => {
@@ -35,7 +39,34 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const [activeColumnTitle, setActiveColumnTitle] = useState<string>("");
     const [dropDirectionForColumn, setDropDirectionForColumn] = useState<Map<number, "left" | "right">>(new Map());
     const [draggableColumnId, setDraggableColumnId] = useState<number | null>(null);
+    const [isAddingColumn, setIsAddingColumn] = useState(false);
+    const [newColumnName, setNewColumnName] = useState("");
     const { announce, announcement } = useAnnouncement();
+
+    // Автофокус на инпут при открытии формы
+    const newColumnInputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (isAddingColumn) {
+            newColumnInputRef.current?.focus();
+        }
+    }, [isAddingColumn]);
+
+    const handleConfirmNewColumn = useCallback(() => {
+        const name = newColumnName.trim();
+        if (name) {
+            onCreateColumn?.(name);
+        }
+        setIsAddingColumn(false);
+        setNewColumnName("");
+    }, [newColumnName, onCreateColumn]);
+
+    const handleCancelNewColumn = useCallback(() => {
+        setIsAddingColumn(false);
+        setNewColumnName("");
+    }, []);
+
+    const newColumnContainerRef = useRef<HTMLDivElement>(null);
+
     const { onDragStart, onDragOver, onDragEnd, onDragCancel } = useDndEvents();
     const activeIdRef = useRef<string | null>(null);
 
@@ -404,7 +435,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             <LiveRegion announcement={announcement} />
 
             <div
-                className={cn("flex overflow-x-auto min-h-[500px]", className)}
+                className={cn("flex overflow-x-auto", className)}
                 aria-label="Канбан-доска"
                 aria-describedby={instructionsId}
             >
@@ -431,7 +462,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                         }}
                         onDrop={(e) => handleColumnDrop(e, column.id, column.name)}
                         className={cn(
-                            "-mr-[2px] px-2 border-r-2 border-l-2 border-r-transparent border-l-transparent last:mr-0",
+                            "first:pl-0 -mr-[2px] px-2 border-r-2 border-l-2 border-r-transparent border-l-transparent",
                             activeColumnId === column.id,
                             dropDirectionForColumn.get(column.id) === "left" && "border-l-blue-500",
                             dropDirectionForColumn.get(column.id) === "right" && "border-r-blue-500",
@@ -454,6 +485,64 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                         />
                     </div>
                 ))}
+
+                {/* Кнопка "Добавить колонку" */}
+                {onCreateColumn && (
+                    <div className="ml-2 w-[260px] flex-shrink-0" ref={newColumnContainerRef}>
+                        {isAddingColumn ? (
+                            <div
+                                className={cn(
+                                    "w-[260px] flex-shrink-0 rounded-2xl flex flex-col",
+                                    "border shadow-sm overflow-hidden",
+                                    "h-[70vh] bg-white",
+                                )}
+                                onBlur={(e) => {
+                                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                                        handleCancelNewColumn();
+                                    }
+                                }}
+                            >
+                                {/* Заголовок */}
+                                <div className="p-3 border-b flex-shrink-0 bg-[hsl(218,45%,94%)]">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <Input
+                                            ref={newColumnInputRef}
+                                            value={newColumnName}
+                                            onChange={(e) => setNewColumnName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") handleConfirmNewColumn();
+                                                if (e.key === "Escape") handleCancelNewColumn();
+                                            }}
+                                            placeholder="Название колонки..."
+                                            // className="h-auto py-0 px-0 text-sm font-semibold flex-1 min-w-0 border-none bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400"
+                                            className="h-6 py-1 px-2 text-sm font-semibold flex-1 min-w-0"
+                                        />
+                                        <button
+                                            onClick={handleConfirmNewColumn}
+                                            className="p-1 rounded-md hover:bg-black/10 text-gray-700 flex-shrink-0"
+                                            aria-label="Создать колонку"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Тело колонки — пустое */}
+                                <div className="flex-1" />
+                            </div>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsAddingColumn(true)}
+                                className="w-full justify-between text-sm text-black"
+                                aria-label="Создать новую колонку"
+                            >
+                                Добавить колонку
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </div>
+                )}
 
                 <div className="w-4 flex-shrink-0" aria-hidden="true" />
             </div>

@@ -68,7 +68,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     const sortedTasks = [...(column.tasks || [])].sort((a, b) => a.position - b.position);
 
     // Проверка WIP лимита
-    const isWipLimitReached = column.wipLimit && (column.tasks?.length || 0) >= column.wipLimit;
+    // const isWipLimitReached = column.wipLimit && (column.tasks?.length || 0) >= column.wipLimit;
 
     // Получаем стили для цвета колонки
     const colorStyle = columnColors[column.color as keyof typeof columnColors] || baseColor.white;
@@ -187,7 +187,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
         <>
             <div
                 className={cn(
-                    "w-[260px] flex-shrink-0 rounded-lg flex flex-col",
+                    "w-[260px] flex-shrink-0 rounded-2xl flex flex-col",
                     "border shadow-sm transition-all duration-200 overflow-hidden",
                     "h-[70vh]",
                     baseColor.white.bg,
@@ -196,16 +196,16 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleTaskDrop}
             >
-                {/* Заголовок колонки - добавляем drag handle для перетаскивания колонки */}
-                <div className={cn("p-3 border-b flex-shrink-0", colorStyle.header)}>
+                {/* Заголовок колонки */}
+                <div className={cn("px-2 py-2.5 border-b flex-shrink-0", colorStyle.header)}>
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
                             {/* Drag Handle для перетаскивания колонки */}
                             <div
                                 data-drag-handle="column"
                                 className="cursor-grab active:cursor-grabbing"
                             >
-                                <GripVertical className={cn("h-4 w-4", colorStyle.text)} />
+                                <GripVertical className={cn("h-5 w-5", colorStyle.text)} />
                             </div>
 
                             {isEditing ? (
@@ -215,7 +215,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                         value={editName}
                                         onChange={(e) => setEditName(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        className="h-8 py-1 px-2 text-sm font-semibold"
+                                        className="h-6 py-1 px-2 text-sm font-semibold"
                                         autoFocus
                                     />
                                     <button
@@ -239,7 +239,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                         {column.name}
                                     </h3>
                                     {/* WIP лимит */}
-                                    {column.wipLimit && (
+                                    {/* {column.wipLimit && (
                                         <span
                                             className={cn(
                                                 "text-xs px-1.5 py-0.5 rounded-full",
@@ -250,14 +250,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                         >
                                             {column.tasks?.length || 0}/{column.wipLimit}
                                         </span>
-                                    )}
+                                    )} */}
 
                                     {/* Если нет WIP лимита, показываем только количество задач */}
-                                    {!column.wipLimit && (
+                                    {/* {!column.wipLimit && (
                                         <span className="text-xs text-gray-500 flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded-full">
                                             {column.tasks?.length || 0}
                                         </span>
-                                    )}
+                                    )} */}
                                 </>
                             )}
                         </div>
@@ -282,7 +282,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             />
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuContent align="end" className="w-[236px]">
                                         {/* Переименовать */}
                                         <DropdownMenuItem
                                             onClick={handleStartRename}
@@ -356,11 +356,11 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 </div>
 
                 {/* Кнопка добавления задачи */}
-                <div className={cn("p-2 border-t border-gray-200 flex-shrink-0")}>
+                <div className={cn("px-2 pt-3 pb-1.5 border-t border-gray-200 flex-shrink-0")}>
                     <Button
                         variant="outline"
                         size="hug36"
-                        className="w-full justify-between text-gray-400 hover:text-gray-600 font-light"
+                        className="w-full h-8 rounded-lg justify-between text-sm font-light text-gray-400 hover:text-gray-600"
                         onClick={handleAddTask}
                     >
                         <span>Добавить задачу...</span>
@@ -404,7 +404,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 onTaskDropOnTask?.(e, task.id);
                             }}
                             className={cn(
-                                "-mb-[2px] py-2 px-2 border-b-2 border-t-2 border-b-transparent border-t-transparent last:mb-0",
+                                "-mb-[2px] py-1.5 px-2 border-b-2 border-t-2 border-b-transparent border-t-transparent last:mb-0",
                                 dropDirectionMap.get(task.id) === "top" && "border-t-blue-500",
                                 dropDirectionMap.get(task.id) === "bottom" && "border-b-blue-500",
                             )}
@@ -425,7 +425,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     {sortedTasks.length === 0 && (
                         <div
                             className={cn(
-                                "text-center py-8 text-gray-400 text-sm rounded-lg transition-all duration-200",
+                                "text-center mx-2 py-8 text-gray-400 text-sm rounded-lg transition-all duration-200",
                                 isDragOver &&
                                     isDraggingTask &&
                                     "border-2 border-blue-400 border-dashed bg-blue-50 text-blue-500",

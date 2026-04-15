@@ -11,6 +11,7 @@ export interface KanbanBoardProps {
     onRenameColumn?: (columnId: number, newName: string) => void;
     onChangeColor?: (columnId: number, color: string) => void;
     onDeleteColumn?: (columnId: number) => void;
+    onCreateColumn?: (name: string) => void;
     className?: string;
 }
 

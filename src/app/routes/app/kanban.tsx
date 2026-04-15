@@ -344,6 +344,8 @@ export const KanbanRoute = () => {
             onChangeColor: handleChangeColor,
             onDeleteColumn: handleDeleteColumn,
             onReorderColumns: handleReorderColumns,
+            onCreateColumn: (name: string) =>
+                handleCreateColumn({ name, color: "white" }),
         }),
         [
             columns,
@@ -416,56 +418,45 @@ export const KanbanRoute = () => {
     const hasColumns = columns && columns.length > 0;
 
     return (
-        <ContentLayout title={spaceName}>
-            <div className="mx-auto max-w-7xl p-6">
-                {/* Header Section */}
-                <header className="mb-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
-                            <p className="text-sm text-gray-500">
-                                {hasColumns
-                                    ? `Всего колонок: ${columns.length}`
-                                    : "Начните с создания первой колонки"}
-                            </p>
-                        </div>
-                    </div>
-
-                    <Button
-                        variant="blue"
-                        size="hug36"
-                        onClick={() => setIsColumnModalOpen(true)}
-                        aria-label="Создать новую колонку"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Создать колонку
-                    </Button>
-                </header>
-
-                {/* Kanban Board */}
+    <ContentLayout title={spaceName}>
+        {/* Header Section */}
+        <div className="mx-auto max-w-7xl p-6">
+            <header className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
+                    <p className="text-sm text-gray-500">
+                        {hasColumns
+                            ? `Всего колонок: ${columns.length}`
+                            : "Начните с создания первой колонки"}
+                    </p>
+                </div>
+            </header>
+        </div>
+        {/* Область канбан-доски без лишних отступов снизу */}
+        {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
+        <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
+            <div className="px-14 pt-6 pb-20 overflow-x-auto">
                 <section aria-label="Канбан-доска с задачами">
-                    <div className="overflow-x-auto">
-                        <div className="min-w-min">
-                            {hasColumns ? (
-                                <KanbanBoard {...boardData} />
-                            ) : (
-                                <div className="flex h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                                    <p className="mb-4 text-lg font-medium text-gray-500">
-                                        Нет колонок
-                                    </p>
-                                    <p className="mb-6 text-sm text-gray-400">
-                                        Создайте первую колонку, чтобы начать работу
-                                    </p>
-                                    <Button
-                                        variant="blue"
-                                        onClick={() => setIsColumnModalOpen(true)}
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Создать колонку
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
+                    <div className="min-w-min">
+                        {hasColumns ? (
+                            <KanbanBoard {...boardData} />
+                        ) : (
+                            <div className="flex h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+                                <p className="mb-4 text-lg font-medium text-gray-500">
+                                    Нет колонок
+                                </p>
+                                <p className="mb-6 text-sm text-gray-400">
+                                    Создайте первую колонку, чтобы начать работу
+                                </p>
+                                <Button
+                                    variant="blue"
+                                    onClick={() => setIsColumnModalOpen(true)}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Создать колонку
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -489,8 +480,9 @@ export const KanbanRoute = () => {
                     isLoading={createColumn.isPending}
                 />
             </div>
-        </ContentLayout>
-    );
+        </div>
+    </ContentLayout>
+);
 };
 
 export default KanbanRoute;
