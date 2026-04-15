@@ -1,4 +1,3 @@
-// task.tsx
 import React, { useState } from "react";
 import { AlarmClockCheck, GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,11 +71,20 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     "bg-gray-50 rounded-lg shadow-sm border border-gray-200",
                     "hover:shadow-md transition-all",
                     "relative group cursor-grab active:cursor-grabbing",
-                    isDragging && "opacity-50 shadow-lg rotate-[2deg] scale-105",
-                    "mb-2 overflow-hidden",
+                    isDragging && "cursor-grabbing",
+                    "overflow-hidden",
                 )}
             >
-                <div className="p-3 bg-gray-100">
+                <div
+                    className={cn(
+                        task.priority === "urgent" && "bg-red-100",
+                        task.priority === "high" && "bg-orange-100",
+                        task.priority === "medium" && "bg-yellow-100",
+                        task.priority === "low" && "bg-green-100",
+                        task.priority === "default" && "bg-gray-100",
+                        "p-3",
+                    )}
+                >
                     {/* Верхняя строка: дедлайн + drag handle */}
                     <div className="flex items-center justify-between mb-2">
                         {/* Дедлайн */}
@@ -175,19 +183,6 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                             )}
                         </div>
                     </div>
-                )}
-
-                {/* Приоритет (цветной индикатор) */}
-                {task.priority && (
-                    <div
-                        className={cn(
-                            "absolute top-2 right-2 w-2 h-2 rounded-full",
-                            task.priority === "urgent" && "bg-red-500",
-                            task.priority === "high" && "bg-orange-500",
-                            task.priority === "medium" && "bg-yellow-500",
-                            task.priority === "low" && "bg-green-500",
-                        )}
-                    />
                 )}
 
                 {/* Кнопки действий (при наведении) */}

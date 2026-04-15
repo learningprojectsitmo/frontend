@@ -36,7 +36,7 @@ export interface Platform {
     members: number;
 }
 
-export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export type TaskPriority = "default" | "low" | "medium" | "high" | "urgent";
 
 // Участник команды
 export interface ProjectMember {

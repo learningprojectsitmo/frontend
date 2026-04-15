@@ -41,9 +41,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
 }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [isDraggingTask, setIsDraggingTask] = useState(false);
-    const [dropDirectionMap, setDropDirectionMap] = useState<Map<number, "top" | "bottom">>(
-        new Map(),
-    );
+    const [dropDirectionMap, setDropDirectionMap] = useState<Map<number, "top" | "bottom">>(new Map(),);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(column.name);
@@ -86,16 +84,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     // Обработчик перетаскивания задачи над колонкой
     const handleTaskDragOver = useCallback(
         (event: React.DragEvent<HTMLElement>) => {
+            if (!event.dataTransfer.types.includes("kanban-board-task")) {
+                return;
+            }
             event.preventDefault();
             if (!isDragOver) {
                 setIsDragOver(true);
             }
-            // Проверяем, что перетаскивается задача
-            if (event.dataTransfer.types.includes("kanban-board-task")) {
-                setIsDraggingTask(true);
-            } else {
-                setIsDraggingTask(false);
-            }
+            setIsDraggingTask(true);
         },
         [isDragOver],
     );
@@ -103,6 +99,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     // Обработчик падения задачи на колонку
     const handleTaskDrop = useCallback(
         (event: React.DragEvent<HTMLElement>) => {
+            if (!event.dataTransfer.types.includes("kanban-board-task")) {
+                return;
+            }
             event.preventDefault();
             setIsDragOver(false);
             onTaskDropOnColumn?.(event, column.id, column.name);
@@ -192,8 +191,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     "border shadow-sm transition-all duration-200 overflow-hidden",
                     "h-[70vh]",
                     baseColor.white.bg,
-                    isDragOver && "border-blue-400 ring-2 ring-blue-400/20",
-                    !isDragOver,
                 )}
                 onDragOver={handleTaskDragOver}
                 onDragLeave={handleDragLeave}
@@ -373,39 +370,43 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
                 {/* Список задач */}
                 <div
-                    className={cn("flex-1 overflow-y-auto p-2 space-y-2")}
+                    className="flex-1 overflow-y-auto"
                     onDragLeave={() => setDropDirectionMap(new Map())}
                 >
                     {sortedTasks.map((task) => (
                         <div
                             key={task.id}
                             onDragOver={(e) => {
+                                if (!e.dataTransfer.types.includes("kanban-board-task")) {
+                                    return;
+                                }
                                 e.preventDefault();
                                 e.stopPropagation();
 
-                                if (e.dataTransfer.types.includes("kanban-board-task")) {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const mouseY = e.clientY;
-                                    const midpoint = (rect.top + rect.bottom) / 2;
-                                    const direction = mouseY <= midpoint ? "top" : "bottom";
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const mouseY = e.clientY;
+                                const midpoint = (rect.top + rect.bottom) / 2;
+                                const direction = mouseY <= midpoint ? "top" : "bottom";
 
-                                    setDropDirectionForTask(task.id, direction);
-                                    onTaskDragOver?.(e, task.id, task.title);
-                                }
+                                setDropDirectionForTask(task.id, direction);
+                                onTaskDragOver?.(e, task.id, task.title);
                             }}
                             onDragLeave={() => {
                                 setDropDirectionForTask(task.id, null);
                             }}
                             onDrop={(e) => {
+                                if (!e.dataTransfer.types.includes("kanban-board-task")) {
+                                    return;
+                                }
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setDropDirectionForTask(task.id, null);
                                 onTaskDropOnTask?.(e, task.id);
                             }}
                             className={cn(
-                                "relative transition-all duration-200",
-                                dropDirectionMap.get(task.id) === "top" &&
-                                    "border-t-2 border-t-blue-500 -mt-1",
-                                dropDirectionMap.get(task.id) === "bottom" &&
-                                    "border-b-2 border-b-blue-500 -mb-1",
+                                "-mb-[2px] py-2 px-2 border-b-2 border-t-2 border-b-transparent border-t-transparent last:mb-0",
+                                dropDirectionMap.get(task.id) === "top" && "border-t-blue-500",
+                                dropDirectionMap.get(task.id) === "bottom" && "border-b-blue-500",
                             )}
                         >
                             <KanbanTask

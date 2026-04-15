@@ -21,7 +21,7 @@ import type { Task, ProjectMember } from "@/types/tables/forTables";
 const taskSchema = z.object({
     title: z.string().min(1, "Название обязательно").max(200, "Слишком длинное название"),
     description: z.string().optional(),
-    priority: z.enum(["low", "medium", "high", "urgent"]).optional().default("low"),
+    priority: z.enum(["default", "low", "medium", "high", "urgent"]).optional().default("default"),
     assigneeIds: z.array(z.number()).optional().default([]),
     dueDate: z.string().optional(),
     tags: z.string().optional(),
@@ -81,7 +81,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         defaultValues: {
             title: task?.title || "",
             description: task?.description || "",
-            priority: task?.priority || "low",
+            priority: task?.priority || "default",
             assigneeIds: task?.assignees?.map((a) => a.id) || [],
             dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
             tags: task?.tags || "",
@@ -103,7 +103,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 reset({
                     title: task.title,
                     description: task.description || "",
-                    priority: task.priority || "low",
+                    priority: task.priority || "default",
                     assigneeIds: task.assignees?.map((a) => a.id) || [],
                     dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
                     tags: task.tags || "",
@@ -127,7 +127,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 reset({
                     title: "",
                     description: "",
-                    priority: "low",
+                    priority: "default",
                     assigneeIds: [],
                     dueDate: "",
                     tags: "",
@@ -232,16 +232,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                             Приоритет <span className="text-red-500">*</span>
                         </Label>
                         <Select
-                            value={watch("priority") || "low"}
-                            onValueChange={(value: "low" | "medium" | "high" | "urgent") =>
+                            value={watch("priority") || "default"}
+                            onValueChange={(value: "default" | "low" | "medium" | "high" | "urgent") =>
                                 setValue("priority", value)
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Низкий (по умолчанию)" />
+                                <SelectValue placeholder="Не указан (по умолчанию)" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="low">Низкий (по умолчанию)</SelectItem>
+                                <SelectItem value="default">Не указан (по умолчанию)</SelectItem>
+                                <SelectItem value="low">Низкий</SelectItem>
                                 <SelectItem value="medium">Средний</SelectItem>
                                 <SelectItem value="high">Высокий</SelectItem>
                                 <SelectItem value="urgent">Срочный</SelectItem>

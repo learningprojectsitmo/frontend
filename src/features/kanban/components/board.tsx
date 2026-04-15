@@ -33,9 +33,8 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const [activeTaskTitle, setActiveTaskTitle] = useState<string>("");
     const [activeColumnId, setActiveColumnId] = useState<number | undefined>(undefined);
     const [activeColumnTitle, setActiveColumnTitle] = useState<string>("");
-    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<
-        Map<number, "left" | "right">
-    >(new Map());
+    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<Map<number, "left" | "right">>(new Map());
+    const [draggableColumnId, setDraggableColumnId] = useState<number | null>(null);
     const { announce, announcement } = useAnnouncement();
     const { onDragStart, onDragOver, onDragEnd, onDragCancel } = useDndEvents();
     const activeIdRef = useRef<string | null>(null);
@@ -65,6 +64,10 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     // Обработка начала перетаскивания колонки
     const handleColumnDragStart = useCallback(
         (event: React.DragEvent<HTMLElement>, columnId: number, columnName: string) => {
+            if (draggableColumnId !== columnId) {
+                event.preventDefault();
+                return;
+            }
             if (event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.TASK)) {
                 event.preventDefault();
                 return;
@@ -86,7 +89,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             onDragStart(`column-${columnId}`);
             announce(`Начато перетаскивание колонки "${columnName}"`);
         },
-        [onDragStart, announce],
+        [onDragStart, announce, draggableColumnId],
     );
 
     // Функция для установки направления для колонки
@@ -105,6 +108,9 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     // Обработка перетаскивания колонки над другой колонкой
     const handleColumnDragOver = useCallback(
         (event: React.DragEvent<HTMLElement>, columnId: number, columnName: string) => {
+            if (!event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.COLUMN)) {
+                return;
+            }
             event.preventDefault();
             event.dataTransfer.dropEffect = "move";
 
@@ -139,12 +145,23 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                 const sourceColumn = JSON.parse(columnData);
 
                 const oldIndex = columns.findIndex((col) => col.id === sourceColumn.id);
-                const newIndex = columns.findIndex((col) => col.id === targetColumnId);
+                const targetIndex = columns.findIndex((col) => col.id === targetColumnId);
 
-                if (oldIndex !== -1 && newIndex !== -1) {
+                if (oldIndex !== -1 && targetIndex !== -1 && oldIndex !== targetIndex) {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const midpoint = (rect.left + rect.right) / 2;
+                    const direction = event.clientX <= midpoint ? "left" : "right";
+
                     const newColumns = [...columns];
                     const [movedColumn] = newColumns.splice(oldIndex, 1);
-                    newColumns.splice(newIndex, 0, movedColumn);
+                    const targetIndexAfterRemoval = newColumns.findIndex(
+                        (col) => col.id === targetColumnId,
+                    );
+                    const insertAt =
+                        direction === "left"
+                            ? targetIndexAfterRemoval
+                            : targetIndexAfterRemoval + 1;
+                    newColumns.splice(insertAt, 0, movedColumn);
 
                     const columnOrders = newColumns.map((col, index) => ({
                         id: col.id,
@@ -154,7 +171,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     onReorderColumns(columnOrders);
                     onDragEnd(`column-${sourceColumn.id}`, `column-${targetColumnId}`);
                     announce(
-                        `Колонка "${sourceColumn.name}" перемещена ${oldIndex < newIndex ? "после" : "перед"} колонкой "${targetColumnName}"`,
+                        `Колонка "${sourceColumn.name}" перемещена ${direction === "left" ? "перед" : "после"} колонкой "${targetColumnName}"`,
                     );
                 }
             } catch {
@@ -194,23 +211,22 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     // Обработка перетаскивания задачи над задачей
     const handleTaskDragOver = useCallback(
         (event: React.DragEvent<HTMLElement>, taskId: number, taskTitle: string) => {
+            if (!event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.TASK)) {
+                return;
+            }
             event.preventDefault();
             event.stopPropagation();
             event.dataTransfer.dropEffect = "move";
 
-            if (event.dataTransfer.types.includes(DATA_TRANSFER_TYPES.TASK)) {
-                const rect = event.currentTarget.getBoundingClientRect();
-                const mouseY = event.clientY;
-                const midpoint = (rect.top + rect.bottom) / 2;
-                const direction = mouseY <= midpoint ? "top" : "bottom";
+            const rect = event.currentTarget.getBoundingClientRect();
+            const mouseY = event.clientY;
+            const midpoint = (rect.top + rect.bottom) / 2;
+            const direction = mouseY <= midpoint ? "top" : "bottom";
 
-                onDragOver(activeIdRef.current || "", `task-${taskId}`);
-                announce(
-                    `Задача будет перемещена ${direction === "top" ? "перед" : "после"} задачи "${taskTitle}"`,
-                );
-
-                event.dataTransfer.setData("text/plain", direction);
-            }
+            onDragOver(activeIdRef.current || "", `task-${taskId}`);
+            announce(
+                `Задача будет перемещена ${direction === "top" ? "перед" : "после"} задачи "${taskTitle}"`,
+            );
         },
         [onDragOver, announce],
     );
@@ -241,7 +257,16 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                         return;
                     }
 
-                    const newPosition = targetColumn.tasks?.length || 0;
+                    const taskCount = targetColumn.tasks?.length || 0;
+                    const isSameColumn = task.columnId === columnId;
+                    const newPosition = isSameColumn ? Math.max(0, taskCount - 1) : taskCount;
+
+                    if (isSameColumn && task.position === newPosition) {
+                        setActiveTaskId(undefined);
+                        setActiveTaskTitle("");
+                        return;
+                    }
+
                     onTaskMove(task.id, columnId, newPosition);
                     onDragEnd(`task-${task.id}`, `column-${columnId}`);
                     announce(`Задача "${task.title}" помещена в колонку "${columnName}"`);
@@ -263,9 +288,14 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             event.stopPropagation();
 
             const taskData = event.dataTransfer.getData(DATA_TRANSFER_TYPES.TASK);
-            const direction = event.dataTransfer.getData("text/plain");
 
             if (!taskData || !onTaskMove) return;
+
+            // Направление вычисляем прямо из события (как в эталоне для карточек) —
+            // так оно всегда совпадает с показанной синей линией.
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midpoint = (rect.top + rect.bottom) / 2;
+            const direction = event.clientY <= midpoint ? "top" : "bottom";
 
             try {
                 const activeTask = JSON.parse(taskData) as Task;
@@ -374,29 +404,39 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
             <LiveRegion announcement={announcement} />
 
             <div
-                className={cn("flex gap-4 pb-4 overflow-x-auto min-h-[500px]", className)}
-                role="region"
+                className={cn("flex overflow-x-auto min-h-[500px]", className)}
                 aria-label="Канбан-доска"
                 aria-describedby={instructionsId}
             >
                 {columns.map((column) => (
                     <div
                         key={column.id}
-                        draggable
+                        draggable={draggableColumnId === column.id}
+                        onMouseDown={(e) => {
+                            const target = e.target as HTMLElement;
+                            if (target.closest('[data-drag-handle="column"]')) {
+                                setDraggableColumnId(column.id);
+                            } else {
+                                setDraggableColumnId(null);
+                            }
+                        }}
+                        onMouseUp={() => setDraggableColumnId(null)}
                         onDragStart={(e) => handleColumnDragStart(e, column.id, column.name)}
                         onDragOver={(e) => handleColumnDragOver(e, column.id, column.name)}
+                        onDragLeave={(e) => {
+                            const related = e.relatedTarget as Node | null;
+                            if (!related || !e.currentTarget.contains(related)) {
+                                setDropDirection(column.id, null);
+                            }
+                        }}
                         onDrop={(e) => handleColumnDrop(e, column.id, column.name)}
                         className={cn(
-                            "relative transition-all duration-200",
-                            activeColumnId === column.id && "opacity-50",
+                            "-mr-[2px] px-2 border-r-2 border-l-2 border-r-transparent border-l-transparent last:mr-0",
+                            activeColumnId === column.id,
+                            dropDirectionForColumn.get(column.id) === "left" && "border-l-blue-500",
+                            dropDirectionForColumn.get(column.id) === "right" && "border-r-blue-500",
                         )}
                     >
-                        {dropDirectionForColumn.get(column.id) === "left" && (
-                            <div className="absolute -left-2 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full shadow-lg z-10" />
-                        )}
-                        {dropDirectionForColumn.get(column.id) === "right" && (
-                            <div className="absolute -right-2 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full shadow-lg z-10" />
-                        )}
                         <KanbanColumn
                             column={column}
                             onAddTask={onAddTask}

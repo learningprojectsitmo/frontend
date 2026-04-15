@@ -120,7 +120,7 @@ export interface ApiColumnWithTasksAndSubtasks extends ApiColumn {
 
 // ========== ЗАДАЧИ ==========
 
-export type ApiTaskPriority = "low" | "medium" | "high" | "urgent";
+export type ApiTaskPriority = "default" | "low" | "medium" | "high" | "urgent";
 
 export interface ApiTask {
     id: number;
