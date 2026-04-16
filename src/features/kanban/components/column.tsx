@@ -5,7 +5,6 @@ import {
     Plus,
     MoreHorizontal,
     Pencil,
-    Palette,
     Trash2,
     Check,
     X,
@@ -193,7 +192,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 onDrop={handleTaskDrop}
             >
                 {/* Заголовок колонки */}
-                <div className={cn("px-2 py-2.5 border-b flex-shrink-0", colorStyle.header)}>
+                <div className={cn("px-2 py-2.5 flex-shrink-0", colorStyle.header)}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1 flex-1 min-w-0">
                             {/* Drag Handle для перетаскивания колонки */}
@@ -261,27 +260,25 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             />
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-[236px]">
+
+                                    <DropdownMenuContent align="end" className="w-[244px] rounded-xl border-gray-300">
                                         {/* Переименовать */}
                                         <DropdownMenuItem
                                             onClick={handleStartRename}
-                                            className="cursor-pointer"
+                                            className="cursor-pointer gap-0"
                                         >
                                             <Pencil className="mr-2 h-4 w-4" />
                                             <span>Переименовать</span>
                                         </DropdownMenuItem>
 
-                                        <DropdownMenuSeparator />
+                                        <DropdownMenuSeparator className="bg-gray-300"/>
 
                                         {/* Выбор цвета */}
                                         <div className="py-2 w-full">
-                                            <div className="flex items-center justify-between px-2 py-1 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <Palette className="mr-2 h-4 w-4" />
-                                                    <span className="text-sm focus:text-accent-foreground">
-                                                        Выбрать цвет
-                                                    </span>
-                                                </div>
+                                            <div className="flex items-center justify-between px-2 pb-1 text-sm">
+                                                <span className="text-sm focus:text-accent-foreground">
+                                                    Выбрать цвет
+                                                </span>
                                                 {/* Белый цвет */}
                                                 <button
                                                     onClick={() => handleColorSelect("white")}
@@ -296,7 +293,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                                     aria-label="Белый цвет"
                                                 />
                                             </div>
-                                            <div className="grid grid-cols-7 gap-2 px-2 pt-2 pb-1">
+                                            <div className="grid grid-cols-7 gap-2 px-2 pt-2">
                                                 {Object.entries(columnColors).map(
                                                     ([colorName, styles]) => (
                                                         <button
@@ -317,12 +314,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             </div>
                                         </div>
 
-                                        <DropdownMenuSeparator />
+                                        <DropdownMenuSeparator className="bg-gray-300"/>
 
                                         {/* Удалить */}
                                         <DropdownMenuItem
                                             onClick={handleDelete}
-                                            className="cursor-pointer text-red-600 focus:text-red-600"
+                                            className="cursor-pointer border-text-red-600 focus:text-red-600 gap-0"
                                         >
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             <span>Удалить</span>
@@ -335,7 +332,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 </div>
 
                 {/* Кнопка добавления задачи */}
-                <div className={cn("px-3 pt-3 pb-1.5 border-t border-gray-200 flex-shrink-0")}>
+                <div className={cn("px-3 pt-3 pb-1.5 flex-shrink-0")}>
                     <Button
                         variant="outline"
                         size="hug36"

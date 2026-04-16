@@ -4,7 +4,7 @@ import { KanbanBoard } from "@/features/kanban/components/board";
 import { ColumnModal } from "@/features/kanban/components/column-modal";
 import { TaskModal } from "@/features/kanban/components/task-modal";
 import type { TaskFormData } from "@/features/kanban/components/task-modal";
-import { KanbanFilter } from "@/features/kanban/components/kanban-filter";
+import { KanbanFilter } from "@/features/kanban/components/board-filter";
 import {
     useBoard,
     useCreateTask,

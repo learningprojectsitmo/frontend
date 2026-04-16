@@ -4,18 +4,16 @@ import type {
     TaskWithSubtasks,
 } from "@/types/tables/forTables";
 
-export type FilterMode = "all" | "mine" | "assignee" | "priority" | "tag" | "author";
-
 export interface KanbanFilterState {
-    mode: FilterMode;
-    assigneeIds: number[];
-    priorities: TaskPriority[];
-    tags: string[];
-    authorIds: number[];
+    mine: boolean;              // Мои задачи
+    assigneeIds: number[];      // Ответственные
+    priorities: TaskPriority[]; // Приоритет
+    tags: string[];             // Теги
+    authorIds: number[];        // Авторы
 }
 
 export const defaultFilterState: KanbanFilterState = {
-    mode: "all",
+    mine: false,
     assigneeIds: [],
     priorities: [],
     tags: [],
@@ -31,38 +29,39 @@ export const parseTags = (raw?: string): string[] =>
               .filter(Boolean)
         : [];
 
-// Проверка, соответствует ли задача фильтру
+// Проверка, что хотя бы один критерий активен
+export const isFilterActive = (filter: KanbanFilterState): boolean =>
+    filter.mine ||
+    filter.assigneeIds.length > 0 ||
+    filter.priorities.length > 0 ||
+    filter.tags.length > 0 ||
+    filter.authorIds.length > 0;
+
+// Проверка соответствия задачи фильтру:
+// AND между активными категориями, OR внутри категории
 const matchesTask = (
     task: TaskWithSubtasks,
     filter: KanbanFilterState,
     currentUserId?: number,
 ): boolean => {
-    switch (filter.mode) {
-        case "all":
-            return true;
-        case "mine":
-            return currentUserId
-                ? task.assignees.some((a) => a.id === currentUserId)
-                : true;
-        case "assignee":
-            if (filter.assigneeIds.length === 0) return true;
-            return task.assignees.some((a) => filter.assigneeIds.includes(a.id));
-        case "priority":
-            if (filter.priorities.length === 0) return true;
-            return !!task.priority && filter.priorities.includes(task.priority);
-        case "tag": {
-            if (filter.tags.length === 0) return true;
-            const tags = parseTags(task.tags);
-            return filter.tags.some((t) => tags.includes(t));
-        }
-        case "author": {
-            if (filter.authorIds.length === 0) return true;
-            const authorId = task.createdBy?.id ?? task.createdById;
-            return filter.authorIds.includes(authorId);
-        }
-        default:
-            return true;
+    if (filter.mine && currentUserId) {
+        if (!task.assignees.some((a) => a.id === currentUserId)) return false;
     }
+    if (filter.assigneeIds.length > 0) {
+        if (!task.assignees.some((a) => filter.assigneeIds.includes(a.id))) return false;
+    }
+    if (filter.priorities.length > 0) {
+        if (!task.priority || !filter.priorities.includes(task.priority)) return false;
+    }
+    if (filter.tags.length > 0) {
+        const taskTags = parseTags(task.tags);
+        if (!filter.tags.some((t) => taskTags.includes(t))) return false;
+    }
+    if (filter.authorIds.length > 0) {
+        const authorId = task.createdBy?.id ?? task.createdById;
+        if (!filter.authorIds.includes(authorId)) return false;
+    }
+    return true;
 };
 
 // Фильтрация колонок — возвращает те же колонки, но с отфильтрованными задачами
@@ -71,12 +70,9 @@ export const filterColumns = (
     filter: KanbanFilterState,
     currentUserId?: number,
 ): ColumnWithTasksAndSubtasks[] => {
-    if (filter.mode === "all") return columns;
+    if (!isFilterActive(filter)) return columns;
     return columns.map((column) => ({
         ...column,
         tasks: (column.tasks || []).filter((task) => matchesTask(task, filter, currentUserId)),
     }));
 };
-
-// Проверка, что фильтр неактивен (дефолтное состояние)
-export const isFilterActive = (filter: KanbanFilterState): boolean => filter.mode !== "all";

@@ -1,16 +1,13 @@
-import React, { useMemo } from "react";
-import { ListFilter, Users, Flag, Tag as TagIcon, UserCircle2, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { ListFilter, ChevronDown, X, Check } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
     DropdownMenuSeparator,
     DropdownMenuSub,
     DropdownMenuSubTrigger,
     DropdownMenuSubContent,
-    DropdownMenuCheckboxItem,
     DropdownMenuLabel,
     DropdownMenuItem,
     DropdownMenuPortal,
@@ -22,7 +19,6 @@ import type {
 } from "@/types/tables/forTables";
 import { cn } from "@/lib/utils";
 import {
-    type FilterMode,
     type KanbanFilterState,
     defaultFilterState,
     parseTags,
@@ -36,12 +32,7 @@ interface Props {
     currentUserId?: number;
 }
 
-// Конфигурация приоритетов: порядок + локализованные метки + визуальные индикаторы
-const PRIORITY_OPTIONS: {
-    value: TaskPriority;
-    label: string;
-    dotClass: string;
-}[] = [
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string; dotClass: string }[] = [
     { value: "urgent", label: "Срочный", dotClass: "bg-red-500" },
     { value: "high", label: "Высокий", dotClass: "bg-orange-500" },
     { value: "medium", label: "Средний", dotClass: "bg-yellow-500" },
@@ -61,6 +52,8 @@ export const KanbanFilter: React.FC<Props> = ({
     onFilterChange,
     currentUserId,
 }) => {
+    const [open, setOpen] = useState(false);
+
     // Агрегируем доступные опции из текущих задач
     const { assignees, authors, tags } = useMemo(() => {
         const assigneesMap = new Map<number, ProjectMember>();
@@ -90,72 +83,44 @@ export const KanbanFilter: React.FC<Props> = ({
         };
     }, [columns]);
 
-    // Метка текущего фильтра для триггер-кнопки
-    const label = useMemo(() => {
-        switch (filter.mode) {
-            case "all":
-                return "Все задачи";
-            case "mine":
-                return "Мои задачи";
-            case "assignee":
-                return filter.assigneeIds.length > 0
-                    ? `Ответственные · ${filter.assigneeIds.length}`
-                    : "Ответственные";
-            case "priority":
-                return filter.priorities.length > 0
-                    ? `Приоритет · ${filter.priorities.length}`
-                    : "Приоритет";
-            case "tag":
-                return filter.tags.length > 0 ? `Теги · ${filter.tags.length}` : "Теги";
-            case "author":
-                return filter.authorIds.length > 0
-                    ? `Авторы · ${filter.authorIds.length}`
-                    : "Авторы";
-        }
-    }, [filter]);
-
     const active = isFilterActive(filter);
 
-    // Смена radio-режима (Все задачи / Мои задачи) — сбрасывает все мультивыборы
-    const handleRadioChange = (value: string) => {
-        const mode = value as FilterMode;
-        if (mode === "all") {
-            onFilterChange(defaultFilterState);
-        } else if (mode === "mine") {
-            onFilterChange({ ...defaultFilterState, mode: "mine" });
-        }
-    };
+    // Количество активных категорий для бейджа на кнопке
+    const activeCriteriaCount = [
+        filter.mine,
+        filter.assigneeIds.length > 0,
+        filter.priorities.length > 0,
+        filter.tags.length > 0,
+        filter.authorIds.length > 0,
+    ].filter(Boolean).length;
 
-    // Переключение элемента в мультивыборе. При первом выборе — устанавливается
-    // соответствующий режим; при снятии последнего — возвращаемся к "Все задачи".
+    // Метка кнопки
+    const label = useMemo(() => {
+        if (!active) return "Все задачи";
+        if (activeCriteriaCount === 1) {
+            if (filter.mine) return "Мои задачи";
+            if (filter.assigneeIds.length > 0)
+                return `Ответственные · ${filter.assigneeIds.length}`;
+            if (filter.priorities.length > 0) return `Приоритет · ${filter.priorities.length}`;
+            if (filter.tags.length > 0) return `Теги · ${filter.tags.length}`;
+            if (filter.authorIds.length > 0) return `Авторы · ${filter.authorIds.length}`;
+        }
+        return `Фильтр · ${activeCriteriaCount}`;
+    }, [filter, active, activeCriteriaCount]);
+
+    // Переключение значения в массиве — независимо между категориями
     const toggleInSet = <T,>(
-        mode: Exclude<FilterMode, "all" | "mine">,
+        key: "assigneeIds" | "priorities" | "tags" | "authorIds",
         currentValues: T[],
         value: T,
-        key: "assigneeIds" | "priorities" | "tags" | "authorIds",
     ) => {
-        const isActive = filter.mode === mode;
-        const base = isActive ? currentValues : [];
-        const next = base.includes(value) ? base.filter((v) => v !== value) : [...base, value];
-
-        if (next.length === 0) {
-            onFilterChange(defaultFilterState);
-            return;
-        }
-
-        onFilterChange({
-            ...defaultFilterState,
-            mode,
-            [key]: next,
-        } as KanbanFilterState);
+        const next = currentValues.includes(value)
+            ? currentValues.filter((v) => v !== value)
+            : [...currentValues, value];
+        onFilterChange({ ...filter, [key]: next });
     };
 
-    const assigneeSelected = filter.mode === "assignee" ? filter.assigneeIds : [];
-    const prioritySelected = filter.mode === "priority" ? filter.priorities : [];
-    const tagSelected = filter.mode === "tag" ? filter.tags : [];
-    const authorSelected = filter.mode === "author" ? filter.authorIds : [];
-
-    // Индикаторы количества выбранных на пунктах sub-menu
+    // Бейдж с количеством выбранных в sub-menu
     const badge = (n: number) =>
         n > 0 ? (
             <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700">
@@ -164,71 +129,81 @@ export const KanbanFilter: React.FC<Props> = ({
         ) : null;
 
     return (
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
                     className={cn(
-                        "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                        "inline-flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                        "min-w-[160px]",
                         active
-                            ? "border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
+                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            : "bg-gray-200 text-black hover:bg-gray-300",
                     )}
                     aria-label="Фильтр задач"
                 >
-                    <ListFilter className="h-4 w-4" />
-                    <span>{label}</span>
+                    <div className="flex items-center gap-2">
+                        <ListFilter className="h-4 w-4 flex-shrink-0" />
+                        <span>{label}</span>
+                    </div>
+                    <ChevronDown
+                        className={cn(
+                            "h-4 w-4 flex-shrink-0 transition-transform duration-200",
+                            open && "rotate-180",
+                        )}
+                    />
                 </button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-[260px]">
-                {/* Базовые режимы: Все задачи / Мои задачи */}
-                <DropdownMenuRadioGroup
-                    value={
-                        filter.mode === "all" || filter.mode === "mine" ? filter.mode : ""
-                    }
-                    onValueChange={handleRadioChange}
+            <DropdownMenuContent align="end" className="w-[160px] rounded-xl border-gray-300">
+                {/* Все задачи — сбрасывает все фильтры */}
+                <DropdownMenuItem
+                    onSelect={(e) => {
+                        e.preventDefault();
+                        onFilterChange(defaultFilterState);
+                    }}
+                    className="flex cursor-pointer items-center justify-between"
                 >
-                    <DropdownMenuRadioItem value="all">Все задачи</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="mine" disabled={!currentUserId}>
-                        Мои задачи
-                    </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
+                    <span>Все задачи</span>
+                    {!active && <Check className="h-4 w-4 text-blue-600" />}
+                </DropdownMenuItem>
 
-                <DropdownMenuSeparator />
+                {/* Мои задачи */}
+                <DropdownMenuItem
+                    onSelect={(e) => {
+                        e.preventDefault();
+                        onFilterChange({ ...filter, mine: !filter.mine });
+                    }}
+                    disabled={!currentUserId}
+                    className="flex cursor-pointer items-center justify-between"
+                >
+                    <span>Мои задачи</span>
+                    {filter.mine && <Check className="h-4 w-4 text-blue-600" />}
+                </DropdownMenuItem>
 
                 {/* Ответственные */}
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger
                         className={cn(
-                            filter.mode === "assignee" && "bg-accent",
+                            filter.assigneeIds.length > 0 && "bg-accent",
                             assignees.length === 0 && "pointer-events-none opacity-50",
                         )}
                     >
-                        <Users className="h-4 w-4" />
                         <span>Ответственные</span>
-                        {badge(assigneeSelected.length)}
+                        {badge(filter.assigneeIds.length)}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="max-h-[320px] w-[240px] overflow-y-auto">
+                        <DropdownMenuSubContent className="max-h-[320px] w-[220px] overflow-y-auto">
                             {assignees.length === 0 ? (
                                 <DropdownMenuLabel className="text-xs font-normal text-gray-500">
                                     Нет ответственных
                                 </DropdownMenuLabel>
                             ) : (
                                 assignees.map((m) => (
-                                    <DropdownMenuCheckboxItem
+                                    <DropdownMenuItem
                                         key={m.id}
-                                        checked={assigneeSelected.includes(m.id)}
-                                        onSelect={(e) => e.preventDefault()}
-                                        onCheckedChange={() =>
-                                            toggleInSet(
-                                                "assignee",
-                                                assigneeSelected,
-                                                m.id,
-                                                "assigneeIds",
-                                            )
-                                        }
+                                        className="flex items-center justify-between cursor-pointer"
+                                        onClick={() => toggleInSet("assigneeIds", filter.assigneeIds, m.id)}
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-700">
@@ -236,7 +211,8 @@ export const KanbanFilter: React.FC<Props> = ({
                                             </div>
                                             <span className="truncate">{formatMemberName(m)}</span>
                                         </div>
-                                    </DropdownMenuCheckboxItem>
+                                        {filter.assigneeIds.includes(m.id) && <Check className="h-4 w-4" />}
+                                    </DropdownMenuItem>
                                 ))
                             )}
                         </DropdownMenuSubContent>
@@ -246,38 +222,31 @@ export const KanbanFilter: React.FC<Props> = ({
                 {/* Приоритет */}
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger
-                        className={cn(filter.mode === "priority" && "bg-accent")}
+                        className={cn(filter.priorities.length > 0 && "bg-accent")}
                     >
-                        <Flag className="h-4 w-4" />
                         <span>Приоритет</span>
-                        {badge(prioritySelected.length)}
+                        {badge(filter.priorities.length)}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="w-[200px]">
+                        <DropdownMenuSubContent forceMount className="w-[160px]">
                             {PRIORITY_OPTIONS.map((opt) => (
-                                <DropdownMenuCheckboxItem
+                                <DropdownMenuItem
                                     key={opt.value}
-                                    checked={prioritySelected.includes(opt.value)}
-                                    onSelect={(e) => e.preventDefault()}
-                                    onCheckedChange={() =>
-                                        toggleInSet(
-                                            "priority",
-                                            prioritySelected,
-                                            opt.value,
-                                            "priorities",
-                                        )
+                                    className="flex items-center justify-between cursor-pointer"
+                                    onClick={() =>
+                                        toggleInSet("priorities", filter.priorities, opt.value)
                                     }
                                 >
                                     <div className="flex items-center gap-2">
                                         <span
-                                            className={cn(
-                                                "h-2.5 w-2.5 rounded-full",
-                                                opt.dotClass,
-                                            )}
+                                            className={cn("h-2.5 w-2.5 rounded-full", opt.dotClass)}
                                         />
                                         <span>{opt.label}</span>
                                     </div>
-                                </DropdownMenuCheckboxItem>
+                                    {filter.priorities.includes(opt.value) && (
+                                        <Check className="h-4 w-4" />
+                                    )}
+                                </DropdownMenuItem>
                             ))}
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
@@ -287,32 +256,29 @@ export const KanbanFilter: React.FC<Props> = ({
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger
                         className={cn(
-                            filter.mode === "tag" && "bg-accent",
+                            filter.tags.length > 0 && "bg-accent",
                             tags.length === 0 && "pointer-events-none opacity-50",
                         )}
                     >
-                        <TagIcon className="h-4 w-4" />
                         <span>Теги</span>
-                        {badge(tagSelected.length)}
+                        {badge(filter.tags.length)}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="max-h-[320px] w-[240px] overflow-y-auto">
+                        <DropdownMenuSubContent className="max-h-[320px] w-[0px] overflow-y-auto">
                             {tags.length === 0 ? (
                                 <DropdownMenuLabel className="text-xs font-normal text-gray-500">
                                     Нет тегов
                                 </DropdownMenuLabel>
                             ) : (
                                 tags.map((tag) => (
-                                    <DropdownMenuCheckboxItem
+                                    <DropdownMenuItem
                                         key={tag}
-                                        checked={tagSelected.includes(tag)}
-                                        onSelect={(e) => e.preventDefault()}
-                                        onCheckedChange={() =>
-                                            toggleInSet("tag", tagSelected, tag, "tags")
-                                        }
+                                        className="flex items-center justify-between cursor-pointer"
+                                        onClick={() => toggleInSet("tags", filter.tags, tag)}
                                     >
                                         <span className="truncate">{tag}</span>
-                                    </DropdownMenuCheckboxItem>
+                                        {filter.tags.includes(tag) && <Check className="h-4 w-4" />}
+                                    </DropdownMenuItem>
                                 ))
                             )}
                         </DropdownMenuSubContent>
@@ -323,34 +289,25 @@ export const KanbanFilter: React.FC<Props> = ({
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger
                         className={cn(
-                            filter.mode === "author" && "bg-accent",
+                            filter.authorIds.length > 0 && "bg-accent",
                             authors.length === 0 && "pointer-events-none opacity-50",
                         )}
                     >
-                        <UserCircle2 className="h-4 w-4" />
                         <span>Авторы</span>
-                        {badge(authorSelected.length)}
+                        {badge(filter.authorIds.length)}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="max-h-[320px] w-[240px] overflow-y-auto">
+                        <DropdownMenuSubContent className="max-h-[320px] w-[220px] overflow-y-auto">
                             {authors.length === 0 ? (
                                 <DropdownMenuLabel className="text-xs font-normal text-gray-500">
                                     Нет авторов
                                 </DropdownMenuLabel>
                             ) : (
                                 authors.map((m) => (
-                                    <DropdownMenuCheckboxItem
+                                    <DropdownMenuItem
                                         key={m.id}
-                                        checked={authorSelected.includes(m.id)}
-                                        onSelect={(e) => e.preventDefault()}
-                                        onCheckedChange={() =>
-                                            toggleInSet(
-                                                "author",
-                                                authorSelected,
-                                                m.id,
-                                                "authorIds",
-                                            )
-                                        }
+                                        className="flex items-center justify-between cursor-pointer"
+                                        onClick={() => toggleInSet("authorIds", filter.authorIds, m.id)}
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-700">
@@ -358,23 +315,24 @@ export const KanbanFilter: React.FC<Props> = ({
                                             </div>
                                             <span className="truncate">{formatMemberName(m)}</span>
                                         </div>
-                                    </DropdownMenuCheckboxItem>
+                                        {filter.authorIds.includes(m.id) && <Check className="h-4 w-4" />}
+                                    </DropdownMenuItem>
                                 ))
                             )}
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
 
-                {/* Сброс фильтра — показываем только если фильтр активен */}
+                {/* Сброс — только когда фильтр активен */}
                 {active && (
                     <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => onFilterChange(defaultFilterState)}
-                            className="cursor-pointer text-red-600 focus:text-red-600"
+                            className="cursor-pointer text-red-600 focus:text-red-600 p-1"
                         >
                             <X className="h-4 w-4" />
-                            <span>Сбросить фильтр</span>
+                            <span>Отменить</span>
                         </DropdownMenuItem>
                     </>
                 )}
