@@ -14,13 +14,27 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     onToggleSubtask,
 }) => {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDraggable, setIsDraggable] = useState(false);
 
     // Обработчик начала перетаскивания
     const handleTaskDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+        if (!isDraggable) {
+            event.preventDefault();
+            return;
+        }
         onDragStart?.(event);
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.dropEffect = "move";
     };
+
+    // Активируем draggable только если mousedown пришёл от drag-handle
+    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        setIsDraggable(!!target.closest('[data-drag-handle="task"]'));
+    };
+
+    // Сбрасываем флаг после завершения или отмены перетаскивания
+    const handleDragEnd = () => setIsDraggable(false);
 
     // Обработчик клика по задаче
     const handleClick = () => {
@@ -64,13 +78,15 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     return (
         <>
             <div
-                draggable
+                draggable={isDraggable}
+                onMouseDown={handleMouseDown}
                 onDragStart={handleTaskDragStart}
+                onDragEnd={handleDragEnd}
                 onClick={handleClick}
                 className={cn(
                     "rounded-lg shadow-sm border border-gray-200",
                     "hover:shadow-md transition-all",
-                    "relative group cursor-grab active:cursor-grabbing",
+                    "relative group cursor-pointer",
                     isDragging && "cursor-grabbing",
                     "overflow-hidden",
                 )}
@@ -137,7 +153,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Подзадачи */}
                 {task.subtasks && task.subtasks.length > 0 && (
-                    <div className="bg-white border-t border-b border-gray-100 py-3 px-3">
+                    <div className="p-3 bg-white border-t border-gray-200">
                         <div className="space-y-2">
                             {task.subtasks.slice(0, 3).map((subtask) => (
                                 <div key={subtask.id} className="flex items-center gap-2 min-w-0">
@@ -148,7 +164,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                             e.stopPropagation();
                                             onToggleSubtask?.(subtask.id);
                                         }}
-                                        className="w-4 h-4 rounded border-gray-300 flex-shrink-0"
+                                        className="w-4 h-4 rounded border-gray-200 flex-shrink-0"
                                     />
                                     <span
                                         className={cn(
@@ -171,7 +187,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Теги (нижняя часть) - показываем только если есть теги */}
                 {tagsArray.length > 0 && (
-                    <div className="p-3 pt-2 bg-[hsl(218,45%,94%)]">
+                    <div className="px-3 py-2 bg-[hsl(218,45%,94%)] border-t border-gray-200">
                         <div className="flex flex-wrap gap-2">
                             {tagsArray.slice(0, 3).map((tag, idx) => (
                                 <span

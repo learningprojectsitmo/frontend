@@ -67,9 +67,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     // Сортировка задач по позиции
     const sortedTasks = [...(column.tasks || [])].sort((a, b) => a.position - b.position);
 
-    // Проверка WIP лимита
-    // const isWipLimitReached = column.wipLimit && (column.tasks?.length || 0) >= column.wipLimit;
-
     // Получаем стили для цвета колонки
     const colorStyle = columnColors[column.color as keyof typeof columnColors] || baseColor.white;
 
@@ -187,9 +184,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
         <>
             <div
                 className={cn(
-                    "w-[260px] flex-shrink-0 rounded-2xl flex flex-col",
+                    "h-[70vh] w-[260px] flex-shrink-0 rounded-2xl flex flex-col",
                     "border shadow-sm transition-all duration-200 overflow-hidden",
-                    "h-[70vh]",
                     baseColor.white.bg,
                 )}
                 onDragOver={handleTaskDragOver}
@@ -235,29 +231,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <h3 className={cn("font-semibold truncate", colorStyle.text)}>
+                                    <h3 className={cn("font-semibold truncate pr-2", colorStyle.text)}>
                                         {column.name}
                                     </h3>
-                                    {/* WIP лимит */}
-                                    {/* {column.wipLimit && (
-                                        <span
-                                            className={cn(
-                                                "text-xs px-1.5 py-0.5 rounded-full",
-                                                isWipLimitReached
-                                                    ? "bg-red-100 text-red-700"
-                                                    : "bg-white/50 text-gray-700",
-                                            )}
-                                        >
-                                            {column.tasks?.length || 0}/{column.wipLimit}
-                                        </span>
-                                    )} */}
-
-                                    {/* Если нет WIP лимита, показываем только количество задач */}
-                                    {/* {!column.wipLimit && (
-                                        <span className="text-xs text-gray-500 flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded-full">
-                                            {column.tasks?.length || 0}
-                                        </span>
-                                    )} */}
+                                    <span className="text-xs text-gray-500 flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded-full">
+                                        {column.tasks?.length || 0}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -356,7 +335,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 </div>
 
                 {/* Кнопка добавления задачи */}
-                <div className={cn("px-2 pt-3 pb-1.5 border-t border-gray-200 flex-shrink-0")}>
+                <div className={cn("px-3 pt-3 pb-1.5 border-t border-gray-200 flex-shrink-0")}>
                     <Button
                         variant="outline"
                         size="hug36"
@@ -404,7 +383,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 onTaskDropOnTask?.(e, task.id);
                             }}
                             className={cn(
-                                "-mb-[2px] py-1.5 px-2 border-b-2 border-t-2 border-b-transparent border-t-transparent last:mb-0",
+                                "-mb-[2px] py-1.5 px-3 border-b-2 border-t-2 border-b-transparent border-t-transparent last:mb-0",
                                 dropDirectionMap.get(task.id) === "top" && "border-t-blue-500",
                                 dropDirectionMap.get(task.id) === "bottom" && "border-b-blue-500",
                             )}

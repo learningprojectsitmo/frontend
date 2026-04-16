@@ -322,8 +322,6 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
 
             if (!taskData || !onTaskMove) return;
 
-            // Направление вычисляем прямо из события (как в эталоне для карточек) —
-            // так оно всегда совпадает с показанной синей линией.
             const rect = event.currentTarget.getBoundingClientRect();
             const midpoint = (rect.top + rect.bottom) / 2;
             const direction = event.clientY <= midpoint ? "top" : "bottom";

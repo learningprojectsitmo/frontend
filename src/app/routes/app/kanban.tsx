@@ -4,6 +4,7 @@ import { KanbanBoard } from "@/features/kanban/components/board";
 import { ColumnModal } from "@/features/kanban/components/column-modal";
 import { TaskModal } from "@/features/kanban/components/task-modal";
 import type { TaskFormData } from "@/features/kanban/components/task-modal";
+import { KanbanFilter } from "@/features/kanban/components/kanban-filter";
 import {
     useBoard,
     useCreateTask,
@@ -25,6 +26,12 @@ import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 // Todo поменять хук
 import { useUsers } from "@/features/kanban/hooks/useUsers";
+import { useUser } from "@/lib/auth";
+import {
+    defaultFilterState,
+    filterColumns,
+    type KanbanFilterState,
+} from "@/features/kanban/utils/filter-tasks";
 
 export const KanbanRoute = () => {
     const { spaceId } = useParams<{ spaceId: string }>();
@@ -32,12 +39,20 @@ export const KanbanRoute = () => {
 
     // Состояния
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+    const [filter, setFilter] = useState<KanbanFilterState>(defaultFilterState);
     const { isOpen, editingTask, targetColumnId, openCreateModal, openEditModal, closeModal } =
         useTaskModal();
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
     const { data: projectMembers } = useUsers();
+    const { data: currentUser } = useUser();
+
+    // Отфильтрованные колонки
+    const filteredColumns = useMemo(
+        () => filterColumns(columns || [], filter, currentUser?.id),
+        [columns, filter, currentUser?.id],
+    );
 
     // Мутации
     const createTask = useCreateTask();
@@ -334,7 +349,7 @@ export const KanbanRoute = () => {
     // Мемоизация данных для KanbanBoard
     const boardData = useMemo(
         () => ({
-            columns: columns || [],
+            columns: filteredColumns,
             isLoading,
             onTaskMove: handleTaskMove,
             onTaskClick: openEditModal,
@@ -344,11 +359,10 @@ export const KanbanRoute = () => {
             onChangeColor: handleChangeColor,
             onDeleteColumn: handleDeleteColumn,
             onReorderColumns: handleReorderColumns,
-            onCreateColumn: (name: string) =>
-                handleCreateColumn({ name, color: "white" }),
+            onCreateColumn: (name: string) => handleCreateColumn({ name, color: "white" }),
         }),
         [
-            columns,
+            filteredColumns,
             isLoading,
             handleTaskMove,
             openEditModal,
@@ -421,7 +435,7 @@ export const KanbanRoute = () => {
     <ContentLayout title={spaceName}>
         {/* Header Section */}
         <div className="mx-auto max-w-7xl p-6">
-            <header className="flex items-center justify-between">
+            <header className="flex items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
                     <p className="text-sm text-gray-500">
@@ -430,12 +444,20 @@ export const KanbanRoute = () => {
                             : "Начните с создания первой колонки"}
                     </p>
                 </div>
+                {hasColumns && (
+                    <KanbanFilter
+                        columns={columns}
+                        filter={filter}
+                        onFilterChange={setFilter}
+                        currentUserId={currentUser?.id}
+                    />
+                )}
             </header>
         </div>
         {/* Область канбан-доски без лишних отступов снизу */}
         {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
         <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
-            <div className="px-14 pt-6 pb-20 overflow-x-auto">
+            <div className="mx-auto max-w-7xl p-6 overflow-x-auto">
                 <section aria-label="Канбан-доска с задачами">
                     <div className="min-w-min">
                         {hasColumns ? (
