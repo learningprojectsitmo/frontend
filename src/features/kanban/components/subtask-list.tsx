@@ -90,26 +90,19 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <Label>Подзадачи</Label>
-                <span className={cn("text-xs", !canAddSubtask && "text-red-500")}>
-                    {subtasks.length}/{MAX_SUBTASKS_PER_TASK}
-                </span>
-            </div>
-
             {/* Список подзадач */}
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+            <div className="space-y-2">
                 {subtasks.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Нет подзадач</p>
                 ) : (
                     subtasks.map((subtask, index) => (
-                        <div key={subtask._tempId} className="flex items-center gap-2">
+                        <div key={subtask._tempId} className="flex items-center p-2 gap-2 border rounded-xl ">
                             <Checkbox
                                 checked={subtask.isCompleted}
                                 onCheckedChange={() =>
                                     handleToggleSubtask(index, subtask.isCompleted)
                                 }
-                                className="w-4 h-4"
+                                className="w-[18px] h-[18px]"
                             />
 
                             {editingIndex === index ? (
@@ -125,7 +118,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                         type="button"
                                         variant="outline"
                                         onClick={() => saveEditing(index)}
-                                        className="h-7 w-7 p-0"
+                                        className="h-6 w-6 p-0"
                                     >
                                         <Check className="h-3.5 w-3.5 text-green-500" />
                                     </Button>
@@ -133,7 +126,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                         type="button"
                                         variant="outline"
                                         onClick={cancelEditing}
-                                        className="h-7 w-7 p-0"
+                                        className="h-6 w-6 p-0"
                                     >
                                         <X className="h-3.5 w-3.5 text-red-500" />
                                     </Button>
@@ -152,7 +145,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                         type="button"
                                         variant="outline"
                                         onClick={() => startEditing(index, subtask.title)}
-                                        className="h-7 w-7 p-0"
+                                        className="h-6 w-6 p-0"
                                     >
                                         <Edit2 className="h-3.5 w-3.5 text-gray-500" />
                                     </Button>
@@ -163,7 +156,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                                 type="button"
                                 variant="outline"
                                 onClick={() => onDeleteSubtask(index)}
-                                className="h-7 w-7 p-0"
+                                className="h-6 w-6 p-0"
                             >
                                 <Trash2 className="h-3.5 w-3.5 text-red-500" />
                             </Button>

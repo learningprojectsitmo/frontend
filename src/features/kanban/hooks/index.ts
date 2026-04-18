@@ -1,3 +1,3 @@
 export * from "./useKanban";
-export * from "./useTaskModal";
+export * from "./useTaskPanel";
 export * from "./useUsers";

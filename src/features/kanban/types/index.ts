@@ -3,7 +3,7 @@ import type { ColumnWithTasksAndSubtasks, ColumnWithTasks, Task } from "@/types/
 export interface KanbanBoardProps {
     columns: ColumnWithTasksAndSubtasks[];
     isLoading?: boolean;
-    onAddTask?: (columnId: number) => void;
+    onAddTask?: (columnId: number, title: string) => void;
     onTaskClick?: (task: Task) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskMove?: (taskId: number, targetColumnId: number, targetPosition: number) => void;
@@ -18,7 +18,7 @@ export interface KanbanBoardProps {
 export interface KanbanColumnProps {
     column: ColumnWithTasks;
     onTaskClick?: (task: Task) => void;
-    onAddTask?: (columnId: number) => void;
+    onAddTask?: (columnId: number, title: string) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskDragStart?: (
         event: React.DragEvent<HTMLDivElement>,

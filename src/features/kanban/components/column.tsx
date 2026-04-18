@@ -45,7 +45,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(column.name);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [quickAddTitle, setQuickAddTitle] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
+    const quickAddRef = useRef<HTMLInputElement>(null);
 
     // Функция для установки направления для конкретной задачи: (верх/низ) при перетаскивании
     const setDropDirectionForTask = useCallback(
@@ -125,10 +127,15 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
         };
     }, [handleDragEnd]);
 
-    // Обработчик клика на кнопку "Добавить задачу"
+    // Добавление новой задачи
     const handleAddTask = useCallback(() => {
-        onAddTask?.(column.id);
-    }, [onAddTask, column.id]);
+        const title = quickAddTitle.trim();
+        if (!title) return;
+        onAddTask?.(column.id, title);
+        setQuickAddTitle("");
+        // Оставляем фокус на поле для цепочечного добавления
+        quickAddRef.current?.focus();
+    }, [quickAddTitle, column.id, onAddTask]);
 
     // Обработчики для переименования
     const handleStartRename = useCallback(() => {
@@ -331,17 +338,29 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     </div>
                 </div>
 
-                {/* Кнопка добавления задачи */}
-                <div className={cn("px-3 pt-3 pb-1.5 flex-shrink-0")}>
-                    <Button
-                        variant="outline"
-                        size="hug36"
-                        className="w-full h-8 rounded-lg justify-between text-sm font-light text-gray-400 hover:text-gray-600"
-                        onClick={handleAddTask}
-                    >
-                        <span>Добавить задачу...</span>
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                {/* Добавить задачу */}
+                <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:border-blue-500">
+                        <input
+                            ref={quickAddRef}
+                            value={quickAddTitle}
+                            onChange={(e) => setQuickAddTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") handleAddTask();
+                            }}
+                            placeholder="Добавить задачу..."
+                            className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-gray-500 placeholder:text-gray-400"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAddTask}
+                            disabled={!quickAddTitle.trim()}
+                            className="flex-shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:text-gray-700 disabled:opacity-30 disabled:cursor-default"
+                            aria-label="Добавить задачу"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Список задач */}

@@ -2,8 +2,7 @@ import { useParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { ColumnModal } from "@/features/kanban/components/column-modal";
-import { TaskModal } from "@/features/kanban/components/task-modal";
-import type { TaskFormData } from "@/features/kanban/components/task-modal";
+import { TaskPanel, type TaskFormData } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
 import {
     useBoard,
@@ -19,7 +18,7 @@ import {
     useUpdateSubtask,
     useDeleteSubtask,
 } from "@/features/kanban/hooks/useKanban";
-import { useTaskModal } from "@/features/kanban/hooks/useTaskModal";
+import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
@@ -40,8 +39,8 @@ export const KanbanRoute = () => {
     // Состояния
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
     const [filter, setFilter] = useState<KanbanFilterState>(defaultFilterState);
-    const { isOpen, editingTask, targetColumnId, openCreateModal, openEditModal, closeModal } =
-        useTaskModal();
+    const { isOpen, editingTask, targetColumnId, openCreatePanel, openEditPanel, closePanel } =
+        useTaskPanel();
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
@@ -71,10 +70,10 @@ export const KanbanRoute = () => {
         (data: TaskFormData, columnId: number) => {
             const processedData = {
                 title: data.title,
-                description: data.description,
+                description: data.description || undefined,
                 priority: data.priority,
                 dueDate: data.dueDate && data.dueDate !== "" ? data.dueDate : undefined,
-                assigneeIds: data.assigneeIds,
+                assigneeIds: data.assigneeIds ?? [],
                 tags: data.tags
                     ? data.tags
                           .split(",")
@@ -83,79 +82,53 @@ export const KanbanRoute = () => {
                     : [],
             };
 
-            const newSubtasks = data.subtasks || [];
+            const newSubtasks = data.subtasks ?? [];
 
             if (editingTask) {
-                const oldSubtasks = editingTask.subtasks || [];
+                const oldSubtasks = editingTask.subtasks ?? [];
                 const oldSubtasksMap = new Map(oldSubtasks.map((s) => [s.id, s]));
-
                 const existingNewIds = new Set(newSubtasks.filter((s) => s.id).map((s) => s.id));
 
                 const toDelete = oldSubtasks.filter((s) => !existingNewIds.has(s.id));
-
                 const toUpdate = newSubtasks
                     .filter((s) => s.id)
-                    .map((newSub) => {
-                        const oldSub = oldSubtasksMap.get(newSub.id!);
-                        const hasChanges =
-                            oldSub?.title !== newSub.title ||
-                            oldSub?.isCompleted !== newSub.isCompleted;
-                        return {
-                            id: newSub.id!,
-                            title: newSub.title,
-                            isCompleted: newSub.isCompleted,
-                            hasChanges,
-                        };
-                    })
-                    .filter((u) => u.hasChanges);
-
+                    .flatMap((newSub) => {
+                        const old = oldSubtasksMap.get(newSub.id!);
+                        return old?.title !== newSub.title || old?.isCompleted !== newSub.isCompleted
+                            ? [{ id: newSub.id!, title: newSub.title, isCompleted: newSub.isCompleted }]
+                            : [];
+                    });
                 const toCreate = newSubtasks.filter((s) => !s.id);
 
                 updateTask.mutate(
                     {
                         taskId: editingTask.id,
-                        data: processedData,
+                        data: { ...processedData, columnId },
                     },
                     {
                         onSuccess: async () => {
                             try {
-                                const operations = [];
-
-                                for (const subtask of toDelete) {
-                                    operations.push(deleteSubtask.mutateAsync(subtask.id));
-                                }
-
-                                for (const subtask of toUpdate) {
-                                    operations.push(
+                                await Promise.all([
+                                    ...toDelete.map((s) => deleteSubtask.mutateAsync(s.id)),
+                                    ...toUpdate.map((s) =>
                                         updateSubtask.mutateAsync({
-                                            subtaskId: subtask.id,
-                                            data: {
-                                                title: subtask.title,
-                                                isCompleted: subtask.isCompleted,
-                                            },
+                                            subtaskId: s.id,
+                                            data: { title: s.title, isCompleted: s.isCompleted },
                                         }),
-                                    );
-                                }
-
-                                for (let i = 0; i < toCreate.length; i++) {
-                                    operations.push(
+                                    ),
+                                    ...toCreate.map((s) =>
                                         createSubtask.mutateAsync({
                                             taskId: editingTask.id,
-                                            title: toCreate[i].title,
-                                            isCompleted: toCreate[i].isCompleted,
+                                            title: s.title,
+                                            isCompleted: s.isCompleted,
                                         }),
-                                    );
-                                }
-
-                                await Promise.all(operations);
-
+                                    ),
+                                ]);
                                 toast.success("Задача успешно обновлена");
-                                closeModal();
-                                refetch();
                             } catch {
-                                // console.error('Error updating subtasks:', error);
                                 toast.error("Ошибка при обновлении подзадач");
-                                closeModal();
+                            } finally {
+                                closePanel();
                                 refetch();
                             }
                         },
@@ -165,33 +138,27 @@ export const KanbanRoute = () => {
                     },
                 );
             } else {
-                // Создание новой задачи
                 createTask.mutate(
-                    {
-                        ...processedData,
-                        columnId: columnId,
-                    },
+                    { ...processedData, columnId },
                     {
                         onSuccess: async (newTask) => {
                             try {
                                 if (newSubtasks.length > 0) {
                                     await Promise.all(
-                                        newSubtasks.map((subtask) =>
+                                        newSubtasks.map((s) =>
                                             createSubtask.mutateAsync({
                                                 taskId: newTask.id,
-                                                title: subtask.title,
-                                                isCompleted: subtask.isCompleted,
+                                                title: s.title,
+                                                isCompleted: s.isCompleted,
                                             }),
                                         ),
                                     );
                                 }
                                 toast.success("Задача успешно создана");
-                                closeModal();
-                                refetch();
                             } catch {
-                                // console.error('Error creating subtasks:', error);
                                 toast.warning("Задача создана, но ошибка при создании подзадач");
-                                closeModal();
+                            } finally {
+                                closePanel();
                                 refetch();
                             }
                         },
@@ -209,7 +176,7 @@ export const KanbanRoute = () => {
             createSubtask,
             updateSubtask,
             deleteSubtask,
-            closeModal,
+            closePanel,
             refetch,
         ],
     );
@@ -346,14 +313,28 @@ export const KanbanRoute = () => {
         [reorderColumns, refetch],
     );
 
+    // Создание задачи
+    const handleAddTask = useCallback(
+        (columnId: number, title: string) => {
+            createTask.mutate(
+                { title, columnId, priority: "default" },
+                {
+                    onSuccess: () => refetch(),
+                    onError: () => toast.error("Ошибка при создании задачи"),
+                },
+            );
+        },
+        [createTask, refetch],
+    );
+
     // Мемоизация данных для KanbanBoard
     const boardData = useMemo(
         () => ({
             columns: filteredColumns,
             isLoading,
             onTaskMove: handleTaskMove,
-            onTaskClick: openEditModal,
-            onAddTask: openCreateModal,
+            onTaskClick: openEditPanel,
+            onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
             onChangeColor: handleChangeColor,
@@ -365,8 +346,9 @@ export const KanbanRoute = () => {
             filteredColumns,
             isLoading,
             handleTaskMove,
-            openEditModal,
-            openCreateModal,
+            openEditPanel,
+            openCreatePanel,
+            handleAddTask,
             handleDeleteTask,
             handleRenameColumn,
             handleChangeColor,
@@ -457,7 +439,7 @@ export const KanbanRoute = () => {
         {/* Область канбан-доски без лишних отступов снизу */}
         {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
         <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
-            <div className="mx-auto max-w-7xl p-6 overflow-x-auto">
+            <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
                 <section aria-label="Канбан-доска с задачами">
                     <div className="min-w-min">
                         {hasColumns ? (
@@ -482,13 +464,15 @@ export const KanbanRoute = () => {
                     </div>
                 </section>
 
-                {/* Task Modal */}
-                <TaskModal
+                {/* Task Panel */}
+                <TaskPanel
                     isOpen={isOpen}
-                    onClose={closeModal}
+                    onClose={closePanel}
                     onSubmit={handleTaskSubmit}
                     task={editingTask}
                     columnId={targetColumnId || columns?.[0]?.id || 0}
+                    columns={columns || []}
+                    projectName="Канбан-доска"
                     projectMembers={projectMembers || []}
                     isLoading={createTask.isPending || updateTask.isPending}
                 />

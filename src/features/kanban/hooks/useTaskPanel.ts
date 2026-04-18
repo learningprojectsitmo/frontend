@@ -1,33 +1,33 @@
 import { useState, useCallback } from "react";
 import type { Task } from "@/types/tables/forTables";
 
-interface UseTaskModalReturn {
+interface UseTaskPanelReturn {
     isOpen: boolean;
     editingTask: Task | undefined;
     targetColumnId: number | undefined;
-    openCreateModal: (columnId: number) => void;
-    openEditModal: (task: Task) => void;
-    closeModal: () => void;
+    openCreatePanel: (columnId: number) => void;
+    openEditPanel: (task: Task) => void;
+    closePanel: () => void;
 }
 
-export const useTaskModal = (): UseTaskModalReturn => {
+export const useTaskPanel = (): UseTaskPanelReturn => {
     const [isOpen, setIsOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>();
     const [targetColumnId, setTargetColumnId] = useState<number | undefined>();
 
-    const openCreateModal = useCallback((columnId: number) => {
+    const openCreatePanel = useCallback((columnId: number) => {
         setEditingTask(undefined);
         setTargetColumnId(columnId);
         setIsOpen(true);
     }, []);
 
-    const openEditModal = useCallback((task: Task) => {
+    const openEditPanel = useCallback((task: Task) => {
         setEditingTask(task);
         setTargetColumnId(task.columnId);
         setIsOpen(true);
     }, []);
 
-    const closeModal = useCallback(() => {
+    const closePanel = useCallback(() => {
         setIsOpen(false);
         setEditingTask(undefined);
         setTargetColumnId(undefined);
@@ -37,8 +37,8 @@ export const useTaskModal = (): UseTaskModalReturn => {
         isOpen,
         editingTask,
         targetColumnId,
-        openCreateModal,
-        openEditModal,
-        closeModal,
+        openCreatePanel,
+        openEditPanel,
+        closePanel,
     };
 };
