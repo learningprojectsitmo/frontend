@@ -99,7 +99,7 @@ const getUser = async (): Promise<User | null> => {
     if (!token) return null;
 
     try {
-        return await api.get<User>("/auth/me") as unknown as User;
+        return (await api.get<User>("/auth/me")) as unknown as User;
     } catch {
         localStorage.removeItem("token");
         return null;
@@ -118,9 +118,9 @@ const loginWithEmailAndPassword = async (data: LoginInput): Promise<AuthTokenRes
     form.append("password", data.password);
     form.append("remember_me", data.rememberMe.toString());
 
-    return await api.post<AuthTokenResponse>("/auth/login", form, {
+    return (await api.post<AuthTokenResponse>("/auth/login", form, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    }) as unknown as AuthTokenResponse;
+    })) as unknown as AuthTokenResponse;
 };
 
 const createAcc = async (data: CreateAccInput): Promise<unknown> => {
@@ -130,7 +130,10 @@ const createAcc = async (data: CreateAccInput): Promise<unknown> => {
 const registerWithEmailAndPassword = async (
     data: RegisterConfirmInput,
 ): Promise<AuthTokenResponse> => {
-    return await api.post<AuthTokenResponse>("/auth/register", data) as unknown as AuthTokenResponse;
+    return (await api.post<AuthTokenResponse>(
+        "/auth/register",
+        data,
+    )) as unknown as AuthTokenResponse;
 };
 
 const resendCode = async (data: ResendCodeInput): Promise<unknown> => {
@@ -138,7 +141,10 @@ const resendCode = async (data: ResendCodeInput): Promise<unknown> => {
 };
 
 const addContacts = async (data: AddContactsInput): Promise<AuthTokenResponse> => {
-    return await api.post<AuthTokenResponse>("/auth/addcontacts", data) as unknown as AuthTokenResponse;
+    return (await api.post<AuthTokenResponse>(
+        "/auth/addcontacts",
+        data,
+    )) as unknown as AuthTokenResponse;
 };
 
 const resetWithEmail = async (data: ResetWithEmailInput): Promise<unknown> => {
@@ -181,8 +187,7 @@ const authConfig = {
     },
 };
 
-export const { useUser, useLogin, useLogout, useRegister, AuthLoader } =
-    configureAuth(authConfig);
+export const { useUser, useLogin, useLogout, useRegister, AuthLoader } = configureAuth(authConfig);
 
 // ─── Custom Mutation Hooks ────────────────────────────────────────────────────
 

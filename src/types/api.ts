@@ -10,7 +10,7 @@ export type BaseEntity = {
 
 export interface AuthTokenResponse {
     access_token: string;
-    token_type: string
+    token_type: string;
 }
 
 export type Entity<T> = {
