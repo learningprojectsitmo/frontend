@@ -8,6 +8,11 @@ export type BaseEntity = {
     createdAt: number;
 };
 
+export interface AuthTokenResponse {
+    access_token: string;
+    token_type: string;
+}
+
 export type Entity<T> = {
     [K in keyof T]: T[K];
 } & BaseEntity;
@@ -22,6 +27,7 @@ export type User = Entity<{
 
 export type LoginResponse = {
     access_token: string;
+    token_type: string;
 };
 
 export type Space = {
