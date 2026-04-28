@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import { AlarmClockCheck, GripVertical, Trash2 } from "lucide-react";
+import { AlarmClockCheck, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KanbanTaskProps } from "../types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 export const KanbanTask: React.FC<KanbanTaskProps> = ({
     task,
     isDragging = false,
     onClick,
     onDragStart,
-    onDelete,
     onToggleSubtask,
 }) => {
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isDraggable, setIsDraggable] = useState(false);
 
     // Обработчик начала перетаскивания
@@ -41,23 +37,6 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
         onClick?.(task);
     };
 
-    // Обработчик удаления (открывает диалог)
-    const handleDeleteClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsDeleteDialogOpen(true);
-    };
-
-    // Подтверждение удаления
-    const handleDeleteConfirm = () => {
-        onDelete?.(task.id);
-        setIsDeleteDialogOpen(false);
-    };
-
-    // Отмена удаления
-    const handleDeleteCancel = () => {
-        setIsDeleteDialogOpen(false);
-    };
-
     // Форматирование даты в формат DD.MM.YYYY
     const formatDate = (dateString?: string) => {
         if (!dateString) return null;
@@ -69,8 +48,30 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
         });
     };
 
-    // Проверка просрочки
-    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
+    // Дни до дедлайна: положительное — осталось, 0 — сегодня, отрицательное — просрочено
+    const getDaysUntilDueDate = (dueDate?: string): number | null => {
+        if (!dueDate) return null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+        const diffMs = due.getTime() - today.getTime();
+        return Math.round(diffMs / (1000 * 60 * 60 * 24));
+    };
+
+    const daysLeft = getDaysUntilDueDate(task.dueDate);
+    const isOverdue = daysLeft !== null && daysLeft < 0;
+
+    // Подпись «N дн.» — показываем только при |daysLeft| ≤ 7 (включая 0 и просрочку)
+    let dueLabel: string | null = null;
+    if (daysLeft !== null) {
+        if (daysLeft >= 0 && daysLeft <= 7) {
+            dueLabel = `${daysLeft} дн.`;
+        } else if (daysLeft < 0) {
+            dueLabel = `${-daysLeft} дн.`;
+        }
+        // daysLeft > 7 → null (ничего не показываем)
+    }
 
     // Обработка тегов (если строка)
     const tagsArray = task.tags ? task.tags.split(",").map((tag) => tag.trim()) : [];
@@ -122,6 +123,20 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                     <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
                                     {formatDate(task.dueDate)}
                                 </div>
+                            )}
+                            {dueLabel && (
+                                <span
+                                    className={cn(
+                                        "flex items-center px-1 py-0.5 rounded-lg text-xs font-medium",
+                                        isOverdue
+                                            ? "bg-red-600 text-white"
+                                            : daysLeft! <= 3
+                                                ? "bg-red-200 text-orange-900"
+                                                : "bg-orange-200 text-orange-900",
+                                    )}
+                                >
+                                    {dueLabel}
+                                </span>
                             )}
                         </div>
 
@@ -206,47 +221,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     </div>
                 )}
 
-                {/* Кнопки действий (при наведении) */}
-                <div className="hidden group-hover:flex absolute top-2 right-8 gap-1">
-                    {onDelete && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleDeleteClick}
-                            className="h-7 w-7 p-0"
-                        >
-                            <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                        </Button>
-                    )}
-                </div>
             </div>
-
-            {/* Диалог подтверждения удаления */}
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="sm:max-w-[400px]">
-                    <DialogHeader>
-                        <DialogTitle>Удалить задачу?</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <p className="text-gray-600">
-                            Вы действительно хотите удалить задачу "{task.title}"?
-                        </p>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="hug36" onClick={handleDeleteCancel}>
-                            Отмена
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="hug36"
-                            onClick={handleDeleteConfirm}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                            Удалить
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </>
     );
 };

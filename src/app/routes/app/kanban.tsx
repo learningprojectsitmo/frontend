@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { ColumnModal } from "@/features/kanban/components/column-modal";
-import { TaskPanel, type TaskFormData } from "@/features/kanban/components/task-panel";
+import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
 import {
     useBoard,
@@ -53,6 +53,16 @@ export const KanbanRoute = () => {
         [columns, filter, currentUser?.id],
     );
 
+    // Актуальный editingTask
+    const liveEditingTask = useMemo(() => {
+        if (!editingTask || !columns) return editingTask;
+        for (const col of columns) {
+            const found = col.tasks?.find((t) => t.id === editingTask.id);
+            if (found) return found;
+        }
+        return editingTask;
+    }, [editingTask, columns]);
+
     // Мутации
     const createTask = useCreateTask();
     const updateTask = useUpdateTask();
@@ -66,119 +76,79 @@ export const KanbanRoute = () => {
     const updateSubtask = useUpdateSubtask();
     const deleteSubtask = useDeleteSubtask();
 
-    const handleTaskSubmit = useCallback(
-        (data: TaskFormData, columnId: number) => {
-            const processedData = {
-                title: data.title,
-                description: data.description || undefined,
-                priority: data.priority,
-                dueDate: data.dueDate && data.dueDate !== "" ? data.dueDate : undefined,
-                assigneeIds: data.assigneeIds ?? [],
-                tags: data.tags
-                    ? data.tags
-                          .split(",")
-                          .map((tag) => tag.trim())
-                          .filter(Boolean)
-                    : [],
-            };
-
-            const newSubtasks = data.subtasks ?? [];
-
-            if (editingTask) {
-                const oldSubtasks = editingTask.subtasks ?? [];
-                const oldSubtasksMap = new Map(oldSubtasks.map((s) => [s.id, s]));
-                const existingNewIds = new Set(newSubtasks.filter((s) => s.id).map((s) => s.id));
-
-                const toDelete = oldSubtasks.filter((s) => !existingNewIds.has(s.id));
-                const toUpdate = newSubtasks
-                    .filter((s) => s.id)
-                    .flatMap((newSub) => {
-                        const old = oldSubtasksMap.get(newSub.id!);
-                        return old?.title !== newSub.title || old?.isCompleted !== newSub.isCompleted
-                            ? [{ id: newSub.id!, title: newSub.title, isCompleted: newSub.isCompleted }]
-                            : [];
-                    });
-                const toCreate = newSubtasks.filter((s) => !s.id);
-
-                updateTask.mutate(
-                    {
-                        taskId: editingTask.id,
-                        data: { ...processedData, columnId },
-                    },
-                    {
-                        onSuccess: async () => {
-                            try {
-                                await Promise.all([
-                                    ...toDelete.map((s) => deleteSubtask.mutateAsync(s.id)),
-                                    ...toUpdate.map((s) =>
-                                        updateSubtask.mutateAsync({
-                                            subtaskId: s.id,
-                                            data: { title: s.title, isCompleted: s.isCompleted },
-                                        }),
-                                    ),
-                                    ...toCreate.map((s) =>
-                                        createSubtask.mutateAsync({
-                                            taskId: editingTask.id,
-                                            title: s.title,
-                                            isCompleted: s.isCompleted,
-                                        }),
-                                    ),
-                                ]);
-                                toast.success("Задача успешно обновлена");
-                            } catch {
-                                toast.error("Ошибка при обновлении подзадач");
-                            } finally {
-                                closePanel();
-                                refetch();
-                            }
-                        },
-                        onError: () => {
-                            toast.error("Ошибка при обновлении задачи");
-                        },
-                    },
-                );
-            } else {
-                createTask.mutate(
-                    { ...processedData, columnId },
-                    {
-                        onSuccess: async (newTask) => {
-                            try {
-                                if (newSubtasks.length > 0) {
-                                    await Promise.all(
-                                        newSubtasks.map((s) =>
-                                            createSubtask.mutateAsync({
-                                                taskId: newTask.id,
-                                                title: s.title,
-                                                isCompleted: s.isCompleted,
-                                            }),
-                                        ),
-                                    );
-                                }
-                                toast.success("Задача успешно создана");
-                            } catch {
-                                toast.warning("Задача создана, но ошибка при создании подзадач");
-                            } finally {
-                                closePanel();
-                                refetch();
-                            }
-                        },
-                        onError: () => {
-                            toast.error("Ошибка при создании задачи");
-                        },
-                    },
-                );
+    // Автосейв задачи
+    const handleTaskAutoSave = useCallback(
+        async (taskId: number, patch: TaskPatch) => {
+            // Преобразуем dueDate: null означает сброс даты
+            const data: Record<string, unknown> = { ...patch };
+            if (patch.dueDate === null) {
+                data.dueDate = undefined; // бэкенд интерпретирует undefined как сброс
+            }
+            try {
+                await updateTask.mutateAsync({ taskId, data: data as Parameters<typeof updateTask.mutateAsync>[0]["data"] });
+            } catch (e) {
+                toast.error("Не удалось сохранить изменения");
+                throw e;
             }
         },
-        [
-            editingTask,
-            createTask,
-            updateTask,
-            createSubtask,
-            updateSubtask,
-            deleteSubtask,
-            closePanel,
-            refetch,
-        ],
+        [updateTask],
+    );
+
+    // Подзадачи — отдельные мутации, дёргаются прямо из TaskPanel
+    const handleSubtaskCreate = useCallback(
+        async (taskId: number, title: string) => {
+            try {
+                await createSubtask.mutateAsync({ taskId, title, isCompleted: false });
+            } catch (e) {
+                toast.error("Не удалось добавить подзадачу");
+                throw e;
+            }
+        },
+        [createSubtask],
+    );
+    const handleSubtaskUpdate = useCallback(
+        async (subtaskId: number, data: { title?: string; isCompleted?: boolean }) => {
+            try {
+                await updateSubtask.mutateAsync({ subtaskId, data });
+            } catch (e) {
+                toast.error("Не удалось обновить подзадачу");
+                throw e;
+            }
+        },
+        [updateSubtask],
+    );
+    const handleSubtaskDelete = useCallback(
+        async (subtaskId: number) => {
+            try {
+                await deleteSubtask.mutateAsync(subtaskId);
+            } catch (e) {
+                toast.error("Не удалось удалить подзадачу");
+                throw e;
+            }
+        },
+        [deleteSubtask],
+    );
+
+    // Перемещение задачи между колонками из TaskPanel
+    const handleTaskMoveToColumn = useCallback(
+        async (taskId: number, targetColumnId: number) => {
+            const targetCol = columns?.find((c) => c.id === targetColumnId);
+            // В конец колонки: max(position) + 1, либо 0 если колонка пуста
+            const targetPosition =
+                targetCol && targetCol.tasks && targetCol.tasks.length > 0
+                    ? Math.max(...targetCol.tasks.map((t) => t.position)) + 1
+                    : 0;
+            try {
+                await moveTask.mutateAsync({
+                    taskId,
+                    data: { columnId: targetColumnId, position: targetPosition },
+                });
+            } catch (e) {
+                toast.error("Не удалось переместить задачу");
+                throw e;
+            }
+        },
+        [columns, moveTask],
     );
 
     const handleDeleteTask = useCallback(
@@ -468,13 +438,16 @@ export const KanbanRoute = () => {
                 <TaskPanel
                     isOpen={isOpen}
                     onClose={closePanel}
-                    onSubmit={handleTaskSubmit}
-                    task={editingTask}
-                    columnId={targetColumnId || columns?.[0]?.id || 0}
+                    onAutoSave={handleTaskAutoSave}
+                    onMoveToColumn={handleTaskMoveToColumn}
+                    onDelete={handleDeleteTask}
+                    onSubtaskCreate={handleSubtaskCreate}
+                    onSubtaskUpdate={handleSubtaskUpdate}
+                    onSubtaskDelete={handleSubtaskDelete}
+                    task={liveEditingTask}
                     columns={columns || []}
                     projectName="Канбан-доска"
                     projectMembers={projectMembers || []}
-                    isLoading={createTask.isPending || updateTask.isPending}
                 />
 
                 {/* Column Modal */}

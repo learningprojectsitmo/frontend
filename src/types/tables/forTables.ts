@@ -120,12 +120,8 @@ export interface TaskWithSubtasks extends Task {
 
 export interface CreateTaskDto {
     title: string;
-    description?: string;
-    priority?: TaskPriority;
     columnId: number;
-    assigneeIds?: number[];
-    dueDate?: string;
-    tags?: string[];
+    priority?: TaskPriority;
 }
 
 export interface UpdateTaskDto {

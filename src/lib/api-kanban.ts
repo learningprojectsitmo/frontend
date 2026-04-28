@@ -172,20 +172,11 @@ export const kanbanApi = {
     },
 
     createTask: (data: CreateTaskDto): Promise<ApiTask> => {
-        const payload: CreateTaskPayload = {
+        return api.post(`${KANBAN_URL}/tasks`, {
             title: data.title,
-            description: data.description,
             column_id: data.columnId,
-        };
-
-        if (data.priority) payload.priority = data.priority;
-        if (data.assigneeIds?.length) payload.assignee_ids = data.assigneeIds;
-        if (data.dueDate && data.dueDate !== "") {
-            payload.due_date = data.dueDate;
-        }
-        if (data.tags?.length) payload.tags = data.tags;
-
-        return api.post(`${KANBAN_URL}/tasks`, payload);
+            priority: data.priority ?? "default",
+        });
     },
 
     updateTask: (taskId: number, data: UpdateTaskDto): Promise<ApiTask> => {

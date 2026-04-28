@@ -14,6 +14,11 @@ import {
     Plus,
     ChevronDown,
     ChevronRight,
+    Check,
+    AlertCircle,
+    Loader2,
+    MoreVertical,
+    Trash2,
 } from "lucide-react";
 import { SubtaskList } from "./subtask-list";
 import { cn } from "@/lib/utils";
@@ -29,7 +34,17 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { columnColors, baseColor } from "@/features/kanban/utils/column-styles";
+
+const allColumnColors: Record<string, { header: string }> = {
+    ...columnColors,
+    white: baseColor.white,
+};
+
+const getColumnHeaderClass = (color?: string): string =>
+    color ? (allColumnColors[color]?.header ?? "bg-gray-200") : "bg-gray-200";
 
 // ─────────────────────────────────────────────────────────────
 // Типы и схема
@@ -45,16 +60,20 @@ const taskSchema = z.object({
     columnId:    z.number().optional(),
 });
 
-export type TaskFormData = z.infer<typeof taskSchema> & {
-    subtasks?: Array<{
-        id?: number;
-        title: string;
-        isCompleted: boolean;
-        position: number;
-        taskId?: number;
-        _tempId?: string;
-    }>;
+type TaskFormData = z.infer<typeof taskSchema>;
+
+// Поля которые можно отправить в PATCH-запрос на бэк
+export type TaskPatch = {
+    title?: string;
+    description?: string;
+    priority?: TaskPriority;
+    assigneeIds?: number[];
+    dueDate?: string | null;
+    tags?: string[];
 };
+
+// Совместимость со старым импортом
+export type { TaskFormData };
 
 // ─────────────────────────────────────────────────────────────
 // Вспомогательные данные
@@ -78,13 +97,16 @@ const PRIORITY_MAP = Object.fromEntries(
 interface TaskPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: TaskFormData, columnId: number) => void;
+    onAutoSave: (taskId: number, patch: TaskPatch) => Promise<unknown>;
+    onMoveToColumn: (taskId: number, columnId: number) => Promise<unknown>;
+    onDelete: (taskId: number) => Promise<unknown> | void;
+    onSubtaskCreate: (taskId: number, title: string) => Promise<unknown>;
+    onSubtaskUpdate: (subtaskId: number, data: { title?: string; isCompleted?: boolean }) => Promise<unknown>;
+    onSubtaskDelete: (subtaskId: number) => Promise<unknown>;
     task?: Task;
-    columnId: number;
     columns?: ColumnWithTasksAndSubtasks[];
     projectName?: string;
     projectMembers?: ProjectMember[];
-    isLoading?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -116,6 +138,40 @@ const MemberAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: 
     </div>
 );
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+const SaveIndicator: React.FC<{ status: SaveStatus; onRetry: () => void }> = ({ status, onRetry }) => {
+    if (status === "saving") {
+        return (
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Сохранение…
+            </span>
+        );
+    }
+    if (status === "saved") {
+        return (
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Check className="h-3.5 w-3.5 text-green-600" />
+                Сохранено
+            </span>
+        );
+    }
+    if (status === "error") {
+        return (
+            <button
+                type="button"
+                onClick={onRetry}
+                className="flex items-center gap-1.5 text-xs text-red-600 hover:underline"
+            >
+                <AlertCircle className="h-3.5 w-3.5" />
+                Не сохранено · Повторить
+            </button>
+        );
+    }
+    return null;
+};
+
 // ─────────────────────────────────────────────────────────────
 // Форматирование
 // ─────────────────────────────────────────────────────────────
@@ -135,23 +191,39 @@ const fmtDateTime = (s?: string) => {
 const fmtDate = (s?: string) => (s ? fmtDatePart(new Date(s)) : null);
 
 // ─────────────────────────────────────────────────────────────
+// Утилиты
+// ─────────────────────────────────────────────────────────────
+
+const parseTags = (raw?: string): string[] =>
+    raw ? raw.split(",").map((t) => t.trim()).filter(Boolean) : [];
+
+const arraysEqual = <T,>(a: T[], b: T[]): boolean =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+
+// ─────────────────────────────────────────────────────────────
 // Основной компонент
 // ─────────────────────────────────────────────────────────────
 
 export const TaskPanel: React.FC<TaskPanelProps> = ({
     isOpen,
     onClose,
-    onSubmit,
+    onAutoSave,
+    onMoveToColumn,
+    onDelete,
+    onSubtaskCreate,
+    onSubtaskUpdate,
+    onSubtaskDelete,
     task,
-    columnId,
     columns = [],
     projectName = "Проект",
     projectMembers = [],
-    isLoading = false,
 }) => {
     // ── UI стейты ──
-    const [titleFocused, setTitleFocused]   = React.useState(false);
-    const [subtasksOpen, setSubtasksOpen]   = React.useState(true);
+    const [subtasksOpen, setSubtasksOpen] = React.useState(true);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+    const titleRef = React.useRef<HTMLTextAreaElement | null>(null);
+    const descriptionRef = React.useRef<HTMLTextAreaElement | null>(null);
+    const dueDateRef = React.useRef<HTMLInputElement | null>(null);
 
     // ── Ресайз панели ──
     const MIN_WIDTH = 560;
@@ -170,7 +242,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
             const newWidth = window.innerWidth - ev.clientX;
             setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
         };
-
         const onMouseUp = () => {
             isResizing.current = false;
             document.body.style.cursor = "";
@@ -178,34 +249,25 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
             document.removeEventListener("mousemove", onMouseMove);
             document.removeEventListener("mouseup", onMouseUp);
         };
-
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
     }, []);
 
-    // ── Подзадачи (локальный стейт, синхронизируется при открытии) ──
-    const [subtasks, setSubtasks] = React.useState<
-        Array<{
-            id?: number;
-            title: string;
-            isCompleted: boolean;
-            position: number;
-            taskId?: number;
-            _tempId: string;
-        }>
-    >([]);
-
-    // ── Теги: отдельный инпут + список ──
+    // ── Теги ──
     const [tagInput, setTagInput] = React.useState("");
 
-    // ── Дедлайн: ref для вызова нативного пикера ──
-    const dueDateRef = React.useRef<HTMLInputElement | null>(null);
+    // ── Save status + последний неудачный patch для retry ──
+    const [saveStatus, setSaveStatus] = React.useState<SaveStatus>("idle");
+    const lastFailedPatch = React.useRef<TaskPatch | null>(null);
+    const pendingCount = React.useRef(0);
+    const savedTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const { register, handleSubmit, reset, setValue, watch } = useForm<TaskFormData>({
+    // ── Form ──
+    const { register, reset, setValue, watch, getValues } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
         defaultValues: {
             title: "", description: "", priority: "default",
-            assigneeIds: [], dueDate: "", tags: "", columnId,
+            assigneeIds: [], dueDate: "", tags: "", columnId: undefined,
         },
     });
 
@@ -213,58 +275,188 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     const watchAssignees = watch("assigneeIds") ?? [];
     const watchDueDate   = watch("dueDate") ?? "";
     const watchTags      = watch("tags") ?? "";
-    const watchColumnId  = watch("columnId") ?? columnId;
+    const watchColumnId  = watch("columnId") ?? task?.columnId;
 
-    // Теги: массив из формы
-    const tagsArray = React.useMemo(
-        () => (watchTags ? watchTags.split(",").map((t) => t.trim()).filter(Boolean) : []),
-        [watchTags],
-    );
+    const tagsArray = React.useMemo(() => parseTags(watchTags), [watchTags]);
 
-    // ── Сброс при открытии ──
+    // ── Сброс формы только при смене ИД задачи или открытии панели ──
+    const taskId = task?.id;
+    React.useEffect(() => {
+        if (!isOpen || !task) return;
+        setTagInput("");
+        if (titleRef.current) {
+            titleRef.current.style.height = "";
+            titleRef.current.blur();
+        }
+        reset({
+            title:       task.title,
+            description: task.description ?? "",
+            priority:    task.priority ?? "default",
+            assigneeIds: task.assignees?.map((a) => a.id) ?? [],
+            dueDate:     task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
+            tags:        task.tags ?? "",
+            columnId:    task.columnId,
+        });
+        setSaveStatus("idle");
+        lastFailedPatch.current = null;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, taskId, reset]);
+
+    // Пересчитываем высоту описания при открытии
     React.useEffect(() => {
         if (!isOpen) return;
-        setTagInput("");
-        if (task) {
-            reset({
-                title:       task.title,
-                description: task.description ?? "",
-                priority:    task.priority ?? "default",
-                assigneeIds: task.assignees?.map((a) => a.id) ?? [],
-                dueDate:     task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
-                tags:        task.tags ?? "",
-                columnId:    task.columnId,
-            });
-            setSubtasks(
-                (task.subtasks ?? []).map((s) => ({
-                    id: s.id, title: s.title, isCompleted: s.isCompleted,
-                    position: s.position, taskId: s.taskId,
-                    _tempId: `existing_${s.id}`,
-                })),
-            );
-        } else {
-            reset({ title: "", description: "", priority: "default", assigneeIds: [], dueDate: "", tags: "", columnId });
-            setSubtasks([]);
-        }
-    }, [isOpen, task, reset, columnId]);
+        const id = requestAnimationFrame(() => {
+            const el = descriptionRef.current;
+            if (el) {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+            }
+        });
+        return () => cancelAnimationFrame(id);
+    }, [isOpen, task]);
 
-    // ── Сабмит ──
-    const handleFormSubmit = (data: TaskFormData) => {
-        onSubmit({ ...data, subtasks }, data.columnId ?? columnId);
+    // ─────────────────────────────────────────────────────────
+    // Автосейв
+    // ─────────────────────────────────────────────────────────
+
+    const runSave = React.useCallback(
+        async (patch: TaskPatch) => {
+            if (!task) return;
+            if (Object.keys(patch).length === 0) return;
+            pendingCount.current += 1;
+            setSaveStatus("saving");
+            try {
+                await onAutoSave(task.id, patch);
+                lastFailedPatch.current = null;
+                pendingCount.current -= 1;
+                if (pendingCount.current === 0) {
+                    setSaveStatus("saved");
+                    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+                    savedTimerRef.current = setTimeout(() => {
+                        setSaveStatus((s) => (s === "saved" ? "idle" : s));
+                    }, 2000);
+                }
+            } catch (e) {
+                pendingCount.current -= 1;
+                lastFailedPatch.current = { ...(lastFailedPatch.current ?? {}), ...patch };
+                setSaveStatus("error");
+                throw e;
+            }
+        },
+        [task, onAutoSave],
+    );
+
+    // Debounce для текстовых полей
+    const debounceTimers = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const pendingPatch = React.useRef<TaskPatch>({});
+
+    const flushDebounced = React.useCallback(() => {
+        Object.keys(debounceTimers.current).forEach((key) => {
+            clearTimeout(debounceTimers.current[key]);
+            delete debounceTimers.current[key];
+        });
+        const patch = pendingPatch.current;
+        pendingPatch.current = {};
+        if (Object.keys(patch).length > 0) {
+            void runSave(patch).catch(() => {});
+        }
+    }, [runSave]);
+
+    const scheduleDebouncedSave = React.useCallback(
+        (key: keyof TaskPatch, value: unknown, delay = 700) => {
+            (pendingPatch.current as Record<string, unknown>)[key] = value;
+            if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
+            debounceTimers.current[key] = setTimeout(() => {
+                delete debounceTimers.current[key];
+                const patch: TaskPatch = {};
+                (patch as Record<string, unknown>)[key] = (pendingPatch.current as Record<string, unknown>)[key];
+                delete (pendingPatch.current as Record<string, unknown>)[key];
+                void runSave(patch).catch(() => {});
+            }, delay);
+        },
+        [runSave],
+    );
+
+    // Flush + закрытие при размонтировании / закрытии панели
+    const handleClose = React.useCallback(() => {
+        flushDebounced();
+        onClose();
+    }, [flushDebounced, onClose]);
+
+    React.useEffect(() => {
+        return () => {
+            Object.values(debounceTimers.current).forEach(clearTimeout);
+            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        };
+    }, []);
+
+    // Retry последнего неудачного сейва
+    const handleRetry = React.useCallback(() => {
+        const patch = lastFailedPatch.current;
+        if (!patch) {
+            setSaveStatus("idle");
+            return;
+        }
+        void runSave(patch).catch(() => {});
+    }, [runSave]);
+
+    // ─────────────────────────────────────────────────────────
+    // Хелперы для полей
+    // ─────────────────────────────────────────────────────────
+
+    // Title / description — onChange c debounce
+    const onTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        scheduleDebouncedSave("title", e.target.value);
+    };
+    const onTitleBlur = () => {
+        flushDebounced();
     };
 
-    // ── Подзадачи ──
-    const handleAddSubtask = (title: string) =>
-        setSubtasks((prev) => [
-            ...prev,
-            { title, isCompleted: false, position: prev.length, taskId: task?.id ?? 0, _tempId: `new_${Date.now()}` },
-        ]);
-    const handleUpdateSubtask = (i: number, upd: Partial<{ title: string; isCompleted: boolean }>) =>
-        setSubtasks((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...upd } : s)));
-    const handleDeleteSubtask = (i: number) =>
-        setSubtasks((prev) => prev.filter((_, idx) => idx !== i));
+    const onDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        scheduleDebouncedSave("description", e.target.value);
+    };
+    const onDescriptionBlur = () => {
+        flushDebounced();
+    };
 
-    // ── Исполнители ──
+    // Селекторы — мгновенный сейв
+    const setColumnId = (columnId: number) => {
+        if (columnId === watchColumnId || !task) return;
+        setValue("columnId", columnId);
+        pendingCount.current += 1;
+        setSaveStatus("saving");
+        onMoveToColumn(task.id, columnId)
+            .then(() => {
+                pendingCount.current -= 1;
+                if (pendingCount.current === 0) {
+                    setSaveStatus("saved");
+                    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+                    savedTimerRef.current = setTimeout(() => {
+                        setSaveStatus((s) => (s === "saved" ? "idle" : s));
+                    }, 2000);
+                }
+            })
+            .catch(() => {
+                pendingCount.current -= 1;
+                // Откат значения в форме
+                setValue("columnId", task.columnId);
+                setSaveStatus("error");
+            });
+    };
+
+    const setPriority = (priority: TaskPriority) => {
+        if (priority === watchPriority) return;
+        setValue("priority", priority);
+        void runSave({ priority }).catch(() => {});
+    };
+
+    const setDueDate = (value: string) => {
+        if (value === watchDueDate) return;
+        setValue("dueDate", value);
+        void runSave({ dueDate: value === "" ? null : value }).catch(() => {});
+    };
+
+    // Исполнители
     const selectedAssignees = React.useMemo(
         () => projectMembers.filter((m) => watchAssignees.includes(m.id)),
         [watchAssignees, projectMembers],
@@ -273,47 +465,103 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
         () => projectMembers.filter((m) => !watchAssignees.includes(m.id)),
         [watchAssignees, projectMembers],
     );
-    const addAssignee    = (id: number) => setValue("assigneeIds", [...watchAssignees, id]);
-    const removeAssignee = (id: number) => setValue("assigneeIds", watchAssignees.filter((x) => x !== id));
+    const addAssignee = (id: number) => {
+        const next = [...watchAssignees, id];
+        setValue("assigneeIds", next);
+        void runSave({ assigneeIds: next }).catch(() => {});
+    };
+    const removeAssignee = (id: number) => {
+        const next = watchAssignees.filter((x) => x !== id);
+        setValue("assigneeIds", next);
+        void runSave({ assigneeIds: next }).catch(() => {});
+    };
 
-    // ── Теги: коммит при запятой / Enter / blur ──
+    // Теги
     const commitTag = React.useCallback(() => {
         const tag = tagInput.replace(/,/g, "").trim();
-        if (!tag || tagsArray.includes(tag)) { setTagInput(""); return; }
-        setValue("tags", [...tagsArray, tag].join(", "));
         setTagInput("");
-    }, [tagInput, tagsArray, setValue]);
+        if (!tag || tagsArray.includes(tag)) return;
+        const next = [...tagsArray, tag];
+        setValue("tags", next.join(", "));
+        void runSave({ tags: next }).catch(() => {});
+    }, [tagInput, tagsArray, setValue, runSave]);
 
-    const removeTag = (tag: string) =>
-        setValue("tags", tagsArray.filter((t) => t !== tag).join(", "));
+    const removeTag = (tag: string) => {
+        const next = tagsArray.filter((t) => t !== tag);
+        setValue("tags", next.join(", "));
+        void runSave({ tags: next }).catch(() => {});
+    };
 
     const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter" || e.key === ",") { e.preventDefault(); commitTag(); }
-        // Backspace на пустом инпуте удаляет последний тег
+        if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            commitTag();
+        }
         if (e.key === "Backspace" && !tagInput && tagsArray.length > 0) {
             removeTag(tagsArray[tagsArray.length - 1]);
         }
     };
 
-    // ── Дедлайн: открыть нативный пикер ──
+    // Открытие нативного date picker
     const openDatePicker = () => {
-        try       { dueDateRef.current?.showPicker(); }
+        try { dueDateRef.current?.showPicker(); }
         catch (_) { dueDateRef.current?.click(); }
     };
-
-    // Мёрж рефов react-hook-form + наш dueDateRef
     const { ref: registerDueDateRef, ...registerDueDateRest } = register("dueDate");
+    const { ref: titleRegRef, ...titleRegRest } = register("title");
 
-    // ── Текущая колонка ──
+    // Текущая колонка
     const currentColumn = columns.find((c) => c.id === watchColumnId) ?? columns[0];
 
-    // ── Прогресс подзадач ──
+    // ─────────────────────────────────────────────────────────
+    // Подзадачи (рендерим напрямую из task.subtasks, без локального стейта)
+    // ─────────────────────────────────────────────────────────
+    const subtasks = React.useMemo(
+        () =>
+            (task?.subtasks ?? [])
+                .slice()
+                .sort((a, b) => a.position - b.position)
+                .map((s) => ({
+                    id: s.id,
+                    title: s.title,
+                    isCompleted: s.isCompleted,
+                    position: s.position,
+                    taskId: s.taskId,
+                    _tempId: `existing_${s.id}`,
+                })),
+        [task?.subtasks],
+    );
+
+    const handleAddSubtask = (title: string) => {
+        if (!task) return;
+        void onSubtaskCreate(task.id, title).catch(() => {});
+    };
+    const handleUpdateSubtaskByIndex = (
+        i: number,
+        upd: Partial<{ title: string; isCompleted: boolean }>,
+    ) => {
+        const sub = subtasks[i];
+        if (!sub?.id) return;
+        void onSubtaskUpdate(sub.id, upd).catch(() => {});
+    };
+    const handleDeleteSubtaskByIndex = (i: number) => {
+        const sub = subtasks[i];
+        if (!sub?.id) return;
+        void onSubtaskDelete(sub.id).catch(() => {});
+    };
+
     const completedCount = subtasks.filter((s) => s.isCompleted).length;
 
-    if (!isOpen) return null;
+    // ─────────────────────────────────────────────────────────
+    // Не используем — но защита от мёртвых импортов
+    // ─────────────────────────────────────────────────────────
+    void getValues;
+    void arraysEqual;
+
+    if (!isOpen || !task) return null;
 
     return (
-        <DialogPrimitive.Root open={isOpen} onOpenChange={(v) => !v && onClose()}>
+        <DialogPrimitive.Root open={isOpen} onOpenChange={(v) => !v && handleClose()}>
             <DialogPrimitive.Portal>
                 <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
 
@@ -333,30 +581,47 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                         className="group absolute left-0 top-0 z-10 flex h-full w-2.5 cursor-ew-resize bg-gray-200 items-center justify-center transition-colors hover:bg-gray-300"
                         aria-hidden
                     >
-                        {/* Центральный грип — две вертикальных полоски */}
                         <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-[2px]">
                             <div className="h-5 w-[2px] rounded-full bg-gray-500 group-hover:bg-black transition-colors" />
                             <div className="h-5 w-[2px] rounded-full bg-gray-500 group-hover:bg-black transition-colors" />
                         </div>
                     </div>
-                    <form onSubmit={handleSubmit(handleFormSubmit)} className="flex h-full flex-col overflow-hidden">
 
+                    <div className="flex h-full flex-col overflow-hidden">
                         {/* ── Хедер ── */}
                         <div className="flex flex-shrink-0 items-center justify-between border-b px-6 py-3">
                             <div className="flex items-center gap-3 text-sm text-gray-500">
                                 <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-gray-100 text-black">
-                                    {task && <span>#{task.id}</span>}
+                                    <span>#{task.id}</span>
                                 </div>
                                 <div className="w-px h-6 bg-gray-300" />
                                 <span>{projectName}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button type="submit" variant="outline" size="hug36" disabled={isLoading} className="h-8">
-                                    {isLoading ? "Сохранение..." : task ? "Сохранить" : "Создать"}
-                                </Button>
+                            <div className="flex items-center gap-1">
+                                <SaveIndicator status={saveStatus} onRetry={handleRetry} />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="rounded-md p-1 text-black transition-colors hover:bg-gray-100 focus:outline-none"
+                                            aria-label="Действия с задачей"
+                                        >
+                                            <MoreVertical className="h-5 w-5" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-[180px] rounded-xl border-gray-300">
+                                        <DropdownMenuItem
+                                            onClick={() => setIsDeleteDialogOpen(true)}
+                                            className="cursor-pointer text-red-600 focus:text-red-600 gap-0"
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Удалить
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                                 <DialogPrimitive.Close
-                                    onClick={onClose}
-                                    className="rounded-md p-1 text-black transition-colors hover:bg-gray-100"
+                                    onClick={handleClose}
+                                    className="rounded-md p-1 text-black transition-colors hover:bg-gray-100 focus:outline-none"
                                     aria-label="Закрыть"
                                 >
                                     <X className="h-5 w-5" />
@@ -370,31 +635,33 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
                                 {/* Название задачи */}
                                 <textarea
-                                    {...register("title")}
-                                    placeholder="Название задачи"
+                                    {...titleRegRest}
+                                    ref={(el) => { titleRegRef(el); titleRef.current = el; }}
                                     rows={1}
+                                    placeholder="Название задачи"
                                     onFocus={(e) => {
-                                        setTitleFocused(true);
                                         const el = e.currentTarget;
                                         el.style.height = "auto";
                                         el.style.height = `${el.scrollHeight}px`;
                                     }}
-                                    onBlur={() => setTitleFocused(false)}
+                                    onBlur={(e) => {
+                                        e.currentTarget.style.height = "";
+                                        onTitleBlur();
+                                    }}
                                     onInput={(e) => {
                                         const el = e.currentTarget;
                                         el.style.height = "auto";
                                         el.style.height = `${el.scrollHeight}px`;
                                     }}
-                                    className={cn(
-                                        "w-full bg-transparent text-2xl font-semibold text-gray-900 outline-none placeholder:text-gray-300 leading-snug",
-                                        titleFocused
-                                            ? "resize-none overflow-hidden"
-                                            : "resize-none overflow-hidden truncate whitespace-nowrap",
-                                    )}
+                                    onChange={(e) => {
+                                        titleRegRest.onChange?.(e);
+                                        onTitleChange(e);
+                                    }}
+                                    className="w-full resize-none overflow-hidden bg-transparent text-2xl font-semibold leading-snug text-gray-900 outline-none placeholder:text-gray-300 truncate focus:whitespace-normal"
                                 />
 
                                 {/* Дата создания */}
-                                {task?.createdAt && (
+                                {task.createdAt && (
                                     <p className="pb-4 text-sm text-gray-500">
                                         Создана: {fmtDateTime(task.createdAt)}
                                     </p>
@@ -408,10 +675,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             <DropdownMenuTrigger asChild>
                                                 <button type="button" className="flex items-center gap-1.5 rounded-md px-2 hover:bg-gray-100 -mx-2">
                                                     {currentColumn?.color && (
-                                                        <span
-                                                            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                                                            style={{ backgroundColor: currentColumn.color }}
-                                                        />
+                                                        <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full", getColumnHeaderClass(currentColumn.color))} />
                                                     )}
                                                     <span>{currentColumn?.name ?? "—"}</span>
                                                     <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
@@ -421,14 +685,11 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                 {columns.map((col) => (
                                                     <DropdownMenuItem
                                                         key={col.id}
-                                                        onClick={() => setValue("columnId", col.id)}
+                                                        onClick={() => setColumnId(col.id)}
                                                         className={cn("cursor-pointer", col.id === watchColumnId && "bg-accent")}
                                                     >
                                                         {col.color && (
-                                                            <span
-                                                                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                                                                style={{ backgroundColor: col.color }}
-                                                            />
+                                                            <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full", getColumnHeaderClass(col.color))} />
                                                         )}
                                                         {col.name}
                                                     </DropdownMenuItem>
@@ -440,7 +701,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     {/* Дедлайн */}
                                     <PropertyRow icon={<Calendar className="h-4 w-4" />} label="Дедлайн">
                                         <div className="flex items-center gap-2 -mx-2">
-                                            {/* Кнопка-триггер с форматированной датой */}
                                             <button
                                                 type="button"
                                                 onClick={openDatePicker}
@@ -448,21 +708,18 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             >
                                                 {watchDueDate
                                                     ? <span>{fmtDate(watchDueDate)}</span>
-                                                    : <span className="text-gray-400">Не указан</span>
-                                                }
+                                                    : <span className="text-gray-400">Не указан</span>}
                                             </button>
-                                            {/* Кнопка сброса */}
                                             {watchDueDate && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setValue("dueDate", "")}
+                                                    onClick={() => setDueDate("")}
                                                     className="flex-shrink-0 rounded p-0.5 text-gray-400 hover:text-red-500 transition-colors"
                                                     aria-label="Сбросить дедлайн"
                                                 >
                                                     <X className="h-3.5 w-3.5" />
                                                 </button>
                                             )}
-                                            {/* Скрытый нативный input — вызывается через showPicker() */}
                                             <input
                                                 type="date"
                                                 {...registerDueDateRest}
@@ -470,13 +727,17 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                     registerDueDateRef(el);
                                                     dueDateRef.current = el;
                                                 }}
+                                                onChange={(e) => {
+                                                    registerDueDateRest.onChange?.(e);
+                                                    setDueDate(e.target.value);
+                                                }}
                                                 className="sr-only"
                                             />
                                         </div>
                                     </PropertyRow>
 
                                     {/* Автор */}
-                                    {task?.createdBy && (
+                                    {task.createdBy && (
                                         <PropertyRow icon={<UserCircle2 className="h-4 w-4" />} label="Автор">
                                             <div className="flex items-center gap-2">
                                                 <MemberAvatar firstName={task.createdBy.firstName} lastName={task.createdBy.lastName} />
@@ -546,7 +807,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                 {PRIORITY_OPTIONS.map(({ value, label, badgeClass }) => (
                                                     <DropdownMenuItem
                                                         key={value}
-                                                        onClick={() => setValue("priority", value)}
+                                                        onClick={() => setPriority(value)}
                                                         className={cn("py-1 cursor-pointer rounded-md", watchPriority === value && "bg-accent")}
                                                     >
                                                         <span className={cn("rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1", badgeClass)}>
@@ -566,12 +827,12 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             onClick={() => document.getElementById("tag-input")?.focus()}
                                         >
                                             {tagsArray.map((tag) => (
-                                                <span key={tag} className="flex items-center gap-1 rounded-md bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
+                                                <span key={tag} className="group flex items-center rounded-md bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
                                                     {tag}
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
-                                                        className="text-gray-500 hover:text-red-500 transition-colors"
+                                                        className="hidden group-hover:inline-flex ml-1 text-gray-500 hover:text-red-500"
                                                     >
                                                         <X className="h-2.5 w-2.5" />
                                                     </button>
@@ -594,10 +855,24 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                 <div className="pt-4">
                                     <div className="h-[2px] w-full bg-gray-100 rounded-full mb-4" />
                                     <textarea
-                                        {...register("description")}
-                                        placeholder="Добавьте описание задачи..."
+                                        {...(() => {
+                                            const { ref: regRef, onChange: regOnChange, ...rest } = register("description");
+                                            return {
+                                                ...rest,
+                                                onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                    regOnChange?.(e);
+                                                    onDescriptionChange(e);
+                                                },
+                                                ref: (el: HTMLTextAreaElement | null) => {
+                                                    regRef(el);
+                                                    descriptionRef.current = el;
+                                                },
+                                            };
+                                        })()}
+                                        onBlur={onDescriptionBlur}
+                                        placeholder="Напишите описание задачи..."
                                         rows={4}
-                                        className="w-full resize-none bg-transparent text-sm leading-relaxed text-gray-700 outline-none placeholder:text-gray-400"
+                                        className="w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed text-gray-700 outline-none placeholder:text-gray-400"
                                         onInput={(e) => {
                                             const el = e.currentTarget;
                                             el.style.height = "auto";
@@ -634,20 +909,57 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     </div>
                                     {subtasksOpen && (
                                         <SubtaskList
-                                            taskId={task?.id}
+                                            taskId={task.id}
                                             subtasks={subtasks}
                                             onAddSubtask={handleAddSubtask}
-                                            onUpdateSubtask={handleUpdateSubtask}
-                                            onDeleteSubtask={handleDeleteSubtask}
+                                            onUpdateSubtask={handleUpdateSubtaskByIndex}
+                                            onDeleteSubtask={handleDeleteSubtaskByIndex}
                                         />
                                     )}
                                 </div>
 
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </DialogPrimitive.Content>
             </DialogPrimitive.Portal>
+
+            {/* Диалог подтверждения удаления задачи */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle>Удалить задачу?</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-gray-600">
+                            Вы действительно хотите удалить задачу «{task.title}»? Это действие
+                            нельзя будет отменить.
+                        </p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            onClick={() => {
+                                setIsDeleteDialogOpen(false);
+                                Promise.resolve(onDelete(task.id))
+                                    .then(() => handleClose())
+                                    .catch(() => {});
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                            Удалить
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </DialogPrimitive.Root>
     );
 };

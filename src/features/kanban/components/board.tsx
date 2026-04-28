@@ -489,11 +489,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     <div className="ml-2 w-[260px] flex-shrink-0" ref={newColumnContainerRef}>
                         {isAddingColumn ? (
                             <div
-                                className={cn(
-                                    "w-[260px] flex-shrink-0 rounded-2xl flex flex-col",
-                                    "border shadow-sm overflow-hidden",
-                                    "h-[70vh] bg-white",
-                                )}
+                                className="w-[260px] flex-shrink-0 rounded-2xl flex flex-col border shadow-sm overflow-hidden h-[70vh] bg-white"
                                 onBlur={(e) => {
                                     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                                         handleCancelNewColumn();
@@ -501,9 +497,9 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                                 }}
                             >
                                 {/* Заголовок */}
-                                <div className="p-3 border-b flex-shrink-0 bg-[hsl(218,45%,94%)]">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <Input
+                                <div className="px-3 p-1.5 bg-[hsl(218,45%,94%)]">
+                                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus-within:border-blue-600">
+                                        <input
                                             ref={newColumnInputRef}
                                             value={newColumnName}
                                             onChange={(e) => setNewColumnName(e.target.value)}
@@ -512,8 +508,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                                                 if (e.key === "Escape") handleCancelNewColumn();
                                             }}
                                             placeholder="Название колонки..."
-                                            // className="h-auto py-0 px-0 text-sm font-semibold flex-1 min-w-0 border-none bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400"
-                                            className="h-6 py-1 px-2 text-sm font-semibold flex-1 min-w-0"
+                                            className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-gray-500 placeholder:text-gray-400"
                                         />
                                         <button
                                             onClick={handleConfirmNewColumn}

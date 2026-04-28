@@ -256,10 +256,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 >
                                     <DropdownMenuTrigger asChild>
                                         <button
-                                            className={cn(
-                                                "p-1 rounded-md transition-colors",
-                                                "hover:bg-black/10 focus:outline-none",
-                                            )}
+                                            className="rounded-md p-1 transition-colors hover:bg-gray-100 focus:outline-none"
                                             aria-label="Настройки колонки"
                                         >
                                             <MoreHorizontal
@@ -274,7 +271,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             onClick={handleStartRename}
                                             className="cursor-pointer gap-0"
                                         >
-                                            <Pencil className="mr-2 h-4 w-4" />
+                                            <Pencil className="h-4 w-4 mr-2" />
                                             <span>Переименовать</span>
                                         </DropdownMenuItem>
 
@@ -326,10 +323,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                         {/* Удалить */}
                                         <DropdownMenuItem
                                             onClick={handleDelete}
-                                            className="cursor-pointer border-text-red-600 focus:text-red-600 gap-0"
+                                            className="cursor-pointer text-red-600 focus:text-red-600 gap-0"
                                         >
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            <span>Удалить</span>
+                                            Удалить
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -340,7 +337,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
                 {/* Добавить задачу */}
                 <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
-                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:border-blue-500">
+                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus-within:border-blue-600 hover:shadow-sm">
                         <input
                             ref={quickAddRef}
                             value={quickAddTitle}
@@ -355,7 +352,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                             type="button"
                             onClick={handleAddTask}
                             disabled={!quickAddTitle.trim()}
-                            className="flex-shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:text-gray-700 disabled:opacity-30 disabled:cursor-default"
+                            className="flex-shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:text-gray-700 disabled:cursor-default"
                             aria-label="Добавить задачу"
                         >
                             <Plus className="h-4 w-4" />
