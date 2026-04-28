@@ -14,13 +14,7 @@ const features = [
         title: "Управление проектами",
         description: "Создавайте, редактируйте и отслеживайте прогресс ваших учебных проектов",
         icon: (
-            <svg
-                className="size-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                // stroke="currentColor"
-            >
+            <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -34,13 +28,7 @@ const features = [
         title: "Командная работа",
         description: "Приглашайте участников, назначайте роли и работайте вместе",
         icon: (
-            <svg
-                className="size-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                // stroke="currentColor"
-            >
+            <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -54,13 +42,7 @@ const features = [
         title: "Отслеживание прогресса",
         description: "Следите за выполнением задач и достижением целей",
         icon: (
-            <svg
-                className="size-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                // stroke="currentColor"
-            >
+            <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -74,13 +56,7 @@ const features = [
         title: "Обратная связь",
         description: "Получайте комментарии и оценки от преподавателей",
         icon: (
-            <svg
-                className="size-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                // stroke="currentColor"
-            >
+            <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
