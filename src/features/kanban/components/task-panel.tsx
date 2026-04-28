@@ -51,13 +51,13 @@ const getColumnHeaderClass = (color?: string): string =>
 // ─────────────────────────────────────────────────────────────
 
 const taskSchema = z.object({
-    title:       z.string().min(1, "Название обязательно").max(200, "Слишком длинное название"),
+    title: z.string().min(1, "Название обязательно").max(200, "Слишком длинное название"),
     description: z.string().optional(),
-    priority:    z.enum(["default", "low", "medium", "high", "urgent"]).optional().default("default"),
+    priority: z.enum(["default", "low", "medium", "high", "urgent"]).optional().default("default"),
     assigneeIds: z.array(z.number()).optional().default([]),
-    dueDate:     z.string().optional(),
-    tags:        z.string().optional(),
-    columnId:    z.number().optional(),
+    dueDate: z.string().optional(),
+    tags: z.string().optional(),
+    columnId: z.number().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -80,11 +80,11 @@ export type { TaskFormData };
 // ─────────────────────────────────────────────────────────────
 
 const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string; badgeClass: string }> = [
-    { value: "urgent",  label: "Срочный",  badgeClass: "bg-red-100 text-red-700"       },
-    { value: "high",    label: "Высокий",  badgeClass: "bg-orange-100 text-orange-700" },
-    { value: "medium",  label: "Средний",  badgeClass: "bg-yellow-100 text-yellow-700" },
-    { value: "low",     label: "Низкий",   badgeClass: "bg-green-100 text-green-700"   },
-    { value: "default", label: "Обычный",  badgeClass: "bg-gray-100 text-gray-600"     },
+    { value: "urgent", label: "Срочный", badgeClass: "bg-red-100 text-red-700" },
+    { value: "high", label: "Высокий", badgeClass: "bg-orange-100 text-orange-700" },
+    { value: "medium", label: "Средний", badgeClass: "bg-yellow-100 text-yellow-700" },
+    { value: "low", label: "Низкий", badgeClass: "bg-green-100 text-green-700" },
+    { value: "default", label: "Обычный", badgeClass: "bg-gray-100 text-gray-600" },
 ];
 const PRIORITY_MAP = Object.fromEntries(
     PRIORITY_OPTIONS.map(({ value, label, badgeClass }) => [value, { label, badgeClass }]),
@@ -101,7 +101,10 @@ interface TaskPanelProps {
     onMoveToColumn: (taskId: number, columnId: number) => Promise<unknown>;
     onDelete: (taskId: number) => Promise<unknown> | void;
     onSubtaskCreate: (taskId: number, title: string) => Promise<unknown>;
-    onSubtaskUpdate: (subtaskId: number, data: { title?: string; isCompleted?: boolean }) => Promise<unknown>;
+    onSubtaskUpdate: (
+        subtaskId: number,
+        data: { title?: string; isCompleted?: boolean },
+    ) => Promise<unknown>;
     onSubtaskDelete: (subtaskId: number) => Promise<unknown>;
     task?: Task;
     columns?: ColumnWithTasksAndSubtasks[];
@@ -140,7 +143,10 @@ const MemberAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: 
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-const SaveIndicator: React.FC<{ status: SaveStatus; onRetry: () => void }> = ({ status, onRetry }) => {
+const SaveIndicator: React.FC<{ status: SaveStatus; onRetry: () => void }> = ({
+    status,
+    onRetry,
+}) => {
     if (status === "saving") {
         return (
             <span className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -195,7 +201,12 @@ const fmtDate = (s?: string) => (s ? fmtDatePart(new Date(s)) : null);
 // ─────────────────────────────────────────────────────────────
 
 const parseTags = (raw?: string): string[] =>
-    raw ? raw.split(",").map((t) => t.trim()).filter(Boolean) : [];
+    raw
+        ? raw
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+        : [];
 
 const arraysEqual = <T,>(a: T[], b: T[]): boolean =>
     a.length === b.length && a.every((v, i) => v === b[i]);
@@ -266,20 +277,22 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     const { register, reset, setValue, watch, getValues } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
         defaultValues: {
-            title: "", description: "", priority: "default",
-            assigneeIds: [], dueDate: "", tags: "", columnId: undefined,
+            title: "",
+            description: "",
+            priority: "default",
+            assigneeIds: [],
+            dueDate: "",
+            tags: "",
+            columnId: undefined,
         },
     });
 
-    const watchPriority  = (watch("priority") ?? "default") as TaskPriority;
+    const watchPriority = (watch("priority") ?? "default") as TaskPriority;
     const watchAssigneesRaw = watch("assigneeIds");
-    const watchAssignees = React.useMemo(
-        () => watchAssigneesRaw ?? [],
-        [watchAssigneesRaw],
-    );
-    const watchDueDate   = watch("dueDate") ?? "";
-    const watchTags      = watch("tags") ?? "";
-    const watchColumnId  = watch("columnId") ?? task?.columnId;
+    const watchAssignees = React.useMemo(() => watchAssigneesRaw ?? [], [watchAssigneesRaw]);
+    const watchDueDate = watch("dueDate") ?? "";
+    const watchTags = watch("tags") ?? "";
+    const watchColumnId = watch("columnId") ?? task?.columnId;
 
     const tagsArray = React.useMemo(() => parseTags(watchTags), [watchTags]);
 
@@ -299,13 +312,13 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
             titleRef.current.blur();
         }
         reset({
-            title:       current.title,
+            title: current.title,
             description: current.description ?? "",
-            priority:    current.priority ?? "default",
+            priority: current.priority ?? "default",
             assigneeIds: current.assignees?.map((a) => a.id) ?? [],
-            dueDate:     current.dueDate ? new Date(current.dueDate).toISOString().split("T")[0] : "",
-            tags:        current.tags ?? "",
-            columnId:    current.columnId,
+            dueDate: current.dueDate ? new Date(current.dueDate).toISOString().split("T")[0] : "",
+            tags: current.tags ?? "",
+            columnId: current.columnId,
         });
         setSaveStatus("idle");
         lastFailedPatch.current = null;
@@ -378,7 +391,9 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
             debounceTimers.current[key] = setTimeout(() => {
                 delete debounceTimers.current[key];
                 const patch: TaskPatch = {};
-                (patch as Record<string, unknown>)[key] = (pendingPatch.current as Record<string, unknown>)[key];
+                (patch as Record<string, unknown>)[key] = (
+                    pendingPatch.current as Record<string, unknown>
+                )[key];
                 delete (pendingPatch.current as Record<string, unknown>)[key];
                 void runSave(patch).catch(() => {});
             }, delay);
@@ -515,8 +530,11 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
     // Открытие нативного date picker
     const openDatePicker = () => {
-        try { dueDateRef.current?.showPicker(); }
-        catch { dueDateRef.current?.click(); }
+        try {
+            dueDateRef.current?.showPicker();
+        } catch {
+            dueDateRef.current?.click();
+        }
     };
     const { ref: registerDueDateRef, ...registerDueDateRest } = register("dueDate");
     const { ref: titleRegRef, ...titleRegRest } = register("title");
@@ -620,7 +638,10 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             <MoreVertical className="h-5 w-5" />
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-[180px] rounded-xl border-gray-300">
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-[180px] rounded-xl border-gray-300"
+                                    >
                                         <DropdownMenuItem
                                             onClick={() => setIsDeleteDialogOpen(true)}
                                             className="cursor-pointer text-red-600 focus:text-red-600 gap-0"
@@ -643,11 +664,13 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                         {/* ── Скролл-область ── */}
                         <div className="flex-1 overflow-y-auto">
                             <div className="px-6 py-6 space-y-1">
-
                                 {/* Название задачи */}
                                 <textarea
                                     {...titleRegRest}
-                                    ref={(el) => { titleRegRef(el); titleRef.current = el; }}
+                                    ref={(el) => {
+                                        titleRegRef(el);
+                                        titleRef.current = el;
+                                    }}
                                     rows={1}
                                     placeholder="Название задачи"
                                     onFocus={(e) => {
@@ -681,26 +704,50 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                 {/* ── Свойства ── */}
                                 <div className="">
                                     {/* Статус */}
-                                    <PropertyRow icon={<Layers className="h-4 w-4" />} label="Статус">
+                                    <PropertyRow
+                                        icon={<Layers className="h-4 w-4" />}
+                                        label="Статус"
+                                    >
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button type="button" className="flex items-center gap-1.5 rounded-md px-2 hover:bg-gray-100 -mx-2">
+                                                <button
+                                                    type="button"
+                                                    className="flex items-center gap-1.5 rounded-md px-2 hover:bg-gray-100 -mx-2"
+                                                >
                                                     {currentColumn?.color && (
-                                                        <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full", getColumnHeaderClass(currentColumn.color))} />
+                                                        <span
+                                                            className={cn(
+                                                                "h-2.5 w-2.5 flex-shrink-0 rounded-full",
+                                                                getColumnHeaderClass(
+                                                                    currentColumn.color,
+                                                                ),
+                                                            )}
+                                                        />
                                                     )}
                                                     <span>{currentColumn?.name ?? "—"}</span>
                                                     <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start" className="w-[200px]">
+                                            <DropdownMenuContent
+                                                align="start"
+                                                className="w-[200px]"
+                                            >
                                                 {columns.map((col) => (
                                                     <DropdownMenuItem
                                                         key={col.id}
                                                         onClick={() => setColumnId(col.id)}
-                                                        className={cn("cursor-pointer", col.id === watchColumnId && "bg-accent")}
+                                                        className={cn(
+                                                            "cursor-pointer",
+                                                            col.id === watchColumnId && "bg-accent",
+                                                        )}
                                                     >
                                                         {col.color && (
-                                                            <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full", getColumnHeaderClass(col.color))} />
+                                                            <span
+                                                                className={cn(
+                                                                    "h-2.5 w-2.5 flex-shrink-0 rounded-full",
+                                                                    getColumnHeaderClass(col.color),
+                                                                )}
+                                                            />
                                                         )}
                                                         {col.name}
                                                     </DropdownMenuItem>
@@ -710,16 +757,21 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     </PropertyRow>
 
                                     {/* Дедлайн */}
-                                    <PropertyRow icon={<Calendar className="h-4 w-4" />} label="Дедлайн">
+                                    <PropertyRow
+                                        icon={<Calendar className="h-4 w-4" />}
+                                        label="Дедлайн"
+                                    >
                                         <div className="flex items-center gap-2 -mx-2">
                                             <button
                                                 type="button"
                                                 onClick={openDatePicker}
                                                 className="flex-1 text-left rounded-md px-2 hover:bg-gray-100"
                                             >
-                                                {watchDueDate
-                                                    ? <span>{fmtDate(watchDueDate)}</span>
-                                                    : <span className="text-gray-400">Не указан</span>}
+                                                {watchDueDate ? (
+                                                    <span>{fmtDate(watchDueDate)}</span>
+                                                ) : (
+                                                    <span className="text-gray-400">Не указан</span>
+                                                )}
                                             </button>
                                             {watchDueDate && (
                                                 <button
@@ -749,21 +801,41 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
                                     {/* Автор */}
                                     {task.createdBy && (
-                                        <PropertyRow icon={<UserCircle2 className="h-4 w-4" />} label="Автор">
+                                        <PropertyRow
+                                            icon={<UserCircle2 className="h-4 w-4" />}
+                                            label="Автор"
+                                        >
                                             <div className="flex items-center gap-2">
-                                                <MemberAvatar firstName={task.createdBy.firstName} lastName={task.createdBy.lastName} />
-                                                <span>{task.createdBy.firstName} {task.createdBy.lastName}</span>
+                                                <MemberAvatar
+                                                    firstName={task.createdBy.firstName}
+                                                    lastName={task.createdBy.lastName}
+                                                />
+                                                <span>
+                                                    {task.createdBy.firstName}{" "}
+                                                    {task.createdBy.lastName}
+                                                </span>
                                             </div>
                                         </PropertyRow>
                                     )}
 
                                     {/* Исполнители */}
-                                    <PropertyRow icon={<Users className="h-4 w-4" />} label="Исполнители">
+                                    <PropertyRow
+                                        icon={<Users className="h-4 w-4" />}
+                                        label="Исполнители"
+                                    >
                                         <div className="flex flex-wrap items-center gap-1.5 -mx-2 px-2">
                                             {selectedAssignees.map((m) => (
-                                                <div key={m.id} className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700">
-                                                    <MemberAvatar firstName={m.firstName} lastName={m.lastName} />
-                                                    <span>{m.firstName} {m.lastName}</span>
+                                                <div
+                                                    key={m.id}
+                                                    className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700"
+                                                >
+                                                    <MemberAvatar
+                                                        firstName={m.firstName}
+                                                        lastName={m.lastName}
+                                                    />
+                                                    <span>
+                                                        {m.firstName} {m.lastName}
+                                                    </span>
                                                     <button
                                                         type="button"
                                                         onClick={() => removeAssignee(m.id)}
@@ -784,49 +856,89 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                             <Plus className="h-3.5 w-3.5" />
                                                         </button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="start" className="w-[220px]">
+                                                    <DropdownMenuContent
+                                                        align="start"
+                                                        className="w-[220px]"
+                                                    >
                                                         {availableAssignees.map((m) => (
-                                                            <DropdownMenuItem key={m.id} onClick={() => addAssignee(m.id)} className="cursor-pointer">
-                                                                <MemberAvatar firstName={m.firstName} lastName={m.lastName} />
-                                                                <span>{m.firstName} {m.lastName}</span>
+                                                            <DropdownMenuItem
+                                                                key={m.id}
+                                                                onClick={() => addAssignee(m.id)}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                <MemberAvatar
+                                                                    firstName={m.firstName}
+                                                                    lastName={m.lastName}
+                                                                />
+                                                                <span>
+                                                                    {m.firstName} {m.lastName}
+                                                                </span>
                                                             </DropdownMenuItem>
                                                         ))}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             )}
-                                            {selectedAssignees.length === 0 && availableAssignees.length === 0 && (
-                                                <span className="text-gray-400">Не назначены</span>
-                                            )}
+                                            {selectedAssignees.length === 0 &&
+                                                availableAssignees.length === 0 && (
+                                                    <span className="text-gray-400">
+                                                        Не назначены
+                                                    </span>
+                                                )}
                                         </div>
                                     </PropertyRow>
 
                                     {/* Приоритет */}
-                                    <PropertyRow icon={<Flag className="h-4 w-4" />} label="Приоритет">
+                                    <PropertyRow
+                                        icon={<Flag className="h-4 w-4" />}
+                                        label="Приоритет"
+                                    >
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button type="button" className="flex items-center gap-1.5 rounded-md px-1 hover:bg-gray-100 -mx-1">
-                                                    <span className={cn(
-                                                        "rounded-md px-2 py-1 text-xs font-medium",
-                                                        PRIORITY_MAP[watchPriority]?.badgeClass ?? "bg-gray-100 text-gray-600",
-                                                    )}>
-                                                        {PRIORITY_MAP[watchPriority]?.label ?? "Обычный"}
+                                                <button
+                                                    type="button"
+                                                    className="flex items-center gap-1.5 rounded-md px-1 hover:bg-gray-100 -mx-1"
+                                                >
+                                                    <span
+                                                        className={cn(
+                                                            "rounded-md px-2 py-1 text-xs font-medium",
+                                                            PRIORITY_MAP[watchPriority]
+                                                                ?.badgeClass ??
+                                                                "bg-gray-100 text-gray-600",
+                                                        )}
+                                                    >
+                                                        {PRIORITY_MAP[watchPriority]?.label ??
+                                                            "Обычный"}
                                                     </span>
                                                     <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start" className="w-[180px] rounded-xl">
-                                                {PRIORITY_OPTIONS.map(({ value, label, badgeClass }) => (
-                                                    <DropdownMenuItem
-                                                        key={value}
-                                                        onClick={() => setPriority(value)}
-                                                        className={cn("py-1 cursor-pointer rounded-md", watchPriority === value && "bg-accent")}
-                                                    >
-                                                        <span className={cn("rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1", badgeClass)}>
-                                                            <div className="h-3 w-3 rounded-full bg-white"></div>
-                                                            {label}
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                ))}
+                                            <DropdownMenuContent
+                                                align="start"
+                                                className="w-[180px] rounded-xl"
+                                            >
+                                                {PRIORITY_OPTIONS.map(
+                                                    ({ value, label, badgeClass }) => (
+                                                        <DropdownMenuItem
+                                                            key={value}
+                                                            onClick={() => setPriority(value)}
+                                                            className={cn(
+                                                                "py-1 cursor-pointer rounded-md",
+                                                                watchPriority === value &&
+                                                                    "bg-accent",
+                                                            )}
+                                                        >
+                                                            <span
+                                                                className={cn(
+                                                                    "rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1",
+                                                                    badgeClass,
+                                                                )}
+                                                            >
+                                                                <div className="h-3 w-3 rounded-full bg-white"></div>
+                                                                {label}
+                                                            </span>
+                                                        </DropdownMenuItem>
+                                                    ),
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </PropertyRow>
@@ -835,14 +947,22 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     <PropertyRow icon={<Hash className="h-4 w-4" />} label="Теги">
                                         <div
                                             className="flex flex-wrap items-center gap-1.5 -mx-2 px-2 rounded-md hover:bg-gray-100 cursor-text min-h-[16px]"
-                                            onClick={() => document.getElementById("tag-input")?.focus()}
+                                            onClick={() =>
+                                                document.getElementById("tag-input")?.focus()
+                                            }
                                         >
                                             {tagsArray.map((tag) => (
-                                                <span key={tag} className="group flex items-center rounded-md bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
+                                                <span
+                                                    key={tag}
+                                                    className="group flex items-center rounded-md bg-gray-200 px-2 py-0.5 text-xs text-gray-700"
+                                                >
                                                     {tag}
                                                     <button
                                                         type="button"
-                                                        onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            removeTag(tag);
+                                                        }}
                                                         className="hidden group-hover:inline-flex ml-1 text-gray-500 hover:text-red-500"
                                                     >
                                                         <X className="h-2.5 w-2.5" />
@@ -855,7 +975,9 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                 onChange={(e) => setTagInput(e.target.value)}
                                                 onKeyDown={handleTagKeyDown}
                                                 onBlur={commitTag}
-                                                placeholder={tagsArray.length === 0 ? "Добавить тег..." : ""}
+                                                placeholder={
+                                                    tagsArray.length === 0 ? "Добавить тег..." : ""
+                                                }
                                                 className="min-w-[80px] flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
                                             />
                                         </div>
@@ -867,10 +989,16 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     <div className="h-[2px] w-full bg-gray-100 rounded-full mb-4" />
                                     <textarea
                                         {...(() => {
-                                            const { ref: regRef, onChange: regOnChange, ...rest } = register("description");
+                                            const {
+                                                ref: regRef,
+                                                onChange: regOnChange,
+                                                ...rest
+                                            } = register("description");
                                             return {
                                                 ...rest,
-                                                onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                onChange: (
+                                                    e: React.ChangeEvent<HTMLTextAreaElement>,
+                                                ) => {
                                                     regOnChange?.(e);
                                                     onDescriptionChange(e);
                                                 },
@@ -928,7 +1056,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                         />
                                     )}
                                 </div>
-
                             </div>
                         </div>
                     </div>

@@ -131,8 +131,8 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                         isOverdue
                                             ? "bg-red-600 text-white"
                                             : daysLeft! <= 3
-                                                ? "bg-red-200 text-orange-900"
-                                                : "bg-orange-200 text-orange-900",
+                                              ? "bg-red-200 text-orange-900"
+                                              : "bg-orange-200 text-orange-900",
                                     )}
                                 >
                                     {dueLabel}
@@ -220,7 +220,6 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                         </div>
                     </div>
                 )}
-
             </div>
         </>
     );

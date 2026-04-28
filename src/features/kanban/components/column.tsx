@@ -1,15 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { KanbanTask } from "./task";
 import type { KanbanColumnProps } from "../types";
-import {
-    Plus,
-    MoreHorizontal,
-    Pencil,
-    Trash2,
-    Check,
-    X,
-    GripVertical,
-} from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Check, X, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { columnColors, baseColor } from "../utils/column-styles";
 import { Button } from "@/components/ui/button";
@@ -40,7 +32,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
 }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [isDraggingTask, setIsDraggingTask] = useState(false);
-    const [dropDirectionMap, setDropDirectionMap] = useState<Map<number, "top" | "bottom">>(new Map(),);
+    const [dropDirectionMap, setDropDirectionMap] = useState<Map<number, "top" | "bottom">>(
+        new Map(),
+    );
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(column.name);
@@ -237,7 +231,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <h3 className={cn("font-semibold truncate pr-2", colorStyle.text)}>
+                                    <h3
+                                        className={cn(
+                                            "font-semibold truncate pr-2",
+                                            colorStyle.text,
+                                        )}
+                                    >
                                         {column.name}
                                     </h3>
                                     <span className="text-xs text-gray-500 flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded-full">
@@ -265,7 +264,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                         </button>
                                     </DropdownMenuTrigger>
 
-                                    <DropdownMenuContent align="end" className="w-[244px] rounded-xl border-gray-300">
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-[244px] rounded-xl border-gray-300"
+                                    >
                                         {/* Переименовать */}
                                         <DropdownMenuItem
                                             onClick={handleStartRename}
@@ -275,7 +277,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             <span>Переименовать</span>
                                         </DropdownMenuItem>
 
-                                        <DropdownMenuSeparator className="bg-gray-300"/>
+                                        <DropdownMenuSeparator className="bg-gray-300" />
 
                                         {/* Выбор цвета */}
                                         <div className="py-2 w-full">
@@ -318,7 +320,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                             </div>
                                         </div>
 
-                                        <DropdownMenuSeparator className="bg-gray-300"/>
+                                        <DropdownMenuSeparator className="bg-gray-300" />
 
                                         {/* Удалить */}
                                         <DropdownMenuItem

@@ -313,7 +313,11 @@ export const useUpdateTask = () => {
                         ...col,
                         tasks: col.tasks.map((t) =>
                             t.id === variables.taskId
-                                ? ({ ...t, ...updatedTask, subtasks: t.subtasks } as ApiTaskWithSubtasks)
+                                ? ({
+                                      ...t,
+                                      ...updatedTask,
+                                      subtasks: t.subtasks,
+                                  } as ApiTaskWithSubtasks)
                                 : t,
                         ),
                     })),
@@ -494,7 +498,9 @@ export const useUpdateSubtask = () => {
                                     s.id === subtaskId
                                         ? {
                                               ...s,
-                                              ...(data.title !== undefined ? { title: data.title } : {}),
+                                              ...(data.title !== undefined
+                                                  ? { title: data.title }
+                                                  : {}),
                                               ...(data.isCompleted !== undefined
                                                   ? { is_completed: data.isCompleted }
                                                   : {}),

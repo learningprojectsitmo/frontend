@@ -5,11 +5,11 @@ import type {
 } from "@/types/tables/forTables";
 
 export interface KanbanFilterState {
-    mine: boolean;              // Мои задачи
-    assigneeIds: number[];      // Ответственные
+    mine: boolean; // Мои задачи
+    assigneeIds: number[]; // Ответственные
     priorities: TaskPriority[]; // Приоритет
-    tags: string[];             // Теги
-    authorIds: number[];        // Авторы
+    tags: string[]; // Теги
+    authorIds: number[]; // Авторы
 }
 
 export const defaultFilterState: KanbanFilterState = {

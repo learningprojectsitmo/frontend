@@ -81,7 +81,10 @@ export const KanbanRoute = () => {
                 data.dueDate = undefined; // бэкенд интерпретирует undefined как сброс
             }
             try {
-                await updateTask.mutateAsync({ taskId, data: data as Parameters<typeof updateTask.mutateAsync>[0]["data"] });
+                await updateTask.mutateAsync({
+                    taskId,
+                    data: data as Parameters<typeof updateTask.mutateAsync>[0]["data"],
+                });
             } catch (e) {
                 toast.error("Не удалось сохранить изменения");
                 throw e;
@@ -379,57 +382,57 @@ export const KanbanRoute = () => {
     const hasColumns = columns && columns.length > 0;
 
     return (
-    <ContentLayout title={spaceName}>
-        {/* Header Section */}
-        <div className="mx-auto max-w-7xl p-6">
-            <header className="flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
-                    <p className="text-sm text-gray-500">
-                        {hasColumns
-                            ? `Всего колонок: ${columns.length}`
-                            : "Начните с создания первой колонки"}
-                    </p>
-                </div>
-                {hasColumns && (
-                    <KanbanFilter
-                        columns={columns}
-                        filter={filter}
-                        onFilterChange={setFilter}
-                        currentUserId={currentUser?.id}
-                    />
-                )}
-            </header>
-        </div>
-        {/* Область канбан-доски без лишних отступов снизу */}
-        {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
-        <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
-            <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
-                <section aria-label="Канбан-доска с задачами">
-                    <div className="min-w-min">
-                        <KanbanBoard {...boardData} />
+        <ContentLayout title={spaceName}>
+            {/* Header Section */}
+            <div className="mx-auto max-w-7xl p-6">
+                <header className="flex items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
+                        <p className="text-sm text-gray-500">
+                            {hasColumns
+                                ? `Всего колонок: ${columns.length}`
+                                : "Начните с создания первой колонки"}
+                        </p>
                     </div>
-                </section>
-
-                {/* Task Panel */}
-                <TaskPanel
-                    isOpen={isOpen}
-                    onClose={closePanel}
-                    onAutoSave={handleTaskAutoSave}
-                    onMoveToColumn={handleTaskMoveToColumn}
-                    onDelete={handleDeleteTask}
-                    onSubtaskCreate={handleSubtaskCreate}
-                    onSubtaskUpdate={handleSubtaskUpdate}
-                    onSubtaskDelete={handleSubtaskDelete}
-                    task={liveEditingTask}
-                    columns={columns || []}
-                    projectName="Канбан-доска"
-                    projectMembers={projectMembers || []}
-                />
+                    {hasColumns && (
+                        <KanbanFilter
+                            columns={columns}
+                            filter={filter}
+                            onFilterChange={setFilter}
+                            currentUserId={currentUser?.id}
+                        />
+                    )}
+                </header>
             </div>
-        </div>
-    </ContentLayout>
-);
+            {/* Область канбан-доски без лишних отступов снизу */}
+            {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
+            <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
+                <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
+                    <section aria-label="Канбан-доска с задачами">
+                        <div className="min-w-min">
+                            <KanbanBoard {...boardData} />
+                        </div>
+                    </section>
+
+                    {/* Task Panel */}
+                    <TaskPanel
+                        isOpen={isOpen}
+                        onClose={closePanel}
+                        onAutoSave={handleTaskAutoSave}
+                        onMoveToColumn={handleTaskMoveToColumn}
+                        onDelete={handleDeleteTask}
+                        onSubtaskCreate={handleSubtaskCreate}
+                        onSubtaskUpdate={handleSubtaskUpdate}
+                        onSubtaskDelete={handleSubtaskDelete}
+                        task={liveEditingTask}
+                        columns={columns || []}
+                        projectName="Канбан-доска"
+                        projectMembers={projectMembers || []}
+                    />
+                </div>
+            </div>
+        </ContentLayout>
+    );
 };
 
 export default KanbanRoute;

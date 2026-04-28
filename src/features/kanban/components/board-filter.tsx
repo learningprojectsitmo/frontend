@@ -203,7 +203,9 @@ export const KanbanFilter: React.FC<Props> = ({
                                     <DropdownMenuItem
                                         key={m.id}
                                         className="flex items-center justify-between cursor-pointer"
-                                        onClick={() => toggleInSet("assigneeIds", filter.assigneeIds, m.id)}
+                                        onClick={() =>
+                                            toggleInSet("assigneeIds", filter.assigneeIds, m.id)
+                                        }
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-700">
@@ -211,7 +213,9 @@ export const KanbanFilter: React.FC<Props> = ({
                                             </div>
                                             <span className="truncate">{formatMemberName(m)}</span>
                                         </div>
-                                        {filter.assigneeIds.includes(m.id) && <Check className="h-4 w-4" />}
+                                        {filter.assigneeIds.includes(m.id) && (
+                                            <Check className="h-4 w-4" />
+                                        )}
                                     </DropdownMenuItem>
                                 ))
                             )}
@@ -307,7 +311,9 @@ export const KanbanFilter: React.FC<Props> = ({
                                     <DropdownMenuItem
                                         key={m.id}
                                         className="flex items-center justify-between cursor-pointer"
-                                        onClick={() => toggleInSet("authorIds", filter.authorIds, m.id)}
+                                        onClick={() =>
+                                            toggleInSet("authorIds", filter.authorIds, m.id)
+                                        }
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-700">
@@ -315,7 +321,9 @@ export const KanbanFilter: React.FC<Props> = ({
                                             </div>
                                             <span className="truncate">{formatMemberName(m)}</span>
                                         </div>
-                                        {filter.authorIds.includes(m.id) && <Check className="h-4 w-4" />}
+                                        {filter.authorIds.includes(m.id) && (
+                                            <Check className="h-4 w-4" />
+                                        )}
                                     </DropdownMenuItem>
                                 ))
                             )}

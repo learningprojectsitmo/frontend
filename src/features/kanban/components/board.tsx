@@ -36,7 +36,9 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const [activeTaskTitle, setActiveTaskTitle] = useState<string>("");
     const [activeColumnId, setActiveColumnId] = useState<number | undefined>(undefined);
     const [activeColumnTitle, setActiveColumnTitle] = useState<string>("");
-    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<Map<number, "left" | "right">>(new Map());
+    const [dropDirectionForColumn, setDropDirectionForColumn] = useState<
+        Map<number, "left" | "right">
+    >(new Map());
     const [draggableColumnId, setDraggableColumnId] = useState<number | null>(null);
     const [isAddingColumn, setIsAddingColumn] = useState(false);
     const [newColumnName, setNewColumnName] = useState("");
@@ -453,7 +455,8 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                             "first:pl-0 -mr-[2px] px-2 border-r-2 border-l-2 border-r-transparent border-l-transparent",
                             activeColumnId === column.id,
                             dropDirectionForColumn.get(column.id) === "left" && "border-l-blue-500",
-                            dropDirectionForColumn.get(column.id) === "right" && "border-r-blue-500",
+                            dropDirectionForColumn.get(column.id) === "right" &&
+                                "border-r-blue-500",
                         )}
                     >
                         <KanbanColumn

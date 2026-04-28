@@ -95,7 +95,10 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                     <p className="text-sm text-gray-400 text-center py-4">Нет подзадач</p>
                 ) : (
                     subtasks.map((subtask, index) => (
-                        <div key={subtask._tempId} className="flex items-center p-2 gap-2 border rounded-xl ">
+                        <div
+                            key={subtask._tempId}
+                            className="flex items-center p-2 gap-2 border rounded-xl "
+                        >
                             <Checkbox
                                 checked={subtask.isCompleted}
                                 onCheckedChange={() =>
