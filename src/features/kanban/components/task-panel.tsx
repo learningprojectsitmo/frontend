@@ -272,7 +272,11 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     });
 
     const watchPriority  = (watch("priority") ?? "default") as TaskPriority;
-    const watchAssignees = watch("assigneeIds") ?? [];
+    const watchAssigneesRaw = watch("assigneeIds");
+    const watchAssignees = React.useMemo(
+        () => watchAssigneesRaw ?? [],
+        [watchAssigneesRaw],
+    );
     const watchDueDate   = watch("dueDate") ?? "";
     const watchTags      = watch("tags") ?? "";
     const watchColumnId  = watch("columnId") ?? task?.columnId;
@@ -280,26 +284,31 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     const tagsArray = React.useMemo(() => parseTags(watchTags), [watchTags]);
 
     // ── Сброс формы только при смене ИД задачи или открытии панели ──
+    const taskRef = React.useRef(task);
+    React.useEffect(() => {
+        taskRef.current = task;
+    }, [task]);
+
     const taskId = task?.id;
     React.useEffect(() => {
-        if (!isOpen || !task) return;
+        const current = taskRef.current;
+        if (!isOpen || !current) return;
         setTagInput("");
         if (titleRef.current) {
             titleRef.current.style.height = "";
             titleRef.current.blur();
         }
         reset({
-            title:       task.title,
-            description: task.description ?? "",
-            priority:    task.priority ?? "default",
-            assigneeIds: task.assignees?.map((a) => a.id) ?? [],
-            dueDate:     task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
-            tags:        task.tags ?? "",
-            columnId:    task.columnId,
+            title:       current.title,
+            description: current.description ?? "",
+            priority:    current.priority ?? "default",
+            assigneeIds: current.assignees?.map((a) => a.id) ?? [],
+            dueDate:     current.dueDate ? new Date(current.dueDate).toISOString().split("T")[0] : "",
+            tags:        current.tags ?? "",
+            columnId:    current.columnId,
         });
         setSaveStatus("idle");
         lastFailedPatch.current = null;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, taskId, reset]);
 
     // Пересчитываем высоту описания при открытии
@@ -384,9 +393,11 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     }, [flushDebounced, onClose]);
 
     React.useEffect(() => {
+        const timers = debounceTimers.current;
+        const savedTimer = savedTimerRef;
         return () => {
-            Object.values(debounceTimers.current).forEach(clearTimeout);
-            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+            Object.values(timers).forEach(clearTimeout);
+            if (savedTimer.current) clearTimeout(savedTimer.current);
         };
     }, []);
 
@@ -505,7 +516,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     // Открытие нативного date picker
     const openDatePicker = () => {
         try { dueDateRef.current?.showPicker(); }
-        catch (_) { dueDateRef.current?.click(); }
+        catch { dueDateRef.current?.click(); }
     };
     const { ref: registerDueDateRef, ...registerDueDateRest } = register("dueDate");
     const { ref: titleRegRef, ...titleRegRest } = register("title");

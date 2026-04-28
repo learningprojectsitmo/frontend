@@ -2,7 +2,6 @@ import React, { useCallback, useState, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { KanbanColumn } from "./column";
 import {
     DndMonitorProvider,
@@ -414,15 +413,6 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            </div>
-        );
-    }
-
-    // Пустое состояние
-    if (!columns.length) {
-        return (
-            <div className="flex items-center justify-center h-64 text-gray-500">
-                Нет колонок. Создайте первую колонку, чтобы начать работу.
             </div>
         );
     }

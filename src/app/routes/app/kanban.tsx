@@ -1,7 +1,6 @@
 import { useParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { KanbanBoard } from "@/features/kanban/components/board";
-import { ColumnModal } from "@/features/kanban/components/column-modal";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
 import {
@@ -20,7 +19,6 @@ import {
 } from "@/features/kanban/hooks/useKanban";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 // Todo поменять хук
@@ -37,10 +35,8 @@ export const KanbanRoute = () => {
     const projectId = parseInt(spaceId || "0");
 
     // Состояния
-    const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
     const [filter, setFilter] = useState<KanbanFilterState>(defaultFilterState);
-    const { isOpen, editingTask, targetColumnId, openCreatePanel, openEditPanel, closePanel } =
-        useTaskPanel();
+    const { isOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
@@ -178,7 +174,6 @@ export const KanbanRoute = () => {
                 {
                     onSuccess: () => {
                         toast.success("Колонка успешно создана");
-                        setIsColumnModalOpen(false);
                         refetch();
                     },
                     onError: () => {
@@ -317,13 +312,13 @@ export const KanbanRoute = () => {
             isLoading,
             handleTaskMove,
             openEditPanel,
-            openCreatePanel,
             handleAddTask,
             handleDeleteTask,
             handleRenameColumn,
             handleChangeColor,
             handleDeleteColumn,
             handleReorderColumns,
+            handleCreateColumn,
         ],
     );
 
@@ -412,25 +407,7 @@ export const KanbanRoute = () => {
             <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
                 <section aria-label="Канбан-доска с задачами">
                     <div className="min-w-min">
-                        {hasColumns ? (
-                            <KanbanBoard {...boardData} />
-                        ) : (
-                            <div className="flex h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                                <p className="mb-4 text-lg font-medium text-gray-500">
-                                    Нет колонок
-                                </p>
-                                <p className="mb-6 text-sm text-gray-400">
-                                    Создайте первую колонку, чтобы начать работу
-                                </p>
-                                <Button
-                                    variant="blue"
-                                    onClick={() => setIsColumnModalOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Создать колонку
-                                </Button>
-                            </div>
-                        )}
+                        <KanbanBoard {...boardData} />
                     </div>
                 </section>
 
@@ -448,15 +425,6 @@ export const KanbanRoute = () => {
                     columns={columns || []}
                     projectName="Канбан-доска"
                     projectMembers={projectMembers || []}
-                />
-
-                {/* Column Modal */}
-                <ColumnModal
-                    isOpen={isColumnModalOpen}
-                    onClose={() => setIsColumnModalOpen(false)}
-                    onSubmit={handleCreateColumn}
-                    projectId={projectId}
-                    isLoading={createColumn.isPending}
                 />
             </div>
         </div>

@@ -63,17 +63,6 @@ interface UpdateColumnPayload {
     wip_limit?: number;
 }
 
-// Тип для создания задачи
-interface CreateTaskPayload {
-    title: string;
-    description?: string;
-    column_id: number;
-    priority?: string;
-    assignee_ids?: number[];
-    due_date?: string;
-    tags?: string[];
-}
-
 // Тип для обновления задачи
 interface UpdateTaskPayload {
     title?: string;
