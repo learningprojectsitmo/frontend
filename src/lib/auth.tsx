@@ -97,7 +97,11 @@ export type ResetWithPasswordInput = z.infer<typeof resetWithPasswordInputSchema
 
 const getUser = async (): Promise<User | null> => {
     try {
-        return (await api.get<User>("/auth/me")) as unknown as User;
+        const response: Record<string, unknown> = await api.get("/auth/me");
+        if (response.access_token) {
+            setAccessToken(response.access_token as string);
+        }
+        return response as unknown as User;
     } catch {
         clearAccessToken();
         return null;
