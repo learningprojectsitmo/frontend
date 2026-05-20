@@ -11,6 +11,7 @@ export type BaseEntity = {
 export interface AuthTokenResponse {
     access_token: string;
     token_type: string;
+    expires_in?: number;
 }
 
 export type Entity<T> = {

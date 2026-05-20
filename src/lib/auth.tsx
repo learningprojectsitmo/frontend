@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import { paths } from "@/config/paths";
 import type { User, AuthTokenResponse } from "@/types/api";
-import { api } from "./api-client";
+import { api, setAccessToken, clearAccessToken } from "./api-client";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -95,13 +95,10 @@ export type ResetWithPasswordInput = z.infer<typeof resetWithPasswordInputSchema
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 const getUser = async (): Promise<User | null> => {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
     try {
         return (await api.get<User>("/auth/me")) as unknown as User;
     } catch {
-        localStorage.removeItem("token");
+        clearAccessToken();
         return null;
     }
 };
@@ -114,7 +111,7 @@ const logout = async (): Promise<unknown> => {
 const loginWithEmailAndPassword = async (data: LoginInput): Promise<AuthTokenResponse> => {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
-    form.append("email", data.email);
+    form.append("username", data.email);
     form.append("password", data.password);
     form.append("remember_me", data.rememberMe.toString());
 
@@ -141,10 +138,16 @@ const resendCode = async (data: ResendCodeInput): Promise<unknown> => {
 };
 
 const addContacts = async (data: AddContactsInput): Promise<AuthTokenResponse> => {
-    return (await api.post<AuthTokenResponse>(
+    const response = (await api.post<AuthTokenResponse>(
         "/auth/addcontacts",
         data,
     )) as unknown as AuthTokenResponse;
+
+    if (response.access_token) {
+        setAccessToken(response.access_token);
+    }
+
+    return response;
 };
 
 const resetWithEmail = async (data: ResetWithEmailInput): Promise<unknown> => {
@@ -163,7 +166,7 @@ const authConfig = {
     loginFn: async (data: LoginInput): Promise<User> => {
         const response = await loginWithEmailAndPassword(data);
         if (response.access_token) {
-            localStorage.setItem("token", response.access_token);
+            setAccessToken(response.access_token);
         }
         const user = await getUser();
         if (!user) throw new Error("Не удалось получить данные пользователя после входа");
@@ -173,7 +176,7 @@ const authConfig = {
     registerFn: async (data: RegisterConfirmInput): Promise<User> => {
         const response = await registerWithEmailAndPassword(data);
         if (response.access_token) {
-            localStorage.setItem("token", response.access_token);
+            setAccessToken(response.access_token);
         }
         const user = await getUser();
         if (!user) throw new Error("Не удалось получить данные пользователя после регистрации");
@@ -183,7 +186,7 @@ const authConfig = {
     // interceptor срезает статус — просто чистим токен без проверки статуса
     logoutFn: async (): Promise<void> => {
         await logout();
-        localStorage.removeItem("token");
+        clearAccessToken();
     },
 };
 
