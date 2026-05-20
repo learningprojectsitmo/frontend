@@ -175,9 +175,9 @@ const SpacesRoute = () => {
 
                 <section className="mb-12">
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {(visibleSpaces || spaces).map((space) => (
-                            <Link to={paths.app.space.getHref(space.id)}>
+                            <Link to={paths.app.space.getHref(space.id)} className="block">
                                 <SpacesCard
                                     key={space.id}
                                     iconName="discipline"
@@ -250,9 +250,9 @@ const SpacesRoute = () => {
                         />
                     </div>
 
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {( projects).map((project) => (
-                            <Link to={paths.app.project.getHref(project.id)}>
+                            <Link to={paths.app.project.getHref(project.id)} className="block">
                                 <ProjectCard
                                     key={project.id}
                                     tag={project.tag}

@@ -81,7 +81,7 @@ export interface SpacesListParams {
 
 
 export type SpacesListResponce = {
-    categories: { name: string }[];
+    categories: Category[];
     spaces: Space[];
     page?: number;
     limit?: number;
@@ -111,6 +111,98 @@ export type Space = {
 //     // Или если ответ — это массив напрямую:
 //     // spaces: Space[];
 // }
+
+export type BackendProjectStatus = {
+    name: string;
+    color: string;
+};
+
+export type BackendParticipantPreview = {
+    id: number;
+    full_name: string;
+    avatar_url: string | null;
+};
+
+export type BackendMember = {
+    id: number;
+    user_id: number;
+    name: string;
+    role: string;
+    contacts: string;
+    resume_url: string;
+    date_added: string;
+};
+
+export type BackendReplycant = {
+    id: number;
+    user_id: number;
+    name: string;
+    contacts: string;
+    resume_url: string;
+    response_date: string;
+};
+
+export type ProjectListItemResponse = {
+    id: number;
+    name: string;
+    status: BackendProjectStatus | null;
+    deadline: string | null;
+    description: string | null;
+    participants_count: number;
+    progress: number;
+    tags: string[];
+    participants_preview: BackendParticipantPreview[];
+};
+
+export type ProjectListResponse = {
+    items: ProjectListItemResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type ProjectFullResponse = {
+    id: number;
+    name: string;
+    author_id: number;
+    description: string | null;
+    max_participants: number | null;
+    status_id: number | null;
+    deadline: string | null;
+    progress: number;
+    tags: string[];
+    workspace_id: number | null;
+    created_at: string;
+    status: BackendProjectStatus | null;
+    participants_count: number;
+    participants_preview: BackendParticipantPreview[];
+    members: BackendMember[];
+    replycants: BackendReplycant[];
+};
+
+export type CreateWorkspaceInput = {
+    name: string;
+    description?: string;
+    category_id?: number;
+    color?: string;
+};
+
+export type WorkSpaceFull = {
+    id: number;
+    name: string;
+    author_id: number;
+    status_id: number;
+    category_id: number | null;
+    color: string | null;
+    description: string | null;
+};
+
+export type Category = {
+    id: number;
+    name: string;
+    color: string;
+};
 
 export type NotificationType = "mention" | "request" | "join";
 

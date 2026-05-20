@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Link } from "react-router";
 import { paths } from "@/config/paths";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Icon } from "@/components/ui/icons";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
 import { GraduationCapIcon, Plus, PanelLeftClose, PanelLeftOpen, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CreateSpaceModal } from "./create-space-modal";
 
 type Space = {
     id: number;
@@ -103,9 +105,12 @@ export function Sidebar({
     isLoading,
     isNotFound,
 }: SidebarProps) {
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const hasNoCategories = activeCategories.every((cat) => cat.spaces.length === 0);
 
     return (
+        <>
+            <CreateSpaceModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
         <aside
             className={cn(
                 "bg-white border-r border-gray-200 flex flex-col fixed top-16 left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
@@ -310,6 +315,7 @@ export function Sidebar({
                             hasIconAsChild={true}
                             aria-label="Создать пространство"
                             className="w-full"
+                            onClick={() => setIsCreateModalOpen(true)}
                         >
                             <Icon name="plus" size={16} />
                         </Button>
@@ -319,6 +325,7 @@ export function Sidebar({
                             size="fixed36"
                             icon={<Icon name="plus" size={16} />}
                             className="w-full text-[13px] font-semibold justify-start"
+                            onClick={() => setIsCreateModalOpen(true)}
                         >
                             Создать пространство
                         </Button>
@@ -326,5 +333,6 @@ export function Sidebar({
                 </div>
             )}
         </aside>
+        </>
     );
 }
