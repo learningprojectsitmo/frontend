@@ -194,7 +194,7 @@ const SpaceRoute = () => {
     const urlId = searchParams.get("id") || "";
 
     const { data: dataProject } = useProject(urlId);
-    const { data: dataSpaces } = useSpacesList();
+    const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
 
     const projectmockdata = dataProject || projects.find((project) => String(project.id) === urlId);
 

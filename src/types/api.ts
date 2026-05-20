@@ -30,15 +30,7 @@ export type LoginResponse = {
     token_type: string;
 };
 
-export type Space = {
-    id: number;
-    title: string;
-    projectsCount: number;
-    membersCount: number;
-    color: string;
-    category: string;
-    description: string;
-};
+
 
 export type Project = {
     id: number;
@@ -79,11 +71,45 @@ export interface ProjectSingle extends Project {
     replycants?: Replycant[];
 }
 
+export interface SpacesListParams {
+    page?: number;
+    limit?: number;
+}
+
+
+
+
 export type SpacesListResponce = {
     categories: { name: string }[];
     spaces: Space[];
-    role: "root" | "admin" | "manager" | "member";
+    page?: number;
+    limit?: number;
+    total?: number;
 };
+
+
+export type Space = {
+    id: number;
+    title: string;
+    projectsCount: number;
+    membersCount: number;
+    color: string;
+    category: string;
+    description: string;
+};
+
+// export interface Space {
+//     id: number;
+//     name: string;
+//     author_id: number;
+//     status_id: number;
+// }
+
+// export interface SpacesListResponce {
+//     data: Space[];
+//     // Или если ответ — это массив напрямую:
+//     // spaces: Space[];
+// }
 
 export type NotificationType = "mention" | "request" | "join";
 

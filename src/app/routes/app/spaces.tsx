@@ -7,7 +7,7 @@ import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
 import { type IconName } from "@/components/ui/icons";
 import { useSpacesList } from "@/lib/spaces";
-import { useRecentProjectsList } from "@/lib/projects";
+// import { useRecentProjectsList } from "@/lib/projects";
 import { Icon } from "@/components/ui/icons";
 import { Link } from "react-router";
 import { paths } from "@/config/paths";
@@ -17,7 +17,7 @@ const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
 
     const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
-    const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
+    // const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
 
@@ -251,7 +251,7 @@ const SpacesRoute = () => {
                     </div>
 
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {(dataRecentProjects || projects).map((project) => (
+                        {( projects).map((project) => (
                             <Link to={paths.app.project.getHref(project.id)}>
                                 <ProjectCard
                                     key={project.id}

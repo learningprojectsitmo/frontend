@@ -1,20 +1,21 @@
 import { api } from "./api-client";
 import { useQuery } from "@tanstack/react-query";
-import { type Notification, type SpacesListResponce } from "@/types/api";
+import { type Notification, type SpacesListParams, type SpacesListResponce } from "@/types/api";
 
 export const getSuggestions = async (search: string): Promise<string[]> => {
     return await api.get("/app/suggestions", { params: { search } });
 };
 
-export const getSpacesList = async (): Promise<SpacesListResponce> => {
-    return await api.get("/app/spaces");
+export const getSpacesList = async (params?: SpacesListParams): Promise<SpacesListResponce> => {
+    return await api.get("/workspaces/menu", { params });
 };
 
-export const useSpacesList = () => {
+export const useSpacesList = (params?: SpacesListParams) => {
     return useQuery({
-        queryKey: ["spaces", "list"],
-        queryFn: getSpacesList,
-        staleTime: 5 * 60 * 1000, // 10 минут
+        // params может содержать { page: 1, limit: 10 } и т.д.
+        queryKey: ["workspaces", "list", params],
+        queryFn: () => getSpacesList(params),
+        staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
