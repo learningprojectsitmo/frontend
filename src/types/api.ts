@@ -230,3 +230,8 @@ export type InviteLinkResponse = {
 export type InviteLinkCreate = {
     role_id?: number;
 };
+
+export type JoinByLinkResponse = {
+    message: string;
+    workspace_id: number;
+};

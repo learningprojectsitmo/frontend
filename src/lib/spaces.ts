@@ -9,6 +9,7 @@ import {
     type WorkSpaceFull,
     type InviteLinkResponse,
     type InviteLinkCreate,
+    type JoinByLinkResponse,
 } from "@/types/api";
 
 export const getSuggestions = async (search: string): Promise<string[]> => {
@@ -152,5 +153,17 @@ export const useRevokeInviteLink = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["workspaces"] });
         },
+    });
+};
+
+// === Join by link ===
+
+export const joinByLink = async (token: string): Promise<JoinByLinkResponse> => {
+    return await api.post("/workspaces/join-by-link", { token });
+};
+
+export const useJoinByLink = () => {
+    return useMutation({
+        mutationFn: joinByLink,
     });
 };

@@ -36,6 +36,11 @@ export const paths = {
         },
     },
 
+    join: {
+        path: "/join",
+        getHref: (token: string) => `/join?token=${encodeURIComponent(token)}`,
+    },
+
     app: {
         root: {
             path: "/app",
