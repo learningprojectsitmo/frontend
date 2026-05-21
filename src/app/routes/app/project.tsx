@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/breadcrumb/breadcrumb";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
-import { type ProjectFullResponse, type Member, type Replycant } from "@/types/api";
+import { type ProjectFullResponse } from "@/types/api";
 
 function formatDate(iso: string): string {
     const d = new Date(iso);
@@ -80,8 +80,6 @@ function mapBackendProject(p: ProjectFullResponse) {
         })),
     };
 }
-
-type ProjectView = ReturnType<typeof mapBackendProject>;
 
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();

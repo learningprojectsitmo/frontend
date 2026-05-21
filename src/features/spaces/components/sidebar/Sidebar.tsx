@@ -1,3 +1,5 @@
+import { SidebarContent } from "./SidebarContent";
+
 export function Sidebar({ isCollapsed, onToggle, data, selectedId }: SidebarProps) {
     const state = getSidebarState(data, selectedId);
 
