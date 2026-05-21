@@ -93,7 +93,6 @@ export type Space = {
     description: string;
 };
 
-
 export type BackendProjectStatus = {
     name: string;
     color: string;

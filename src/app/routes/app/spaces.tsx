@@ -177,7 +177,11 @@ const SpacesRoute = () => {
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
                     <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {(visibleSpaces || spaces).map((space) => (
-                            <Link key={space.id} to={paths.app.space.getHref(space.id)} className="block">
+                            <Link
+                                key={space.id}
+                                to={paths.app.space.getHref(space.id)}
+                                className="block"
+                            >
                                 <SpacesCard
                                     iconName="discipline"
                                     iconColor={space.color}
@@ -251,7 +255,11 @@ const SpacesRoute = () => {
 
                     <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {projects.map((project) => (
-                            <Link key={project.id} to={paths.app.project.getHref(project.id)} className="block">
+                            <Link
+                                key={project.id}
+                                to={paths.app.project.getHref(project.id)}
+                                className="block"
+                            >
                                 <ProjectCard
                                     tag={project.tag}
                                     tagVariant={project.tagVariant}
