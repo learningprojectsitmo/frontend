@@ -128,7 +128,7 @@ export function Sidebar({
                         <NavLink to={paths.app.spaces.getHref()} end className="w-full">
                             {({ isActive }) => (
                                 <Button
-                                    variant={isActive ? "dark" : "darkTransparent"}
+                                    variant={isActive ? "dark" : "outline"}
                                     size="fill36"
                                     align="left"
                                     hasIconAsChild={true}
@@ -144,7 +144,7 @@ export function Sidebar({
                     )}
 
                     <Button
-                        variant="dark"
+                        variant="outline"
                         size="hug36"
                         hasIconAsChild={true}
                         onClick={onToggle}
@@ -204,7 +204,7 @@ export function Sidebar({
 
                                 <div className="w-5 h-px bg-gray-200 my-1" />
 
-                                {activeCategories.map((category) => (
+                                {activeCategories.map((category, index) => (
                                     <div
                                         key={category.name}
                                         className="flex flex-col gap-2 items-center w-full"
@@ -235,8 +235,7 @@ export function Sidebar({
                                             </div>
                                         )}
 
-                                        {/* TODO fix Hardcode */}
-                                        {category.name === "Дисциплины" && (
+                                        {index < activeCategories.length - 1 && (
                                             <div className="w-5 h-px bg-gray-200 my-1" />
                                         )}
                                     </div>
