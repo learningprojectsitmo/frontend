@@ -7,7 +7,7 @@ import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
 import { type IconName } from "@/components/ui/icons";
 import { useSpacesList } from "@/lib/spaces";
-import { useRecentProjectsList } from "@/lib/projects";
+// import { useRecentProjectsList } from "@/lib/projects";
 import { Icon } from "@/components/ui/icons";
 import { Link } from "react-router";
 import { paths } from "@/config/paths";
@@ -17,7 +17,7 @@ const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
 
     const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
-    const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
+    // const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
 
@@ -175,11 +175,14 @@ const SpacesRoute = () => {
 
                 <section className="mb-12">
                     <h2 className="mb-4 text-lg font-semibold text-gray-800">Ваши пространства</h2>
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {(visibleSpaces || spaces).map((space) => (
-                            <Link to={paths.app.space.getHref(space.id)}>
+                            <Link
+                                key={space.id}
+                                to={paths.app.space.getHref(space.id)}
+                                className="block"
+                            >
                                 <SpacesCard
-                                    key={space.id}
                                     iconName="discipline"
                                     iconColor={space.color}
                                     tag={space.category}
@@ -250,11 +253,14 @@ const SpacesRoute = () => {
                         />
                     </div>
 
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {(dataRecentProjects || projects).map((project) => (
-                            <Link to={paths.app.project.getHref(project.id)}>
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                        {projects.map((project) => (
+                            <Link
+                                key={project.id}
+                                to={paths.app.project.getHref(project.id)}
+                                className="block"
+                            >
                                 <ProjectCard
-                                    key={project.id}
                                     tag={project.tag}
                                     tagVariant={project.tagVariant}
                                     title={project.title}

@@ -90,9 +90,13 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                         />
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                        <h3 className={cn("text-[17px] font-bold", titleClass)}>{title}</h3>
-                        <p className={cn("text-[13px]", descriptionClass)}>{description}</p>
+                    <div className="flex flex-col gap-1 min-h-[3.75rem]">
+                        <h3 className={cn("text-[17px] font-bold line-clamp-1", titleClass)}>
+                            {title}
+                        </h3>
+                        <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>
+                            {description}
+                        </p>
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -109,7 +113,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                     </div>
 
                     {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
                             {tags.map((t, index) => (
                                 <Tag
                                     key={index}

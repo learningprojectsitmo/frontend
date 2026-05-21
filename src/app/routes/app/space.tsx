@@ -1,6 +1,12 @@
 import { ContentLayout } from "@/components/layouts";
-import { Plus } from "lucide-react";
+import { Plus, MoreHorizontal, Share2, Upload, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
@@ -12,6 +18,9 @@ import { useSearchParams } from "react-router";
 import { GraduationCapIcon } from "lucide-react";
 import { paths } from "@/config/paths";
 import { SearchBar } from "@/components/ui/search-bar";
+import { Spinner } from "@/components/ui/spinner/spinner";
+import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
+import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
 
 import { Link } from "react-router";
 import {
@@ -22,180 +31,78 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb/breadcrumb";
+import { type ProjectListItemResponse } from "@/types/api";
 
-const projects = [
-    {
-        id: 1,
-        tag: "In Progress",
-        tagVariant: "info" as const,
-        title: "AI Learning Platform",
-        description: "Разработка цифровой платформы с ИИ",
-        progressValue: 75,
-        dateText: "Дедлайн: 31 мая 2024",
-        tags: [{ text: "Frontend" }, { text: "AI/ML" }, { text: "Design" }],
-        membersCount: 8,
-        users: [
-            { name: "Анна С." },
-            { name: "Михаил К." },
-            { name: "Елена В." },
-            { name: "Дмитрий П." },
-        ],
-        archived: false,
-    },
-    {
-        id: 2,
-        tag: "In Progress",
-        tagVariant: "info" as const,
-        title: "Мобильное приложение",
-        description: "Разработка iOS и Android приложений",
-        progressValue: 45,
-        dateText: "Дедлайн: 15 июня 2024",
-        tags: [{ text: "Mobile" }, { text: "iOS" }, { text: "Android" }],
-        membersCount: 6,
-        users: [{ name: "Иван П." }, { name: "Мария С." }, { name: "Алексей К." }],
-        archived: false,
-    },
-    {
-        id: 3,
-        tag: "Archive",
-        tagVariant: "disabled" as const,
-        title: "Редизайн сайта",
-        description: "Обновление дизайна корпоративного сайта",
-        progressValue: 100,
-        dateText: "Завершен: 10 апреля 2024",
-        tags: [{ text: "Design" }, { text: "UI/UX" }],
-        membersCount: 4,
-        users: [{ name: "Ольга Н." }, { name: "Павел Р." }],
-        archived: true,
-    },
-    {
-        id: 1,
-        tag: "In Progress",
-        tagVariant: "info" as const,
-        title: "AI Learning Platform",
-        description: "Разработка цифровой платформы с ИИ",
-        progressValue: 75,
-        dateText: "Дедлайн: 31 мая 2024",
-        tags: [{ text: "Frontend" }, { text: "AI/ML" }, { text: "Design" }],
-        membersCount: 8,
-        users: [
-            { name: "Анна С." },
-            { name: "Михаил К." },
-            { name: "Елена В." },
-            { name: "Дмитрий П." },
-        ],
-        archived: false,
-    },
-    {
-        id: 2,
-        tag: "In Progress",
-        tagVariant: "info" as const,
-        title: "Мобильное приложение",
-        description: "Разработка iOS и Android приложений",
-        progressValue: 45,
-        dateText: "Дедлайн: 15 июня 2024",
-        tags: [{ text: "Mobile" }, { text: "iOS" }, { text: "Android" }],
-        membersCount: 6,
-        users: [{ name: "Иван П." }, { name: "Мария С." }, { name: "Алексей К." }],
-        archived: false,
-    },
-    {
-        id: 3,
-        tag: "Archive",
-        tagVariant: "disabled" as const,
-        title: "Редизайн сайта",
-        description: "Обновление дизайна корпоративного сайта",
-        progressValue: 100,
-        dateText: "Завершен: 10 апреля 2024",
-        tags: [{ text: "Design" }, { text: "UI/UX" }],
-        membersCount: 4,
-        users: [{ name: "Ольга Н." }, { name: "Павел Р." }],
-        archived: true,
-    },
-];
+function formatDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
+}
 
-const spaces = [
-    {
-        id: 1,
-        title: "Управление проектами",
-        projectsCount: 8,
-        membersCount: 24,
-        color: "bg-blue-500",
-        category: "Дисциплина",
-        description: "Проекты по планированию, организации и контролю проектной работы",
-    },
-    {
-        id: 2,
-        title: "Проектная деятельность",
-        projectsCount: 5,
-        membersCount: 12,
-        color: "bg-indigo-500",
-        category: "Дисциплина",
-        description: "Практические проекты, направленные на командную работу и применение знаний",
-    },
-    {
-        id: 3,
-        title: "Управление процессами",
-        projectsCount: 12,
-        membersCount: 128,
-        color: "bg-red-500",
-        category: "Дисциплина",
-        description: "Проекты для знакомства с профессией и основами профессиональной работы",
-    },
-    {
-        id: 4,
-        title: "Управление проектами",
-        projectsCount: 8,
-        membersCount: 24,
-        color: "bg-blue-500",
-        category: "Дисциплина",
-        description: "Проекты по планированию, организации и контролю проектной работы",
-    },
-    {
-        id: 5,
-        title: "Проектная деятельность",
-        projectsCount: 5,
-        membersCount: 12,
-        color: "bg-indigo-500",
-        category: "Дисциплина",
-        description: "Практические проекты, направленные на командную работу и применение знаний",
-    },
-    {
-        id: 6,
-        title: "Управление процессами",
-        projectsCount: 12,
-        membersCount: 128,
-        color: "bg-red-500",
-        category: "Дисциплина",
-        description: "Проекты для знакомства с профессией и основами профессиональной работы",
-    },
-];
+function mapProjectListItem(item: ProjectListItemResponse) {
+    const statusName = item.status?.name || "draft";
+    const isArchived = statusName === "archived";
+
+    const tagVariant = isArchived
+        ? "disabled"
+        : statusName === "in_progress"
+          ? "info"
+          : statusName === "completed"
+            ? "success"
+            : statusName === "review"
+              ? "warning"
+              : statusName === "planned"
+                ? "default"
+                : "default";
+
+    return {
+        id: item.id,
+        tag: statusName,
+        tagVariant: tagVariant as "disabled" | "info" | "success" | "warning" | "default",
+        title: item.name,
+        description: item.description || "",
+        progressValue: item.progress,
+        dateText: item.deadline ? `Дедлайн: ${formatDate(item.deadline)}` : "",
+        tags: item.tags.map((t) => ({ text: t })),
+        membersCount: item.participants_count,
+        users: item.participants_preview.map((u) => ({ name: u.full_name })),
+        archived: isArchived,
+    };
+}
 
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get("id") || "";
 
-    const { data: dataSpaces } = useSpacesList();
-    const { data: dataProjects } = useProjectsList(urlId);
+    const { data: dataSpaces, isLoading: isSpacesLoading } = useSpacesList();
+    const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
 
     const [activeView, setActiveView] = useState("grid");
-
     const [search, setSearch] = useState("");
-    const titles = (dataProjects || projects).map((project) => project.title) || [];
-    const descriptions = (dataProjects || projects).map((project) => project.description) || [];
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
 
+    const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
+
+    const mappedProjects = useMemo(() => {
+        return (dataProjects?.items || []).map(mapProjectListItem);
+    }, [dataProjects]);
+
+    const titles = mappedProjects.map((p) => p.title);
+    const descriptions = mappedProjects.map((p) => p.description);
     const suggestions = [...titles, ...descriptions];
 
-    const spaceData = (dataSpaces?.spaces || spaces).find((space) => String(space.id) === urlId);
-
     const filteredProjects = useMemo(() => {
-        if (!search) return dataProjects || projects;
-        return (dataProjects || projects).filter(
+        if (!search) return mappedProjects;
+        return mappedProjects.filter(
             (project) =>
                 project.title.toLowerCase().includes(search.toLowerCase()) ||
                 project.description.toLowerCase().includes(search.toLowerCase()),
         );
-    }, [dataProjects, search]);
+    }, [mappedProjects, search]);
 
     const [visibleCount, setVisibleCount] = useState(9);
 
@@ -203,19 +110,28 @@ const SpaceRoute = () => {
         return filteredProjects.slice(0, visibleCount);
     }, [filteredProjects, visibleCount]);
 
-    //const hasMore = visibleCount < (dataSpaces?.spaces || []).length;
-    const hasMore = true;
+    const hasMore = visibleCount < (dataProjects?.total || 0);
     const handleLoadMore = () => {
         setVisibleCount((prev) => prev + 6);
     };
 
-    const viewTabs = [
-        { value: "grid", icon: "grid" as IconName },
-        { value: "settings", icon: "settings" as IconName },
-    ];
+    const viewTabs = [{ value: "grid", icon: "grid" as IconName }];
 
     if (!spaceData) {
-        return <div>Пространство не найдено</div>;
+        if (isSpacesLoading) {
+            return (
+                <div className="flex items-center justify-center h-screen">
+                    <Spinner size="lg" />
+                </div>
+            );
+        }
+        return (
+            <ContentLayout title="Пространство не найдено">
+                <div className="flex items-center justify-center h-64">
+                    <p className="text-gray-500 text-lg">Пространство не найдено</p>
+                </div>
+            </ContentLayout>
+        );
     }
 
     return (
@@ -255,16 +171,18 @@ const SpaceRoute = () => {
                                 <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
                                     {spaceData.title}
                                 </div>
-                                <div
+                                <button
+                                    type="button"
+                                    onClick={() => setSettingsOpen(true)}
                                     data-have-badge="False"
                                     data-icon-alignment="Default"
                                     data-size="Default"
                                     data-state="Default"
                                     data-type="Main"
-                                    className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center"
+                                    className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
                                 >
                                     <Icon name="settings" size={20} className="h-5 w-5" />
-                                </div>
+                                </button>
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start">
                                 <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
@@ -306,14 +224,43 @@ const SpaceRoute = () => {
                         </div>
                     </div>
                     {dataSpaces?.role !== "member" ? (
-                        <Button
-                            variant="dark"
-                            size="hug36"
-                            icon={<Plus size={18} />}
-                            className="font-sans text-[13px] font-semibold gap-2"
-                        >
-                            Создать проект
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="dark"
+                                size="hug36"
+                                icon={<Plus size={18} />}
+                                className="font-sans text-[13px] font-semibold gap-2"
+                            >
+                                Создать проект
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                                    >
+                                        <MoreHorizontal size={18} />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[180px]">
+                                    <DropdownMenuItem
+                                        className="gap-3 text-sm cursor-pointer"
+                                        onSelect={() => setShareOpen(true)}
+                                    >
+                                        <Share2 size={16} />
+                                        Поделись
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                                        <Upload size={16} />
+                                        Экспортировать
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                                        <Archive size={16} />
+                                        Архивировать
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     ) : (
                         ""
                     )}
@@ -341,26 +288,47 @@ const SpaceRoute = () => {
                         </div>
                     </div>
 
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {visibleProjects.map((project) => (
-                            <Link to={paths.app.project.getHref(project.id)}>
-                                <ProjectCard
+                    {isProjectsLoading ? (
+                        <div className="flex items-center justify-center py-16">
+                            <Spinner size="lg" />
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center py-16 text-red-400 text-sm">
+                            Не удалось загрузить проекты. Попробуйте обновить страницу.
+                        </div>
+                    ) : visibleProjects.length === 0 ? (
+                        <div className="text-center py-16 text-gray-400 text-sm">
+                            {search
+                                ? "Проекты не найдены"
+                                : "В этом пространстве пока нет проектов"}
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                            {visibleProjects.map((project) => (
+                                <Link
                                     key={project.id}
-                                    tag={project.tag}
-                                    tagVariant={project.tagVariant}
-                                    title={project.title}
-                                    description={project.description}
-                                    progressValue={project.progressValue}
-                                    dateText={project.dateText}
-                                    tags={project.tags}
-                                    membersCount={project.membersCount}
-                                    users={project.users}
-                                    archived={project.archived}
-                                    onKebabClick={() => alert(`Menu opened for ${project.title}`)}
-                                />
-                            </Link>
-                        ))}
-                    </div>
+                                    to={paths.app.project.getHref(project.id)}
+                                    className="block"
+                                >
+                                    <ProjectCard
+                                        tag={project.tag}
+                                        tagVariant={project.tagVariant}
+                                        title={project.title}
+                                        description={project.description}
+                                        progressValue={project.progressValue}
+                                        dateText={project.dateText}
+                                        tags={project.tags}
+                                        membersCount={project.membersCount}
+                                        users={project.users}
+                                        archived={project.archived}
+                                        onKebabClick={() =>
+                                            alert(`Menu opened for ${project.title}`)
+                                        }
+                                    />
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="w-full flex justify-center">
                         {hasMore && (
@@ -375,6 +343,20 @@ const SpaceRoute = () => {
                     </div>
                 </section>
             </div>
+            {spaceData && (
+                <SpaceSettingsModal
+                    open={settingsOpen}
+                    onOpenChange={setSettingsOpen}
+                    space={spaceData}
+                />
+            )}
+            {spaceData && (
+                <ShareSpaceModal
+                    open={shareOpen}
+                    onOpenChange={setShareOpen}
+                    spaceId={spaceData.id}
+                />
+            )}
         </ContentLayout>
     );
 };

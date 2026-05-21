@@ -8,6 +8,7 @@ import { paths } from "@/config/paths";
 import { ProtectedRoute } from "@/lib/auth";
 
 import { default as AppRoot, ErrorBoundary as AppRootErrorBoundary } from "./routes/app/root";
+import { Spinner } from "@/components/ui/spinner/spinner";
 
 type LazyModule = {
     clientLoader?: (client: QueryClient) => LoaderFunction;
@@ -26,35 +27,54 @@ const convert = (queryClient: QueryClient) => (m: LazyModule) => {
     };
 };
 
+// Компонент для отображения во время загрузки
+const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-screen">
+        <Spinner size="lg" />
+    </div>
+);
+
 export const createAppRouter = (queryClient: QueryClient) =>
     createBrowserRouter([
         {
             path: paths.home.path,
             lazy: () => import("./routes/landing").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.createAcc.path,
             lazy: () => import("./routes/auth/create-acc").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.registerConfirm.path,
             lazy: () => import("./routes/auth/register-confirm").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.registerContacts.path,
             lazy: () => import("./routes/auth/register-contacts").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.login.path,
             lazy: () => import("./routes/auth/login").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.resetPassword.path,
             lazy: () => import("./routes/auth/reset-password").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
             path: paths.auth.resetEmail.path,
             lazy: () => import("./routes/auth/reset-email").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
+        },
+        {
+            path: paths.join.path,
+            lazy: () => import("./routes/join").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
         },
         {
             path: paths.app.root.path,
@@ -64,28 +84,34 @@ export const createAppRouter = (queryClient: QueryClient) =>
                 </ProtectedRoute>
             ),
             ErrorBoundary: AppRootErrorBoundary,
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
             children: [
                 {
                     path: paths.app.spaces.path,
                     lazy: () => import("./routes/app/spaces").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
                     path: paths.app.space.path,
                     lazy: () => import("./routes/app/space").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
                     path: paths.app.project.path,
                     lazy: () => import("./routes/app/project").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
                     path: paths.app.settings.roles.path,
                     lazy: () => import("./routes/app/settings/roles").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
             ],
         },
         {
             path: "*",
             lazy: () => import("./routes/not-found").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
     ]);
 

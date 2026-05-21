@@ -19,7 +19,7 @@ const buttonVariants = cva(
                 blue: "bg-[--btn-blue-bg] text-[--btn-blue-text] hover:bg-[--btn-blue-hover-bg] hover:text-[--btn-blue-hover-text] active:bg-[--btn-blue-active-bg] active:text-[--btn-blue-active-text]",
             },
             size: {
-                fixed36: "w-[223px] h-9 rounded-[8px] px-3 py-2",
+                fixed36: "w-[187px] h-9 rounded-[8px] px-3 py-2",
                 fixed48: "w-[223px] h-12 rounded-[12px] px-4 py-3",
                 hug36: "h-9 rounded-[8px] px-3 py-2",
                 hug48: "h-12 rounded-[12px] px-4 py-3",

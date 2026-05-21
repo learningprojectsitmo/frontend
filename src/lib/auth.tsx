@@ -8,6 +8,7 @@ import { Navigate, useLocation } from "react-router";
 import { z } from "zod";
 
 import { paths } from "@/config/paths";
+import { Spinner } from "@/components/ui/spinner/spinner";
 import type { User, AuthTokenResponse } from "@/types/api";
 import { api, setAccessToken, clearAccessToken } from "./api-client";
 
@@ -96,7 +97,11 @@ export type ResetWithPasswordInput = z.infer<typeof resetWithPasswordInputSchema
 
 const getUser = async (): Promise<User | null> => {
     try {
-        return (await api.get<User>("/auth/me")) as unknown as User;
+        const response: Record<string, unknown> = await api.get("/auth/me");
+        if (response.access_token) {
+            setAccessToken(response.access_token as string);
+        }
+        return response as unknown as User;
     } catch {
         clearAccessToken();
         return null;
@@ -227,10 +232,18 @@ export const useResetWithPassword = (
 // ─── Protected Route ──────────────────────────────────────────────────────────
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }): React.ReactElement => {
-    const user = useUser();
+    const { data: user, isLoading } = useUser();
     const location = useLocation();
 
-    if (!user.data) {
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
+
+    if (!user) {
         return <Navigate to={paths.auth.login.getHref(location.pathname)} replace />;
     }
 

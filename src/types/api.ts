@@ -31,16 +31,6 @@ export type LoginResponse = {
     token_type: string;
 };
 
-export type Space = {
-    id: number;
-    title: string;
-    projectsCount: number;
-    membersCount: number;
-    color: string;
-    category: string;
-    description: string;
-};
-
 export type Project = {
     id: number;
     tag: string;
@@ -80,10 +70,134 @@ export interface ProjectSingle extends Project {
     replycants?: Replycant[];
 }
 
+export interface SpacesListParams {
+    page?: number;
+    limit?: number;
+}
+
 export type SpacesListResponce = {
-    categories: { name: string }[];
+    categories: Category[];
     spaces: Space[];
-    role: "root" | "admin" | "manager" | "member";
+    page?: number;
+    limit?: number;
+    total?: number;
+};
+
+export type Space = {
+    id: number;
+    title: string;
+    projectsCount: number;
+    membersCount: number;
+    color: string;
+    category: string;
+    description: string;
+};
+
+export type BackendProjectStatus = {
+    name: string;
+    color: string;
+};
+
+export type BackendParticipantPreview = {
+    id: number;
+    full_name: string;
+    avatar_url: string | null;
+};
+
+export type BackendMember = {
+    id: number;
+    user_id: number;
+    name: string;
+    role: string;
+    contacts: string;
+    resume_url: string;
+    date_added: string;
+};
+
+export type BackendVacancy = {
+    id: number;
+    title: string;
+    tasks: string[];
+    required_count: number;
+};
+
+export type BackendReplycant = {
+    id: number;
+    user_id: number;
+    name: string;
+    contacts: string;
+    resume_url: string;
+    response_date: string;
+};
+
+export type ProjectListItemResponse = {
+    id: number;
+    name: string;
+    status: BackendProjectStatus | null;
+    deadline: string | null;
+    description: string | null;
+    participants_count: number;
+    progress: number;
+    tags: string[];
+    participants_preview: BackendParticipantPreview[];
+};
+
+export type ProjectListResponse = {
+    items: ProjectListItemResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type ProjectFullResponse = {
+    id: number;
+    name: string;
+    author_id: number;
+    description: string | null;
+    max_participants: number | null;
+    status_id: number | null;
+    deadline: string | null;
+    progress: number;
+    tags: string[];
+    workspace_id: number | null;
+    created_at: string;
+    status: BackendProjectStatus | null;
+    participants_count: number;
+    participants_preview: BackendParticipantPreview[];
+    members: BackendMember[];
+    replycants: BackendReplycant[];
+    vacancies: BackendVacancy[];
+};
+
+export type CreateWorkspaceInput = {
+    name: string;
+    description?: string;
+    category_id?: number;
+    color?: string;
+};
+
+export type SpaceSettingsInput = {
+    visibility?: "public" | "private";
+    join_policy?: "open" | "link" | "invitation";
+    default_role_id?: number | null;
+    icon_url?: string | null;
+};
+
+export type WorkSpaceFull = {
+    id: number;
+    name: string;
+    author_id: number;
+    status_id: number;
+    category_id: number | null;
+    color: string | null;
+    description: string | null;
+};
+
+export type Category = {
+    id: number;
+    name: string;
+    color: string;
 };
 
 export type NotificationType = "mention" | "request" | "join";
@@ -98,3 +212,21 @@ export interface Notification {
     avatar: string;
     read: boolean;
 }
+
+export type InviteLinkResponse = {
+    token: string;
+    url: string;
+    is_active: boolean;
+    use_count: number;
+    role_id: number;
+    created_at: string;
+};
+
+export type InviteLinkCreate = {
+    role_id?: number;
+};
+
+export type JoinByLinkResponse = {
+    message: string;
+    workspace_id: number;
+};
