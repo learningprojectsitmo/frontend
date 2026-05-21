@@ -31,8 +31,6 @@ export type LoginResponse = {
     token_type: string;
 };
 
-
-
 export type Project = {
     id: number;
     tag: string;
@@ -77,9 +75,6 @@ export interface SpacesListParams {
     limit?: number;
 }
 
-
-
-
 export type SpacesListResponce = {
     categories: Category[];
     spaces: Space[];
@@ -87,7 +82,6 @@ export type SpacesListResponce = {
     limit?: number;
     total?: number;
 };
-
 
 export type Space = {
     id: number;
@@ -188,6 +182,13 @@ export type CreateWorkspaceInput = {
     color?: string;
 };
 
+export type SpaceSettingsInput = {
+    visibility?: "public" | "private";
+    join_policy?: "open" | "link" | "invitation";
+    default_role_id?: number | null;
+    icon_url?: string | null;
+};
+
 export type WorkSpaceFull = {
     id: number;
     name: string;
@@ -216,3 +217,16 @@ export interface Notification {
     avatar: string;
     read: boolean;
 }
+
+export type InviteLinkResponse = {
+    token: string;
+    url: string;
+    is_active: boolean;
+    use_count: number;
+    role_id: number;
+    created_at: string;
+};
+
+export type InviteLinkCreate = {
+    role_id?: number;
+};

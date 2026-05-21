@@ -1,11 +1,11 @@
-
-
 function SidebarContent({ state, isCollapsed, categories, selectedId }: SidebarContentProps) {
-    if (state === 'loading') return <SidebarSkeleton isCollapsed={isCollapsed} />;
-    if (state === 'notFound') return <SidebarNotFound isCollapsed={isCollapsed} />;
+    if (state === "loading") return <SidebarSkeleton isCollapsed={isCollapsed} />;
+    if (state === "notFound") return <SidebarNotFound isCollapsed={isCollapsed} />;
     if (categories.length === 0) return <SidebarEmpty />;
-    
-    return isCollapsed 
-        ? <SidebarCollapsed categories={categories} selectedId={selectedId} />
-        : <SidebarExpanded categories={categories} selectedId={selectedId} />;
+
+    return isCollapsed ? (
+        <SidebarCollapsed categories={categories} selectedId={selectedId} />
+    ) : (
+        <SidebarExpanded categories={categories} selectedId={selectedId} />
+    );
 }

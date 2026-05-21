@@ -22,9 +22,7 @@ export const useProject = (id: string) => {
     });
 };
 
-export const getProjectsList = async (
-    workspaceId: string,
-): Promise<ProjectListResponse> => {
+export const getProjectsList = async (workspaceId: string): Promise<ProjectListResponse> => {
     return await api.get("/projects/", { params: { workspace_id: workspaceId } });
 };
 

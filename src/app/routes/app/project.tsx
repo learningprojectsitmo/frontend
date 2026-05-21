@@ -145,8 +145,7 @@ const SpaceRoute = () => {
     const memberRoles = project?.members?.map((member) => member.role) || [];
 
     const memberContacts = project?.members?.map((member) => member.contacts) || [];
-    const replycantContacts =
-        project?.replycants?.map((replycant) => replycant.contacts) || [];
+    const replycantContacts = project?.replycants?.map((replycant) => replycant.contacts) || [];
 
     const memberSuggestions = [...memberTitles, ...memberContacts, ...memberRoles];
 

@@ -1,6 +1,12 @@
 import { ContentLayout } from "@/components/layouts";
-import { Plus } from "lucide-react";
+import { Plus, MoreHorizontal, Share2, Upload, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo } from "react";
@@ -13,6 +19,8 @@ import { GraduationCapIcon } from "lucide-react";
 import { paths } from "@/config/paths";
 import { SearchBar } from "@/components/ui/search-bar";
 import { Spinner } from "@/components/ui/spinner/spinner";
+import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
+import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
 
 import { Link } from "react-router";
 import {
@@ -38,12 +46,17 @@ function mapProjectListItem(item: ProjectListItemResponse) {
     const statusName = item.status?.name || "draft";
     const isArchived = statusName === "archived";
 
-    const tagVariant = isArchived ? "disabled"
-        : statusName === "in_progress" ? "info"
-        : statusName === "completed" ? "success"
-        : statusName === "review" ? "warning"
-        : statusName === "planned" ? "default"
-        : "default";
+    const tagVariant = isArchived
+        ? "disabled"
+        : statusName === "in_progress"
+          ? "info"
+          : statusName === "completed"
+            ? "success"
+            : statusName === "review"
+              ? "warning"
+              : statusName === "planned"
+                ? "default"
+                : "default";
 
     return {
         id: item.id,
@@ -69,6 +82,8 @@ const SpaceRoute = () => {
 
     const [activeView, setActiveView] = useState("grid");
     const [search, setSearch] = useState("");
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
 
@@ -100,10 +115,7 @@ const SpaceRoute = () => {
         setVisibleCount((prev) => prev + 6);
     };
 
-    const viewTabs = [
-        { value: "grid", icon: "grid" as IconName },
-        { value: "settings", icon: "settings" as IconName },
-    ];
+    const viewTabs = [{ value: "grid", icon: "grid" as IconName }];
 
     if (!spaceData) {
         if (isSpacesLoading) {
@@ -159,16 +171,18 @@ const SpaceRoute = () => {
                                 <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
                                     {spaceData.title}
                                 </div>
-                                <div
+                                <button
+                                    type="button"
+                                    onClick={() => setSettingsOpen(true)}
                                     data-have-badge="False"
                                     data-icon-alignment="Default"
                                     data-size="Default"
                                     data-state="Default"
                                     data-type="Main"
-                                    className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center"
+                                    className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
                                 >
                                     <Icon name="settings" size={20} className="h-5 w-5" />
-                                </div>
+                                </button>
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start">
                                 <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
@@ -210,14 +224,43 @@ const SpaceRoute = () => {
                         </div>
                     </div>
                     {dataSpaces?.role !== "member" ? (
-                        <Button
-                            variant="dark"
-                            size="hug36"
-                            icon={<Plus size={18} />}
-                            className="font-sans text-[13px] font-semibold gap-2"
-                        >
-                            Создать проект
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="dark"
+                                size="hug36"
+                                icon={<Plus size={18} />}
+                                className="font-sans text-[13px] font-semibold gap-2"
+                            >
+                                Создать проект
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                                    >
+                                        <MoreHorizontal size={18} />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[180px]">
+                                    <DropdownMenuItem
+                                        className="gap-3 text-sm cursor-pointer"
+                                        onSelect={() => setShareOpen(true)}
+                                    >
+                                        <Share2 size={16} />
+                                        Поделись
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                                        <Upload size={16} />
+                                        Экспортировать
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                                        <Archive size={16} />
+                                        Архивировать
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     ) : (
                         ""
                     )}
@@ -251,7 +294,9 @@ const SpaceRoute = () => {
                         </div>
                     ) : visibleProjects.length === 0 ? (
                         <div className="text-center py-16 text-gray-400 text-sm">
-                            {search ? "Проекты не найдены" : "В этом пространстве пока нет проектов"}
+                            {search
+                                ? "Проекты не найдены"
+                                : "В этом пространстве пока нет проектов"}
                         </div>
                     ) : (
                         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -269,7 +314,9 @@ const SpaceRoute = () => {
                                         membersCount={project.membersCount}
                                         users={project.users}
                                         archived={project.archived}
-                                        onKebabClick={() => alert(`Menu opened for ${project.title}`)}
+                                        onKebabClick={() =>
+                                            alert(`Menu opened for ${project.title}`)
+                                        }
                                     />
                                 </Link>
                             ))}
@@ -289,6 +336,20 @@ const SpaceRoute = () => {
                     </div>
                 </section>
             </div>
+            {spaceData && (
+                <SpaceSettingsModal
+                    open={settingsOpen}
+                    onOpenChange={setSettingsOpen}
+                    space={spaceData}
+                />
+            )}
+            {spaceData && (
+                <ShareSpaceModal
+                    open={shareOpen}
+                    onOpenChange={setShareOpen}
+                    spaceId={spaceData.id}
+                />
+            )}
         </ContentLayout>
     );
 };

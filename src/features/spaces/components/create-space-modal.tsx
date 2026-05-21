@@ -120,7 +120,9 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                                                     type="button"
                                                     onClick={() =>
                                                         field.onChange(
-                                                            field.value === cat.id ? undefined : cat.id,
+                                                            field.value === cat.id
+                                                                ? undefined
+                                                                : cat.id,
                                                         )
                                                     }
                                                     className={cn(
@@ -154,7 +156,9 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                                                 type="button"
                                                 onClick={() =>
                                                     field.onChange(
-                                                        field.value === c.value ? undefined : c.value,
+                                                        field.value === c.value
+                                                            ? undefined
+                                                            : c.value,
                                                     )
                                                 }
                                                 title={c.label}

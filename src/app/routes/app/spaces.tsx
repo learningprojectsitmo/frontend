@@ -251,7 +251,7 @@ const SpacesRoute = () => {
                     </div>
 
                     <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                        {( projects).map((project) => (
+                        {projects.map((project) => (
                             <Link to={paths.app.project.getHref(project.id)} className="block">
                                 <ProjectCard
                                     key={project.id}

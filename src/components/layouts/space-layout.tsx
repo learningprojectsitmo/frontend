@@ -69,9 +69,7 @@ function SpaceLayoutError() {
                     <h1 className="text-2xl font-semibold text-gray-800 mb-2">
                         Ошибка загрузки данных
                     </h1>
-                    <p className="text-gray-500 mb-4">
-                        Не удалось загрузить список пространств
-                    </p>
+                    <p className="text-gray-500 mb-4">Не удалось загрузить список пространств</p>
                     <Button
                         variant="outlineSoft"
                         size="hug36"
@@ -135,16 +133,29 @@ function SpaceLayoutNotFound() {
                             <div className="relative">
                                 <div className="w-32 h-32 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center">
                                     <svg
-                                        width="64" height="64" viewBox="0 0 64 64"
-                                        fill="none" xmlns="http://www.w3.org/2000/svg"
+                                        width="64"
+                                        height="64"
+                                        viewBox="0 0 64 64"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
                                         className="opacity-40"
                                     >
                                         <circle cx="32" cy="32" r="32" fill="#F3F4F6" />
-                                        <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontSize="32">🔍</text>
+                                        <text
+                                            x="50%"
+                                            y="54%"
+                                            dominantBaseline="middle"
+                                            textAnchor="middle"
+                                            fontSize="32"
+                                        >
+                                            🔍
+                                        </text>
                                     </svg>
                                 </div>
                                 <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center">
-                                    <span className="text-red-400 text-[13px] font-bold leading-none">404</span>
+                                    <span className="text-red-400 text-[13px] font-bold leading-none">
+                                        404
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -152,8 +163,8 @@ function SpaceLayoutNotFound() {
                             Страница не найдена
                         </h1>
                         <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                            Запрошенное пространство не существует или было удалено.
-                            Проверьте ссылку или вернитесь на главную страницу.
+                            Запрошенное пространство не существует или было удалено. Проверьте
+                            ссылку или вернитесь на главную страницу.
                         </p>
                         <div className="flex items-center justify-center gap-3">
                             <Button
@@ -166,7 +177,7 @@ function SpaceLayoutNotFound() {
                             <Button
                                 variant="dark"
                                 size="hug36"
-                                onClick={() => window.location.href = paths.app.spaces.getHref()}
+                                onClick={() => (window.location.href = paths.app.spaces.getHref())}
                             >
                                 Все пространства
                             </Button>
@@ -178,7 +189,13 @@ function SpaceLayoutNotFound() {
     );
 }
 
-function SpaceLayoutContent({ data, children }: { data: NonNullable<ReturnType<typeof useSpacesList>["data"]>; children?: React.ReactNode }) {
+function SpaceLayoutContent({
+    data,
+    children,
+}: {
+    data: NonNullable<ReturnType<typeof useSpacesList>["data"]>;
+    children?: React.ReactNode;
+}) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get("id");
@@ -193,7 +210,11 @@ function SpaceLayoutContent({ data, children }: { data: NonNullable<ReturnType<t
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search);
     const [suggestions, setSuggestions] = useState<string[]>([
-        "Mobile App", "Mobile App Learning", "Mobile App X", "Web Development", "UI/UX Design",
+        "Mobile App",
+        "Mobile App Learning",
+        "Mobile App X",
+        "Web Development",
+        "UI/UX Design",
     ]);
 
     useEffect(() => {
@@ -229,10 +250,12 @@ function SpaceLayoutContent({ data, children }: { data: NonNullable<ReturnType<t
                     urlId={urlId}
                 />
 
-                <main className={cn(
-                    "flex-1 overflow-y-auto transition-all duration-200",
-                    isCollapsed ? "ml-[56px]" : "ml-[248px]"
-                )}>
+                <main
+                    className={cn(
+                        "flex-1 overflow-y-auto transition-all duration-200",
+                        isCollapsed ? "ml-[56px]" : "ml-[248px]",
+                    )}
+                >
                     {children || <Outlet />}
                 </main>
             </div>

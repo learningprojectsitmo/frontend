@@ -91,8 +91,12 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                     </div>
 
                     <div className="flex flex-col gap-1 min-h-[3.75rem]">
-                        <h3 className={cn("text-[17px] font-bold line-clamp-1", titleClass)}>{title}</h3>
-                        <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>{description}</p>
+                        <h3 className={cn("text-[17px] font-bold line-clamp-1", titleClass)}>
+                            {title}
+                        </h3>
+                        <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>
+                            {description}
+                        </p>
                     </div>
 
                     <div className="flex flex-col gap-3">
