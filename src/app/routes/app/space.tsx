@@ -303,11 +303,14 @@ const SpaceRoute = () => {
                                 : "В этом пространстве пока нет проектов"}
                         </div>
                     ) : (
-                        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                             {visibleProjects.map((project) => (
-                                <Link to={paths.app.project.getHref(project.id)}>
+                                <Link
+                                    key={project.id}
+                                    to={paths.app.project.getHref(project.id)}
+                                    className="block"
+                                >
                                     <ProjectCard
-                                        key={project.id}
                                         tag={project.tag}
                                         tagVariant={project.tagVariant}
                                         title={project.title}

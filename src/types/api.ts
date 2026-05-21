@@ -93,18 +93,6 @@ export type Space = {
     description: string;
 };
 
-// export interface Space {
-//     id: number;
-//     name: string;
-//     author_id: number;
-//     status_id: number;
-// }
-
-// export interface SpacesListResponce {
-//     data: Space[];
-//     // Или если ответ — это массив напрямую:
-//     // spaces: Space[];
-// }
 
 export type BackendProjectStatus = {
     name: string;
@@ -125,6 +113,13 @@ export type BackendMember = {
     contacts: string;
     resume_url: string;
     date_added: string;
+};
+
+export type BackendVacancy = {
+    id: number;
+    title: string;
+    tasks: string[];
+    required_count: number;
 };
 
 export type BackendReplycant = {
@@ -173,6 +168,7 @@ export type ProjectFullResponse = {
     participants_preview: BackendParticipantPreview[];
     members: BackendMember[];
     replycants: BackendReplycant[];
+    vacancies: BackendVacancy[];
 };
 
 export type CreateWorkspaceInput = {

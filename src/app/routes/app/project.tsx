@@ -55,7 +55,11 @@ function mapBackendProject(p: ProjectFullResponse) {
         descriptionExtended: p.description || "",
         creationDate: formatDate(p.created_at),
         color: "bg-blue-500",
-        roles: MOCK_ROLES,
+        roles: (p.vacancies || []).map((v) => ({
+            title: v.title,
+            tasks: v.tasks,
+            count: v.required_count,
+        })),
         members: p.members.map((m) => ({
             id: m.id,
             name: m.name,
@@ -78,31 +82,6 @@ function mapBackendProject(p: ProjectFullResponse) {
 }
 
 type ProjectView = ReturnType<typeof mapBackendProject>;
-
-const MOCK_ROLES: { title: string; tasks: string[]; count: number }[] = [
-    {
-        title: "Backend Developer",
-        tasks: [
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-        ],
-        count: 2,
-    },
-    {
-        title: "Frontend Developer",
-        tasks: [
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-            "Проектирование и реализация серверной логики платформы",
-        ],
-        count: 3,
-    },
-];
 
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();

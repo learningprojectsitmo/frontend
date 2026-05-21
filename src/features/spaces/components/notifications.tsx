@@ -259,9 +259,8 @@ export function NotificationsNav({ notifications }: { notifications: Notificatio
                             </>
                         ) : (
                             filteredNotifications.map((item) => (
-                                <>
+                                <React.Fragment key={item.id}>
                                     <DropdownMenuItem
-                                        key={item.id}
                                         className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 focus:bg-gray-50 rounded-none"
                                         //onSelect={() => handleNotificationClick(item.id)}
                                     >
@@ -318,7 +317,7 @@ export function NotificationsNav({ notifications }: { notifications: Notificatio
                                         {/* Индикатор непрочитанного убран, так как на дизайне его нет */}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-gray-200 my-0 shrink-0" />
-                                </>
+                                </React.Fragment>
                             ))
                         )}
                         {/* Footer */}
