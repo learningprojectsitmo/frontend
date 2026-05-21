@@ -78,7 +78,7 @@ const SpaceRoute = () => {
     const urlId = searchParams.get("id") || "";
 
     const { data: dataSpaces, isLoading: isSpacesLoading } = useSpacesList();
-    const { data: dataProjects, isLoading: isProjectsLoading } = useProjectsList(urlId);
+    const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
 
     const [activeView, setActiveView] = useState("grid");
     const [search, setSearch] = useState("");
@@ -291,6 +291,10 @@ const SpaceRoute = () => {
                     {isProjectsLoading ? (
                         <div className="flex items-center justify-center py-16">
                             <Spinner size="lg" />
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center py-16 text-red-400 text-sm">
+                            Не удалось загрузить проекты. Попробуйте обновить страницу.
                         </div>
                     ) : visibleProjects.length === 0 ? (
                         <div className="text-center py-16 text-gray-400 text-sm">
