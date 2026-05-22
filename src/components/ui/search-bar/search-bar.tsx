@@ -155,7 +155,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
         };
 
         return (
-            <div ref={wrapperRef} className={cn("relative w-full h-9 z-50", className)}>
+            <div ref={wrapperRef} className={cn("relative w-full h-9", className)}>
                 <div
                     className={cn(
                         "absolute top-0 left-0 w-full flex flex-col transition-all duration-200 z-[100] overflow-hidden rounded-[12px] border",

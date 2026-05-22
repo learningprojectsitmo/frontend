@@ -2,15 +2,17 @@ import { ContentLayout } from "@/components/layouts";
 import { Dot, Ellipsis, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { type IconName } from "@/components/ui/icons";
-import { useProject } from "@/lib/projects";
+import { useProject, useUpdateProject } from "@/lib/projects";
+import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
 import { useSearchParams } from "react-router";
 import { Plus, GraduationCapIcon } from "lucide-react";
 import { SearchBar } from "@/components/ui/search-bar";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner/spinner";
 
 import { Link } from "react-router";
 import {
@@ -23,184 +25,162 @@ import {
 } from "@/components/ui/breadcrumb/breadcrumb";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
+import { type ProjectFullResponse } from "@/types/api";
 
-const projects = [
-    {
-        id: 1,
-        tag: "В работе",
-        tagVariant: "info" as const,
-        title: "AI Learning Platform",
-        description: "Разработка цифровой платформы с ИИ",
-        progressValue: 75,
-        dateText: "31 мая, 2024",
-        tags: [{ text: "Frontend" }, { text: "AI/ML" }, { text: "Design" }],
-        membersCount: 8,
-        users: [
-            { name: "Анна С." },
-            { name: "Михаил К." },
-            { name: "Елена В." },
-            { name: "Дмитрий П." },
-        ],
-        archived: false,
-        spaceId: 1,
-        descriptionExtended:
-            "Tasker — учебный проект по разработке веб-сервиса для управления задачами и проектами. Сервис предназначен для планирования задач, распределения ролей в команде, работы с дедлайнами и отслеживания прогресса выполнения проекта. В рамках проекта прорабатываются основные этапы создания веб-приложения: формирование требований, проектирование пользовательских сценариев и интерфейсов, разработка ключевого функционала и организация командной работы. Tasker ориентирован на использование в образовательной среде и поддержку учебных проектных команд.",
-        creationDate: "4 Февраля, 2026",
-        color: "bg-blue-500",
-        roles: [
-            {
-                title: "Backend Developer",
-                tasks: [
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                ],
-                count: 2,
-            },
-            {
-                title: "Frontend Developer",
-                tasks: [
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                    "Проектирование и реализация серверной логики платформы",
-                ],
-                count: 3,
-            },
-        ],
-        members: [
-            {
-                id: 1,
-                name: "Кирилл Сомов",
-                role: "Project Manager",
-                contacts: "@kirillsomov",
-                resumeUrl: "",
-                dateAdded: "12.02.2026",
-                status: "default" as const,
-            },
-            {
-                id: 2,
-                name: "Анна Красина",
-                role: "Frontend Developer",
-                contacts: "@anutakrasina",
-                resumeUrl: "",
-                dateAdded: "12.02.2026",
-                status: "delete" as const,
-            },
-            {
-                id: 3,
-                name: "Илья Поперечный",
-                role: "Backend Developer",
-                contacts: "@ilya_poperechny",
-                resumeUrl: "",
-                dateAdded: "12.02.2026",
-                status: "delete" as const,
-            },
-        ],
-        replycants: [
-            {
-                id: 1,
-                name: "Кирилл Сомов",
-                priority: 1,
-                contacts: "@kirillsomov",
-                resumeUrl: "",
-                responseDate: "12.02.2026",
-                status: "invite" as const,
-            },
-            {
-                id: 2,
-                name: "Анна Красина",
-                priority: 1,
-                contacts: "@anutakrasina",
-                resumeUrl: "",
-                responseDate: "12.02.2026",
-                status: "invited" as const,
-            },
-            {
-                id: 3,
-                name: "Илья Поперечный",
-                priority: 2,
-                contacts: "@ilya_poperechny",
-                resumeUrl: "",
-                responseDate: "12.02.2026",
-                status: "invited" as const,
-            },
-        ],
-    },
-];
+function formatDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
+}
 
-const spaces = [
-    {
-        id: 1,
-        title: "Управление проектами",
-        projectsCount: 8,
-        membersCount: 24,
+function mapBackendProject(p: ProjectFullResponse) {
+    const statusName = p.status?.name || "Неизвестно";
+    const isArchived = statusName === "archived";
+
+    return {
+        id: p.id,
+        title: p.name,
+        tag: statusName,
+        tagVariant: (isArchived ? "disabled" : "info") as "disabled" | "info",
+        description: p.description || "",
+        progressValue: p.progress,
+        dateText: p.deadline ? formatDate(p.deadline) : "",
+        tags: p.tags.map((t) => ({ text: t })),
+        membersCount: p.participants_count,
+        users: p.participants_preview.map((u) => ({ name: u.full_name })),
+        archived: isArchived,
+        spaceId: p.workspace_id || 0,
+        descriptionExtended: p.description || "",
+        creationDate: formatDate(p.created_at),
         color: "bg-blue-500",
-        category: "Дисциплина",
-        description: "Проекты по планированию, организации и контролю проектной работы",
-    },
-    {
-        id: 2,
-        title: "Проектная деятельность",
-        projectsCount: 5,
-        membersCount: 12,
-        color: "bg-indigo-500",
-        category: "Дисциплина",
-        description: "Практические проекты, направленные на командную работу и применение знаний",
-    },
-    {
-        id: 3,
-        title: "Управление процессами",
-        projectsCount: 12,
-        membersCount: 128,
-        color: "bg-red-500",
-        category: "Дисциплина",
-        description: "Проекты для знакомства с профессией и основами профессиональной работы",
-    },
-    {
-        id: 4,
-        title: "Управление проектами",
-        projectsCount: 8,
-        membersCount: 24,
-        color: "bg-blue-500",
-        category: "Дисциплина",
-        description: "Проекты по планированию, организации и контролю проектной работы",
-    },
-    {
-        id: 5,
-        title: "Проектная деятельность",
-        projectsCount: 5,
-        membersCount: 12,
-        color: "bg-indigo-500",
-        category: "Дисциплина",
-        description: "Практические проекты, направленные на командную работу и применение знаний",
-    },
-    {
-        id: 6,
-        title: "Управление процессами",
-        projectsCount: 12,
-        membersCount: 128,
-        color: "bg-red-500",
-        category: "Дисциплина",
-        description: "Проекты для знакомства с профессией и основами профессиональной работы",
-    },
-];
+        roles: (p.vacancies || []).map((v) => ({
+            title: v.title,
+            tasks: v.tasks,
+            count: v.required_count,
+        })),
+        members: p.members.map((m) => ({
+            id: m.id,
+            name: m.name,
+            role: m.role,
+            contacts: m.contacts,
+            resumeUrl: m.resume_url,
+            dateAdded: m.date_added,
+            status: "default" as const,
+        })),
+        replycants: p.replycants.map((r) => ({
+            id: r.id,
+            name: r.name,
+            priority: 0,
+            contacts: r.contacts,
+            resumeUrl: r.resume_url,
+            responseDate: r.response_date,
+            status: "invite" as const,
+        })),
+    };
+}
 
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get("id") || "";
 
-    const { data: dataProject } = useProject(urlId);
-    const { data: dataSpaces } = useSpacesList();
+    const { data: dataProject, isLoading, error } = useProject(urlId);
+    const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
+    const { data: user } = useUser();
 
-    const projectmockdata = dataProject || projects.find((project) => String(project.id) === urlId);
+    const project = dataProject ? mapBackendProject(dataProject) : null;
+    const isCreator = dataProject ? dataProject.author_id === user?.id : false;
 
-    const spaceTitle = (dataSpaces?.spaces || spaces).find(
-        (space) => String(space.id) === String(projectmockdata?.spaceId),
-    )?.title;
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editTags, setEditTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState("");
+    const [editRoles, setEditRoles] = useState<{ title: string; tasks: string[]; count: number }[]>(
+        [],
+    );
+    const updateProjectMutation = useUpdateProject();
+
+    useEffect(() => {
+        if (dataProject) {
+            setEditTitle(dataProject.name);
+            setEditDescription(dataProject.description || "");
+            setEditTags(dataProject.tags);
+            setEditRoles(
+                (dataProject.vacancies || []).map((v) => ({
+                    title: v.title,
+                    tasks: [...v.tasks],
+                    count: v.required_count,
+                })),
+            );
+        }
+    }, [dataProject]);
+
+    const handleSave = async () => {
+        if (!dataProject) return;
+        const filtered = editTags.filter((t) => t.trim() !== "");
+        await updateProjectMutation.mutateAsync({
+            id: String(dataProject.id),
+            data: {
+                name: editTitle,
+                description: editDescription,
+                tags: filtered,
+                vacancies: editRoles.map((r) => ({
+                    title: r.title,
+                    tasks: r.tasks,
+                    required_count: r.count,
+                })),
+            },
+        });
+        setIsEditing(false);
+    };
+
+    const addRole = () => {
+        setEditRoles([...editRoles, { title: "", tasks: [], count: 1 }]);
+    };
+
+    const removeRole = (index: number) => {
+        setEditRoles(editRoles.filter((_, i) => i !== index));
+    };
+
+    const updateRole = (index: number, field: string, value: string | number | string[]) => {
+        setEditRoles(editRoles.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    };
+
+    const addTag = () => {
+        const val = tagInput.trim();
+        if (val && !editTags.includes(val)) {
+            setEditTags([...editTags, val]);
+        }
+        setTagInput("");
+    };
+
+    const removeTag = (index: number) => {
+        setEditTags(editTags.filter((_, i) => i !== index));
+    };
+
+    const handleCancel = () => {
+        if (dataProject) {
+            setEditTitle(dataProject.name);
+            setEditDescription(dataProject.description || "");
+            setEditTags(dataProject.tags);
+            setEditRoles(
+                (dataProject.vacancies || []).map((v) => ({
+                    title: v.title,
+                    tasks: [...v.tasks],
+                    count: v.required_count,
+                })),
+            );
+        }
+        setTagInput("");
+        setIsEditing(false);
+    };
+
+    const spaceTitle =
+        dataSpaces?.spaces.find((space) => String(space.id) === String(project?.spaceId))?.title ||
+        "";
 
     const [activeTab, setActiveTab] = useState("view");
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
@@ -224,52 +204,57 @@ const SpaceRoute = () => {
     ];
 
     const [search, setSearch] = useState("");
-    const memberTitles = projectmockdata?.members?.map((member) => member.name) || [];
-    const replycantTitles = projectmockdata?.replycants?.map((replycant) => replycant.name) || [];
+    const memberTitles = project?.members?.map((member) => member.name) || [];
+    const replycantTitles = project?.replycants?.map((replycant) => replycant.name) || [];
 
-    const memberRoles = projectmockdata?.members?.map((member) => member.role) || [];
+    const memberRoles = project?.members?.map((member) => member.role) || [];
 
-    const memberContacts = projectmockdata?.members?.map((member) => member.contacts) || [];
-    const replycantContacts =
-        projectmockdata?.replycants?.map((replycant) => replycant.contacts) || [];
+    const memberContacts = project?.members?.map((member) => member.contacts) || [];
+    const replycantContacts = project?.replycants?.map((replycant) => replycant.contacts) || [];
 
     const memberSuggestions = [...memberTitles, ...memberContacts, ...memberRoles];
 
     const replycantSuggestions = [...replycantTitles, ...replycantContacts];
 
     const filteredMembers = useMemo(() => {
-        if (!search) return projectmockdata?.members || [];
-        return (projectmockdata?.members || []).filter(
+        if (!search) return project?.members || [];
+        return (project?.members || []).filter(
             (member) =>
                 member.name.toLowerCase().includes(search.toLowerCase()) ||
                 member.contacts.toLowerCase().includes(search.toLowerCase()) ||
                 member.role.toLowerCase().includes(search.toLowerCase()),
         );
-    }, [projectmockdata, search]);
+    }, [project, search]);
 
     const filteredReplycants = useMemo(() => {
-        if (!search) return projectmockdata?.replycants || [];
-        return (projectmockdata?.replycants || []).filter(
+        if (!search) return project?.replycants || [];
+        return (project?.replycants || []).filter(
             (replycant) =>
                 replycant.name.toLowerCase().includes(search.toLowerCase()) ||
                 replycant.contacts.toLowerCase().includes(search.toLowerCase()),
         );
-    }, [projectmockdata, search]);
+    }, [project, search]);
 
-    //const removeMember = (id: number) => {
-    // Логика удаления участника из команды по id
-    //}
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
-    //const addToTeam = (id: number) => {
-    //    // Логика добавления участника в команду по id
-    //}
-
-    if (!projectmockdata) {
-        return <div>Пространство не найдено</div>;
+    if (error || !project) {
+        return (
+            <ContentLayout title="Проект не найден">
+                <div className="flex items-center justify-center h-64">
+                    <p className="text-gray-500 text-lg">Проект не найден</p>
+                </div>
+            </ContentLayout>
+        );
     }
 
     return (
-        <ContentLayout title={projectmockdata.title}>
+        <ContentLayout title={project.title}>
             <div className="mx-auto max-w-7xl flex flex-col gap-6">
                 <Breadcrumb className="h-[34px] flex align-center">
                     <BreadcrumbList>
@@ -284,7 +269,7 @@ const SpaceRoute = () => {
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
                                 <Link
-                                    to={`/app/space?id=${projectmockdata.spaceId}`}
+                                    to={`/app/space?id=${project.spaceId}`}
                                     className="font-sans font-medium text-[16px]"
                                 >
                                     {spaceTitle}
@@ -294,46 +279,65 @@ const SpaceRoute = () => {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <BreadcrumbPage className="font-sans font-medium text-[16px]">
-                                {projectmockdata.title}
+                                {project.title}
                             </BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                <div className="self-stretch inline-flex justify-between items-start">
-                    <div className="flex justify-start items-start gap-5">
-                        <div className="pt-1 flex justify-start items-center gap-2">
+                <div className="self-stretch flex items-start gap-10">
+                    <div className="flex-1 flex justify-start items-start gap-5">
+                        <div className="pt-1 flex justify-start items-center gap-2 shrink-0">
                             <div className="w-16 h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">
                                 <div
-                                    className={`${projectmockdata.color} rounded-lg  text-white h-16 w-16 flex items-center justify-center`}
+                                    className={`${project.color} rounded-lg  text-white h-16 w-16 flex items-center justify-center`}
                                 >
                                     <GraduationCapIcon size={32} />
                                 </div>
                             </div>
                         </div>
-                        <div className="inline-flex flex-col justify-start items-start gap-0.5">
-                            <div className="self-stretch inline-flex justify-start items-center gap-3">
-                                <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
-                                    {projectmockdata.title}
-                                </div>
+                        <div className="flex flex-col justify-start items-start gap-0.5 min-w-0 w-full">
+                            {/*  */}
+                            <div className="self-stretch flex justify-start items-center gap-3 flex-wrap">
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                    />
+                                ) : (
+                                    <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
+                                        {project.title}
+                                    </div>
+                                )}
                                 <div
                                     data-status="In Progress"
                                     className="w-16 px-2 py-0.5 bg-[#2B7FFF] rounded-lg outline outline-1 outline-[#2B7FFF]  inline-flex justify-center items-center overflow-hidden"
                                 >
                                     <div className="text-center justify-center text-white text-[11px] font-semibold font-sans leading-4 tracking-tight">
-                                        {projectmockdata.tag}
+                                        {project.tag}
                                     </div>
                                 </div>
                             </div>
-                            <div className="self-stretch flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
-                                    {projectmockdata.description}
-                                </div>
+                            <div className="self-stretch flex flex-col justify-start items-start w-full">
+                                {isEditing ? (
+                                    <textarea
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                        rows={Math.max(2, Math.ceil(editDescription.length / 80))}
+                                    />
+                                ) : (
+                                    <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                                        {project.description}
+                                    </div>
+                                )}
                             </div>
                             <div className="inline-flex justify-start items-center gap-3">
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
-                                        <ProgressBar value={projectmockdata.progressValue} />
+                                        <ProgressBar value={project.progressValue} />
                                     </div>
                                 </div>
                                 <div data-svg-wrapper className="relative">
@@ -355,7 +359,7 @@ const SpaceRoute = () => {
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
                                         <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
-                                            Создан: {projectmockdata.creationDate}
+                                            Создан: {project.creationDate}
                                         </div>
                                     </div>
                                 </div>
@@ -378,7 +382,7 @@ const SpaceRoute = () => {
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
                                         <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
-                                            Дедлайн: {projectmockdata.dateText}
+                                            Дедлайн: {project.dateText}
                                         </div>
                                     </div>
                                 </div>
@@ -386,15 +390,38 @@ const SpaceRoute = () => {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        {dataSpaces?.role !== "member" ? (
+                        {isCreator && !isEditing ? (
                             <Button
                                 variant="dark"
                                 size="hug36"
                                 icon={<PencilLine size={18} />}
                                 className="font-sans text-[13px] font-semibold gap-2"
+                                onClick={() => setIsEditing(true)}
                             >
                                 Редактировать
                             </Button>
+                        ) : (
+                            ""
+                        )}
+                        {isEditing ? (
+                            <>
+                                <Button
+                                    variant="dark"
+                                    size="hug36"
+                                    className="font-sans text-[13px] font-semibold gap-2"
+                                    onClick={handleSave}
+                                >
+                                    Сохранить
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="hug36"
+                                    className="font-sans text-[13px] font-semibold gap-2"
+                                    onClick={handleCancel}
+                                >
+                                    Отмена
+                                </Button>
+                            </>
                         ) : (
                             ""
                         )}
@@ -425,21 +452,67 @@ const SpaceRoute = () => {
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start gap-5">
                                 <div className="self-stretch flex flex-col justify-start items-start">
-                                    <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
-                                        {projectmockdata.descriptionExtended}
-                                    </div>
+                                    {isEditing ? (
+                                        <textarea
+                                            value={editDescription}
+                                            onChange={(e) => setEditDescription(e.target.value)}
+                                            className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                            rows={Math.max(
+                                                2,
+                                                Math.ceil(editDescription.length / 80),
+                                            )}
+                                        />
+                                    ) : (
+                                        <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                                            {project.descriptionExtended}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="self-stretch inline-flex justify-start items-start gap-1 flex-wrap content-start">
-                                    {projectmockdata.tags.map((tag, index) => (
-                                        <div
-                                            key={index}
-                                            className="h-5 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] flex justify-center items-center overflow-hidden"
-                                        >
-                                            <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
-                                                {tag.text}
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {isEditing
+                                        ? editTags.map((tag, index) => (
+                                              <div
+                                                  key={index}
+                                                  className="h-6 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] inline-flex justify-center items-center gap-1 overflow-hidden"
+                                              >
+                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                      {tag}
+                                                  </div>
+                                                  <button
+                                                      type="button"
+                                                      onClick={() => removeTag(index)}
+                                                      className="text-[#6A7282] hover:text-red-500 leading-none"
+                                                  >
+                                                      ✕
+                                                  </button>
+                                              </div>
+                                          ))
+                                        : project.tags.map((tag, index) => (
+                                              <div
+                                                  key={index}
+                                                  className="h-5 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] flex justify-center items-center overflow-hidden"
+                                              >
+                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                      {tag.text}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                    {isEditing && (
+                                        <input
+                                            type="text"
+                                            value={tagInput}
+                                            onChange={(e) => setTagInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    addTag();
+                                                }
+                                            }}
+                                            onBlur={addTag}
+                                            placeholder="Добавить тег..."
+                                            className="h-6 px-2 text-[11px] font-semibold font-sans bg-transparent border border-dashed border-[#6A7282] rounded-lg outline-none min-w-[100px]"
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -471,33 +544,114 @@ const SpaceRoute = () => {
                                         </div>
                                     </div>
                                 </div>
-                                {projectmockdata.roles.map((role) => (
-                                    <>
+                                {(isEditing ? editRoles : project.roles).map((role, index) => (
+                                    <Fragment key={index}>
                                         <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
-                                        <div className="self-stretch inline-flex justify-start items-center gap-5">
-                                            <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                                <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                                    {role.title}
+                                        {isEditing ? (
+                                            <div className="self-stretch inline-flex justify-start items-center gap-5">
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                    <input
+                                                        type="text"
+                                                        value={role.title}
+                                                        onChange={(e) =>
+                                                            updateRole(
+                                                                index,
+                                                                "title",
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 px-1 py-2 flex justify-start items-center">
+                                                    <textarea
+                                                        value={(
+                                                            role as {
+                                                                title: string;
+                                                                tasks: string[];
+                                                                count: number;
+                                                            }
+                                                        ).tasks.join("\n")}
+                                                        onChange={(e) =>
+                                                            updateRole(
+                                                                index,
+                                                                "tasks",
+                                                                e.target.value
+                                                                    .split("\n")
+                                                                    .filter((t) => t.trim() !== ""),
+                                                            )
+                                                        }
+                                                        className="w-full justify-center text-[#121212] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                                        rows={Math.max(
+                                                            1,
+                                                            (
+                                                                role as {
+                                                                    title: string;
+                                                                    tasks: string[];
+                                                                    count: number;
+                                                                }
+                                                            ).tasks.length,
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={role.count}
+                                                        onChange={(e) =>
+                                                            updateRole(
+                                                                index,
+                                                                "count",
+                                                                parseInt(e.target.value) || 1,
+                                                            )
+                                                        }
+                                                        className="w-16 justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeRole(index)}
+                                                        className="text-[#6A7282] hover:text-red-500 text-[13px] font-medium leading-none"
+                                                    >
+                                                        ✕
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                                <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
-                                                    {role.tasks.map((task) => (
-                                                        <div className="flex items-center">
-                                                            <Dot />
-                                                            <span>{task}</span>
-                                                        </div>
-                                                    ))}
+                                        ) : (
+                                            <div className="self-stretch inline-flex justify-start items-center gap-5">
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                        {role.title}
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 px-1 py-2 flex justify-start items-center">
+                                                    <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
+                                                        {role.tasks.map((task) => (
+                                                            <div className="flex items-center">
+                                                                <Dot />
+                                                                <span>{task}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                        {role.count}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                                <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
-                                                    {role.count}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
+                                        )}
+                                    </Fragment>
                                 ))}
+                                {isEditing && (
+                                    <button
+                                        type="button"
+                                        onClick={addRole}
+                                        className="self-stretch mt-2 py-2 border-2 border-dashed border-[#6A7282] rounded-lg text-[#6A7282] text-[13px] font-semibold font-sans leading-5 hover:border-[#2B7FFF] hover:text-[#2B7FFF] transition-colors"
+                                    >
+                                        + Добавить роль
+                                    </button>
+                                )}
                             </div>
                         </section>
 
@@ -506,8 +660,8 @@ const SpaceRoute = () => {
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     Список участников{" "}
                                     {activeApplicantTab === "team"
-                                        ? `(${projectmockdata.members?.length || 0}/8)`
-                                        : `(${projectmockdata.replycants?.length || 0}/10)`}
+                                        ? `(${project.members?.length || 0}/8)`
+                                        : `(${project.replycants?.length || 0}/10)`}
                                 </h2>
                                 {/* сделать */}
 

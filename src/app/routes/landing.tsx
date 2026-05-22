@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate } from "react-router";
 import { Head } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useUser } from "@/lib/auth";
+import { paths } from "@/config/paths";
 
 export interface Role {
     nameRole: string;
@@ -83,6 +85,10 @@ const FeatureCard = ({ title, description, icon }: (typeof features)[0]) => (
 
 const LandingRoute = () => {
     const navigate = useNavigate();
+    const { data: user, isLoading } = useUser();
+
+    if (isLoading) return null;
+    if (user) return <Navigate to={paths.app.spaces.getHref()} replace />;
 
     const handleStart = () => navigate("/auth/login");
 
@@ -131,7 +137,7 @@ const LandingRoute = () => {
                         <Button
                             variant="outline"
                             size="fixed48"
-                            onClick={() => navigate("/auth/register")}
+                            onClick={() => navigate(paths.auth.createAcc.getHref())}
                         >
                             Регистрация
                         </Button>
