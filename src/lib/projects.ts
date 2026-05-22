@@ -1,5 +1,5 @@
 import { api } from "./api-client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ProjectFullResponse, type ProjectListResponse } from "@/types/api";
 
 export const getProject = async ({
@@ -36,5 +36,25 @@ export const useProjectsList = (workspaceId: string) => {
         refetchOnWindowFocus: false,
         enabled: !!workspaceId,
         retry: 3,
+    });
+};
+
+export const updateProject = async ({
+    id,
+    data,
+}: {
+    id: string;
+    data: Partial<ProjectFullResponse>;
+}): Promise<ProjectFullResponse> => {
+    return await api.put(`/projects/${id}`, data);
+};
+
+export const useUpdateProject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateProject,
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["project", variables.id] });
+        },
     });
 };
