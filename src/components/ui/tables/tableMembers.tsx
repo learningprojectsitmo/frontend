@@ -21,7 +21,7 @@ export const TableMembers = ({ headerList, members, removeMember }: TableProps) 
                 <thead className=" text-[#0A0A0A]  text-black-500 border-b border-gray-200">
                     <tr>
                         {headerList.map((header) => (
-                            <th className="px-6 py-4 text-[15px] font-sans font-semibold">
+                            <th key={header} className="px-6 py-4 text-[15px] font-sans font-semibold">
                                 {header}
                             </th>
                         ))}
@@ -30,7 +30,7 @@ export const TableMembers = ({ headerList, members, removeMember }: TableProps) 
 
                 <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
                     {members.map((member) => (
-                        <tr className="hover:bg-gray-50 transition">
+                        <tr key={member.id} className="hover:bg-gray-50 transition">
                             <td className="px-6 py-4">
                                 {member.avatarUrl ? (
                                     <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Outlet, useSearchParams } from "react-router";
+import { NavLink, Outlet, useSearchParams } from "react-router";
 
 import { paths } from "@/config/paths";
 import { useSpacesList, getSuggestions } from "@/lib/spaces";
@@ -246,7 +246,7 @@ function SpaceLayoutContent({
                             className="w-full"
                         >
                             <NavLink
-                                to={paths.app.kanban.getHref(1)} // ID = 1 для примера
+                                to={urlId ? `/app/kanban/${urlId}?id=${urlId}` : "#"}
                                 className={({ isActive }) =>
                                     cn(
                                         "flex items-center font-medium transition-all w-full",

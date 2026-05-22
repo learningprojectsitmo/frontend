@@ -2,7 +2,7 @@ import { ContentLayout } from "@/components/layouts";
 import { Dot, Ellipsis, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
 import { type IconName } from "@/components/ui/icons";
 import { useProject, useUpdateProject } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
@@ -10,6 +10,7 @@ import { useSpacesList } from "@/lib/spaces";
 import { useSearchParams } from "react-router";
 import { Plus, GraduationCapIcon } from "lucide-react";
 import { SearchBar } from "@/components/ui/search-bar";
+import { toast } from "sonner";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -26,6 +27,30 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
+import { KanbanBoard } from "@/features/kanban/components/board";
+import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
+import { KanbanFilter } from "@/features/kanban/components/board-filter";
+import {
+    useBoard,
+    useCreateTask,
+    useUpdateTask,
+    useDeleteTask,
+    useMoveTask,
+    useCreateColumn,
+    useUpdateColumn,
+    useDeleteColumn,
+    useReorderColumns,
+    useCreateSubtask,
+    useUpdateSubtask,
+    useDeleteSubtask,
+} from "@/features/kanban/hooks/useKanban";
+import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
+import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
+import {
+    defaultFilterState,
+    filterColumns,
+    type KanbanFilterState,
+} from "@/features/kanban/utils/filter-tasks";
 
 function formatDate(iso: string): string {
     const d = new Date(iso);
@@ -185,6 +210,263 @@ const SpaceRoute = () => {
     const [activeTab, setActiveTab] = useState("view");
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
     const [activeView, setActiveView] = useState("grid");
+
+    // Kanban state
+    const projectId = parseInt(urlId || "0", 10);
+    const [kanbanFilter, setKanbanFilter] = useState<KanbanFilterState>(defaultFilterState);
+    const { isOpen: isTaskPanelOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
+    const { data: columns, isLoading: kanbanLoading, error: kanbanError, refetch } = useBoard(projectId);
+    const { data: projectMembers } = useKanbanUsers();
+
+    const filteredColumns = useMemo(
+        () => filterColumns(columns || [], kanbanFilter, user?.id),
+        [columns, kanbanFilter, user?.id],
+    );
+
+    const liveEditingTask = useMemo(() => {
+        if (!editingTask || !columns) return editingTask;
+        for (const col of columns) {
+            const found = col.tasks?.find((t) => t.id === editingTask.id);
+            if (found) return found;
+        }
+        return editingTask;
+    }, [editingTask, columns]);
+
+    const kanbanCreateTask = useCreateTask();
+    const kanbanUpdateTask = useUpdateTask();
+    const kanbanDeleteTask = useDeleteTask();
+    const kanbanMoveTask = useMoveTask();
+    const kanbanCreateColumn = useCreateColumn();
+    const kanbanUpdateColumn = useUpdateColumn();
+    const kanbanDeleteColumn = useDeleteColumn();
+    const kanbanReorderColumns = useReorderColumns(projectId);
+    const kanbanCreateSubtask = useCreateSubtask();
+    const kanbanUpdateSubtask = useUpdateSubtask();
+    const kanbanDeleteSubtask = useDeleteSubtask();
+
+    const handleTaskAutoSave = useCallback(
+        async (taskId: number, patch: TaskPatch) => {
+            const data: Record<string, unknown> = { ...patch };
+            if (patch.dueDate === null) {
+                data.dueDate = undefined;
+            }
+            try {
+                await kanbanUpdateTask.mutateAsync({
+                    taskId,
+                    data: data as Parameters<typeof kanbanUpdateTask.mutateAsync>[0]["data"],
+                });
+            } catch (e) {
+                toast.error("Не удалось сохранить изменения");
+                throw e;
+            }
+        },
+        [kanbanUpdateTask],
+    );
+
+    const handleSubtaskCreate = useCallback(
+        async (taskId: number, title: string) => {
+            try {
+                await kanbanCreateSubtask.mutateAsync({ taskId, title, isCompleted: false });
+            } catch {
+                toast.error("Не удалось добавить подзадачу");
+            }
+        },
+        [kanbanCreateSubtask],
+    );
+
+    const handleSubtaskUpdate = useCallback(
+        async (subtaskId: number, data: { title?: string; isCompleted?: boolean }) => {
+            try {
+                await kanbanUpdateSubtask.mutateAsync({ subtaskId, data });
+            } catch {
+                toast.error("Не удалось обновить подзадачу");
+            }
+        },
+        [kanbanUpdateSubtask],
+    );
+
+    const handleSubtaskDelete = useCallback(
+        async (subtaskId: number) => {
+            try {
+                await kanbanDeleteSubtask.mutateAsync(subtaskId);
+            } catch {
+                toast.error("Не удалось удалить подзадачу");
+            }
+        },
+        [kanbanDeleteSubtask],
+    );
+
+    const handleTaskMoveToColumn = useCallback(
+        async (taskId: number, targetColumnId: number) => {
+            const targetCol = columns?.find((c) => c.id === targetColumnId);
+            const targetPosition =
+                targetCol && targetCol.tasks && targetCol.tasks.length > 0
+                    ? Math.max(...targetCol.tasks.map((t) => t.position)) + 1
+                    : 0;
+            try {
+                await kanbanMoveTask.mutateAsync({
+                    taskId,
+                    data: { columnId: targetColumnId, position: targetPosition },
+                });
+            } catch {
+                toast.error("Не удалось переместить задачу");
+            }
+        },
+        [columns, kanbanMoveTask],
+    );
+
+    const handleDeleteTask = useCallback(
+        (taskId: number) => {
+            kanbanDeleteTask.mutate(taskId, {
+                onSuccess: () => {
+                    toast.success("Задача удалена");
+                    refetch();
+                },
+                onError: () => {
+                    toast.error("Ошибка при удалении задачи");
+                },
+            });
+        },
+        [kanbanDeleteTask, refetch],
+    );
+
+    const handleCreateColumn = useCallback(
+        (name: string) => {
+            kanbanCreateColumn.mutate(
+                { projectId, name, color: "white" },
+                {
+                    onSuccess: () => {
+                        toast.success("Колонка создана");
+                        refetch();
+                    },
+                    onError: () => {
+                        toast.error("Ошибка при создании колонки");
+                    },
+                },
+            );
+        },
+        [projectId, kanbanCreateColumn, refetch],
+    );
+
+    const handleRenameColumn = useCallback(
+        (columnId: number, newName: string) => {
+            kanbanUpdateColumn.mutate(
+                { columnId, data: { name: newName } },
+                {
+                    onSuccess: () => {
+                        toast.success("Колонка переименована");
+                        refetch();
+                    },
+                    onError: () => {
+                        toast.error("Ошибка при переименовании колонки");
+                    },
+                },
+            );
+        },
+        [kanbanUpdateColumn, refetch],
+    );
+
+    const handleChangeColor = useCallback(
+        (columnId: number, color: string) => {
+            kanbanUpdateColumn.mutate(
+                { columnId, data: { color } },
+                {
+                    onSuccess: () => {
+                        toast.success("Цвет колонки изменен");
+                        refetch();
+                    },
+                    onError: () => {
+                        toast.error("Ошибка при изменении цвета колонки");
+                    },
+                },
+            );
+        },
+        [kanbanUpdateColumn, refetch],
+    );
+
+    const handleDeleteColumn = useCallback(
+        (columnId: number) => {
+            kanbanDeleteColumn.mutate(columnId, {
+                onSuccess: () => {
+                    toast.success("Колонка удалена");
+                    refetch();
+                },
+                onError: () => {
+                    toast.error("Ошибка при удалении колонки");
+                },
+            });
+        },
+        [kanbanDeleteColumn, refetch],
+    );
+
+    const handleTaskMove = useCallback(
+        (taskId: number, targetColumnId: number, targetPosition: number) => {
+            kanbanMoveTask.mutate(
+                { taskId, data: { columnId: targetColumnId, position: targetPosition } },
+                {
+                    onError: () => {
+                        toast.error("Ошибка при перемещении задачи");
+                        refetch();
+                    },
+                },
+            );
+        },
+        [kanbanMoveTask, refetch],
+    );
+
+    const handleReorderColumns = useCallback(
+        (columnOrders: { id: number; position: number }[]) => {
+            kanbanReorderColumns.mutate(columnOrders, {
+                onError: () => {
+                    toast.error("Ошибка при изменении порядка колонок");
+                    refetch();
+                },
+            });
+        },
+        [kanbanReorderColumns, refetch],
+    );
+
+    const handleAddTask = useCallback(
+        (columnId: number, title: string) => {
+            kanbanCreateTask.mutate(
+                { title, columnId, priority: "default" },
+                {
+                    onSuccess: () => refetch(),
+                    onError: () => toast.error("Ошибка при создании задачи"),
+                },
+            );
+        },
+        [kanbanCreateTask, refetch],
+    );
+
+    const boardData = useMemo(
+        () => ({
+            columns: filteredColumns,
+            isLoading: kanbanLoading,
+            onTaskMove: handleTaskMove,
+            onTaskClick: openEditPanel,
+            onAddTask: handleAddTask,
+            onDeleteTask: handleDeleteTask,
+            onRenameColumn: handleRenameColumn,
+            onChangeColor: handleChangeColor,
+            onDeleteColumn: handleDeleteColumn,
+            onReorderColumns: handleReorderColumns,
+            onCreateColumn: handleCreateColumn,
+        }),
+        [
+            filteredColumns,
+            kanbanLoading,
+            handleTaskMove,
+            openEditPanel,
+            handleAddTask,
+            handleDeleteTask,
+            handleRenameColumn,
+            handleChangeColor,
+            handleDeleteColumn,
+            handleReorderColumns,
+            handleCreateColumn,
+        ],
+    );
 
     const textTabs = [
         { value: "view", label: "Обзор проекта" },
@@ -626,8 +908,8 @@ const SpaceRoute = () => {
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
                                                     <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
-                                                        {role.tasks.map((task) => (
-                                                            <div className="flex items-center">
+                                                        {role.tasks.map((task, i) => (
+                                                            <div key={i} className="flex items-center">
                                                                 <Dot />
                                                                 <span>{task}</span>
                                                             </div>
@@ -733,6 +1015,48 @@ const SpaceRoute = () => {
                                 />
                             ) //addToTeam={addToTeam}
                         }
+                    </>
+                )}
+                {activeTab === "kanban" && (
+                    <>
+                        <section>
+                            <header className="flex items-center justify-between gap-4 mb-4">
+                                <div>
+                                    <p className="text-sm text-gray-500">
+                                        {columns && columns.length > 0
+                                            ? `Всего колонок: ${columns.length}`
+                                            : "Начните с создания первой колонки"}
+                                    </p>
+                                </div>
+                                {columns && columns.length > 0 && (
+                                    <KanbanFilter
+                                        columns={columns}
+                                        filter={kanbanFilter}
+                                        onFilterChange={setKanbanFilter}
+                                        currentUserId={user?.id}
+                                    />
+                                )}
+                            </header>
+                        </section>
+                        <div className="min-h-[400px] overflow-x-auto">
+                            <div className="min-w-min">
+                                <KanbanBoard {...boardData} />
+                            </div>
+                        </div>
+                        <TaskPanel
+                            isOpen={isTaskPanelOpen}
+                            onClose={closePanel}
+                            onAutoSave={handleTaskAutoSave}
+                            onMoveToColumn={handleTaskMoveToColumn}
+                            onDelete={handleDeleteTask}
+                            onSubtaskCreate={handleSubtaskCreate}
+                            onSubtaskUpdate={handleSubtaskUpdate}
+                            onSubtaskDelete={handleSubtaskDelete}
+                            task={liveEditingTask}
+                            columns={columns || []}
+                            projectName={project.title}
+                            projectMembers={projectMembers || []}
+                        />
                     </>
                 )}
             </div>
