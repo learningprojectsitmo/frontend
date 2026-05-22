@@ -88,11 +88,7 @@ const SpaceRoute = () => {
                 onOpenChange={setSettingsOpen}
                 space={spaceData}
             />
-            <ShareSpaceModal
-                open={shareOpen}
-                onOpenChange={setShareOpen}
-                spaceId={spaceData.id}
-            />
+            <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} spaceId={spaceData.id} />
         </ContentLayout>
     );
 };

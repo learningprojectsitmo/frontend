@@ -117,9 +117,7 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                 </div>
             ) : visibleProjects.length === 0 ? (
                 <div className="text-center py-16 text-gray-400 text-sm">
-                    {search
-                        ? "Проекты не найдены"
-                        : "В этом пространстве пока нет проектов"}
+                    {search ? "Проекты не найдены" : "В этом пространстве пока нет проектов"}
                 </div>
             ) : (
                 <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">

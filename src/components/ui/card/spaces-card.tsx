@@ -79,7 +79,9 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
 
                 <div className="flex flex-col gap-1 flex-1 min-h-0">
                     <h3 className={cn("text-[17px] font-bold", titleClass)}>{title}</h3>
-                    <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>{description}</p>
+                    <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>
+                        {description}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-4">

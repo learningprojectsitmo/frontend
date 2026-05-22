@@ -98,7 +98,9 @@ const SpaceRoute = () => {
     const [editDescription, setEditDescription] = useState("");
     const [editTags, setEditTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState("");
-    const [editRoles, setEditRoles] = useState<{ title: string; tasks: string[]; count: number }[]>([]);
+    const [editRoles, setEditRoles] = useState<{ title: string; tasks: string[]; count: number }[]>(
+        [],
+    );
     const updateProjectMutation = useUpdateProject();
 
     useEffect(() => {
@@ -111,7 +113,7 @@ const SpaceRoute = () => {
                     title: v.title,
                     tasks: [...v.tasks],
                     count: v.required_count,
-                }))
+                })),
             );
         }
     }, [dataProject]);
@@ -169,7 +171,7 @@ const SpaceRoute = () => {
                     title: v.title,
                     tasks: [...v.tasks],
                     count: v.required_count,
-                }))
+                })),
             );
         }
         setTagInput("");
@@ -302,8 +304,8 @@ const SpaceRoute = () => {
                                         type="text"
                                         value={editTitle}
                                         onChange={(e) => setEditTitle(e.target.value)}
-                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"/>
-                                    
+                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                    />
                                 ) : (
                                     <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
                                         {project.title}
@@ -455,7 +457,10 @@ const SpaceRoute = () => {
                                             value={editDescription}
                                             onChange={(e) => setEditDescription(e.target.value)}
                                             className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                            rows={Math.max(2, Math.ceil(editDescription.length / 80))}
+                                            rows={Math.max(
+                                                2,
+                                                Math.ceil(editDescription.length / 80),
+                                            )}
                                         />
                                     ) : (
                                         <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
@@ -548,22 +553,45 @@ const SpaceRoute = () => {
                                                     <input
                                                         type="text"
                                                         value={role.title}
-                                                        onChange={(e) => updateRole(index, "title", e.target.value)}
+                                                        onChange={(e) =>
+                                                            updateRole(
+                                                                index,
+                                                                "title",
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         className="w-full justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
                                                     <textarea
-                                                        value={(role as { title: string; tasks: string[]; count: number }).tasks.join("\n")}
+                                                        value={(
+                                                            role as {
+                                                                title: string;
+                                                                tasks: string[];
+                                                                count: number;
+                                                            }
+                                                        ).tasks.join("\n")}
                                                         onChange={(e) =>
                                                             updateRole(
                                                                 index,
                                                                 "tasks",
-                                                                e.target.value.split("\n").filter((t) => t.trim() !== "")
+                                                                e.target.value
+                                                                    .split("\n")
+                                                                    .filter((t) => t.trim() !== ""),
                                                             )
                                                         }
                                                         className="w-full justify-center text-[#121212] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                                        rows={Math.max(1, (role as { title: string; tasks: string[]; count: number }).tasks.length)}
+                                                        rows={Math.max(
+                                                            1,
+                                                            (
+                                                                role as {
+                                                                    title: string;
+                                                                    tasks: string[];
+                                                                    count: number;
+                                                                }
+                                                            ).tasks.length,
+                                                        )}
                                                     />
                                                 </div>
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
@@ -571,7 +599,13 @@ const SpaceRoute = () => {
                                                         type="number"
                                                         min={1}
                                                         value={role.count}
-                                                        onChange={(e) => updateRole(index, "count", parseInt(e.target.value) || 1)}
+                                                        onChange={(e) =>
+                                                            updateRole(
+                                                                index,
+                                                                "count",
+                                                                parseInt(e.target.value) || 1,
+                                                            )
+                                                        }
                                                         className="w-16 justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                     <button
