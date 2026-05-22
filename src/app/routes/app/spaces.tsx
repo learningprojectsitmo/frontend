@@ -180,7 +180,7 @@ const SpacesRoute = () => {
                             <Link
                                 key={space.id}
                                 to={paths.app.space.getHref(space.id)}
-                                className="block"
+                                className="block h-full"
                             >
                                 <SpacesCard
                                     iconName="discipline"
