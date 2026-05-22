@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog } from "@/components/ui/dialog/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group/radio-group";
@@ -76,111 +76,111 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
     const hasLink = !!generatedLink;
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={handleOpenChange}
-            title="Поделиться пространством"
-            className="max-w-md"
-        >
-            <div className="space-y-5">
-                {/* Role section */}
-                <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                        Роль по приглашению
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-3">
-                        Роль будет автоматически назначена при вступлении по ссылке
-                    </p>
-                    <p className="text-xs font-medium text-gray-700 mb-2">Роль участника</p>
-                    <RadioGroup
-                        options={roleOptions}
-                        value={selectedRole}
-                        onValueChange={setSelectedRole}
-                        name="invite_role"
-                    />
-                </div>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Поделиться пространством</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-5">
+                    {/* Role section */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                            Роль по приглашению
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-3">
+                            Роль будет автоматически назначена при вступлении по ссылке
+                        </p>
+                        <p className="text-xs font-medium text-gray-700 mb-2">Роль участника</p>
+                        <RadioGroup
+                            options={roleOptions}
+                            value={selectedRole}
+                            onValueChange={setSelectedRole}
+                            name="invite_role"
+                        />
+                    </div>
 
-                <hr className="border-gray-100" />
+                    <hr className="border-gray-100" />
 
-                {/* Link section */}
-                <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                        Ссылка для приглашения
-                    </h3>
+                    {/* Link section */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                            Ссылка для приглашения
+                        </h3>
 
-                    {!hasLink ? (
-                        <div>
-                            <p className="text-xs text-gray-500 mb-4">
-                                Создайте ссылку, чтобы пригласить участников в пространство
-                            </p>
-                            <Button
-                                type="button"
-                                variant="dark"
-                                size="hug36"
-                                onClick={handleGenerate}
-                                disabled={isPending}
-                                className="flex items-center gap-2"
-                            >
-                                <Link2 size={16} />
-                                {createLink.isPending ? "Создание..." : "Создать ссылку"}
-                            </Button>
-                        </div>
-                    ) : (
-                        <div>
-                            <p className="text-xs text-gray-500 mb-3">
-                                Скопируйте ссылку и отправьте ее участникам
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 relative">
-                                    <Input
-                                        value={generatedLink.url}
-                                        readOnly
-                                        className="pr-2 text-sm text-gray-600 bg-gray-50 border-gray-200 cursor-default"
-                                        onClick={(e) => (e.target as HTMLInputElement).select()}
-                                    />
-                                </div>
+                        {!hasLink ? (
+                            <div>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    Создайте ссылку, чтобы пригласить участников в пространство
+                                </p>
                                 <Button
                                     type="button"
-                                    variant="blue"
+                                    variant="dark"
                                     size="hug36"
-                                    onClick={handleCopy}
+                                    onClick={handleGenerate}
                                     disabled={isPending}
-                                    className="flex items-center gap-1.5 whitespace-nowrap"
+                                    className="flex items-center gap-2"
                                 >
-                                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                                    {copied ? "Скопировано" : "Копировать"}
+                                    <Link2 size={16} />
+                                    {createLink.isPending ? "Создание..." : "Создать ссылку"}
                                 </Button>
                             </div>
+                        ) : (
+                            <div>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    Скопируйте ссылку и отправьте ее участникам
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 relative">
+                                        <Input
+                                            value={generatedLink.url}
+                                            readOnly
+                                            className="pr-2 text-sm text-gray-600 bg-gray-50 border-gray-200 cursor-default"
+                                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="blue"
+                                        size="hug36"
+                                        onClick={handleCopy}
+                                        disabled={isPending}
+                                        className="flex items-center gap-1.5 whitespace-nowrap"
+                                    >
+                                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                                        {copied ? "Скопировано" : "Копировать"}
+                                    </Button>
+                                </div>
 
-                            <div className="flex items-center justify-between mt-3">
-                                <span className="text-xs text-gray-400">
-                                    Переходов: {generatedLink.use_count}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={handleRevoke}
-                                    disabled={isPending}
-                                    className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
-                                >
-                                    Отозвать ссылку
-                                </button>
+                                <div className="flex items-center justify-between mt-3">
+                                    <span className="text-xs text-gray-400">
+                                        Переходов: {generatedLink.use_count}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleRevoke}
+                                        disabled={isPending}
+                                        className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                                    >
+                                        Отозвать ссылку
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
 
-                {/* Actions */}
-                <div className="flex justify-end pt-2 border-t border-gray-100">
-                    <Button
-                        type="button"
-                        variant="dark"
-                        size="hug36"
-                        onClick={() => handleOpenChange(false)}
-                    >
-                        Готово
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex justify-end pt-2 border-t border-gray-100">
+                        <Button
+                            type="button"
+                            variant="dark"
+                            size="hug36"
+                            onClick={() => handleOpenChange(false)}
+                        >
+                            Готово
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            </DialogContent>
         </Dialog>
     );
 };

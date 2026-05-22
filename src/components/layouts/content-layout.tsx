@@ -11,7 +11,7 @@ export const ContentLayout = ({ children, title }: ContentLayoutProps) => {
     return (
         <>
             <Head title={title} />
-            <div className="p-8">
+            <div className="">
                 {/* Контейнер теперь просто передает контент, 
             сетку и заголовки мы верстаем внутри страниц */}
                 <div className="mx-auto max-w-[1400px]">{children}</div>

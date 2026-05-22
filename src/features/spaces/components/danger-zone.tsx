@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface DangerZoneProps {
     title?: string;
@@ -40,22 +40,31 @@ export const DangerZone = ({
                 </Button>
             </div>
 
-            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen} title={confirmTitle}>
-                <p className="text-sm text-gray-600">{confirmDescription}</p>
-                <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="outline" size="hug36" onClick={() => setConfirmOpen(false)}>
-                        Отмена
-                    </Button>
-                    <Button
-                        variant="dark"
-                        size="hug36"
-                        className="bg-red-600 hover:bg-red-700"
-                        onClick={onDelete}
-                        disabled={isPending}
-                    >
-                        {isPending ? "Удаление..." : confirmDeleteLabel}
-                    </Button>
-                </div>
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{confirmTitle}</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-gray-600">{confirmDescription}</p>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            onClick={() => setConfirmOpen(false)}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            variant="dark"
+                            size="hug36"
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={onDelete}
+                            disabled={isPending}
+                        >
+                            {isPending ? "Удаление..." : confirmDeleteLabel}
+                        </Button>
+                    </div>
+                </DialogContent>
             </Dialog>
         </>
     );

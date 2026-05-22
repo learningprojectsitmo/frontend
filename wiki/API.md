@@ -165,8 +165,8 @@ export type Meta = {
 
 ```tsx
 export type User = Entity<{
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     middle_name: string;
     email: string;
 }>;

@@ -235,6 +235,31 @@ function SpaceLayoutContent({
                             value={search}
                         />
                     </div>
+
+                    <div className="">
+                        <Button
+                            variant="outlineSoft"
+                            size="fixed36"
+                            align="left"
+                            hasIconAsChild={true}
+                            asChild
+                            className="w-full"
+                        >
+                            <NavLink
+                                to={paths.app.kanban.getHref(1)} // ID = 1 для примера
+                                className={({ isActive }) =>
+                                    cn(
+                                        "flex items-center font-medium transition-all w-full",
+                                        isActive
+                                            ? "bg-[#0F1117] text-white"
+                                            : "text-gray-600 hover:bg-gray-100",
+                                    )
+                                }
+                            >
+                                Канбан доска
+                            </NavLink>
+                        </Button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <NotificationsNav notifications={undefined} />
