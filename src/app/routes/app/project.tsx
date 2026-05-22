@@ -215,7 +215,7 @@ const SpaceRoute = () => {
     const projectId = parseInt(urlId || "0", 10);
     const [kanbanFilter, setKanbanFilter] = useState<KanbanFilterState>(defaultFilterState);
     const { isOpen: isTaskPanelOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
-    const { data: columns, isLoading: kanbanLoading, error: kanbanError, refetch } = useBoard(projectId);
+    const { data: columns, isLoading: kanbanLoading, refetch } = useBoard(projectId);
     const { data: projectMembers } = useKanbanUsers();
 
     const filteredColumns = useMemo(
