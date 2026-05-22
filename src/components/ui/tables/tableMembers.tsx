@@ -21,7 +21,10 @@ export const TableMembers = ({ headerList, members, removeMember }: TableProps) 
                 <thead className=" text-[#0A0A0A]  text-black-500 border-b border-gray-200">
                     <tr>
                         {headerList.map((header) => (
-                            <th key={header} className="px-6 py-4 text-[15px] font-sans font-semibold">
+                            <th
+                                key={header}
+                                className="px-6 py-4 text-[15px] font-sans font-semibold"
+                            >
                                 {header}
                             </th>
                         ))}

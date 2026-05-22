@@ -909,7 +909,10 @@ const SpaceRoute = () => {
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
                                                     <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
                                                         {role.tasks.map((task, i) => (
-                                                            <div key={i} className="flex items-center">
+                                                            <div
+                                                                key={i}
+                                                                className="flex items-center"
+                                                            >
                                                                 <Dot />
                                                                 <span>{task}</span>
                                                             </div>
