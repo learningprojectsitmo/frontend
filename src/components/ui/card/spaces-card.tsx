@@ -58,7 +58,7 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
                 ref={ref}
                 className={cn(
                     "min-w-[320px] p-6 border border-[--color-black-10] rounded-[14px] bg-white",
-                    "flex flex-col gap-4",
+                    "flex flex-col gap-4 h-full",
                     "transition-shadow hover:shadow-md",
                     className,
                 )}
@@ -77,9 +77,11 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
                     <Tag variant={tagVariant}>{tag}</Tag>
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 flex-1 min-h-0">
                     <h3 className={cn("text-[17px] font-bold", titleClass)}>{title}</h3>
-                    <p className={cn("text-[13px]", descriptionClass)}>{description}</p>
+                    <p className={cn("text-[13px] line-clamp-2", descriptionClass)}>
+                        {description}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-4">
