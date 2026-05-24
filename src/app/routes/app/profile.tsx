@@ -38,7 +38,7 @@ const ProfileRoute = () => {
 
     return (
         <ContentLayout title="Профиль и Резюме">
-            <div className="mx-auto max-w-5xl p-6 flex flex-col gap-5">
+            <div className="mx-auto max-w-5xl p-4 sm:p-6 flex flex-col gap-5">
                 <ProfileHeader
                     firstName={profile?.first_name ?? ""}
                     lastName={profile?.last_name ?? ""}
@@ -60,7 +60,7 @@ const ProfileRoute = () => {
                 />
 
                 {activeTab === "resume" && (
-                    <div className="flex gap-6">
+                    <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-[7] min-w-0">
                             <ResumeList resumes={(profile?.resumes ?? []).map(mapResumeFromApi)} />
                         </div>

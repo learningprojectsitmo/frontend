@@ -10,9 +10,9 @@ type ResumeListProps = {
 export function ResumeList({ resumes }: ResumeListProps) {
     return (
         <section>
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Мои резюме</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <Button
                         variant="outline"
                         size="hug36"
@@ -32,7 +32,7 @@ export function ResumeList({ resumes }: ResumeListProps) {
                 </div>
             </div>
             {resumes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <div className="flex flex-col items-center justify-center py-12 sm:py-20">
                     <Icon name="rocket" size={120} className="text-gray-300 mb-6" />
                     <h3 className="text-[28px] font-bold text-gray-900">У вас пока нет резюме</h3>
                     <p className="text-[15px] text-gray-500 mt-2">

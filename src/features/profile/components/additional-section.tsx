@@ -30,7 +30,7 @@ function AddLink() {
 
 export function AdditionalSection({ portfolio, education, languages }: AdditionalSectionProps) {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-6">
             <h2 className="text-base font-bold text-gray-900">Дополнительно</h2>
 
             <div>

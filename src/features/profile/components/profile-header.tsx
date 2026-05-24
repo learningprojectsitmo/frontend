@@ -20,8 +20,8 @@ export function ProfileHeader({
     socials,
 }: ProfileHeaderProps) {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 flex gap-8">
-            <div className="h-[120px] w-[120px] rounded-[20px] bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold shrink-0">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
+            <div className="h-[80px] w-[80px] sm:h-[120px] sm:w-[120px] rounded-[20px] bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold shrink-0">
                 {firstName[0]}
                 {lastName[0]}
             </div>
@@ -29,7 +29,7 @@ export function ProfileHeader({
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                        <h1 className="text-[32px] font-bold text-gray-900 leading-tight truncate">
+                        <h1 className="text-2xl sm:text-[32px] font-bold text-gray-900 leading-tight truncate">
                             {firstName} {lastName}
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">{role}</p>
@@ -52,7 +52,7 @@ export function ProfileHeader({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-12 gap-y-4 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 mt-6">
                     <div>
                         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
                             Контакты
