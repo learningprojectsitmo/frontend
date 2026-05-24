@@ -92,6 +92,10 @@ api.interceptors.response.use(
         originalRequest._retry = true;
         isRefreshing = true;
 
+        // Если токена не было — не показываем «Сессия истекла»,
+        // потому что сессии и не было (чистый визит, не залогинен).
+        const hadToken = !!accessToken;
+
         try {
             const response = await refreshApi.post("/auth/refresh");
             const newToken = (response as { access_token: string }).access_token;
@@ -103,11 +107,13 @@ api.interceptors.response.use(
         } catch (refreshError) {
             processQueue(refreshError, null);
             clearAccessToken();
-            useNotifications.getState().addNotification({
-                type: "error",
-                title: "Error",
-                message: "Сессия истекла. Пожалуйста, войдите снова.",
-            });
+            if (hadToken) {
+                useNotifications.getState().addNotification({
+                    type: "error",
+                    title: "Error",
+                    message: "Сессия истекла. Пожалуйста, войдите снова.",
+                });
+            }
             return Promise.reject(refreshError);
         } finally {
             isRefreshing = false;

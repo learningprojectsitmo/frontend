@@ -44,6 +44,11 @@ export default defineConfig({
             external: ["fs/promises"],
             output: {
                 experimentalMinChunkSize: 3500,
+                manualChunks: {
+                    "vendor-react": ["react", "react-dom", "react-router"],
+                    "vendor-query": ["@tanstack/react-query"],
+                    "vendor-utils": ["axios", "zustand", "zod", "dayjs", "clsx", "camelcase-keys"],
+                },
             },
         },
     },

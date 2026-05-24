@@ -5,9 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import type { LoaderFunction, ActionFunction } from "react-router";
 
 import { paths } from "@/config/paths";
-import { ProtectedRoute } from "@/lib/auth";
 
-import { default as AppRoot, ErrorBoundary as AppRootErrorBoundary } from "./routes/app/root";
 import { Spinner } from "@/components/ui/spinner/spinner";
 
 type LazyModule = {
@@ -72,19 +70,19 @@ export const createAppRouter = (queryClient: QueryClient) =>
             hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
-            path: paths.join.path,
-            lazy: () => import("./routes/join").then(convert(queryClient)),
+            path: paths.home.path,
+            lazy: () => import("./routes/landing").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.landing.path,
+            lazy: () => import("./routes/landing").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />,
         },
         {
             path: paths.app.root.path,
-            element: (
-                <ProtectedRoute>
-                    <AppRoot />
-                </ProtectedRoute>
-            ),
-            ErrorBoundary: AppRootErrorBoundary,
-            hydrateFallbackElement: <LoadingFallback />, // Добавить
+            lazy: () => import("./routes/app/root").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
             children: [
                 {
                     path: paths.app.spaces.path,
