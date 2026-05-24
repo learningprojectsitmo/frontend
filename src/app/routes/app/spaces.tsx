@@ -11,12 +11,11 @@ import { useSpacesList } from "@/lib/spaces";
 import { Icon } from "@/components/ui/icons";
 import { Link } from "react-router";
 import { paths } from "@/config/paths";
-
 const SpacesRoute = () => {
     const [activeTab, setActiveTab] = useState("all");
     const [activeView, setActiveView] = useState("grid");
 
-    const { data: dataSpaces } = useSpacesList(); //, isLoading: isLoadingSpaces, error: errorSpaces
+    const { data: dataSpaces, isLoading: isLoadingSpaces } = useSpacesList();
     // const { data: dataRecentProjects } = useRecentProjectsList(); // isLoading: isLoadingProjects, error: errorProjects
 
     const [visibleCount, setVisibleCount] = useState(6);
@@ -148,6 +147,30 @@ const SpacesRoute = () => {
         { value: "grid", icon: "grid" as IconName },
         { value: "settings", icon: "settings" as IconName },
     ];
+
+    const isEmpty = !isLoadingSpaces && dataSpaces && dataSpaces.spaces.length === 0;
+
+    if (isEmpty) {
+        return (
+            <ContentLayout title="Все пространства">
+                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center px-6">
+                    <h1 className="mb-3 text-2xl font-bold text-gray-900">Все пространства</h1>
+                    <p className="text-sm text-gray-500 max-w-md mb-8 leading-relaxed">
+                        Вы ещё не создали ни одного проекта. Проекты помогают организовать
+                        студенческие проекты, команды и дисциплины в одном месте.
+                    </p>
+                    <Button
+                        variant="dark"
+                        size="hug36"
+                        icon={<Icon name="magnifier" size={18} />}
+                        className="font-sans text-[13px] font-semibold gap-2"
+                    >
+                        Найти проект
+                    </Button>
+                </div>
+            </ContentLayout>
+        );
+    }
 
     return (
         <ContentLayout title="Все пространства">

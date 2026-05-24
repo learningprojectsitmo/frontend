@@ -170,6 +170,63 @@ export type ProjectFullResponse = {
     vacancies: BackendVacancy[];
 };
 
+export type ResumeFull = {
+    id: number;
+    header: string;
+    author_id: number;
+    resume_text: string | null;
+    created_at: string;
+    updated_at: string;
+};
+
+export type ResumeListResponse = {
+    items: ResumeFull[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type PortfolioFull = {
+    id: number;
+    user_id: number;
+    title: string;
+    url: string;
+};
+
+export type EducationFull = {
+    id: number;
+    user_id: number;
+    institution: string;
+    faculty: string;
+    degree: string;
+    years: string;
+};
+
+export type LanguageFull = {
+    id: number;
+    user_id: number;
+    name: string;
+    level: string;
+    flag: string;
+};
+
+export type ProfileResponse = {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    middle_name: string;
+    email: string | null;
+    phone: string | null;
+    tg_nickname: string | null;
+    vk_nickname: string | null;
+    role: string;
+    resumes: ResumeFull[];
+    portfolio: PortfolioFull[];
+    education: EducationFull[];
+    languages: LanguageFull[];
+};
+
 export type CreateWorkspaceInput = {
     name: string;
     description?: string;

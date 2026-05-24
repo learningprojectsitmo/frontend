@@ -106,6 +106,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
+                    path: paths.app.profile.path,
+                    lazy: () => import("./routes/app/profile").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.settings.roles.path,
                     lazy: () => import("./routes/app/settings/roles").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />, // Добавить

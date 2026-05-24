@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { NavLink, Outlet, useSearchParams } from "react-router";
+import { Outlet, useSearchParams } from "react-router";
 
 import { paths } from "@/config/paths";
 import { useSpacesList, getSuggestions } from "@/lib/spaces";
@@ -234,31 +234,6 @@ function SpaceLayoutContent({
                             suggestions={suggestions}
                             value={search}
                         />
-                    </div>
-
-                    <div className="">
-                        <Button
-                            variant="outlineSoft"
-                            size="fixed36"
-                            align="left"
-                            hasIconAsChild={true}
-                            asChild
-                            className="w-full"
-                        >
-                            <NavLink
-                                to={urlId ? `/app/kanban/${urlId}?id=${urlId}` : "#"}
-                                className={({ isActive }) =>
-                                    cn(
-                                        "flex items-center font-medium transition-all w-full",
-                                        isActive
-                                            ? "bg-[#0F1117] text-white"
-                                            : "text-gray-600 hover:bg-gray-100",
-                                    )
-                                }
-                            >
-                                Канбан доска
-                            </NavLink>
-                        </Button>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

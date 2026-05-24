@@ -261,16 +261,18 @@ export function Sidebar({
                                                                     space.id,
                                                                 )}
                                                                 className={cn(
-                                                                    "flex items-center gap-3 w-full px-2 py-2 rounded-[12px] transition-all duration-150 group",
+                                                                    "flex items-center gap-3 w-full px-3 py-3 rounded-[14px] transition-all duration-150 group",
                                                                     isActive
-                                                                        ? "bg-white shadow-sm border border-gray-200"
-                                                                        : "hover:bg-white hover:shadow-sm hover:border-gray-200 border border-transparent",
+                                                                        ? "bg-purple-50"
+                                                                        : "hover:bg-gray-50 border border-transparent",
                                                                 )}
                                                             >
                                                                 <div
                                                                     className={cn(
                                                                         "shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center text-white",
                                                                         space.color,
+                                                                        isActive &&
+                                                                            "ring-2 ring-blue-200",
                                                                     )}
                                                                 >
                                                                     <GraduationCapIcon size={15} />
