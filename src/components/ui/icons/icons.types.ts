@@ -53,6 +53,7 @@ export type IconName =
     | "priority"
     | "profile"
     | "project"
+    | "rocket"
     | "restart"
     | "settings"
     | "share"

@@ -31,11 +31,21 @@ export function ResumeList({ resumes }: ResumeListProps) {
                     </Button>
                 </div>
             </div>
-            <div className="flex flex-col gap-5">
-                {resumes.map((resume) => (
-                    <ResumeCard key={resume.id} resume={resume} />
-                ))}
-            </div>
+            {resumes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                    <Icon name="rocket" size={120} className="text-gray-300 mb-6" />
+                    <h3 className="text-[28px] font-bold text-gray-900">У вас пока нет резюме</h3>
+                    <p className="text-[15px] text-gray-500 mt-2">
+                        Создайте резюме или загрузите существующее
+                    </p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-5">
+                    {resumes.map((resume) => (
+                        <ResumeCard key={resume.id} resume={resume} />
+                    ))}
+                </div>
+            )}
         </section>
     );
 }

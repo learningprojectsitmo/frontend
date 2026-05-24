@@ -56,6 +56,7 @@ export const iconImports: Record<
     profile: () => import("./assets/profile.svg?react"),
     project: () => import("./assets/project.svg?react"),
     restart: () => import("./assets/restart.svg?react"),
+    rocket: () => import("./assets/rocket.svg?react"),
     settings: () => import("./assets/settings.svg?react"),
     share: () => import("./assets/share.svg?react"),
     sidebar: () => import("./assets/sidebar.svg?react"),
