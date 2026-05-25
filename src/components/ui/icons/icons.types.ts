@@ -37,6 +37,7 @@ export type IconName =
     | "import"
     | "info"
     | "kebab"
+    | "lightbulb"
     | "link"
     | "list"
     | "loader"

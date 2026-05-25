@@ -76,6 +76,10 @@ export const paths = {
             path: "/app/profile",
             getHref: () => "/app/profile",
         },
+        ideas: {
+            path: "/app/ideas",
+            getHref: () => "/app/ideas",
+        },
         kanban: {
             path: "kanban/:spaceId",
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,

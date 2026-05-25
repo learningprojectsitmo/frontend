@@ -39,6 +39,7 @@ export const iconImports: Record<
     info: () => import("./assets/info.svg?react"),
     "itmo-id": () => import("./assets/itmo-id.svg?react"),
     kebab: () => import("./assets/kebab.svg?react"),
+    lightbulb: () => import("./assets/lightbulb.svg?react"),
     link: () => import("./assets/link.svg?react"),
     list: () => import("./assets/list.svg?react"),
     loader: () => import("./assets/loader.svg?react"),
