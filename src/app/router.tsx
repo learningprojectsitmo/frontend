@@ -116,6 +116,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ],
         },
         {
+            path: paths.join.path,
+            lazy: () => import("./routes/join").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
             path: "*",
             lazy: () => import("./routes/not-found").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />, // Добавить
