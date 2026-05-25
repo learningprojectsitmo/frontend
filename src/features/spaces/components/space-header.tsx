@@ -11,12 +11,13 @@ import { type Space } from "@/types/api";
 
 type SpaceHeaderProps = {
     spaceData: Space;
+    isAuthor: boolean;
     role?: string;
     onSettingsOpen: () => void;
     onShareOpen: () => void;
 };
 
-export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: SpaceHeaderProps) {
+export function SpaceHeader({ spaceData, isAuthor, role, onSettingsOpen, onShareOpen }: SpaceHeaderProps) {
     return (
         <div className="self-stretch inline-flex justify-between items-start">
             <div className="flex justify-start items-start gap-5">
@@ -34,18 +35,20 @@ export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: Sp
                         <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
                             {spaceData.title}
                         </div>
-                        <button
-                            type="button"
-                            onClick={onSettingsOpen}
-                            data-have-badge="False"
-                            data-icon-alignment="Default"
-                            data-size="Default"
-                            data-state="Default"
-                            data-type="Main"
-                            className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
-                        >
-                            <Icon name="settings" size={20} className="h-5 w-5" />
-                        </button>
+                        {isAuthor && (
+                            <button
+                                type="button"
+                                onClick={onSettingsOpen}
+                                data-have-badge="False"
+                                data-icon-alignment="Default"
+                                data-size="Default"
+                                data-state="Default"
+                                data-type="Main"
+                                className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                            >
+                                <Icon name="settings" size={20} className="h-5 w-5" />
+                            </button>
+                        )}
                     </div>
                     <div className="self-stretch flex flex-col justify-start items-start">
                         <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">

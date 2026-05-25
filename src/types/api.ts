@@ -91,6 +91,7 @@ export type Space = {
     color: string;
     category: string;
     description: string;
+    author_id: number;
 };
 
 export type BackendProjectStatus = {

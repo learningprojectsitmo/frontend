@@ -9,6 +9,7 @@ import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
 import { useSpacesList } from "@/lib/spaces";
 import { useProjectsList } from "@/lib/projects";
+import { useUser } from "@/lib/auth";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -24,11 +25,13 @@ const SpaceRoute = () => {
 
     const { data: dataSpaces, isLoading: isSpacesLoading } = useSpacesList();
     const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
+    const { data: user } = useUser();
 
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
+    const isAuthor = spaceData?.author_id === user?.id;
 
     if (!spaceData) {
         if (isSpacesLoading) {
@@ -70,6 +73,7 @@ const SpaceRoute = () => {
 
                 <SpaceHeader
                     spaceData={spaceData}
+                    isAuthor={isAuthor}
                     role={(dataSpaces as { role?: string })?.role}
                     onSettingsOpen={() => setSettingsOpen(true)}
                     onShareOpen={() => setShareOpen(true)}
