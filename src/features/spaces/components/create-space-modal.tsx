@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useCreateWorkspace, useSpacesList } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const createSpaceSchema = z.object({
     name: z.string().min(1, "Название обязательно").max(100, "Слишком длинное название"),
@@ -59,6 +60,9 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                 onSuccess: () => {
                     form.reset();
                     onOpenChange(false);
+                },
+                onError: () => {
+                    toast.error("Ошибка при создании пространства");
                 },
             },
         );

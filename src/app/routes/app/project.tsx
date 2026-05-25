@@ -146,20 +146,24 @@ const SpaceRoute = () => {
     const handleSave = async () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
-        await updateProjectMutation.mutateAsync({
-            id: String(dataProject.id),
-            data: {
-                name: editTitle,
-                description: editDescription,
-                tags: filtered,
-                vacancies: editRoles.map((r) => ({
-                    title: r.title,
-                    tasks: r.tasks,
-                    required_count: r.count,
-                })),
-            },
-        });
-        setIsEditing(false);
+        try {
+            await updateProjectMutation.mutateAsync({
+                id: String(dataProject.id),
+                data: {
+                    name: editTitle,
+                    description: editDescription,
+                    tags: filtered,
+                    vacancies: editRoles.map((r) => ({
+                        title: r.title,
+                        tasks: r.tasks,
+                        required_count: r.count,
+                    })),
+                },
+            });
+            setIsEditing(false);
+        } catch {
+            toast.error("Не удалось сохранить изменения");
+        }
     };
 
     const addRole = () => {

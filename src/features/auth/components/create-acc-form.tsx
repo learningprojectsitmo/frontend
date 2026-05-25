@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/for
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
+import { toast } from "sonner";
 
 const CreateAccFormSchema = z
     .object({
@@ -57,10 +58,17 @@ export const CreateAccForm = () => {
     });
 
     const onSubmit = (values: CreateAccFormInput) => {
-        createAcc.mutate({
-            email: values.email,
-            password: values.password,
-        });
+        createAcc.mutate(
+            {
+                email: values.email,
+                password: values.password,
+            },
+            {
+                onError: () => {
+                    toast.error("Ошибка при создании аккаунта");
+                },
+            },
+        );
     };
 
     return (

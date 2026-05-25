@@ -1,7 +1,13 @@
 import Axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-import { useNotifications } from "@/components/ui/notifications";
 import { env } from "@/config/env";
+
+let _sessionExpired = false;
+
+export const isSessionExpired = (): boolean => _sessionExpired;
+export const clearSessionExpired = (): void => {
+    _sessionExpired = false;
+};
 
 // ─── In-memory token store ────────────────────────────────────────────────
 
@@ -63,20 +69,10 @@ api.interceptors.response.use(
         if (!originalRequest) return Promise.reject(error);
 
         if (error.response?.status !== 401) {
-            useNotifications.getState().addNotification({
-                type: "error",
-                title: "Error",
-                message: (error.response?.data as { message?: string })?.message || error.message,
-            });
             return Promise.reject(error);
         }
 
         if (originalRequest._retry) {
-            useNotifications.getState().addNotification({
-                type: "error",
-                title: "Error",
-                message: "Неправильный ввод",
-            });
             return Promise.reject(error);
         }
 
@@ -108,11 +104,7 @@ api.interceptors.response.use(
             processQueue(refreshError, null);
             clearAccessToken();
             if (hadToken) {
-                useNotifications.getState().addNotification({
-                    type: "error",
-                    title: "Error",
-                    message: "Сессия истекла. Пожалуйста, войдите снова.",
-                });
+                _sessionExpired = true;
             }
             return Promise.reject(refreshError);
         } finally {
