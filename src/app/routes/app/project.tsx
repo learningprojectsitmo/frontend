@@ -115,7 +115,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
 }
 
 const SpaceRoute = () => {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const urlId = searchParams.get("id") || "";
 
     const { data: dataProject, isLoading, error } = useProject(urlId);
@@ -223,7 +223,20 @@ const SpaceRoute = () => {
         dataSpaces?.spaces.find((space) => String(space.id) === String(project?.spaceId))?.title ||
         "";
 
-    const [activeTab, setActiveTab] = useState("view");
+    const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "view");
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (tab === "view") {
+                next.delete("tab");
+            } else {
+                next.set("tab", tab);
+            }
+            return next;
+        }, { replace: true });
+    };
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
     const [activeView, setActiveView] = useState("grid");
     const [sortBy, setSortBy] = useState("default");
@@ -768,7 +781,7 @@ const SpaceRoute = () => {
                     <Tabs
                         tabs={textTabs}
                         value={activeTab}
-                        onValueChange={setActiveTab}
+                        onValueChange={handleTabChange}
                         variant="text"
                     />
                 </section>
