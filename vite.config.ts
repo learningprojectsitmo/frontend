@@ -40,14 +40,46 @@ export default defineConfig({
     },
     optimizeDeps: { exclude: ["fsevents"] },
     build: {
+        chunkSizeWarningLimit: 600,
         rollupOptions: {
             external: ["fs/promises"],
             output: {
-                experimentalMinChunkSize: 3500,
-                manualChunks: {
-                    "vendor-react": ["react", "react-dom", "react-router"],
-                    "vendor-query": ["@tanstack/react-query"],
-                    "vendor-utils": ["axios", "zustand", "zod", "dayjs", "clsx", "camelcase-keys"],
+                experimentalMinChunkSize: 50000,
+                manualChunks(id: string) {
+                    if (id.includes("node_modules")) {
+                        if (id.includes("react") || id.includes("react-router") || id.includes("react-dom")) {
+                            return "vendor-react";
+                        }
+                        if (id.includes("@tanstack/react-query")) {
+                            return "vendor-query";
+                        }
+                        if (id.includes("framer-motion")) {
+                            return "vendor-animation";
+                        }
+                        if (id.includes("lucide-react")) {
+                            return "vendor-icons";
+                        }
+                        if (id.includes("react-hook-form") || id.includes("@hookform/resolvers")) {
+                            return "vendor-forms";
+                        }
+                        if (id.includes("@radix-ui/")) {
+                            return "vendor-radix";
+                        }
+                        if (id.includes("@dnd-kit/")) {
+                            return "vendor-dnd";
+                        }
+                        if (id.includes("sonner") || id.includes("react-helmet-async") || id.includes("react-error-boundary")) {
+                            return "vendor-ui";
+                        }
+                        if (
+                            id.includes("axios") || id.includes("zustand") || id.includes("zod") ||
+                            id.includes("dayjs") || id.includes("clsx") || id.includes("camelcase-keys") ||
+                            id.includes("tailwind-merge") || id.includes("class-variance-authority") ||
+                            id.includes("nanoid")
+                        ) {
+                            return "vendor-utils";
+                        }
+                    }
                 },
             },
         },

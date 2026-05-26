@@ -38,9 +38,11 @@ const ResumeRoute = () => {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <Spinner size="lg" />
-            </div>
+            <ContentLayout title="Резюме">
+                <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
+                    <Spinner size="lg" />
+                </div>
+            </ContentLayout>
         );
     }
 

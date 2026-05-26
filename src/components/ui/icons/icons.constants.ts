@@ -44,7 +44,7 @@ export const iconImports: Record<
     list: () => import("./assets/list.svg?react"),
     loader: () => import("./assets/loader.svg?react"),
     "logo-edu-flow": () => import("./assets/logo-edu-flow.svg?react"),
-    "logo-edu-space": () => import("./assets/logo-edu-space.svg?react"),
+
     magnifier: () => import("./assets/magnifier.svg?react"),
     mail: () => import("./assets/mail.svg?react"),
     meatballs: () => import("./assets/meatballs.svg?react"),

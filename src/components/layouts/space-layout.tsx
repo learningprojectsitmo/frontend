@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { Outlet, useSearchParams } from "react-router";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Outlet, useSearchParams, Link } from "react-router";
 
 import { paths } from "@/config/paths";
 import { useSpacesList, getSuggestions } from "@/lib/spaces";
@@ -99,12 +99,12 @@ function SpaceLayoutNotFound() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <a
-                        href={paths.app.ideas.getHref()}
+                    <Link
+                        to={paths.app.ideas.getHref()}
                         className="w-9 h-9 bg-transparent rounded-[8px] flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
                     >
                         <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
-                    </a>
+                    </Link>
                     <NotificationsNav notifications={undefined} />
                     <UserNav />
                 </div>
@@ -195,12 +195,59 @@ function SpaceLayoutNotFound() {
     );
 }
 
+const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
+    search,
+    onSearchChange,
+    suggestions,
+}: {
+    search: string;
+    onSearchChange: (v: string) => void;
+    suggestions: string[];
+}) {
+    return (
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <div className="flex items-center gap-12">
+                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <div className="relative w-full md:w-96 lg:w-[415px]">
+                    <SearchBar
+                        placeholder="Ищите проекты, пространства или участников..."
+                        onChange={onSearchChange}
+                        suggestions={suggestions}
+                        value={search}
+                    />
+                </div>
+            </div>
+            <div className="flex items-center gap-3">
+                <Link
+                    to={paths.app.ideas.getHref()}
+                    className="w-9 h-9 bg-transparent rounded-[8px] flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
+                >
+                    <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
+                </Link>
+                <NotificationsNav notifications={undefined} />
+                <UserNav />
+            </div>
+        </header>
+    );
+});
+
+function SpaceLayoutMain({ isCollapsed }: { isCollapsed: boolean }) {
+    return (
+        <main
+            className={cn(
+                "flex-1 overflow-y-auto transition-all duration-200",
+                isCollapsed ? "ml-[56px]" : "ml-[248px]",
+            )}
+        >
+            <Outlet />
+        </main>
+    );
+}
+
 function SpaceLayoutContent({
     data,
-    children,
 }: {
     data: NonNullable<ReturnType<typeof useSpacesList>["data"]>;
-    children?: React.ReactNode;
 }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [searchParams] = useSearchParams();
@@ -228,59 +275,34 @@ function SpaceLayoutContent({
         getSuggestions(debouncedSearch).then(setSuggestions);
     }, [debouncedSearch]);
 
+    const handleToggle = useCallback(() => setIsCollapsed((prev) => !prev), []);
+
     return (
         <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-12">
-                    <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
-                    <div className="relative w-full md:w-96 lg:w-[415px]">
-                        <SearchBar
-                            placeholder="Ищите проекты, пространства или участников..."
-                            onChange={setSearch}
-                            suggestions={suggestions}
-                            value={search}
-                        />
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <a
-                        href={paths.app.ideas.getHref()}
-                        className="w-9 h-9 bg-transparent rounded-[8px] flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
-                    >
-                        <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
-                    </a>
-                    <NotificationsNav notifications={undefined} />
-                    <UserNav />
-                </div>
-            </header>
-
+            <SpaceLayoutHeader
+                search={search}
+                onSearchChange={setSearch}
+                suggestions={suggestions}
+            />
             <div className="flex-1 flex flex-row mt-16">
                 <Sidebar
                     isCollapsed={isCollapsed}
-                    onToggle={() => setIsCollapsed((prev) => !prev)}
+                    onToggle={handleToggle}
                     activeCategories={categories}
                     urlId={urlId}
                 />
-
-                <main
-                    className={cn(
-                        "flex-1 overflow-y-auto transition-all duration-200",
-                        isCollapsed ? "ml-[56px]" : "ml-[248px]",
-                    )}
-                >
-                    {children || <Outlet />}
-                </main>
+                <SpaceLayoutMain isCollapsed={isCollapsed} />
             </div>
         </div>
     );
 }
 
-export function SpaceLayout({ children }: { children?: React.ReactNode }) {
+export function SpaceLayout() {
     const { data, error, isLoading } = useSpacesList({ page: 1, limit: 10 });
 
     if (isLoading) return <SpaceLayoutSkeleton />;
     if (error) return <SpaceLayoutError />;
     if (!data) return <SpaceLayoutNotFound />;
 
-    return <SpaceLayoutContent data={data} children={children} />;
+    return <SpaceLayoutContent data={data} />;
 }

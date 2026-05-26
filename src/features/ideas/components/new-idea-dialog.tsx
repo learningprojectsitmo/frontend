@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mockTags } from "../api";
+import { mockTags } from "../store";
 
 type NewIdeaDialogProps = {
     open: boolean;

@@ -42,7 +42,6 @@ export type IconName =
     | "list"
     | "loader"
     | "logo-edu-flow"
-    | "logo-edu-space"
     | "magnifier"
     | "mail"
     | "meatballs"

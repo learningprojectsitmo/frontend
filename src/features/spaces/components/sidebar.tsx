@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { NavLink, Link } from "react-router";
 import { paths } from "@/config/paths";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ function SidebarNotFoundCollapsed() {
     );
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
     isCollapsed,
     onToggle,
     activeCategories,
@@ -349,4 +349,4 @@ export function Sidebar({
             </aside>
         </>
     );
-}
+});

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ContentLayout } from "@/components/layouts";
-import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
 import { mapResumeFromApi } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
@@ -27,17 +26,7 @@ const socialsFromProfile = (
 const ProfileRoute = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("resume");
-    const { data: profile, isLoading } = useProfile();
-
-    if (isLoading) {
-        return (
-            <ContentLayout title="Профиль и Резюме">
-                <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
-                    <Spinner size="lg" />
-                </div>
-            </ContentLayout>
-        );
-    }
+    const { data: profile } = useProfile();
 
     return (
         <ContentLayout title="Профиль и Резюме">
