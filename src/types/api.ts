@@ -323,6 +323,22 @@ export type SpaceSettingsInput = {
     join_policy?: "open" | "link" | "invitation";
     default_role_id?: number | null;
     icon_url?: string | null;
+    allow_multi_project_participation?: boolean;
+    allow_multi_project_creation?: boolean;
+};
+
+export type SpaceSettingsFull = {
+    id: number;
+    space_id: number;
+    settings_type_id: number;
+    visibility: string;
+    join_policy: string;
+    default_role_id: number | null;
+    icon_url: string | null;
+    allow_multi_project_participation: boolean;
+    allow_multi_project_creation: boolean;
+    created_at: string;
+    updated_at: string;
 };
 
 export type WorkSpaceFull = {
@@ -453,6 +469,26 @@ export interface ApiProjectStats {
     without_assignee: number;
     column_names: Record<number, string>;
 }
+
+export type WorkspaceMember = {
+    id: number;
+    user_id: number;
+    name: string;
+    avatar_url: string | null;
+    projects: { id: number; title: string }[];
+    role: string;
+    contacts: { telegram?: string | null; email?: string | null; linkedin?: string | null };
+    resume_url: string;
+    created_at: string;
+};
+
+export type WorkspaceParticipantListResponse = {
+    items: WorkspaceMember[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
 
 export type InviteLinkResponse = {
     token: string;
