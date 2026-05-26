@@ -4,11 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
 import { type IconName } from "@/components/ui/icons";
-import { useProject, useUpdateProject } from "@/lib/projects";
+import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
 import { useSearchParams } from "react-router";
 import { Plus, GraduationCapIcon } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select/select";
 import { SearchBar } from "@/components/ui/search-bar";
 import { toast } from "sonner";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
@@ -61,7 +68,7 @@ function formatDate(iso: string): string {
     });
 }
 
-function mapBackendProject(p: ProjectFullResponse) {
+function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
     const statusName = p.status?.name || "Неизвестно";
     const isArchived = statusName === "archived";
 
@@ -93,7 +100,7 @@ function mapBackendProject(p: ProjectFullResponse) {
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.date_added,
-            status: "default" as const,
+            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId ? "delete" : "default") as "default" | "delete",
         })),
         replycants: p.replycants.map((r) => ({
             id: r.id,
@@ -115,7 +122,7 @@ const SpaceRoute = () => {
     const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
     const { data: user } = useUser();
 
-    const project = dataProject ? mapBackendProject(dataProject) : null;
+    const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -214,6 +221,9 @@ const SpaceRoute = () => {
     const [activeTab, setActiveTab] = useState("view");
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
     const [activeView, setActiveView] = useState("grid");
+    const [sortBy, setSortBy] = useState("default");
+
+    const removeParticipantMutation = useRemoveParticipant();
 
     // Kanban state
     const projectId = parseInt(urlId || "0", 10);
@@ -388,6 +398,25 @@ const SpaceRoute = () => {
         [kanbanUpdateColumn, refetch],
     );
 
+    const handleRemoveMember = useCallback(
+        (memberId: number) => {
+            const member = project?.members.find((m) => m.id === memberId);
+            if (!member) return;
+            removeParticipantMutation.mutate(
+                { projectId: project?.id || 0, userId: member.id },
+                {
+                    onSuccess: () => {
+                        toast.success("Участник удалён из команды");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось удалить участника");
+                    },
+                },
+            );
+        },
+        [project, removeParticipantMutation],
+    );
+
     const handleDeleteColumn = useCallback(
         (columnId: number) => {
             kanbanDeleteColumn.mutate(columnId, {
@@ -486,7 +515,7 @@ const SpaceRoute = () => {
 
     const viewTabs = [
         { value: "grid", icon: "grid" as IconName },
-        { value: "settings", icon: "settings" as IconName },
+        { value: "list", icon: "list" as IconName },
     ];
 
     const [search, setSearch] = useState("");
@@ -503,14 +532,25 @@ const SpaceRoute = () => {
     const replycantSuggestions = [...replycantTitles, ...replycantContacts];
 
     const filteredMembers = useMemo(() => {
-        if (!search) return project?.members || [];
-        return (project?.members || []).filter(
-            (member) =>
-                member.name.toLowerCase().includes(search.toLowerCase()) ||
-                member.contacts.toLowerCase().includes(search.toLowerCase()) ||
-                member.role.toLowerCase().includes(search.toLowerCase()),
-        );
-    }, [project, search]);
+        let result = project?.members || [];
+        if (search) {
+            result = result.filter(
+                (member) =>
+                    member.name.toLowerCase().includes(search.toLowerCase()) ||
+                    member.contacts.toLowerCase().includes(search.toLowerCase()) ||
+                    member.role.toLowerCase().includes(search.toLowerCase()),
+            );
+        }
+        if (sortBy === "name") {
+            result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === "date") {
+            result = [...result].sort(
+                (a, b) =>
+                    new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
+            );
+        }
+        return result;
+    }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
         if (!search) return project?.replycants || [];
@@ -956,7 +996,7 @@ const SpaceRoute = () => {
 
                                 <div className="flex flex-row items-center gap-3">
                                     <SearchBar
-                                        placeholder="Ищите участников"
+                                        placeholder="Поиск..."
                                         onChange={setSearch}
                                         suggestions={
                                             activeApplicantTab === "team"
@@ -966,7 +1006,16 @@ const SpaceRoute = () => {
                                         value={search}
                                         className="w-[300px]"
                                     />
-                                    {/* сделать */}
+                                    <Select value={sortBy} onValueChange={setSortBy}>
+                                        <SelectTrigger className="w-[160px] h-9 text-[13px] font-sans">
+                                            <SelectValue placeholder="По умолчанию" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="default">По умолчанию</SelectItem>
+                                            <SelectItem value="name">По имени</SelectItem>
+                                            <SelectItem value="date">По дате добавления</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <Tabs
                                         tabs={viewTabs}
                                         value={activeView}
@@ -1008,7 +1057,8 @@ const SpaceRoute = () => {
                                         "Дата добавления",
                                     ]}
                                     members={filteredMembers}
-                                /> //removeMember={removeMember}
+                                    removeMember={handleRemoveMember}
+                                />
                             ) : (
                                 <TableInvitations
                                     headerList={[

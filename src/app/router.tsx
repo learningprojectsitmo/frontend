@@ -109,6 +109,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
+                    path: paths.app.resume.path,
+                    lazy: () => import("./routes/app/resume").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.ideas.path,
                     lazy: () => import("./routes/app/ideas").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,

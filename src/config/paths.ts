@@ -84,5 +84,10 @@ export const paths = {
             path: "kanban/:spaceId",
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,
         },
+        resume: {
+            path: "/app/resume",
+            getHref: (id: number, projectId?: number | null) =>
+                `/app/resume?id=${id}${projectId ? `&projectId=${projectId}` : ""}`,
+        },
     },
 } as const;

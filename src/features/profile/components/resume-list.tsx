@@ -5,9 +5,10 @@ import { Icon } from "@/components/ui/icons";
 
 type ResumeListProps = {
     resumes: ResumeData[];
+    onResumeClick?: (id: number) => void;
 };
 
-export function ResumeList({ resumes }: ResumeListProps) {
+export function ResumeList({ resumes, onResumeClick }: ResumeListProps) {
     return (
         <section>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -42,7 +43,11 @@ export function ResumeList({ resumes }: ResumeListProps) {
             ) : (
                 <div className="flex flex-col gap-5">
                     {resumes.map((resume) => (
-                        <ResumeCard key={resume.id} resume={resume} />
+                        <ResumeCard
+                            key={resume.id}
+                            resume={resume}
+                            onClick={() => onResumeClick?.(resume.id)}
+                        />
                     ))}
                 </div>
             )}

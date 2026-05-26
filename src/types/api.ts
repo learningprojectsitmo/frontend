@@ -176,8 +176,82 @@ export type ResumeFull = {
     header: string;
     author_id: number;
     resume_text: string | null;
+    role: string | null;
+    about: string | null;
+    cover_letter: string | null;
     created_at: string;
     updated_at: string;
+};
+
+export type ResumeExperience = {
+    id: number;
+    company: string;
+    position: string;
+    period_from: string | null;
+    period_to: string | null;
+    duration: string | null;
+    description: string | null;
+    responsibilities: string[] | null;
+    skills: string[] | null;
+    sort_order: number;
+};
+
+export type ResumeSkill = {
+    id: number;
+    name: string;
+    sort_order: number;
+};
+
+export type ResumeInterest = {
+    id: number;
+    name: string;
+    sort_order: number;
+};
+
+export type ResumeLink = {
+    id: number;
+    platform: string;
+    url: string;
+    sort_order: number;
+};
+
+export type ResumeEducation = {
+    id: number;
+    institution: string;
+    faculty: string | null;
+    degree: string | null;
+    year: number | null;
+    sort_order: number;
+};
+
+export type ResumeLanguage = {
+    id: number;
+    name: string;
+    level: string | null;
+    sort_order: number;
+};
+
+export type ResumeUserInfo = {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    middle_name: string;
+    email: string | null;
+    phone: string | null;
+    tg_nickname: string | null;
+    vk_nickname: string | null;
+    role: string | null;
+};
+
+export type ResumeDetail = {
+    resume: ResumeFull;
+    user: ResumeUserInfo;
+    experiences: ResumeExperience[];
+    skills: ResumeSkill[];
+    interests: ResumeInterest[];
+    links: ResumeLink[];
+    educations: ResumeEducation[];
+    languages: ResumeLanguage[];
 };
 
 export type ResumeListResponse = {

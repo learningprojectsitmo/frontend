@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
 import { mapResumeFromApi } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
+import { paths } from "@/config/paths";
 
 const tabs = [
     { value: "resume", label: "Резюме" },
@@ -23,6 +25,7 @@ const socialsFromProfile = (
 };
 
 const ProfileRoute = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("resume");
     const { data: profile, isLoading } = useProfile();
 
@@ -62,7 +65,10 @@ const ProfileRoute = () => {
                 {activeTab === "resume" && (
                     <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-[7] min-w-0">
-                            <ResumeList resumes={(profile?.resumes ?? []).map(mapResumeFromApi)} />
+                            <ResumeList
+                                resumes={(profile?.resumes ?? []).map(mapResumeFromApi)}
+                                onResumeClick={(id) => navigate(paths.app.resume.getHref(id))}
+                            />
                         </div>
                         <div className="flex-[3] min-w-0">
                             <AdditionalSection

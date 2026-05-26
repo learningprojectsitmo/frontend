@@ -9,8 +9,6 @@ import { LoginForm } from "@/features/auth/components/login-form";
 const LoginRoute = () => {
     const { data: user, isLoading } = useUser();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const redirectTo = searchParams.get("redirectTo");
 
     if (isLoading) {
         return (
@@ -21,16 +19,14 @@ const LoginRoute = () => {
     }
 
     if (user) {
-        return <Navigate to={redirectTo || paths.app.spaces.getHref()} replace />;
+        return <Navigate to={paths.app.spaces.getHref()} replace />;
     }
 
     return (
         <AuthLayout title="Log in to your account">
             <LoginForm
                 onSuccess={() => {
-                    navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {
-                        replace: true,
-                    });
+                    navigate(paths.app.spaces.getHref(), { replace: true });
                 }}
             />
         </AuthLayout>
