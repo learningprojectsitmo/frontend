@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group/radio-group";
-import { useCreateInviteLink, useRevokeInviteLink } from "@/lib/spaces";
+import { useInviteLink, useCreateInviteLink, useRevokeInviteLink } from "@/lib/spaces";
 import { Copy, Check, Link2 } from "lucide-react";
 import type { InviteLinkResponse } from "@/types/api";
 
@@ -20,11 +20,21 @@ const roleOptions: RadioOption[] = [
 ];
 
 export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModalProps) => {
+    const { data: existingLink, isLoading: isLinkLoading } = useInviteLink(spaceId, open);
     const createLink = useCreateInviteLink();
     const revokeLink = useRevokeInviteLink();
     const [copied, setCopied] = useState(false);
     const [selectedRole, setSelectedRole] = useState("2");
     const [generatedLink, setGeneratedLink] = useState<InviteLinkResponse | null>(null);
+
+    useEffect(() => {
+        if (open) {
+            if (existingLink) {
+                setGeneratedLink(existingLink);
+            }
+            setCopied(false);
+        }
+    }, [open, existingLink]);
 
     const handleGenerate = () => {
         createLink.mutate(
@@ -107,7 +117,9 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
                             Ссылка для приглашения
                         </h3>
 
-                        {!hasLink ? (
+                        {isLinkLoading ? (
+                            <div className="text-sm text-gray-400 py-2">Загрузка...</div>
+                        ) : !hasLink ? (
                             <div>
                                 <p className="text-xs text-gray-500 mb-4">
                                     Создайте ссылку, чтобы пригласить участников в пространство

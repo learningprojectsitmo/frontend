@@ -124,12 +124,13 @@ export const revokeInviteLink = async (workspaceId: number): Promise<void> => {
     return await api.delete(`/workspaces/${workspaceId}/invite-link`);
 };
 
-export const useInviteLink = (workspaceId: number) => {
+export const useInviteLink = (workspaceId: number, enabled?: boolean) => {
     return useQuery({
         queryKey: ["workspaces", workspaceId, "invite-link"],
         queryFn: () => getInviteLink(workspaceId),
         staleTime: 5 * 60 * 1000,
         retry: false,
+        enabled: enabled ?? true,
     });
 };
 
