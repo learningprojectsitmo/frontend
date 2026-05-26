@@ -113,22 +113,25 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                         <label className="block text-sm font-medium text-[--grey-4] mb-1.5">
                             Теги
                         </label>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            {allTags.map((tag) => (
-                                <button
-                                    key={tag.id}
-                                    type="button"
-                                    onClick={() => toggleTag(tag.name)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                        selectedTags.includes(tag.name)
-                                            ? "bg-[--azure-60] text-white"
-                                            : "bg-[#F3F4F6] text-[--azure-46] hover:bg-[#E5E7EB]"
-                                    }`}
-                                >
-                                    {tag.name}
-                                </button>
-                            ))}
-                        </div>
+                        {selectedTags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {selectedTags.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[--azure-60] text-white"
+                                    >
+                                        {tag}
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleTag(tag)}
+                                            className="hover:text-white/80 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         <div className="relative flex gap-2">
                             <div className="relative flex-1">
                                 <input
