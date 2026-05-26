@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { IdeaStatus } from "../types";
-import { useIdeasStore, mockTags } from "../store";
+import { useIdeasUIStore } from "../store";
+import { useIdeasList as useQueryIdeasList, useTags, useCreateIdea, useToggleVote as useToggleVoteMutation } from "@/lib/api-ideas";
+import { useUser } from "@/lib/auth";
 
 const statusLabels: Record<IdeaStatus, string> = {
     new: "Новые идеи",
@@ -14,60 +16,50 @@ export function getStatusLabel(status: IdeaStatus): string {
 }
 
 export function useIdeasList() {
-    const ideas = useIdeasStore((s) => s.ideas);
-    const search = useIdeasStore((s) => s.search);
-    const sort = useIdeasStore((s) => s.sort);
-    const statusFilter = useIdeasStore((s) => s.statusFilter);
-    const tagFilter = useIdeasStore((s) => s.tagFilter);
-    const showOnlyMine = useIdeasStore((s) => s.showOnlyMine);
-    const showAllTags = useIdeasStore((s) => s.showAllTags);
+    const search = useIdeasUIStore((s) => s.search);
+    const sort = useIdeasUIStore((s) => s.sort);
+    const statusFilter = useIdeasUIStore((s) => s.statusFilter);
+    const tagFilter = useIdeasUIStore((s) => s.tagFilter);
+    const showOnlyMine = useIdeasUIStore((s) => s.showOnlyMine);
+    const showAllTags = useIdeasUIStore((s) => s.showAllTags);
 
-    const setSearch = useIdeasStore((s) => s.setSearch);
-    const setSort = useIdeasStore((s) => s.setSort);
-    const setStatusFilter = useIdeasStore((s) => s.setStatusFilter);
-    const setTagFilter = useIdeasStore((s) => s.setTagFilter);
-    const setShowOnlyMine = useIdeasStore((s) => s.setShowOnlyMine);
-    const setShowAllTags = useIdeasStore((s) => s.setShowAllTags);
-    const toggleVote = useIdeasStore((s) => s.toggleVote);
-    const addIdea = useIdeasStore((s) => s.addIdea);
+    const setSearch = useIdeasUIStore((s) => s.setSearch);
+    const setSort = useIdeasUIStore((s) => s.setSort);
+    const setStatusFilter = useIdeasUIStore((s) => s.setStatusFilter);
+    const setTagFilter = useIdeasUIStore((s) => s.setTagFilter);
+    const setShowOnlyMine = useIdeasUIStore((s) => s.setShowOnlyMine);
+    const setShowAllTags = useIdeasUIStore((s) => s.setShowAllTags);
+
+    const { data: currentUser } = useUser();
+
+    const { data: allIdeas = [] } = useQueryIdeasList({
+        search: search || undefined,
+        sort: sort || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        tag: tagFilter || undefined,
+    });
+
+    const { data: allTags = [] } = useTags();
+    const { mutate: createIdea } = useCreateIdea();
+    const { mutate: toggleVote } = useToggleVoteMutation();
 
     const filtered = useMemo(() => {
-        let result = [...ideas];
-
-        if (statusFilter !== "all") {
-            result = result.filter((i) => i.status === statusFilter);
-        }
-        if (showOnlyMine) {
-            result = result.filter((i) => i.author.id === 0);
-        }
-        if (tagFilter) {
-            result = result.filter((i) => i.tags.includes(tagFilter));
-        }
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (i) =>
-                    i.title.toLowerCase().includes(q) ||
-                    i.description.toLowerCase().includes(q),
-            );
-        }
-        if (sort === "newest") {
-            result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        } else {
-            result.sort((a, b) => b.votes - a.votes);
+        let result = [...allIdeas];
+        if (showOnlyMine && currentUser) {
+            result = result.filter((i) => i.author.id === currentUser.id);
         }
         return result;
-    }, [ideas, statusFilter, showOnlyMine, tagFilter, search, sort]);
+    }, [allIdeas, showOnlyMine, currentUser]);
 
     const filteredTags = useMemo(() => {
-        if (showAllTags) return mockTags;
-        return mockTags.slice(0, 10);
-    }, [showAllTags]);
+        if (showAllTags) return allTags;
+        return allTags.slice(0, 10);
+    }, [allTags, showAllTags]);
 
     return {
         ideas: filtered,
         tags: filteredTags,
-        totalTags: mockTags.length,
+        totalTags: allTags.length,
         showAllTags,
         setShowAllTags,
         search,
@@ -80,7 +72,7 @@ export function useIdeasList() {
         setTagFilter,
         showOnlyMine,
         setShowOnlyMine,
-        toggleVote,
-        addIdea,
+        toggleVote: (ideaId: number, direction: "up" | "down") => toggleVote({ ideaId, direction }),
+        addIdea: (title: string, description: string, tags: string[]) => createIdea({ title, description, tags }),
     };
 }

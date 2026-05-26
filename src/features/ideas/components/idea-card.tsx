@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { MessageSquare } from "lucide-react";
 import { VotePanel } from "./vote-panel";
 import type { Idea } from "../types";
@@ -10,7 +11,10 @@ type IdeaCardProps = {
 
 export function IdeaCard({ idea, onVoteUp, onVoteDown }: IdeaCardProps) {
     return (
-        <div className="group bg-white border border-[--color-black-10] rounded-[14px] p-5 flex gap-4 transition-shadow duration-200 hover:shadow-md">
+        <Link
+            to={`/app/ideas/${idea.id}`}
+            className="block group bg-white border border-[--color-black-10] rounded-[14px] p-5 flex gap-4 transition-shadow duration-200 hover:shadow-md cursor-pointer"
+        >
             <VotePanel
                 votes={idea.votes}
                 userVote={idea.userVote}
@@ -32,10 +36,8 @@ export function IdeaCard({ idea, onVoteUp, onVoteDown }: IdeaCardProps) {
                         </div>
                         <div className="flex items-center gap-1.5">
                             {idea.tags.map((tag) => (
-                                <span
-                                    key={tag}
-                                    className="px-2 py-0.5 bg-[--azure-60]/10 text-[--azure-60] text-xs font-medium rounded-[8px]"
-                                >
+                                <span key={tag}
+                                    className="px-2 py-0.5 bg-[--azure-60]/10 text-[--azure-60] text-xs font-medium rounded-[8px]">
                                     {tag}
                                 </span>
                             ))}
@@ -49,6 +51,6 @@ export function IdeaCard({ idea, onVoteUp, onVoteDown }: IdeaCardProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
