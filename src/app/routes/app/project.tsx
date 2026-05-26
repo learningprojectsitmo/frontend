@@ -1,9 +1,9 @@
 import { ContentLayout } from "@/components/layouts";
-import { Dot, Ellipsis, PencilLine } from "lucide-react";
+import { Dot, Ellipsis, PencilLine, List as ListIcon } from "lucide-react";
+import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
-import { type IconName } from "@/components/ui/icons";
 import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
@@ -538,11 +538,6 @@ const SpaceRoute = () => {
         { value: "applications", label: "Отклики и приглашения" },
     ];
 
-    const viewTabs = [
-        { value: "grid", icon: "grid" as IconName },
-        { value: "list", icon: "list" as IconName },
-    ];
-
     const [search, setSearch] = useState("");
     const memberTitles = project?.members?.map((member) => member.name) || [];
     const replycantTitles = project?.replycants?.map((replycant) => replycant.name) || [];
@@ -1060,13 +1055,28 @@ const SpaceRoute = () => {
                                             <SelectItem value="date">По дате добавления</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <Tabs
-                                        tabs={viewTabs}
-                                        value={activeView}
-                                        onValueChange={setActiveView}
-                                        variant="icon"
-                                        className="w-auto"
-                                    />
+                                    <div className="flex items-center h-9 bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
+                                        <button
+                                            onClick={() => setActiveView("grid")}
+                                            className={`px-2.5 h-full flex items-center transition-colors ${
+                                                activeView === "grid"
+                                                    ? "bg-[#111827] text-white"
+                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <Icon name="grid" size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveView("list")}
+                                            className={`px-2.5 h-full flex items-center transition-colors ${
+                                                activeView === "list"
+                                                    ? "bg-[#111827] text-white"
+                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <ListIcon size={16} />
+                                        </button>
+                                    </div>
                                     {isCreator ||
                                     dataSpaces?.role === "admin" ||
                                     dataSpaces?.role === "teacher" ? (
@@ -1092,17 +1102,69 @@ const SpaceRoute = () => {
 
                         {
                             activeApplicantTab === "team" ? (
-                                <TableMembers
-                                    headerList={[
-                                        "Имя",
-                                        "Роль",
-                                        "Контакты",
-                                        "Резюме",
-                                        "Дата добавления",
-                                    ]}
-                                    members={filteredMembers}
-                                    removeMember={handleRemoveMember}
-                                />
+                                activeView === "list" ? (
+                                    <TableMembers
+                                        headerList={[
+                                            "Имя",
+                                            "Роль",
+                                            "Контакты",
+                                            "Резюме",
+                                            "Дата добавления",
+                                        ]}
+                                        members={filteredMembers}
+                                        removeMember={handleRemoveMember}
+                                    />
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-6">
+                                        {filteredMembers.map((member) => (
+                                            <div
+                                                key={member.id}
+                                                className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
+                                                        {member.name
+                                                            .split(" ")
+                                                            .map((n) => n[0])
+                                                            .join("")
+                                                            .toUpperCase()
+                                                            .slice(0, 2)}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[15px] font-semibold text-app-text truncate">
+                                                            {member.name}
+                                                        </p>
+                                                        <p className="text-[13px] text-app-muted">
+                                                            {member.role}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {member.projects && member.projects.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {member.projects.map((p) => (
+                                                            <span
+                                                                key={p.id}
+                                                                className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
+                                                            >
+                                                                {p.title}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {member.resumeUrl && (
+                                                    <a
+                                                        href={member.resumeUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
+                                                    >
+                                                        Открыть резюме
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
                             ) : (
                                 <TableInvitations
                                     headerList={[

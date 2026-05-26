@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Search, Columns, List } from "lucide-react";
+import { Search, List } from "lucide-react";
+import { Icon } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProjectCard } from "@/components/ui/card/project-card";
 import { paths } from "@/config/paths";
@@ -134,7 +135,7 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                                     : "text-[#6B7280] hover:bg-gray-50"
                             }`}
                         >
-                            <Columns size={16} />
+                                            <Icon name="grid" size={16} />
                         </button>
                         <button
                             onClick={() => setViewMode("list")}
