@@ -12,12 +12,16 @@ import { type Space } from "@/types/api";
 type SpaceHeaderProps = {
     spaceData: Space;
     isAuthor: boolean;
-    role?: string;
     onSettingsOpen: () => void;
     onShareOpen: () => void;
 };
 
-export function SpaceHeader({ spaceData, isAuthor, role, onSettingsOpen, onShareOpen }: SpaceHeaderProps) {
+export function SpaceHeader({
+    spaceData,
+    isAuthor,
+    onSettingsOpen,
+    onShareOpen,
+}: SpaceHeaderProps) {
     return (
         <div className="self-stretch inline-flex justify-between items-start">
             <div className="flex justify-start items-start gap-5">
@@ -89,45 +93,43 @@ export function SpaceHeader({ spaceData, isAuthor, role, onSettingsOpen, onShare
                     </div>
                 </div>
             </div>
-            {role !== "member" && (
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="dark"
-                        size="hug36"
-                        icon={<Plus size={18} />}
-                        className="font-sans text-[13px] font-semibold gap-2"
-                    >
-                        Создать проект
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                type="button"
-                                className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
-                            >
-                                <MoreHorizontal size={18} />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[180px]">
-                            <DropdownMenuItem
-                                className="gap-3 text-sm cursor-pointer"
-                                onSelect={onShareOpen}
-                            >
-                                <Share2 size={16} />
-                                Поделись
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                                <Upload size={16} />
-                                Экспортировать
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                                <Archive size={16} />
-                                Архивировать
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )}
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="dark"
+                    size="hug36"
+                    icon={<Plus size={18} />}
+                    className="font-sans text-[13px] font-semibold gap-2"
+                >
+                    Создать проект
+                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                        >
+                            <MoreHorizontal size={18} />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[180px]">
+                        <DropdownMenuItem
+                            className="gap-3 text-sm cursor-pointer"
+                            onSelect={onShareOpen}
+                        >
+                            <Share2 size={16} />
+                            Поделись
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                            <Upload size={16} />
+                            Экспортировать
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                            <Archive size={16} />
+                            Архивировать
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
     );
 }

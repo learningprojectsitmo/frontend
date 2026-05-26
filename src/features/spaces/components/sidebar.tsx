@@ -320,7 +320,7 @@ export const Sidebar = memo(function Sidebar({
                 )}
 
                 {/* ── Footer — скрыт при загрузке и 404 ── */}
-                {!isLoading && !isNotFound && role !== "manager" && role !== "member" && (
+                {!isLoading && !isNotFound && (role === "admin" || role === "teacher") && (
                     <div className="border-t border-gray-200 p-3 flex-none">
                         {isCollapsed ? (
                             <Button

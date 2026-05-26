@@ -74,7 +74,6 @@ const SpaceRoute = () => {
                 <SpaceHeader
                     spaceData={spaceData}
                     isAuthor={isAuthor}
-                    role={(dataSpaces as { role?: string })?.role}
                     onSettingsOpen={() => setSettingsOpen(true)}
                     onShareOpen={() => setShareOpen(true)}
                 />

@@ -100,7 +100,9 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.date_added,
-            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId ? "delete" : "default") as "default" | "delete",
+            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId
+                ? "delete"
+                : "default") as "default" | "delete",
         })),
         replycants: p.replycants.map((r) => ({
             id: r.id,
@@ -150,12 +152,14 @@ const SpaceRoute = () => {
         }
     }, [dataProject]);
 
-                    const handleSave = async () => {
+    const handleSave = async () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
         const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
         if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
-            toast.error(`Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`);
+            toast.error(
+                `Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`,
+            );
             return;
         }
         try {
@@ -227,15 +231,18 @@ const SpaceRoute = () => {
 
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (tab === "view") {
-                next.delete("tab");
-            } else {
-                next.set("tab", tab);
-            }
-            return next;
-        }, { replace: true });
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                if (tab === "view") {
+                    next.delete("tab");
+                } else {
+                    next.set("tab", tab);
+                }
+                return next;
+            },
+            { replace: true },
+        );
     };
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
     const [activeView, setActiveView] = useState("grid");
@@ -563,8 +570,7 @@ const SpaceRoute = () => {
             result = [...result].sort((a, b) => a.name.localeCompare(b.name));
         } else if (sortBy === "date") {
             result = [...result].sort(
-                (a, b) =>
-                    new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
+                (a, b) => new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
             );
         }
         return result;
@@ -868,7 +874,8 @@ const SpaceRoute = () => {
                                 </div>
                                 {isEditing && dataProject?.max_participants && (
                                     <div className="text-sm text-gray-400 mt-1">
-                                        Мест: {editRoles.reduce((s, r) => s + r.count, 0)} / {dataProject.max_participants}
+                                        Мест: {editRoles.reduce((s, r) => s + r.count, 0)} /{" "}
+                                        {dataProject.max_participants}
                                     </div>
                                 )}
                             </div>
@@ -947,7 +954,10 @@ const SpaceRoute = () => {
                                                     <input
                                                         type="number"
                                                         min={1}
-                                                        max={dataProject?.max_participants ?? undefined}
+                                                        max={
+                                                            dataProject?.max_participants ??
+                                                            undefined
+                                                        }
                                                         value={role.count}
                                                         onChange={(e) =>
                                                             updateRole(
@@ -1057,7 +1067,9 @@ const SpaceRoute = () => {
                                         variant="icon"
                                         className="w-auto"
                                     />
-                                    {dataSpaces?.role !== "member" ? (
+                                    {isCreator ||
+                                    dataSpaces?.role === "admin" ||
+                                    dataSpaces?.role === "teacher" ? (
                                         <Button
                                             variant="dark"
                                             size="hug36"
@@ -1066,9 +1078,7 @@ const SpaceRoute = () => {
                                         >
                                             Пригласить
                                         </Button>
-                                    ) : (
-                                        ""
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
 

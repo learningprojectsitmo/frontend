@@ -182,18 +182,14 @@ const SpacesRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    {dataSpaces?.role !== "member" ? (
-                        <Button
-                            variant="dark"
-                            size="hug36"
-                            icon={<Plus size={18} />}
-                            className="font-sans text-[13px] font-semibold gap-2"
-                        >
-                            Создать проект
-                        </Button>
-                    ) : (
-                        ""
-                    )}
+                    <Button
+                        variant="dark"
+                        size="hug36"
+                        icon={<Plus size={18} />}
+                        className="font-sans text-[13px] font-semibold gap-2"
+                    >
+                        Создать проект
+                    </Button>
                 </div>
 
                 <section className="mb-12">

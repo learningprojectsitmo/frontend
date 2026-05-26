@@ -290,6 +290,7 @@ function SpaceLayoutContent({
                     onToggle={handleToggle}
                     activeCategories={categories}
                     urlId={urlId}
+                    role={data?.role}
                 />
                 <SpaceLayoutMain isCollapsed={isCollapsed} />
             </div>

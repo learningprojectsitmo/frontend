@@ -81,6 +81,7 @@ export type SpacesListResponce = {
     page?: number;
     limit?: number;
     total?: number;
+    role: string;
 };
 
 export type Space = {
