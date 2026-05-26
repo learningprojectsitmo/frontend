@@ -12,6 +12,7 @@ type ProfileHeaderProps = {
     phone: string | null;
     socials: SocialLink[];
     showActions?: boolean;
+    onEdit?: () => void;
 };
 
 export const ProfileHeader = ({
@@ -22,6 +23,7 @@ export const ProfileHeader = ({
     phone,
     socials,
     showActions = false,
+    onEdit,
 }: ProfileHeaderProps) => {
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
@@ -45,6 +47,7 @@ export const ProfileHeader = ({
                                 size="hug36"
                                 icon={<Icon name="pen" size={14} />}
                                 className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                                onClick={onEdit}
                             >
                                 Редактировать
                             </Button>

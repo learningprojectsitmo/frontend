@@ -150,9 +150,14 @@ const SpaceRoute = () => {
         }
     }, [dataProject]);
 
-    const handleSave = async () => {
+                    const handleSave = async () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
+        const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
+        if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
+            toast.error(`Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`);
+            return;
+        }
         try {
             await updateProjectMutation.mutateAsync({
                 id: String(dataProject.id),
@@ -848,6 +853,11 @@ const SpaceRoute = () => {
                                 <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
                                     Необходимые участники
                                 </div>
+                                {isEditing && dataProject?.max_participants && (
+                                    <div className="text-sm text-gray-400 mt-1">
+                                        Мест: {editRoles.reduce((s, r) => s + r.count, 0)} / {dataProject.max_participants}
+                                    </div>
+                                )}
                             </div>
                             <div
                                 data-type="Required participants"
@@ -924,6 +934,7 @@ const SpaceRoute = () => {
                                                     <input
                                                         type="number"
                                                         min={1}
+                                                        max={dataProject?.max_participants ?? undefined}
                                                         value={role.count}
                                                         onChange={(e) =>
                                                             updateRole(
@@ -981,6 +992,16 @@ const SpaceRoute = () => {
                                         + Добавить роль
                                     </button>
                                 )}
+                                {isEditing &&
+                                    dataProject?.max_participants &&
+                                    editRoles.reduce((s, r) => s + r.count, 0) >
+                                        dataProject.max_participants && (
+                                        <div className="text-sm text-red-500 mt-2">
+                                            Сумма необходимых участников (
+                                            {editRoles.reduce((s, r) => s + r.count, 0)}) превышает
+                                            максимальное количество ({dataProject.max_participants})
+                                        </div>
+                                    )}
                             </div>
                         </section>
 
@@ -989,8 +1010,8 @@ const SpaceRoute = () => {
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     Список участников{" "}
                                     {activeApplicantTab === "team"
-                                        ? `(${project.members?.length || 0}/8)`
-                                        : `(${project.replycants?.length || 0}/10)`}
+                                        ? `(${project.members?.length || 0}${dataProject?.max_participants ? `/${dataProject.max_participants}` : ""})`
+                                        : `(${project.replycants?.length || 0})`}
                                 </h2>
                                 {/* сделать */}
 

@@ -1,3 +1,6 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { type ResumeDetail } from "@/types/api";
 import { CoverLetterCard } from "./cover-letter-card";
 import { ProfileCard } from "./profile-card";
@@ -11,18 +14,72 @@ import { InterestsCard } from "./interests-card";
 
 type Props = {
     data: ResumeDetail;
+    isEditing?: boolean;
+    onEdit?: () => void;
+    onSave?: (data: { role: string | null; about: string | null; cover_letter: string | null }) => void;
+    onCancel?: () => void;
 };
 
-export const ResumePage = ({ data }: Props) => {
+export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props) => {
+    const [editRole, setEditRole] = useState("");
+    const [editAbout, setEditAbout] = useState("");
+    const [editCoverLetter, setEditCoverLetter] = useState("");
+
+    useEffect(() => {
+        setEditRole(data.resume.role ?? "");
+        setEditAbout(data.resume.about ?? "");
+        setEditCoverLetter(data.resume.cover_letter ?? "");
+    }, [data.resume.role, data.resume.about, data.resume.cover_letter]);
+
     return (
         <div className="flex flex-col gap-6">
-            {data.resume.cover_letter && (
+            {isEditing && (
+                <div className="flex items-center justify-end gap-3">
+                    <Button
+                        variant="outline"
+                        size="hug36"
+                        className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                        onClick={onCancel}
+                    >
+                        Отмена
+                    </Button>
+                    <Button
+                        variant="dark"
+                        size="hug36"
+                        icon={<Icon name="check" size={14} />}
+                        className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                        onClick={() =>
+                            onSave?.({
+                                role: editRole || null,
+                                about: editAbout || null,
+                                cover_letter: editCoverLetter || null,
+                            })
+                        }
+                    >
+                        Сохранить
+                    </Button>
+                </div>
+            )}
+
+            {data.resume.cover_letter && !isEditing && (
                 <CoverLetterCard content={data.resume.cover_letter} />
+            )}
+            {isEditing && (
+                <CoverLetterCard
+                    content={data.resume.cover_letter ?? ""}
+                    isEditing
+                    editValue={editCoverLetter}
+                    onChange={setEditCoverLetter}
+                />
             )}
 
             <ProfileCard
                 user={data.user}
                 role={data.resume.role}
+                isEditing={isEditing}
+                editRole={editRole}
+                onRoleChange={setEditRole}
+                onEdit={onEdit}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
@@ -30,8 +87,16 @@ export const ResumePage = ({ data }: Props) => {
                     {data.experiences.length > 0 && (
                         <ExperienceTimeline experiences={data.experiences} />
                     )}
-                    {data.resume.about && (
+                    {data.resume.about && !isEditing && (
                         <AboutCard content={data.resume.about} />
+                    )}
+                    {isEditing && (
+                        <AboutCard
+                            content={data.resume.about ?? ""}
+                            isEditing
+                            editValue={editAbout}
+                            onChange={setEditAbout}
+                        />
                     )}
                 </div>
 

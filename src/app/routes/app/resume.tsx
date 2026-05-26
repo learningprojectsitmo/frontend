@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { ContentLayout } from "@/components/layouts";
 import { useSearchParams, Link } from "react-router";
-import { useResumeDetail } from "@/lib/resume";
+import { useResumeDetail, useUpdateResume } from "@/lib/resume";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import {
     Breadcrumb,
@@ -18,6 +19,22 @@ const ResumeRoute = () => {
     const projectId = searchParams.get("projectId");
 
     const { data, isLoading, error } = useResumeDetail(id);
+    const updateResumeMutation = useUpdateResume();
+
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+    };
+
+    const handleSave = async (fields: { role: string | null; about: string | null; cover_letter: string | null }) => {
+        await updateResumeMutation.mutateAsync({ id, data: fields });
+        setIsEditing(false);
+    };
 
     if (isLoading) {
         return (
@@ -91,7 +108,13 @@ const ResumeRoute = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                <ResumePage data={data} />
+                <ResumePage
+                    data={data}
+                    isEditing={isEditing}
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                />
             </div>
         </ContentLayout>
     );

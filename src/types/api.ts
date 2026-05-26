@@ -171,6 +171,14 @@ export type ProjectFullResponse = {
     vacancies: BackendVacancy[];
 };
 
+export type ResumeUpdate = {
+    header?: string;
+    resume_text?: string | null;
+    role?: string | null;
+    about?: string | null;
+    cover_letter?: string | null;
+};
+
 export type ResumeFull = {
     id: number;
     header: string;
