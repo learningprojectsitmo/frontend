@@ -1,12 +1,18 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { SearchBar } from "@/components/ui/search-bar";
-import { Tabs } from "@/components/ui/tabs/tabs";
+import { Search, Columns, List } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProjectCard } from "@/components/ui/card/project-card";
-import { Icon, type IconName } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
 import { type ProjectListItemResponse } from "@/types/api";
+
+const statusLabels: Record<string, string> = {
+    in_progress: "В работе",
+    review: "На проверке",
+    planned: "Запланирован",
+    completed: "Выполнен",
+    draft: "Черновик",
+};
 
 function formatDate(iso: string): string {
     const d = new Date(iso);
@@ -21,22 +27,10 @@ function mapProjectListItem(item: ProjectListItemResponse) {
     const statusName = item.status?.name || "draft";
     const isArchived = statusName === "archived";
 
-    const tagVariant = isArchived
-        ? "disabled"
-        : statusName === "in_progress"
-          ? "info"
-          : statusName === "completed"
-            ? "success"
-            : statusName === "review"
-              ? "warning"
-              : statusName === "planned"
-                ? "default"
-                : "default";
-
     return {
         id: item.id,
-        tag: statusName,
-        tagVariant: tagVariant as "disabled" | "info" | "success" | "warning" | "default",
+        tag: isArchived ? "draft" : statusName,
+        tagLabel: statusLabels[statusName] || statusName,
         title: item.name,
         description: item.description || "",
         progressValue: item.progress,
@@ -55,25 +49,34 @@ type SpaceProjectListProps = {
     isError: boolean;
 };
 
+type StatusFilter = "all" | "active" | "archived";
+
 export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceProjectListProps) {
-    const [activeView, setActiveView] = useState("grid");
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [visibleCount, setVisibleCount] = useState(9);
 
     const mappedProjects = useMemo(() => projects.map(mapProjectListItem), [projects]);
 
-    const titles = mappedProjects.map((p) => p.title);
-    const descriptions = mappedProjects.map((p) => p.description);
-    const suggestions = [...titles, ...descriptions];
-
     const filteredProjects = useMemo(() => {
-        if (!search) return mappedProjects;
-        return mappedProjects.filter(
-            (project) =>
-                project.title.toLowerCase().includes(search.toLowerCase()) ||
-                project.description.toLowerCase().includes(search.toLowerCase()),
-        );
-    }, [mappedProjects, search]);
+        let result = mappedProjects;
+
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(
+                (p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
+            );
+        }
+
+        if (statusFilter === "active") {
+            result = result.filter((p) => !p.archived);
+        } else if (statusFilter === "archived") {
+            result = result.filter((p) => p.archived);
+        }
+
+        return result;
+    }, [mappedProjects, search, statusFilter]);
 
     const visibleProjects = useMemo(() => {
         return filteredProjects.slice(0, visibleCount);
@@ -82,31 +85,72 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
     const hasMore = visibleCount < total;
     const handleLoadMore = () => setVisibleCount((prev) => prev + 6);
 
-    const viewTabs = [{ value: "grid", icon: "grid" as IconName }];
-
     return (
-        <section className="pt-4">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-800">Проекты</h2>
+        <section>
+            {/* Toolbar */}
+            <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-app-text">Проекты</h2>
 
-                <div className="flex flex-row items-center gap-3">
-                    <SearchBar
-                        placeholder="Ищите проекты"
-                        onChange={setSearch}
-                        suggestions={suggestions}
-                        value={search}
-                        className="w-[300px]"
-                    />
-                    <Tabs
-                        tabs={viewTabs}
-                        value={activeView}
-                        onValueChange={setActiveView}
-                        variant="icon"
-                        className="w-auto"
-                    />
+                <div className="flex items-center gap-3">
+                    {/* Search */}
+                    <div className="relative">
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Поиск проектов"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-[240px] h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[14px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"
+                        />
+                    </div>
+
+                    {/* Status filter */}
+                    <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                        {(["all", "active", "archived"] as const).map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setStatusFilter(f)}
+                                className={`px-3 h-full text-[13px] font-medium transition-colors ${
+                                    statusFilter === f
+                                        ? "bg-[#111827] text-white"
+                                        : "text-[#6B7280] hover:bg-gray-50"
+                                }`}
+                            >
+                                {f === "all" ? "Все" : f === "active" ? "Активные" : "Архив"}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Grid/List toggle */}
+                    <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                        <button
+                            onClick={() => setViewMode("grid")}
+                            className={`px-3 h-full flex items-center transition-colors ${
+                                viewMode === "grid"
+                                    ? "bg-[#111827] text-white"
+                                    : "text-[#6B7280] hover:bg-gray-50"
+                            }`}
+                        >
+                            <Columns size={16} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode("list")}
+                            className={`px-3 h-full flex items-center transition-colors ${
+                                viewMode === "list"
+                                    ? "bg-[#111827] text-white"
+                                    : "text-[#6B7280] hover:bg-gray-50"
+                            }`}
+                        >
+                            <List size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            {/* Content */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                     <Spinner size="lg" />
@@ -116,11 +160,13 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                     Не удалось загрузить проекты. Попробуйте обновить страницу.
                 </div>
             ) : visibleProjects.length === 0 ? (
-                <div className="text-center py-16 text-gray-400 text-sm">
-                    {search ? "Проекты не найдены" : "В этом пространстве пока нет проектов"}
+                <div className="text-center py-16 text-app-muted text-sm">
+                    {search || statusFilter !== "all"
+                        ? "Проекты не найдены"
+                        : "В этом пространстве пока нет проектов"}
                 </div>
-            ) : (
-                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+            ) : viewMode === "grid" ? (
+                <div className="grid grid-cols-3 gap-6">
                     {visibleProjects.map((project) => (
                         <Link
                             key={project.id}
@@ -129,7 +175,7 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                         >
                             <ProjectCard
                                 tag={project.tag}
-                                tagVariant={project.tagVariant}
+                                tagLabel={project.tagLabel}
                                 title={project.title}
                                 description={project.description}
                                 progressValue={project.progressValue}
@@ -138,24 +184,27 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                                 membersCount={project.membersCount}
                                 users={project.users}
                                 archived={project.archived}
-                                onKebabClick={() => alert(`Menu opened for ${project.title}`)}
                             />
                         </Link>
                     ))}
                 </div>
+            ) : (
+                <div className="bg-white rounded-[20px] border border-[#E5E7EB] p-6">
+                    <p className="text-app-muted text-sm">List view coming soon</p>
+                </div>
             )}
 
-            <div className="w-full flex justify-center">
-                {hasMore && (
+            {/* Load more */}
+            {hasMore && (
+                <div className="w-full flex justify-center mt-8">
                     <button
                         onClick={handleLoadMore}
-                        className="mt-4 px-4 py-2 font-sans text-[13px] font-semibold text-blue-600 rounded flex align-items gap-1"
+                        className="text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
                     >
-                        <Icon name="arrow-down" width={16} height={16} />
                         Загрузить ещё
                     </button>
-                )}
-            </div>
+                </div>
+            )}
         </section>
     );
 }

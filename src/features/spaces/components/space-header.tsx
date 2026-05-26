@@ -36,7 +36,7 @@ export function SpaceHeader({
                 </div>
                 <div className="inline-flex flex-col justify-start items-start gap-0.5">
                     <div className="self-stretch inline-flex justify-start items-center gap-3">
-                        <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
+                        <div className="justify-center text-app-text text-[40px] font-bold font-sans leading-[1.1]">
                             {spaceData.title}
                         </div>
                         {isAuthor && (
@@ -55,14 +55,14 @@ export function SpaceHeader({
                         )}
                     </div>
                     <div className="self-stretch flex flex-col justify-start items-start">
-                        <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                        <div className="justify-center text-app-muted text-base font-medium font-sans leading-7">
                             {spaceData.description}
                         </div>
                     </div>
                     <div className="inline-flex justify-start items-center gap-3">
                         <div className="flex justify-start items-center gap-1">
                             <div className="inline-flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                <div className="justify-center text-app-muted text-[13px] font-normal font-sans leading-5 tracking-tight">
                                     {spaceData.projectsCount} проектов
                                 </div>
                             </div>
@@ -75,17 +75,12 @@ export function SpaceHeader({
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
-                                <circle
-                                    cx="8"
-                                    cy="8"
-                                    r="1.5"
-                                    fill="var(--color-azure-46, #6A7282)"
-                                />
+                                <circle cx="8" cy="8" r="1.5" fill="#6B7280" />
                             </svg>
                         </div>
                         <div className="flex justify-start items-center gap-1">
                             <div className="inline-flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                <div className="justify-center text-app-muted text-[13px] font-normal font-sans leading-5 tracking-tight">
                                     {spaceData.membersCount} участника
                                 </div>
                             </div>
@@ -98,7 +93,7 @@ export function SpaceHeader({
                     variant="dark"
                     size="hug36"
                     icon={<Plus size={18} />}
-                    className="font-sans text-[13px] font-semibold gap-2"
+                    className="font-sans text-[13px] font-semibold gap-2 !h-11 !rounded-[12px] !px-[18px]"
                 >
                     Создать проект
                 </Button>

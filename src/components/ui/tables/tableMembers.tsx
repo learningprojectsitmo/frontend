@@ -1,11 +1,4 @@
-import {
-    Dot,
-    Ellipsis,
-    Mail,
-    Linkedin,
-    ExternalLink,
-    UserMinus,
-} from "lucide-react";
+import { Ellipsis, Mail, Linkedin, ExternalLink, UserMinus } from "lucide-react";
 import { type Member } from "@/types/tables/forTables";
 import {
     DropdownMenu,
@@ -47,16 +40,16 @@ export const TableMembers = ({
     onRowClick,
 }: TableProps) => {
     return (
-        <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="w-full overflow-hidden rounded-[20px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="text-[#0A0A0A] text-black-500 border-b border-gray-200 sticky top-0 bg-white z-10">
+                    <thead className="text-app-text border-b border-[#E5E7EB] sticky top-0 bg-[#FAFAFA] z-10">
                         <tr>
                             {headerList.map((header) => (
                                 <th
                                     key={header}
                                     className={cn(
-                                        "px-6 py-4 text-[15px] font-sans font-semibold whitespace-nowrap",
+                                        "px-6 h-14 text-[15px] font-sans font-semibold whitespace-nowrap",
                                         (header === "Резюме" || header === "Дата добавления") &&
                                             "hidden md:table-cell",
                                         header === "Контакты" && "hidden sm:table-cell",
@@ -68,12 +61,12 @@ export const TableMembers = ({
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
+                    <tbody className="divide-y divide-[#E5E7EB] text-[13px] font-sans font-medium">
                         {members.map((member) => (
                             <tr
                                 key={member.id}
                                 className={cn(
-                                    "hover:bg-gray-50 transition",
+                                    "h-16 hover:bg-[#FAFAFA] transition",
                                     onRowClick && "cursor-pointer",
                                 )}
                                 onClick={() => onRowClick?.(member)}
@@ -83,18 +76,18 @@ export const TableMembers = ({
                                         <div className="flex items-center gap-3">
                                             <img
                                                 src={member.avatarUrl}
-                                                className="flex h-10 w-10 rounded-full bg-gray-100"
+                                                className="flex h-9 w-9 rounded-full bg-gray-100"
                                             />
-                                            <span className="text-gray-900 font-sans">
+                                            <span className="text-app-text font-sans">
                                                 {member.name}
                                             </span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E5E7EB] text-sm font-semibold text-app-text">
                                                 {getInitials(member.name)}
                                             </div>
-                                            <span className="text-gray-900 font-sans">
+                                            <span className="text-app-text font-sans">
                                                 {member.name}
                                             </span>
                                         </div>
@@ -102,28 +95,27 @@ export const TableMembers = ({
                                 </td>
 
                                 {showProject && (
-                                    <td className="px-6 py-4 text-gray-900 font-sans">
+                                    <td className="px-6 py-4 text-app-text font-sans">
                                         {member.projects && member.projects.length > 0 ? (
                                             <div className="flex flex-col gap-1">
                                                 {member.projects.map((p) => (
                                                     <span
                                                         key={p.id}
-                                                        className="inline-flex items-center gap-1"
+                                                        className="text-[#2563EB] font-medium"
                                                     >
-                                                        <Dot className="h-4 w-4 text-blue-500 shrink-0" />
                                                         {p.title}
                                                     </span>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <span className="text-gray-400">—</span>
+                                            <span className="text-[#9CA3AF]">—</span>
                                         )}
                                     </td>
                                 )}
 
-                                <td className="px-6 py-4 text-gray-900 font-sans">{member.role}</td>
+                                <td className="px-6 py-4 text-app-text font-sans">{member.role}</td>
 
-                                <td className="px-6 py-4 text-gray-900 font-sans hidden sm:table-cell">
+                                <td className="px-6 py-4 text-app-text font-sans hidden sm:table-cell">
                                     {isStringContacts(member.contacts) ? (
                                         member.contacts
                                     ) : (
@@ -179,7 +171,7 @@ export const TableMembers = ({
                                     )}
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-900 font-sans hidden md:table-cell">
+                                <td className="px-6 py-4 text-app-text font-sans hidden md:table-cell">
                                     {member.dateAdded}
                                 </td>
 
@@ -216,6 +208,7 @@ export const TableMembers = ({
                                                         e.stopPropagation();
                                                         removeMember?.(member.id);
                                                     }}
+                                                    className="text-[#EF4444]"
                                                 >
                                                     <UserMinus className="h-4 w-4 mr-2" />
                                                     Удалить из пространства

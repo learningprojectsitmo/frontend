@@ -1,5 +1,5 @@
 import { ContentLayout } from "@/components/layouts";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { Link } from "react-router";
 import { SpaceHeader } from "@/features/spaces/components/space-header";
@@ -10,21 +10,18 @@ import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal"
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select/select";
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { Ellipsis } from "lucide-react";
+import { Search, Check, X, Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSpacesList, useWorkspaceParticipants, useRemoveWorkspaceParticipant } from "@/lib/spaces";
+import {
+    useSpacesList,
+    useWorkspaceParticipants,
+    useRemoveWorkspaceParticipant,
+} from "@/lib/spaces";
 import { useProjectsList } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { toast } from "sonner";
@@ -39,6 +36,146 @@ import {
 import { type Member } from "@/types/tables/forTables";
 import { type WorkspaceMember } from "@/types/api";
 
+// ── Filter Dropdown Component ──
+type FilterDropdownProps = {
+    options: { value: string; label: string }[];
+    selected: string[];
+    onChange: (selected: string[]) => void;
+    onReset: () => void;
+};
+
+function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdownProps) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const filteredOptions = options.filter((o) =>
+        o.label.toLowerCase().includes(search.toLowerCase()),
+    );
+
+    const allSelected = selected.length === options.length;
+
+    const toggleAll = () => {
+        if (allSelected) {
+            onChange([]);
+        } else {
+            onChange(options.map((o) => o.value));
+        }
+    };
+
+    const handleReset = () => {
+        onReset();
+        setOpen(false);
+    };
+
+    return (
+        <div ref={ref} className="relative">
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="h-10 px-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[13px] text-app-text font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors"
+            >
+                Проект
+                {selected.length > 0 && selected.length < options.length && (
+                    <span className="text-[11px] text-app-muted ml-1">({selected.length})</span>
+                )}
+            </button>
+
+            {open && (
+                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[14px] font-semibold text-app-text">
+                            Проект {selected.length > 0 ? `(${selected.length})` : ""}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={toggleAll}
+                                className="text-[13px] text-[#2563EB] font-medium hover:text-[#1d4ed8]"
+                            >
+                                {allSelected ? "Снять все" : "Выбрать все"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setOpen(false)}
+                                className="p-1 hover:bg-gray-100 rounded-md"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Search inside dropdown */}
+                    <div className="relative mb-2">
+                        <Search
+                            size={14}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Поиск"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB]"
+                        />
+                    </div>
+
+                    {/* Checkbox rows */}
+                    <div className="max-h-[240px] overflow-y-auto space-y-0.5">
+                        {filteredOptions.map((opt) => (
+                            <label
+                                key={opt.value}
+                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+                            >
+                                <div
+                                    className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center transition-colors ${
+                                        selected.includes(opt.value)
+                                            ? "bg-[#2563EB] border-[#2563EB]"
+                                            : "border-[#D1D5DB]"
+                                    }`}
+                                >
+                                    {selected.includes(opt.value) && (
+                                        <Check size={12} className="text-white" />
+                                    )}
+                                </div>
+                                <span className="text-[13px] text-app-text font-medium">
+                                    {opt.label}
+                                </span>
+                            </label>
+                        ))}
+                        {filteredOptions.length === 0 && (
+                            <p className="text-[13px] text-app-muted text-center py-4">
+                                Не найдено
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Reset button */}
+                    <button
+                        type="button"
+                        onClick={handleReset}
+                        className="w-full mt-3 text-[13px] font-medium text-[#EF4444] hover:text-[#DC2626] transition-colors text-center"
+                    >
+                        Сбросить
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Main Route ──
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get("id") || "";
@@ -57,10 +194,10 @@ const SpaceRoute = () => {
     const workspaceId = spaceData?.id ?? 0;
     const [participantSearch, setParticipantSearch] = useState("");
     const [participantPage, setParticipantPage] = useState(1);
-    const [projectFilter, setProjectFilter] = useState<string>("all");
+    const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
     const limit = 10;
 
-    const projectIdFilter = projectFilter && projectFilter !== "all" ? Number(projectFilter) : undefined;
+    const projectIdFilter = selectedProjects.length === 1 ? Number(selectedProjects[0]) : undefined;
 
     const {
         data: participantsData,
@@ -105,7 +242,9 @@ const SpaceRoute = () => {
             resumeUrl: m.resume_url,
             dateAdded: m.created_at,
             avatarUrl: m.avatar_url ?? undefined,
-            status: (isAuthor && m.user_id !== user?.id ? "delete" : "default") as "default" | "delete",
+            status: (isAuthor && m.user_id !== user?.id ? "delete" : "default") as
+                | "default"
+                | "delete",
             projects: m.projects,
         }));
     }, [participantsData, isAuthor, user?.id]);
@@ -127,6 +266,11 @@ const SpaceRoute = () => {
         return base;
     }, [projectOptions]);
 
+    const handleFilterReset = useCallback(() => {
+        setSelectedProjects([]);
+        setParticipantPage(1);
+    }, []);
+
     if (!spaceData) {
         if (isSpacesLoading) {
             return (
@@ -138,7 +282,7 @@ const SpaceRoute = () => {
         return (
             <ContentLayout title="Пространство не найдено">
                 <div className="flex items-center justify-center h-64">
-                    <p className="text-gray-500 text-lg">Пространство не найдено</p>
+                    <p className="text-app-muted text-lg">Пространство не найдено</p>
                 </div>
             </ContentLayout>
         );
@@ -146,12 +290,15 @@ const SpaceRoute = () => {
 
     return (
         <ContentLayout title={spaceData.title}>
-            <div className="mx-auto max-w-7xl p-6 flex flex-col gap-6">
+            <div className="mx-auto max-w-7xl p-8 flex flex-col gap-8">
                 <Breadcrumb className="h-[34px] flex align-center">
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link to="/app" className="font-sans font-medium text-[16px]">
+                                <Link
+                                    to="/app"
+                                    className="font-sans font-medium text-[16px] text-app-muted"
+                                >
                                     Все пространства
                                 </Link>
                             </BreadcrumbLink>
@@ -180,18 +327,18 @@ const SpaceRoute = () => {
                 />
 
                 {/* Participants section */}
-                <section className="pt-4">
-                    <div className="mb-4 flex flex-col gap-4">
+                <section className="mt-14">
+                    <div className="mb-6 flex flex-col gap-5">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-800">
+                            <h2 className="text-[32px] font-bold text-app-text leading-tight">
                                 Список участников ({totalParticipants})
                             </h2>
 
                             <div className="flex items-center gap-2">
                                 <Button
-                                    variant="default"
-                                    size="sm"
-                                    className="font-sans"
+                                    variant="dark"
+                                    size="hug36"
+                                    className="font-sans text-[13px] font-semibold"
                                     onClick={() => setShareOpen(true)}
                                 >
                                     Пригласить
@@ -199,7 +346,7 @@ const SpaceRoute = () => {
 
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="sm" className="px-2">
+                                        <Button variant="outline" size="hug36" className="px-2">
                                             <Ellipsis className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -223,25 +370,15 @@ const SpaceRoute = () => {
                             />
 
                             {projectOptions.length > 0 && (
-                                <Select
-                                    value={projectFilter}
-                                    onValueChange={(v) => {
-                                        setProjectFilter(v);
+                                <FilterDropdown
+                                    options={projectOptions}
+                                    selected={selectedProjects}
+                                    onChange={(v) => {
+                                        setSelectedProjects(v);
                                         setParticipantPage(1);
                                     }}
-                                >
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Все проекты" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Все проекты</SelectItem>
-                                        {projectOptions.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onReset={handleFilterReset}
+                                />
                             )}
                         </div>
                     </div>
@@ -255,8 +392,8 @@ const SpaceRoute = () => {
                             Не удалось загрузить участников. Попробуйте обновить страницу.
                         </div>
                     ) : mappedMembers.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 text-sm">
-                            {participantSearch || projectFilter !== "all"
+                        <div className="text-center py-16 text-app-muted text-sm">
+                            {participantSearch || selectedProjects.length > 0
                                 ? "Участники не найдены"
                                 : "В этом пространстве пока нет участников"}
                         </div>
@@ -271,11 +408,13 @@ const SpaceRoute = () => {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-center gap-2 mt-4">
+                                <div className="flex items-center justify-center gap-2 mt-6">
                                     <button
-                                        onClick={() => setParticipantPage((p) => Math.max(1, p - 1))}
+                                        onClick={() =>
+                                            setParticipantPage((p) => Math.max(1, p - 1))
+                                        }
                                         disabled={participantPage <= 1}
-                                        className="px-3 py-1.5 text-sm font-medium text-gray-600 rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Назад
                                     </button>
@@ -290,14 +429,16 @@ const SpaceRoute = () => {
                                         .map((p, idx, arr) => (
                                             <span key={p} className="flex items-center">
                                                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                                    <span className="px-1 text-gray-400">...</span>
+                                                    <span className="px-1 text-[#9CA3AF] text-sm">
+                                                        ...
+                                                    </span>
                                                 )}
                                                 <button
                                                     onClick={() => setParticipantPage(p)}
-                                                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                                                    className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
                                                         p === participantPage
-                                                            ? "bg-blue-600 text-white"
-                                                            : "text-gray-600 border border-gray-200 hover:bg-gray-50"
+                                                            ? "bg-[#2563EB] text-white"
+                                                            : "text-[#6B7280] hover:bg-gray-50"
                                                     }`}
                                                 >
                                                     {p}
@@ -310,7 +451,7 @@ const SpaceRoute = () => {
                                             setParticipantPage((p) => Math.min(totalPages, p + 1))
                                         }
                                         disabled={participantPage >= totalPages}
-                                        className="px-3 py-1.5 text-sm font-medium text-gray-600 rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Вперёд
                                     </button>

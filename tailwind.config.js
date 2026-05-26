@@ -45,6 +45,17 @@ export default {
                 link: ["16px", { lineHeight: "1.5", letterSpacing: "0" }],
             },
             colors: {
+                // Design system tokens (from spec)
+                app: {
+                    background: "#F7F7F8",
+                    surface: "#FFFFFF",
+                    border: "#E5E7EB",
+                    "border-light": "#ECECF1",
+                    text: "#111827",
+                    muted: "#6B7280",
+                    primary: "#0F172A",
+                    blue: "#2563EB",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

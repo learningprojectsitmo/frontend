@@ -113,8 +113,8 @@ export const Sidebar = memo(function Sidebar({
             <CreateSpaceModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
             <aside
                 className={cn(
-                    "bg-white border-r border-gray-200 flex flex-col fixed top-16 left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
-                    isCollapsed ? "w-[56px]" : "w-[248px]",
+                    "bg-white border-r border-app-border flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
+                    isCollapsed ? "w-[56px]" : "w-[260px]",
                 )}
             >
                 {/* ── Кнопка «Все пространства» + кнопка сворачивания ── */}
@@ -246,7 +246,7 @@ export const Sidebar = memo(function Sidebar({
                             <div className="p-3 flex flex-col gap-5 flex-1">
                                 {activeCategories.map((category) => (
                                     <div key={category.name}>
-                                        <p className="px-1 mb-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                        <p className="px-1 mb-2 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-[0.08em]">
                                             {category.name}
                                         </p>
 
@@ -261,9 +261,9 @@ export const Sidebar = memo(function Sidebar({
                                                                     space.id,
                                                                 )}
                                                                 className={cn(
-                                                                    "flex items-center gap-3 w-full px-3 py-3 rounded-[14px] transition-all duration-150 group",
+                                                                    "flex items-center gap-3 w-full h-11 px-3.5 rounded-[12px] transition-all duration-150 group",
                                                                     isActive
-                                                                        ? "bg-purple-50"
+                                                                        ? "bg-[#EEF2FF]"
                                                                         : "hover:bg-gray-50 border border-transparent",
                                                                 )}
                                                             >

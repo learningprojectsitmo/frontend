@@ -14,14 +14,19 @@ import { NotificationsNav } from "@/features/spaces/components/notifications";
 
 function SpaceLayoutSkeleton() {
     return (
-        <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <div className="flex flex-col min-h-screen bg-app-background">
+            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-12">
-                    <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                    <span
+                        className="text-[30px] font-bold text-app-text"
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                        EduFlow
+                    </span>
                 </div>
             </header>
-            <div className="flex-1 flex mt-16">
-                <aside className="w-[248px] bg-white border-r border-gray-200 fixed top-16 left-0 bottom-0 z-[9]">
+            <div className="flex-1 flex mt-[72px]">
+                <aside className="w-[260px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -44,7 +49,7 @@ function SpaceLayoutSkeleton() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[248px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-[260px] flex items-center justify-center p-8">
                     <div className="w-full max-w-4xl space-y-6">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
@@ -58,10 +63,15 @@ function SpaceLayoutSkeleton() {
 
 function SpaceLayoutError() {
     return (
-        <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <div className="flex flex-col min-h-screen bg-app-background">
+            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-12">
-                    <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                    <span
+                        className="text-[30px] font-bold text-app-text"
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                        EduFlow
+                    </span>
                 </div>
             </header>
             <div className="flex-1 flex items-center justify-center mt-16">
@@ -85,16 +95,22 @@ function SpaceLayoutError() {
 
 function SpaceLayoutNotFound() {
     return (
-        <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <div className="flex flex-col min-h-screen bg-app-background">
+            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-12">
-                    <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
-                    <div className="relative w-full md:w-96 lg:w-[415px]">
+                    <span
+                        className="text-[30px] font-bold text-app-text"
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                        EduFlow
+                    </span>
+                    <div className="relative">
                         <SearchBar
                             placeholder="Ищите проекты, пространства или участников..."
                             onChange={() => {}}
                             suggestions={[]}
                             value=""
+                            className="!w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
                         />
                     </div>
                 </div>
@@ -109,8 +125,8 @@ function SpaceLayoutNotFound() {
                     <UserNav />
                 </div>
             </header>
-            <div className="flex-1 flex mt-16">
-                <aside className="w-[248px] bg-white border-r border-gray-200 fixed top-16 left-0 bottom-0 z-[9]">
+            <div className="flex-1 flex mt-[72px]">
+                <aside className="w-[260px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -133,7 +149,7 @@ function SpaceLayoutNotFound() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[248px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-[260px] flex items-center justify-center p-8">
                     <div className="text-center max-w-md">
                         <div className="flex justify-center mb-6">
                             <div className="relative">
@@ -205,15 +221,21 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     suggestions: string[];
 }) {
     return (
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
             <div className="flex items-center gap-12">
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
-                <div className="relative w-full md:w-96 lg:w-[415px]">
+                <span
+                    className="text-[30px] font-bold text-app-text"
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                >
+                    EduFlow
+                </span>
+                <div className="relative">
                     <SearchBar
                         placeholder="Ищите проекты, пространства или участников..."
                         onChange={onSearchChange}
                         suggestions={suggestions}
                         value={search}
+                        className="!w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
                     />
                 </div>
             </div>
@@ -236,7 +258,7 @@ function SpaceLayoutMain({ isCollapsed }: { isCollapsed: boolean }) {
         <main
             className={cn(
                 "flex-1 overflow-y-auto transition-all duration-200",
-                isCollapsed ? "ml-[56px]" : "ml-[248px]",
+                isCollapsed ? "ml-[56px]" : "ml-[260px]",
             )}
         >
             <Outlet />
@@ -278,7 +300,7 @@ function SpaceLayoutContent({
     const handleToggle = useCallback(() => setIsCollapsed((prev) => !prev), []);
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
+        <div className="flex flex-col min-h-screen bg-app-background">
             <SpaceLayoutHeader
                 search={search}
                 onSearchChange={setSearch}
