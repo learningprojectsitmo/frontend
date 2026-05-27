@@ -80,16 +80,6 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
 
     return (
         <div ref={ref} className="relative">
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                className="h-10 px-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[13px] text-app-text font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors"
-            >
-                Проект
-                {selected.length > 0 && selected.length < options.length && (
-                    <span className="text-[11px] text-app-muted ml-1">({selected.length})</span>
-                )}
-            </button>
 
             {open && (
                 <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">

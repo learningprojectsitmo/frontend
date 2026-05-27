@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Outlet, useSearchParams, Link } from "react-router";
 
 import { paths } from "@/config/paths";
@@ -26,20 +26,20 @@ function SpaceLayoutSkeleton() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
-                        <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse" />
+                        <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
                     </div>
                     <div className="h-px bg-gray-200" />
                     <div className="p-3 flex flex-col gap-4">
                         {[1, 2].map((g) => (
                             <div key={g}>
-                                <div className="h-3 w-24 rounded bg-gray-100 animate-pulse mb-3" />
+                                <div className="h-3 w-24 rounded bg-gray-100 animate-pulse mb-3 hidden md:block" />
                                 {[1, 2, 3].map((i) => (
                                     <div key={i} className="flex items-center gap-3 px-2 py-2 mb-1">
                                         <div className="h-8 w-8 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
-                                        <div className="flex flex-col gap-1 flex-1">
+                                        <div className="hidden md:block flex-col gap-1 flex-1">
                                             <div className="h-3 rounded bg-gray-100 animate-pulse w-4/5" />
                                             <div className="h-2 rounded bg-gray-100 animate-pulse w-2/5" />
                                         </div>
@@ -49,7 +49,7 @@ function SpaceLayoutSkeleton() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
                     <div className="w-full max-w-4xl space-y-6">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
@@ -126,20 +126,20 @@ function SpaceLayoutNotFound() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
-                        <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse" />
+                        <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
                     </div>
                     <div className="h-px bg-gray-200" />
                     <div className="p-3 flex flex-col gap-4">
                         {[1, 2].map((g) => (
                             <div key={g}>
-                                <div className="h-3 w-24 rounded bg-gray-100 animate-pulse mb-3" />
+                                <div className="h-3 w-24 rounded bg-gray-100 animate-pulse mb-3 hidden md:block" />
                                 {[1, 2, 3].map((i) => (
                                     <div key={i} className="flex items-center gap-3 px-2 py-2 mb-1">
                                         <div className="h-8 w-8 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
-                                        <div className="flex flex-col gap-1 flex-1">
+                                        <div className="hidden md:block flex-col gap-1 flex-1">
                                             <div className="h-3 rounded bg-gray-100 animate-pulse w-4/5" />
                                             <div className="h-2 rounded bg-gray-100 animate-pulse w-2/5" />
                                         </div>
@@ -149,7 +149,7 @@ function SpaceLayoutNotFound() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
                     <div className="text-center max-w-md">
                         <div className="flex justify-center mb-6">
                             <div className="relative">
@@ -272,8 +272,25 @@ function SpaceLayoutContent({
     data: NonNullable<ReturnType<typeof useSpacesList>["data"]>;
 }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const userPreferenceRef = useRef(false);
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get("id");
+
+    useEffect(() => {
+        const mql = window.matchMedia("(max-width: 768px)");
+
+        const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+            if (e.matches) {
+                setIsCollapsed(true);
+            } else {
+                setIsCollapsed(userPreferenceRef.current);
+            }
+        };
+
+        handleChange(mql);
+        mql.addEventListener("change", handleChange);
+        return () => mql.removeEventListener("change", handleChange);
+    }, []);
 
     const categories = useMemo(() => {
         return data.categories.map((cat) => ({
@@ -297,7 +314,13 @@ function SpaceLayoutContent({
         getSuggestions(debouncedSearch).then(setSuggestions);
     }, [debouncedSearch]);
 
-    const handleToggle = useCallback(() => setIsCollapsed((prev) => !prev), []);
+    const handleToggle = useCallback(() => {
+        setIsCollapsed((prev) => {
+            const next = !prev;
+            userPreferenceRef.current = next;
+            return next;
+        });
+    }, []);
 
     return (
         <div className="flex flex-col min-h-screen bg-app-background">

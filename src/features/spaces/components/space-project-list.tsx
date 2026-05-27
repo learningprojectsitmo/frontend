@@ -6,6 +6,12 @@ import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProjectCard } from "@/components/ui/card/project-card";
 import { paths } from "@/config/paths";
 import { type ProjectListItemResponse } from "@/types/api";
+import {
+    ProjectFilters,
+    defaultFiltersState,
+    type FiltersState,
+} from "@/features/spaces/components/filters";
+import { SpaceProjectTable } from "@/features/spaces/components/space-project-table";
 
 const statusLabels: Record<string, string> = {
     in_progress: "В работе",
@@ -50,40 +56,87 @@ type SpaceProjectListProps = {
     isError: boolean;
 };
 
-type StatusFilter = "all" | "active" | "archived";
-
-export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceProjectListProps) {
+export function SpaceProjectList({
+    projects,
+    total: _total,
+    isLoading,
+    isError,
+}: SpaceProjectListProps) {
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [filters, setFilters] = useState<FiltersState>(defaultFiltersState);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [visibleCount, setVisibleCount] = useState(9);
 
-    const mappedProjects = useMemo(() => projects.map(mapProjectListItem), [projects]);
+    const filteredRaw = useMemo(() => {
+        let result = projects;
 
-    const filteredProjects = useMemo(() => {
-        let result = mappedProjects;
+        if (filters.statuses.length > 0) {
+            result = result.filter((p) => {
+                const statusName = p.status?.name || "draft";
+                return filters.statuses.includes(statusName);
+            });
+        }
+
+        if (filters.tags.length > 0) {
+            result = result.filter((p) => p.tags.some((t) => filters.tags.includes(t)));
+        }
+
+        if (filters.members.length > 0) {
+            result = result.filter((p) =>
+                p.participants_preview.some((m) => filters.members.includes(m.id)),
+            );
+        }
+
+        if (filters.datePreset !== "all") {
+            result = result.filter((p) => {
+                if (!p.deadline) return false;
+                const d = new Date(p.deadline);
+                const now = new Date();
+                switch (filters.datePreset) {
+                    case "today":
+                        return (
+                            d.getFullYear() === now.getFullYear() &&
+                            d.getMonth() === now.getMonth() &&
+                            d.getDate() === now.getDate()
+                        );
+                    case "7days": {
+                        const diff = now.getTime() - d.getTime();
+                        return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+                    }
+                    case "30days": {
+                        const diff = now.getTime() - d.getTime();
+                        return diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+                    }
+                    case "custom":
+                        if (!filters.customDate) return true;
+                        return d >= filters.customDate.from && d <= filters.customDate.to;
+                    default:
+                        return true;
+                }
+            });
+        }
 
         if (search) {
             const q = search.toLowerCase();
             result = result.filter(
-                (p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
+                (p) =>
+                    p.name.toLowerCase().includes(q) ||
+                    (p.description || "").toLowerCase().includes(q),
             );
         }
 
-        if (statusFilter === "active") {
-            result = result.filter((p) => !p.archived);
-        } else if (statusFilter === "archived") {
-            result = result.filter((p) => p.archived);
-        }
-
         return result;
-    }, [mappedProjects, search, statusFilter]);
+    }, [projects, search, filters]);
 
-    const visibleProjects = useMemo(() => {
-        return filteredProjects.slice(0, visibleCount);
-    }, [filteredProjects, visibleCount]);
+    const visibleRaw = useMemo(() => {
+        return filteredRaw.slice(0, visibleCount);
+    }, [filteredRaw, visibleCount]);
 
-    const hasMore = visibleCount < total;
+    const mappedProjects = useMemo(() => {
+        return visibleRaw.map(mapProjectListItem);
+    }, [visibleRaw]);
+
+    const hasMore = visibleCount < filteredRaw.length;
     const handleLoadMore = () => setVisibleCount((prev) => prev + 6);
 
     return (
@@ -108,22 +161,12 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                         />
                     </div>
 
-                    {/* Status filter */}
-                    <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
-                        {(["all", "active", "archived"] as const).map((f) => (
-                            <button
-                                key={f}
-                                onClick={() => setStatusFilter(f)}
-                                className={`px-3 h-full text-[13px] font-medium transition-colors ${
-                                    statusFilter === f
-                                        ? "bg-[#111827] text-white"
-                                        : "text-[#6B7280] hover:bg-gray-50"
-                                }`}
-                            >
-                                {f === "all" ? "Все" : f === "active" ? "Активные" : "Архив"}
-                            </button>
-                        ))}
-                    </div>
+                    <ProjectFilters
+                        state={filters}
+                        onChange={setFilters}
+                        onReset={() => setFilters(defaultFiltersState)}
+                        projects={projects}
+                    />
 
                     {/* Grid/List toggle */}
                     <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
@@ -135,7 +178,7 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                                     : "text-[#6B7280] hover:bg-gray-50"
                             }`}
                         >
-                                            <Icon name="grid" size={16} />
+                            <Icon name="grid" size={16} />
                         </button>
                         <button
                             onClick={() => setViewMode("list")}
@@ -160,19 +203,23 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                 <div className="text-center py-16 text-red-400 text-sm">
                     Не удалось загрузить проекты. Попробуйте обновить страницу.
                 </div>
-            ) : visibleProjects.length === 0 ? (
+            ) : filteredRaw.length === 0 ? (
                 <div className="text-center py-16 text-app-muted text-sm">
-                    {search || statusFilter !== "all"
+                    {search ||
+                    filters.statuses.length > 0 ||
+                    filters.tags.length > 0 ||
+                    filters.members.length > 0 ||
+                    filters.datePreset !== "all"
                         ? "Проекты не найдены"
                         : "В этом пространстве пока нет проектов"}
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid grid-cols-3 gap-6">
-                    {visibleProjects.map((project) => (
+                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                    {mappedProjects.map((project) => (
                         <Link
                             key={project.id}
                             to={paths.app.project.getHref(project.id)}
-                            className="block"
+                            className="block h-full"
                         >
                             <ProjectCard
                                 tag={project.tag}
@@ -190,8 +237,8 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                     ))}
                 </div>
             ) : (
-                <div className="bg-white rounded-[20px] border border-[#E5E7EB] p-6">
-                    <p className="text-app-muted text-sm">List view coming soon</p>
+                <div className="bg-white rounded-[20px] border border-[#E5E7EB] overflow-hidden">
+                    <SpaceProjectTable projects={visibleRaw} />
                 </div>
             )}
 

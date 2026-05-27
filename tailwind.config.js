@@ -149,6 +149,16 @@ export default {
                         transform: "translateX(0)",
                     },
                 },
+                "filter-in": {
+                    "0%": {
+                        opacity: "0",
+                        transform: "translateY(-4px)",
+                    },
+                    "100%": {
+                        opacity: "1",
+                        transform: "translateY(0)",
+                    },
+                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
@@ -156,6 +166,7 @@ export default {
                 "fade-in-up": "fade-in-up 0.6s ease-out forwards",
                 "fade-in-left": "fade-in-left 0.5s ease-out forwards",
                 "fade-in-right": "fade-in-right 0.5s ease-out forwards",
+                "filter-in": "filter-in 160ms cubic-bezier(0.16, 1, 0.3, 1)",
             },
         },
     },
