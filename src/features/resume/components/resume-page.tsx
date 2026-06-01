@@ -101,14 +101,14 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                 </div>
 
                 <div className="flex flex-col gap-6">
-                    {data.links.length > 0 && (
-                        <PortfolioCard links={data.links} />
+                    {(data.links.length > 0 || isEditing) && (
+                        <PortfolioCard links={data.links} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
-                    {data.educations.length > 0 && (
-                        <EducationCard educations={data.educations} />
+                    {(data.educations.length > 0 || isEditing) && (
+                        <EducationCard educations={data.educations} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
-                    {data.languages.length > 0 && (
-                        <LanguagesCard languages={data.languages} />
+                    {(data.languages.length > 0 || isEditing) && (
+                        <LanguagesCard languages={data.languages} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
                     {data.skills.length > 0 && (
                         <SkillsCard skills={data.skills} />

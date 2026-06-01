@@ -229,7 +229,7 @@ export type ResumeEducation = {
     institution: string;
     faculty: string | null;
     degree: string | null;
-    year: number | null;
+    years: string | null;
     sort_order: number;
 };
 
