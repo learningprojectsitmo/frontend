@@ -132,11 +132,11 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     {(data.languages.length > 0 || isEditing) && (
                         <LanguagesCard languages={data.languages} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
-                    {data.skills.length > 0 && (
-                        <SkillsCard skills={data.skills} />
+                    {(data.skills.length > 0 || isEditing) && (
+                        <SkillsCard skills={data.skills} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
-                    {data.interests.length > 0 && (
-                        <InterestsCard interests={data.interests} />
+                    {(data.interests.length > 0 || isEditing) && (
+                        <InterestsCard interests={data.interests} isEditing={isEditing} resumeId={data.resume.id} />
                     )}
                 </div>
             </div>

@@ -5,8 +5,10 @@ import {
     type ResumeEducation,
     type ResumeExperience,
     type ResumeFull,
+    type ResumeInterest,
     type ResumeLanguage,
     type ResumeLink,
+    type ResumeSkill,
     type ResumeUpdate,
 } from "@/types/api";
 
@@ -170,6 +172,38 @@ export const deleteResumeLanguage = async (langId: number): Promise<void> => {
     return await api.delete(`/resumes/languages/${langId}`);
 };
 
+// ─── Resume Skill CRUD ────────────────────────────────────────────────
+
+export const createResumeSkill = async ({
+    resumeId,
+    data,
+}: {
+    resumeId: number;
+    data: { name: string; sort_order?: number };
+}): Promise<ResumeSkill> => {
+    return await api.post(`/resumes/${resumeId}/skills`, data);
+};
+
+export const deleteResumeSkill = async (skillId: number): Promise<void> => {
+    return await api.delete(`/resumes/skills/${skillId}`);
+};
+
+// ─── Resume Interest CRUD ─────────────────────────────────────────────
+
+export const createResumeInterest = async ({
+    resumeId,
+    data,
+}: {
+    resumeId: number;
+    data: { name: string; sort_order?: number };
+}): Promise<ResumeInterest> => {
+    return await api.post(`/resumes/${resumeId}/interests`, data);
+};
+
+export const deleteResumeInterest = async (interestId: number): Promise<void> => {
+    return await api.delete(`/resumes/interests/${interestId}`);
+};
+
 // ─── React Query mutations ───────────────────────────────────────────
 
 export const useCreateResumeLink = (resumeId: number) => {
@@ -288,6 +322,50 @@ export const useDeleteResumeLanguage = (resumeId: number) => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: deleteResumeLanguage,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+// ─── React Query mutations: Skills ──────────────────────────────────
+
+export const useCreateResumeSkill = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createResumeSkill,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+export const useDeleteResumeSkill = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteResumeSkill,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+// ─── React Query mutations: Interests ──────────────────────────────
+
+export const useCreateResumeInterest = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createResumeInterest,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+export const useDeleteResumeInterest = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteResumeInterest,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
         },
