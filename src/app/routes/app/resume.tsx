@@ -68,12 +68,12 @@ const ResumeRoute = () => {
 
     return (
         <ContentLayout title={`Резюме — ${fullName}`}>
-            <div className="mx-auto max-w-[1200px] p-6 flex flex-col gap-6">
+            <div className="mx-auto max-w-[1200px] px-4 sm:px-6 py-6 flex flex-col gap-6">
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link to="/app" className="font-sans font-medium text-[16px]">
+                                <Link to="/app" className="font-sans font-medium text-sm sm:text-base">
                                     Все пространства
                                 </Link>
                             </BreadcrumbLink>
@@ -85,7 +85,7 @@ const ResumeRoute = () => {
                                     <BreadcrumbLink asChild>
                                         <Link
                                             to={`/app/project?id=${projectId}`}
-                                            className="font-sans font-medium text-[16px]"
+                                            className="font-sans font-medium text-sm sm:text-base"
                                         >
                                             Проект
                                         </Link>
@@ -99,7 +99,7 @@ const ResumeRoute = () => {
                                     <BreadcrumbLink asChild>
                                         <Link
                                             to="/app/profile"
-                                            className="font-sans font-medium text-[16px]"
+                                            className="font-sans font-medium text-sm sm:text-base"
                                         >
                                             Профиль
                                         </Link>
@@ -109,7 +109,7 @@ const ResumeRoute = () => {
                         )}
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage className="font-sans font-medium text-[16px]">
+                            <BreadcrumbPage className="font-sans font-medium text-sm sm:text-base">
                                 Резюме — {fullName}
                             </BreadcrumbPage>
                         </BreadcrumbItem>

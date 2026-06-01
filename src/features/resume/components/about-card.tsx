@@ -7,7 +7,7 @@ type Props = {
 
 export const AboutCard = ({ content, isEditing, editValue, onChange }: Props) => {
     return (
-        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-8">
+        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 sm:p-8">
             <h2 className="text-2xl font-semibold tracking-tight mb-4">Обо мне</h2>
             {isEditing ? (
                 <textarea

@@ -13,12 +13,12 @@ export function ResumeList({ resumes, onResumeClick }: ResumeListProps) {
         <section>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Мои резюме</h2>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         size="hug36"
                         icon={<Icon name="import" size={14} />}
-                        className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                        className="text-[13px] font-semibold gap-1.5 rounded-xl px-2 sm:px-3"
                     >
                         Загрузить резюме
                     </Button>
@@ -26,9 +26,9 @@ export function ResumeList({ resumes, onResumeClick }: ResumeListProps) {
                         variant="dark"
                         size="hug36"
                         icon={<Icon name="plus" size={14} />}
-                        className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                        className="text-[13px] font-semibold gap-1.5 rounded-xl px-2 sm:px-3"
                     >
-                        Создать резюме
+                        <span className="hidden sm:inline">Создать резюме</span>
                     </Button>
                 </div>
             </div>

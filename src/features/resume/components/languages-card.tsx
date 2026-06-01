@@ -50,8 +50,8 @@ export const LanguagesCard = ({ languages, isEditing, resumeId }: Props) => {
             </div>
             <div className="space-y-2">
                 {languages.map((lang) => (
-                    <div key={lang.id} className="flex items-center justify-between text-sm group">
-                        <span className="text-gray-900">
+                    <div key={lang.id} className="flex items-center justify-between text-sm group gap-2">
+                        <span className="text-gray-900 min-w-0 truncate">
                             {LANGUAGE_FLAGS[lang.name] && `${LANGUAGE_FLAGS[lang.name]} `}{lang.name}
                         </span>
                         <div className="flex items-center gap-2">

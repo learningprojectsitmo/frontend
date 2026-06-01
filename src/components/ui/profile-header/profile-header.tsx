@@ -49,7 +49,7 @@ export const ProfileHeader = ({
                                 className="text-[13px] font-semibold gap-1.5 rounded-xl"
                                 onClick={onEdit}
                             >
-                                Редактировать
+                                <span className="hidden sm:inline">Редактировать</span>
                             </Button>
                             <IconButton
                                 className="h-9 w-9 rounded-xl border border-gray-200 flex items-center justify-center"

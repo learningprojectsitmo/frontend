@@ -54,9 +54,9 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                            className="flex items-center gap-2 text-sm text-blue-600 hover:underline min-w-0 truncate"
                         >
-                            {platformLabels[link.platform.toLowerCase()] || link.platform}
+                            <span className="truncate">{platformLabels[link.platform.toLowerCase()] || link.platform}</span>
                         </a>
                         {isEditing && (
                             <button

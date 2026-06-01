@@ -42,8 +42,8 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
             </div>
             <div className="space-y-4">
                 {educations.map((edu) => (
-                    <div key={edu.id} className="group flex justify-between">
-                        <div>
+                    <div key={edu.id} className="group flex justify-between gap-3">
+                        <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900">{edu.institution}</p>
                             {edu.faculty && <p className="text-sm text-gray-500">{edu.faculty}</p>}
                             <p className="text-sm text-gray-400">

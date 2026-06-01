@@ -16,7 +16,7 @@ function SpaceLayoutSkeleton() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
             <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-12">
+                <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
                         style={{ fontFamily: "Inter, sans-serif" }}
@@ -65,7 +65,7 @@ function SpaceLayoutError() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
             <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-12">
+                <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
                         style={{ fontFamily: "Inter, sans-serif" }}
@@ -97,7 +97,7 @@ function SpaceLayoutNotFound() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
             <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-12">
+                <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
                         style={{ fontFamily: "Inter, sans-serif" }}
@@ -110,7 +110,7 @@ function SpaceLayoutNotFound() {
                             onChange={() => {}}
                             suggestions={[]}
                             value=""
-                            className="!w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                            className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
                         />
                     </div>
                 </div>
@@ -235,7 +235,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
                         onChange={onSearchChange}
                         suggestions={suggestions}
                         value={search}
-                        className="!w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                        className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
                     />
                 </div>
             </div>
