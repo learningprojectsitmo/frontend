@@ -110,7 +110,8 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                 visibility: values.visibility,
                                 join_policy: values.join_policy,
                                 default_role_id: values.default_role_id ?? null,
-                                allow_multi_project_participation: values.allow_multi_project_participation,
+                                allow_multi_project_participation:
+                                    values.allow_multi_project_participation,
                                 allow_multi_project_creation: values.allow_multi_project_creation,
                             },
                         },
@@ -131,7 +132,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent aria-describedby={undefined} className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Настройки пространства</DialogTitle>
                 </DialogHeader>
@@ -161,7 +162,9 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                     <button
                                         type="button"
                                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                        onClick={() => alert("Загрузка иконки будет добавлена позже")}
+                                        onClick={() =>
+                                            alert("Загрузка иконки будет добавлена позже")
+                                        }
                                     >
                                         [изменить]
                                     </button>
@@ -266,8 +269,8 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                     Роли участников
                                 </h3>
                                 <p className="text-xs text-gray-500 mb-3">
-                                    Применяется, если роль не указана при добавлении участника вручную
-                                    или через приглашение
+                                    Применяется, если роль не указана при добавлении участника
+                                    вручную или через приглашение
                                 </p>
                                 <FormField
                                     control={form.control}
@@ -310,7 +313,8 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                             Участие в нескольких проектах
                                                         </FormLabel>
                                                         <p className="text-xs text-gray-500 mt-0.5">
-                                                            Разрешить участникам состоять в нескольких проектах одновременно
+                                                            Разрешить участникам состоять в
+                                                            нескольких проектах одновременно
                                                         </p>
                                                     </div>
                                                     <FormControl>
@@ -335,7 +339,8 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                             Создание нескольких проектов
                                                         </FormLabel>
                                                         <p className="text-xs text-gray-500 mt-0.5">
-                                                            Разрешить участникам создавать несколько проектов в пространстве
+                                                            Разрешить участникам создавать несколько
+                                                            проектов в пространстве
                                                         </p>
                                                     </div>
                                                     <FormControl>
@@ -354,6 +359,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                             {/* Section 6: Danger zone */}
                             <div>
                                 <DangerZone
+                                    confirmationName={space.title}
                                     onDelete={handleDelete}
                                     isPending={deleteWorkspace.isPending}
                                 />
@@ -369,7 +375,12 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                 >
                                     Отмена
                                 </Button>
-                                <Button type="submit" variant="dark" size="hug36" disabled={isPending}>
+                                <Button
+                                    type="submit"
+                                    variant="dark"
+                                    size="hug36"
+                                    disabled={isPending}
+                                >
                                     {isPending ? "Сохранение..." : "Сохранить"}
                                 </Button>
                             </div>

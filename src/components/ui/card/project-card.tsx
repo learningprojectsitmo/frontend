@@ -66,13 +66,13 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                     "bg-white border border-[#E5E7EB] rounded-[20px] transition-all duration-200",
                     "shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]",
                     "hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)]",
-                    "min-w-[320px] h-full",
+                    "min-w-[320px] h-full flex flex-col",
                     archived && "opacity-90",
                     className,
                 )}
                 {...props}
             >
-                <div className="p-5 flex flex-col gap-4">
+                <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Card Header: Status badge + kebab */}
                     <div className="flex items-start justify-between">
                         <span
