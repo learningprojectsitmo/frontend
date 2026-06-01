@@ -178,6 +178,8 @@ export type ResumeUpdate = {
     role?: string | null;
     about?: string | null;
     cover_letter?: string | null;
+    has_experience?: boolean;
+    no_experience_description?: string | null;
 };
 
 export type ResumeFull = {
@@ -188,6 +190,8 @@ export type ResumeFull = {
     role: string | null;
     about: string | null;
     cover_letter: string | null;
+    has_experience: boolean;
+    no_experience_description: string | null;
     created_at: string;
     updated_at: string;
 };
@@ -196,6 +200,7 @@ export type ResumeExperience = {
     id: number;
     company: string;
     position: string;
+    experience_type: string | null;
     period_from: string | null;
     period_to: string | null;
     duration: string | null;

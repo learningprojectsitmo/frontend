@@ -5,6 +5,7 @@ import { type ResumeDetail } from "@/types/api";
 import { CoverLetterCard } from "./cover-letter-card";
 import { ProfileCard } from "./profile-card";
 import { ExperienceTimeline } from "./experience-timeline";
+import { ExperienceSection } from "@/features/profile/components/ExperienceSection";
 import { AboutCard } from "./about-card";
 import { PortfolioCard } from "./portfolio-card";
 import { EducationCard } from "./education-card";
@@ -16,7 +17,13 @@ type Props = {
     data: ResumeDetail;
     isEditing?: boolean;
     onEdit?: () => void;
-    onSave?: (data: { role: string | null; about: string | null; cover_letter: string | null }) => void;
+    onSave?: (data: {
+        role: string | null;
+        about: string | null;
+        cover_letter: string | null;
+        has_experience: boolean;
+        no_experience_description: string | null;
+    }) => void;
     onCancel?: () => void;
 };
 
@@ -24,12 +31,16 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
     const [editRole, setEditRole] = useState("");
     const [editAbout, setEditAbout] = useState("");
     const [editCoverLetter, setEditCoverLetter] = useState("");
+    const [editHasExperience, setEditHasExperience] = useState(true);
+    const [editNoExpDescription, setEditNoExpDescription] = useState("");
 
     useEffect(() => {
         setEditRole(data.resume.role ?? "");
         setEditAbout(data.resume.about ?? "");
         setEditCoverLetter(data.resume.cover_letter ?? "");
-    }, [data.resume.role, data.resume.about, data.resume.cover_letter]);
+        setEditHasExperience(data.resume.has_experience);
+        setEditNoExpDescription(data.resume.no_experience_description ?? "");
+    }, [data.resume.role, data.resume.about, data.resume.cover_letter, data.resume.has_experience, data.resume.no_experience_description]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -53,24 +64,14 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                                 role: editRole || null,
                                 about: editAbout || null,
                                 cover_letter: editCoverLetter || null,
+                                has_experience: editHasExperience,
+                                no_experience_description: editNoExpDescription || null,
                             })
                         }
                     >
                         Сохранить
                     </Button>
                 </div>
-            )}
-
-            {data.resume.cover_letter && !isEditing && (
-                <CoverLetterCard content={data.resume.cover_letter} />
-            )}
-            {isEditing && (
-                <CoverLetterCard
-                    content={data.resume.cover_letter ?? ""}
-                    isEditing
-                    editValue={editCoverLetter}
-                    onChange={setEditCoverLetter}
-                />
             )}
 
             <ProfileCard
@@ -82,10 +83,31 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                 onEdit={onEdit}
             />
 
+            {(data.resume.cover_letter || isEditing) && (
+                <CoverLetterCard
+                    content={data.resume.cover_letter ?? ""}
+                    isEditing={isEditing}
+                    editValue={editCoverLetter}
+                    onChange={setEditCoverLetter}
+                />
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
                 <div className="flex flex-col gap-6">
-                    {data.experiences.length > 0 && (
-                        <ExperienceTimeline experiences={data.experiences} />
+                    {isEditing ? (
+                        <ExperienceTimeline
+                            experiences={data.experiences}
+                            isEditing
+                            resumeId={data.resume.id}
+                            hasExperience={editHasExperience}
+                            noExperienceDescription={editNoExpDescription}
+                            onHasExperienceChange={setEditHasExperience}
+                            onNoExperienceDescriptionChange={setEditNoExpDescription}
+                        />
+                    ) : (
+                        data.experiences.length > 0 && (
+                            <ExperienceSection experiences={data.experiences} />
+                        )
                     )}
                     {data.resume.about && !isEditing && (
                         <AboutCard content={data.resume.about} />

@@ -31,7 +31,13 @@ const ResumeRoute = () => {
         setIsEditing(false);
     };
 
-    const handleSave = async (fields: { role: string | null; about: string | null; cover_letter: string | null }) => {
+    const handleSave = async (fields: {
+        role: string | null;
+        about: string | null;
+        cover_letter: string | null;
+        has_experience: boolean;
+        no_experience_description: string | null;
+    }) => {
         await updateResumeMutation.mutateAsync({ id, data: fields });
         setIsEditing(false);
     };

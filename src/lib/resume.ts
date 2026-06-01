@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     type ResumeDetail,
     type ResumeEducation,
+    type ResumeExperience,
     type ResumeFull,
     type ResumeLanguage,
     type ResumeLink,
@@ -117,6 +118,54 @@ export const updateResumeLanguage = async ({
     return await api.put(`/resumes/languages/${langId}`, data);
 };
 
+// ─── Resume Experience CRUD ──────────────────────────────────────────
+
+export const createResumeExperience = async ({
+    resumeId,
+    data,
+}: {
+    resumeId: number;
+    data: {
+        company: string;
+        position: string;
+        experience_type?: string | null;
+        period_from?: string | null;
+        period_to?: string | null;
+        duration?: string | null;
+        description?: string | null;
+        responsibilities?: string[] | null;
+        skills?: string[] | null;
+        sort_order?: number;
+    };
+}): Promise<ResumeExperience> => {
+    return await api.post(`/resumes/${resumeId}/experiences`, data);
+};
+
+export const updateResumeExperience = async ({
+    expId,
+    data,
+}: {
+    expId: number;
+    data: {
+        company?: string;
+        position?: string;
+        experience_type?: string | null;
+        period_from?: string | null;
+        period_to?: string | null;
+        duration?: string | null;
+        description?: string | null;
+        responsibilities?: string[] | null;
+        skills?: string[] | null;
+        sort_order?: number;
+    };
+}): Promise<ResumeExperience> => {
+    return await api.put(`/resumes/experiences/${expId}`, data);
+};
+
+export const deleteResumeExperience = async (expId: number): Promise<void> => {
+    return await api.delete(`/resumes/experiences/${expId}`);
+};
+
 export const deleteResumeLanguage = async (langId: number): Promise<void> => {
     return await api.delete(`/resumes/languages/${langId}`);
 };
@@ -197,6 +246,38 @@ export const useUpdateResumeLanguage = (resumeId: number) => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: updateResumeLanguage,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+// ─── React Query mutations: Experience ─────────────────────────────
+
+export const useCreateResumeExperience = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createResumeExperience,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+export const useUpdateResumeExperience = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateResumeExperience,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+        },
+    });
+};
+
+export const useDeleteResumeExperience = (resumeId: number) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteResumeExperience,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
         },
