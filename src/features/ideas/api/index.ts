@@ -1,7 +1,12 @@
 import { useMemo } from "react";
 import type { IdeaStatus } from "../types";
 import { useIdeasUIStore } from "../store";
-import { useIdeasList as useQueryIdeasList, useTags, useCreateIdea, useToggleVote as useToggleVoteMutation } from "@/lib/api-ideas";
+import {
+    useIdeasList as useQueryIdeasList,
+    useTags,
+    useCreateIdea,
+    useToggleVote as useToggleVoteMutation,
+} from "@/lib/api-ideas";
 import { useUser } from "@/lib/auth";
 
 const statusLabels: Record<IdeaStatus, string> = {
@@ -73,6 +78,7 @@ export function useIdeasList() {
         showOnlyMine,
         setShowOnlyMine,
         toggleVote: (ideaId: number, direction: "up" | "down") => toggleVote({ ideaId, direction }),
-        addIdea: (title: string, description: string, tags: string[]) => createIdea({ title, description, tags }),
+        addIdea: (title: string, description: string, tags: string[]) =>
+            createIdea({ title, description, tags }),
     };
 }

@@ -82,10 +82,7 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
     return (
         <div className="flex flex-col gap-3">
             {PRESETS.map((preset) => (
-                <label
-                    key={preset.value}
-                    className="flex items-center gap-2.5 h-7 cursor-pointer"
-                >
+                <label key={preset.value} className="flex items-center gap-2.5 h-7 cursor-pointer">
                     <div
                         className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                             state.datePreset === preset.value
@@ -101,9 +98,7 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                         onChange={() => handlePreset(preset.value)}
                         className="sr-only"
                     />
-                    <span className="text-[13px] font-normal text-[#111827]">
-                        {preset.label}
-                    </span>
+                    <span className="text-[13px] font-normal text-[#111827]">{preset.label}</span>
                 </label>
             ))}
 
@@ -146,8 +141,8 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                         <Calendar
                             selected={
                                 activeInput === "from"
-                                    ? state.customDate?.from ?? null
-                                    : state.customDate?.to ?? null
+                                    ? (state.customDate?.from ?? null)
+                                    : (state.customDate?.to ?? null)
                             }
                             range={
                                 state.customDate

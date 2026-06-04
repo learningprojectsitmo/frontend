@@ -226,13 +226,8 @@ export const removeWorkspaceParticipant = async (
 export const useRemoveWorkspaceParticipant = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({
-            workspaceId,
-            userId,
-        }: {
-            workspaceId: number;
-            userId: number;
-        }) => removeWorkspaceParticipant(workspaceId, userId),
+        mutationFn: ({ workspaceId, userId }: { workspaceId: number; userId: number }) =>
+            removeWorkspaceParticipant(workspaceId, userId),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
                 queryKey: ["workspaces", variables.workspaceId, "participants"],

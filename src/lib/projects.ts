@@ -1,6 +1,10 @@
 import { api } from "./api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type ProjectFullResponse, type ProjectListResponse } from "@/types/api";
+import {
+    type ProjectFullResponse,
+    type ProjectListResponse,
+    type MyProjectListResponse,
+} from "@/types/api";
 
 export const getProject = async ({
     queryKey,
@@ -47,6 +51,20 @@ export const updateProject = async ({
     data: Partial<ProjectFullResponse>;
 }): Promise<ProjectFullResponse> => {
     return await api.put(`/projects/${id}`, data);
+};
+
+export const getRecentProjects = async (): Promise<MyProjectListResponse> => {
+    return await api.get("/projects/my");
+};
+
+export const useRecentProjectsList = () => {
+    return useQuery({
+        queryKey: ["projects", "recent"],
+        queryFn: getRecentProjects,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
 };
 
 export const useUpdateProject = () => {

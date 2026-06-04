@@ -28,18 +28,11 @@ export function FilterSection({ icon, label, count, children }: FilterSectionPro
                 </div>
                 <ChevronDown
                     size={16}
-                    className={cn(
-                        "text-[#6B7280] transition-transform",
-                        open && "rotate-180",
-                    )}
+                    className={cn("text-[#6B7280] transition-transform", open && "rotate-180")}
                     style={{ transitionDuration: "160ms" }}
                 />
             </button>
-            {open && (
-                <div className="px-3 pb-3 pt-1 border-b border-[#F3F4F6]">
-                    {children}
-                </div>
-            )}
+            {open && <div className="px-3 pb-3 pt-1 border-b border-[#F3F4F6]">{children}</div>}
         </div>
     );
 }

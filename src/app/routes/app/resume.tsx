@@ -130,7 +130,10 @@ const ResumeRoute = () => {
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <BreadcrumbLink asChild>
-                                    <Link to="/app" className="font-sans font-medium text-sm sm:text-base">
+                                    <Link
+                                        to="/app"
+                                        className="font-sans font-medium text-sm sm:text-base"
+                                    >
                                         Все пространства
                                     </Link>
                                 </BreadcrumbLink>
@@ -138,7 +141,10 @@ const ResumeRoute = () => {
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
                                 <BreadcrumbLink asChild>
-                                    <Link to="/app/profile" className="font-sans font-medium text-sm sm:text-base">
+                                    <Link
+                                        to="/app/profile"
+                                        className="font-sans font-medium text-sm sm:text-base"
+                                    >
                                         Профиль
                                     </Link>
                                 </BreadcrumbLink>
@@ -196,7 +202,10 @@ const ResumeRoute = () => {
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link to="/app" className="font-sans font-medium text-sm sm:text-base">
+                                <Link
+                                    to="/app"
+                                    className="font-sans font-medium text-sm sm:text-base"
+                                >
                                     Все пространства
                                 </Link>
                             </BreadcrumbLink>

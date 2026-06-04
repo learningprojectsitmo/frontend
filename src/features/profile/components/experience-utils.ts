@@ -13,13 +13,12 @@ const YEAR_WORDS = ["год", "года", "лет"] as const;
 
 const pluralize = (count: number, words: readonly [string, string, string]): string => {
     if (count % 10 === 1 && count % 100 !== 11) return words[0];
-    if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return words[1];
+    if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))
+        return words[1];
     return words[2];
 };
 
-export const calculateTotalDuration = (
-    items: { duration: string }[],
-): string => {
+export const calculateTotalDuration = (items: { duration: string }[]): string => {
     const totalMonths = items.reduce((acc, item) => {
         const match = item.duration.match(/(?:(\d+)\s*год)?\s*(?:(\d+)\s*месяц)?/);
         const years = match?.[1] ? Number.parseInt(match[1]) : 0;

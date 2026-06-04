@@ -11,7 +11,13 @@ import { paths } from "@/config/paths";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { useNotifications } from "@/components/ui/notifications";
 import type { User, AuthTokenResponse } from "@/types/api";
-import { api, setAccessToken, clearAccessToken, isSessionExpired, clearSessionExpired } from "./api-client";
+import {
+    api,
+    setAccessToken,
+    clearAccessToken,
+    isSessionExpired,
+    clearSessionExpired,
+} from "./api-client";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 

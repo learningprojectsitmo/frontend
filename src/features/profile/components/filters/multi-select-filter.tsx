@@ -2,18 +2,24 @@ import { useState, useMemo } from "react";
 import { Search, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type CheckboxOption = {
+type MultiSelectOption = {
     value: string;
     label: string;
 };
 
-type CheckboxGroupProps = {
-    options: CheckboxOption[];
+type MultiSelectFilterProps = {
+    options: MultiSelectOption[];
     selected: string[];
     onChange: (selected: string[]) => void;
+    placeholder?: string;
 };
 
-export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProps) {
+export function MultiSelectFilter({
+    options,
+    selected,
+    onChange,
+    placeholder = "Поиск",
+}: MultiSelectFilterProps) {
     const [search, setSearch] = useState("");
 
     const filteredOptions = useMemo(
@@ -57,7 +63,7 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                 />
                 <input
                     type="text"
-                    placeholder="Поиск"
+                    placeholder={placeholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full h-[34px] pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"

@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { type ResumeExperience } from "@/types/api";
-import { useCreateResumeExperience, useUpdateResumeExperience, useDeleteResumeExperience } from "@/lib/resume";
+import {
+    useCreateResumeExperience,
+    useUpdateResumeExperience,
+    useDeleteResumeExperience,
+} from "@/lib/resume";
 import { ExperienceEditCard } from "./ExperienceEditCard";
 
 const INITIAL_VISIBLE = 3;
@@ -18,7 +22,8 @@ const formatDuration = (items: { duration: string | null }[]): string => {
     const months = totalMonths % 12;
     const parts: string[] = [];
     if (years) parts.push(`${years} ${years === 1 ? "год" : years < 5 ? "года" : "лет"}`);
-    if (months) parts.push(`${months} ${months === 1 ? "месяц" : months < 5 ? "месяца" : "месяцев"}`);
+    if (months)
+        parts.push(`${months} ${months === 1 ? "месяц" : months < 5 ? "месяца" : "месяцев"}`);
     return parts.join(" ");
 };
 
@@ -56,36 +61,40 @@ export const ExperienceTimeline = ({
         setNewCards((prev) => [...prev, Date.now()]);
     };
 
-    const handleSaveNew = (cardId: number) => (data: {
-        company: string;
-        position: string;
-        experience_type: string | null;
-        period_from: string | null;
-        period_to: string | null;
-        description: string | null;
-        responsibilities: string[] | null;
-    }) => {
-        createMutation.mutate(
-            { resumeId, data },
-            { onSuccess: () => setNewCards((prev) => prev.filter((id) => id !== cardId)) },
-        );
-    };
+    const handleSaveNew =
+        (cardId: number) =>
+        (data: {
+            company: string;
+            position: string;
+            experience_type: string | null;
+            period_from: string | null;
+            period_to: string | null;
+            description: string | null;
+            responsibilities: string[] | null;
+        }) => {
+            createMutation.mutate(
+                { resumeId, data },
+                { onSuccess: () => setNewCards((prev) => prev.filter((id) => id !== cardId)) },
+            );
+        };
 
     const handleCancelNew = (cardId: number) => () => {
         setNewCards((prev) => prev.filter((id) => id !== cardId));
     };
 
-    const handleSave = (exp: ResumeExperience) => (data: {
-        company: string;
-        position: string;
-        experience_type: string | null;
-        period_from: string | null;
-        period_to: string | null;
-        description: string | null;
-        responsibilities: string[] | null;
-    }) => {
-        updateMutation.mutate({ expId: exp.id, data });
-    };
+    const handleSave =
+        (exp: ResumeExperience) =>
+        (data: {
+            company: string;
+            position: string;
+            experience_type: string | null;
+            period_from: string | null;
+            period_to: string | null;
+            description: string | null;
+            responsibilities: string[] | null;
+        }) => {
+            updateMutation.mutate({ expId: exp.id, data });
+        };
 
     const handleDelete = (exp: ResumeExperience) => () => {
         deleteMutation.mutate(exp.id);
@@ -96,7 +105,9 @@ export const ExperienceTimeline = ({
             <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm divide-y divide-gray-100">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold tracking-tight text-[#222]">Опыт работы</h3>
+                        <h3 className="text-lg font-semibold tracking-tight text-[#222]">
+                            Опыт работы
+                        </h3>
                         {totalDuration && (
                             <span className="text-sm text-[#8A8A8A]">{totalDuration}</span>
                         )}
@@ -115,7 +126,8 @@ export const ExperienceTimeline = ({
                 {!hasExperience ? (
                     <div className="p-6">
                         <p className="text-xs text-gray-500 mb-2">
-                            Опишите, почему у вас нет опыта (например, вы студент, меняете сферу деятельности и т.д.)
+                            Опишите, почему у вас нет опыта (например, вы студент, меняете сферу
+                            деятельности и т.д.)
                         </p>
                         <textarea
                             value={noExperienceDescription ?? ""}
@@ -140,10 +152,21 @@ export const ExperienceTimeline = ({
                         {newCards.map((id) => (
                             <div key={id} className="p-6">
                                 <ExperienceEditCard
-                                    experience={{ id, company: "", position: "", experience_type: "project", period_from: null, period_to: null, description: null, responsibilities: null }}
+                                    experience={{
+                                        id,
+                                        company: "",
+                                        position: "",
+                                        experience_type: "project",
+                                        period_from: null,
+                                        period_to: null,
+                                        description: null,
+                                        responsibilities: null,
+                                    }}
                                     isNew
                                     onSave={handleSaveNew(id)}
-                                    onDelete={() => setNewCards((prev) => prev.filter((c) => c !== id))}
+                                    onDelete={() =>
+                                        setNewCards((prev) => prev.filter((c) => c !== id))
+                                    }
                                     onCancel={handleCancelNew(id)}
                                 />
                             </div>
@@ -162,7 +185,9 @@ export const ExperienceTimeline = ({
                                         className="inline-flex items-center gap-1 text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors"
                                     >
                                         {isExpanded ? "Свернуть" : "Развернуть"}
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                        />
                                     </button>
                                 )}
                             </div>

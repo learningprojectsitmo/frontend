@@ -9,7 +9,14 @@ type TagListProps = {
     onShowMore: () => void;
 };
 
-export function TagList({ tags, totalTags, activeTag, showAll, onTagClick, onShowMore }: TagListProps) {
+export function TagList({
+    tags,
+    totalTags,
+    activeTag,
+    showAll,
+    onTagClick,
+    onShowMore,
+}: TagListProps) {
     return (
         <div className="bg-white border border-[--color-black-10] rounded-[14px] p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Теги</h3>

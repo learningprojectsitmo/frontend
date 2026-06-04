@@ -128,9 +128,13 @@ const IdeasDetailRoute = () => {
                                 <div className="w-8 h-8 rounded-full bg-[--azure-60]/20 flex items-center justify-center text-xs font-semibold text-[--azure-60]">
                                     {idea.author.username.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-[--azure-46] text-sm">{idea.author.username}</span>
+                                <span className="text-[--azure-46] text-sm">
+                                    {idea.author.username}
+                                </span>
                                 <span className="text-[--azure-46] text-sm">·</span>
-                                <span className="text-[--azure-46] text-sm">{formatDate(idea.createdAt)}</span>
+                                <span className="text-[--azure-46] text-sm">
+                                    {formatDate(idea.createdAt)}
+                                </span>
                             </div>
 
                             <p className="text-[15px] text-[--grey-4] leading-relaxed mb-6 whitespace-pre-wrap">
@@ -229,8 +233,8 @@ const IdeasDetailRoute = () => {
                     </DialogHeader>
                     <div className="py-4">
                         <p className="text-gray-600">
-                            Вы действительно хотите удалить идею «{idea.title}»? Это действие
-                            нельзя будет отменить.
+                            Вы действительно хотите удалить идею «{idea.title}»? Это действие нельзя
+                            будет отменить.
                         </p>
                     </div>
                     <div className="flex justify-end gap-2">

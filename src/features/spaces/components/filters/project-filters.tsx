@@ -24,12 +24,7 @@ type ProjectFiltersProps = {
     projects: ProjectListItemResponse[];
 };
 
-export function ProjectFilters({
-    state,
-    onChange,
-    onReset,
-    projects,
-}: ProjectFiltersProps) {
+export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFiltersProps) {
     const [open, setOpen] = useState(false);
 
     const activeCount = [
@@ -53,11 +48,7 @@ export function ProjectFilters({
                 onClick={() => setOpen((v) => !v)}
             />
 
-            <FilterDropdown
-                open={open}
-                onClose={handleClose}
-                onReset={onReset}
-            >
+            <FilterDropdown open={open} onClose={handleClose} onReset={onReset}>
                 <FilterSection
                     icon={<CircleDot size={16} />}
                     label="Статус"
@@ -70,8 +61,7 @@ export function ProjectFilters({
                                 label: STATUS_LABELS[p.status?.name || "draft"],
                             }))
                             .filter(
-                                (opt, i, arr) =>
-                                    arr.findIndex((o) => o.value === opt.value) === i,
+                                (opt, i, arr) => arr.findIndex((o) => o.value === opt.value) === i,
                             )
                             .sort((a, b) => a.label.localeCompare(b.label, "ru"))}
                         selected={state.statuses}
@@ -79,15 +69,9 @@ export function ProjectFilters({
                     />
                 </FilterSection>
 
-                <FilterSection
-                    icon={<Tag size={16} />}
-                    label="Теги"
-                    count={state.tags.length}
-                >
+                <FilterSection icon={<Tag size={16} />} label="Теги" count={state.tags.length}>
                     <CheckboxGroup
-                        options={[
-                            ...new Set(projects.flatMap((p) => p.tags)),
-                        ]
+                        options={[...new Set(projects.flatMap((p) => p.tags))]
                             .sort((a, b) => a.localeCompare(b, "ru"))
                             .map((t) => ({ value: t, label: t }))}
                         selected={state.tags}
@@ -114,9 +98,7 @@ export function ProjectFilters({
                                 label: m.full_name,
                             }))}
                         selected={state.members.map(String)}
-                        onChange={(v) =>
-                            onChange({ ...state, members: v.map(Number) })
-                        }
+                        onChange={(v) => onChange({ ...state, members: v.map(Number) })}
                     />
                 </FilterSection>
 

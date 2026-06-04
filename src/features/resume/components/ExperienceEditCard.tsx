@@ -3,8 +3,18 @@ import { Folder, Building2, Pencil, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/features/spaces/components/filters/calendar";
 
 const MONTHS_RU = [
-    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь",
 ];
 
 function formatMonthDisplay(value: string): string {
@@ -83,7 +93,10 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
     const handleSave = () => {
         if (!company.trim() || !position.trim()) return;
         const responsibilitiesArr = description
-            ? description.split("\n").map((s) => s.trim()).filter(Boolean)
+            ? description
+                  .split("\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
             : null;
         onSave({
             company: company.trim(),
@@ -116,9 +129,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                                 {company || "Новый опыт"}
                             </h3>
                         )}
-                        {!isNew && (
-                            <Pencil className="w-4 h-4 text-[#8A8A8A] shrink-0" />
-                        )}
+                        {!isNew && <Pencil className="w-4 h-4 text-[#8A8A8A] shrink-0" />}
                     </div>
                 </div>
             </div>
@@ -150,7 +161,9 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                             </button>
                         </div>
                         <div>
-                            <label className="text-xs text-[#8A8A8A] mb-1 block">Дата окончания</label>
+                            <label className="text-xs text-[#8A8A8A] mb-1 block">
+                                Дата окончания
+                            </label>
                             <button
                                 type="button"
                                 onClick={() => setActiveField("to")}
@@ -162,14 +175,25 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                         </div>
                     </div>
                     {activeField && (
-                        <div ref={popoverRef} className="absolute left-1/2 -translate-x-1/2 z-50 mt-2">
+                        <div
+                            ref={popoverRef}
+                            className="absolute left-1/2 -translate-x-1/2 z-50 mt-2"
+                        >
                             <Calendar
                                 selected={
                                     activeField === "from" && periodFrom
-                                        ? new Date(Number(periodFrom.split("-")[0]), Number(periodFrom.split("-")[1]) - 1, 1)
+                                        ? new Date(
+                                              Number(periodFrom.split("-")[0]),
+                                              Number(periodFrom.split("-")[1]) - 1,
+                                              1,
+                                          )
                                         : activeField === "to" && periodTo
-                                        ? new Date(Number(periodTo.split("-")[0]), Number(periodTo.split("-")[1]) - 1, 1)
-                                        : null
+                                          ? new Date(
+                                                Number(periodTo.split("-")[0]),
+                                                Number(periodTo.split("-")[1]) - 1,
+                                                1,
+                                            )
+                                          : null
                                 }
                                 onSelect={handleDateSelect}
                             />

@@ -8,9 +8,7 @@ type Props = {
 export const CoverLetterCard = ({ content, isEditing, editValue, onChange }: Props) => {
     return (
         <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 sm:p-8">
-            <h2 className="text-2xl font-semibold tracking-tight mb-4">
-                Сопроводительное письмо
-            </h2>
+            <h2 className="text-2xl font-semibold tracking-tight mb-4">Сопроводительное письмо</h2>
             {isEditing ? (
                 <textarea
                     value={editValue ?? ""}

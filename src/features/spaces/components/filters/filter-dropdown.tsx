@@ -42,9 +42,7 @@ export function FilterDropdown({ open, onClose, onReset, children }: FilterDropd
                 ref={ref}
                 className="absolute top-full mt-2 right-0 z-[110] w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_10px_15px_rgba(0,0,0,0.05),0_25px_50px_rgba(0,0,0,0.12)] p-2 animate-filter-in"
             >
-                <div className="flex flex-col gap-1">
-                    {children}
-                </div>
+                <div className="flex flex-col gap-1">{children}</div>
 
                 <button
                     type="button"

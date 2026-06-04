@@ -12,7 +12,12 @@ export const ideasKeys = {
     tags: () => [...ideasKeys.all, "tags"] as const,
 };
 
-export const useIdeasList = (params?: { search?: string; sort?: string; status?: string; tag?: string }) => {
+export const useIdeasList = (params?: {
+    search?: string;
+    sort?: string;
+    status?: string;
+    tag?: string;
+}) => {
     return useQuery({
         queryKey: ideasKeys.list(params),
         queryFn: async () => {
@@ -85,8 +90,7 @@ export const useCreateIdea = () => {
 export const useDeleteIdea = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (ideaId: number) =>
-            api.delete(`/ideas/${ideaId}`) as Promise<void>,
+        mutationFn: (ideaId: number) => api.delete(`/ideas/${ideaId}`) as Promise<void>,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ideasKeys.lists() });
             queryClient.invalidateQueries({ queryKey: ideasKeys.details() });
@@ -98,8 +102,7 @@ export const useDeleteIdea = () => {
 export const useCreateTag = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (name: string) =>
-            api.post("/ideas/tags", { name }) as Promise<IdeaTag>,
+        mutationFn: (name: string) => api.post("/ideas/tags", { name }) as Promise<IdeaTag>,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ideasKeys.tags() });
         },

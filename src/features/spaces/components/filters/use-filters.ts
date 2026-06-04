@@ -69,9 +69,7 @@ export function useFilters(projects: ProjectListItemResponse[]) {
                 }
             }
         }
-        return [...map.values()].sort((a, b) =>
-            a.full_name.localeCompare(b.full_name, "ru"),
-        );
+        return [...map.values()].sort((a, b) => a.full_name.localeCompare(b.full_name, "ru"));
     }, [projects]);
 
     const activeCount = useMemo(() => {
@@ -87,15 +85,11 @@ export function useFilters(projects: ProjectListItemResponse[]) {
         let result = projects;
 
         if (state.statuses.length > 0) {
-            result = result.filter(
-                (p) => p.status?.name && state.statuses.includes(p.status.name),
-            );
+            result = result.filter((p) => p.status?.name && state.statuses.includes(p.status.name));
         }
 
         if (state.tags.length > 0) {
-            result = result.filter((p) =>
-                p.tags.some((t) => state.tags.includes(t)),
-            );
+            result = result.filter((p) => p.tags.some((t) => state.tags.includes(t)));
         }
 
         if (state.members.length > 0) {

@@ -47,7 +47,11 @@ export default defineConfig({
                 experimentalMinChunkSize: 50000,
                 manualChunks(id: string) {
                     if (id.includes("node_modules")) {
-                        if (id.includes("react") || id.includes("react-router") || id.includes("react-dom")) {
+                        if (
+                            id.includes("react") ||
+                            id.includes("react-router") ||
+                            id.includes("react-dom")
+                        ) {
                             return "vendor-react";
                         }
                         if (id.includes("@tanstack/react-query")) {
@@ -68,13 +72,22 @@ export default defineConfig({
                         if (id.includes("@dnd-kit/")) {
                             return "vendor-dnd";
                         }
-                        if (id.includes("sonner") || id.includes("react-helmet-async") || id.includes("react-error-boundary")) {
+                        if (
+                            id.includes("sonner") ||
+                            id.includes("react-helmet-async") ||
+                            id.includes("react-error-boundary")
+                        ) {
                             return "vendor-ui";
                         }
                         if (
-                            id.includes("axios") || id.includes("zustand") || id.includes("zod") ||
-                            id.includes("dayjs") || id.includes("clsx") || id.includes("camelcase-keys") ||
-                            id.includes("tailwind-merge") || id.includes("class-variance-authority") ||
+                            id.includes("axios") ||
+                            id.includes("zustand") ||
+                            id.includes("zod") ||
+                            id.includes("dayjs") ||
+                            id.includes("clsx") ||
+                            id.includes("camelcase-keys") ||
+                            id.includes("tailwind-merge") ||
+                            id.includes("class-variance-authority") ||
                             id.includes("nanoid")
                         ) {
                             return "vendor-utils";

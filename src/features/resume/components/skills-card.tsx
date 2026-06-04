@@ -20,7 +20,12 @@ export const SkillsCard = ({ skills, isEditing, resumeId }: Props) => {
         if (!name.trim()) return;
         createMutation.mutate(
             { resumeId, data: { name: name.trim() } },
-            { onSuccess: () => { setName(""); setShowForm(false); } },
+            {
+                onSuccess: () => {
+                    setName("");
+                    setShowForm(false);
+                },
+            },
         );
     };
 
@@ -63,7 +68,10 @@ export const SkillsCard = ({ skills, isEditing, resumeId }: Props) => {
                         className="text-sm px-3 py-2 rounded-lg border border-gray-200 outline-none focus:border-gray-400"
                     />
                     <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowForm(false)} className="text-xs text-gray-500 px-3 py-1.5">
+                        <button
+                            onClick={() => setShowForm(false)}
+                            className="text-xs text-gray-500 px-3 py-1.5"
+                        >
                             Отмена
                         </button>
                         <button

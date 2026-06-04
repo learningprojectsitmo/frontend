@@ -2,7 +2,9 @@ export interface Member {
     id: number;
     name: string;
     role: string;
-    contacts: string | { telegram?: string | null; email?: string | null; linkedin?: string | null };
+    contacts:
+        | string
+        | { telegram?: string | null; email?: string | null; linkedin?: string | null };
     resumeUrl: string;
     dateAdded: string;
     avatarUrl?: string;

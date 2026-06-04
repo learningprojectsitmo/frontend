@@ -45,7 +45,14 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
         setEditHasExperience(data.resume.has_experience);
         setEditNoExpDescription(data.resume.no_experience_description ?? "");
         setEditIsVisible(data.resume.is_visible);
-    }, [data.resume.header, data.resume.about, data.resume.cover_letter, data.resume.has_experience, data.resume.no_experience_description, data.resume.is_visible]);
+    }, [
+        data.resume.header,
+        data.resume.about,
+        data.resume.cover_letter,
+        data.resume.has_experience,
+        data.resume.no_experience_description,
+        data.resume.is_visible,
+    ]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -57,7 +64,10 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                             onCheckedChange={setEditIsVisible}
                             id="resume-visibility"
                         />
-                        <label htmlFor="resume-visibility" className="text-sm text-gray-600 cursor-pointer">
+                        <label
+                            htmlFor="resume-visibility"
+                            className="text-sm text-gray-600 cursor-pointer"
+                        >
                             {editIsVisible ? "Видно всем" : "Скрыто"}
                         </label>
                     </div>
@@ -127,16 +137,16 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                         <ExperienceSection experiences={data.experiences} />
                     ) : !data.resume.has_experience && data.resume.no_experience_description ? (
                         <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
-                            <h3 className="text-lg font-semibold tracking-tight text-[#222] mb-3">Опыт работы</h3>
+                            <h3 className="text-lg font-semibold tracking-tight text-[#222] mb-3">
+                                Опыт работы
+                            </h3>
                             <p className="text-sm text-gray-600">Нет опыта</p>
                             <p className="text-[15px] leading-relaxed text-gray-700 mt-2 whitespace-pre-line">
                                 {data.resume.no_experience_description}
                             </p>
                         </div>
                     ) : null}
-                    {data.resume.about && !isEditing && (
-                        <AboutCard content={data.resume.about} />
-                    )}
+                    {data.resume.about && !isEditing && <AboutCard content={data.resume.about} />}
                     {isEditing && (
                         <AboutCard
                             content={data.resume.about ?? ""}
@@ -149,19 +159,39 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
 
                 <div className="flex flex-col gap-6">
                     {(data.links.length > 0 || isEditing) && (
-                        <PortfolioCard links={data.links} isEditing={isEditing} resumeId={data.resume.id} />
+                        <PortfolioCard
+                            links={data.links}
+                            isEditing={isEditing}
+                            resumeId={data.resume.id}
+                        />
                     )}
                     {(data.educations.length > 0 || isEditing) && (
-                        <EducationCard educations={data.educations} isEditing={isEditing} resumeId={data.resume.id} />
+                        <EducationCard
+                            educations={data.educations}
+                            isEditing={isEditing}
+                            resumeId={data.resume.id}
+                        />
                     )}
                     {(data.languages.length > 0 || isEditing) && (
-                        <LanguagesCard languages={data.languages} isEditing={isEditing} resumeId={data.resume.id} />
+                        <LanguagesCard
+                            languages={data.languages}
+                            isEditing={isEditing}
+                            resumeId={data.resume.id}
+                        />
                     )}
                     {(data.skills.length > 0 || isEditing) && (
-                        <SkillsCard skills={data.skills} isEditing={isEditing} resumeId={data.resume.id} />
+                        <SkillsCard
+                            skills={data.skills}
+                            isEditing={isEditing}
+                            resumeId={data.resume.id}
+                        />
                     )}
                     {(data.interests.length > 0 || isEditing) && (
-                        <InterestsCard interests={data.interests} isEditing={isEditing} resumeId={data.resume.id} />
+                        <InterestsCard
+                            interests={data.interests}
+                            isEditing={isEditing}
+                            resumeId={data.resume.id}
+                        />
                     )}
                 </div>
             </div>

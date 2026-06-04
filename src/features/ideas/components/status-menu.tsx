@@ -15,7 +15,12 @@ const items: { key: IdeaStatus | "all"; label: string; icon: typeof Lightbulb }[
     { key: "implemented", label: "Реализовано", icon: CheckCircle2 },
 ];
 
-export function StatusMenu({ current, showOnlyMine, onStatusChange, onMineToggle }: StatusMenuProps) {
+export function StatusMenu({
+    current,
+    showOnlyMine,
+    onStatusChange,
+    onMineToggle,
+}: StatusMenuProps) {
     return (
         <div className="bg-white border border-[--color-black-10] rounded-[14px] p-2">
             <div className="space-y-0.5">

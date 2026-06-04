@@ -80,7 +80,6 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
 
     return (
         <div ref={ref} className="relative">
-
             {open && (
                 <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
                     {/* Header */}

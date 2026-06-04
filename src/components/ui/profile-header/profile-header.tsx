@@ -91,7 +91,9 @@ export const ProfileHeader = ({
                                     className="flex items-center gap-2 text-sm text-gray-700"
                                 >
                                     <Icon
-                                        name={s.label.toLowerCase() === "telegram" ? "telegram" : "vk"}
+                                        name={
+                                            s.label.toLowerCase() === "telegram" ? "telegram" : "vk"
+                                        }
                                         size={14}
                                         className="text-gray-400"
                                     />

@@ -95,7 +95,13 @@ export const createResumeEducation = async ({
     data,
 }: {
     resumeId: number;
-    data: { institution: string; faculty?: string | null; degree?: string | null; years?: string | null; sort_order?: number };
+    data: {
+        institution: string;
+        faculty?: string | null;
+        degree?: string | null;
+        years?: string | null;
+        sort_order?: number;
+    };
 }): Promise<ResumeEducation> => {
     return await api.post(`/resumes/${resumeId}/educations`, data);
 };
@@ -105,7 +111,13 @@ export const updateResumeEducation = async ({
     data,
 }: {
     eduId: number;
-    data: { institution?: string; faculty?: string | null; degree?: string | null; years?: string | null; sort_order?: number };
+    data: {
+        institution?: string;
+        faculty?: string | null;
+        degree?: string | null;
+        years?: string | null;
+        sort_order?: number;
+    };
 }): Promise<ResumeEducation> => {
     return await api.put(`/resumes/educations/${eduId}`, data);
 };

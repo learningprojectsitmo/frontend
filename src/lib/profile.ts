@@ -17,7 +17,10 @@ export const useProfile = () => {
 
 // ─── Portfolio CRUD ────────────────────────────────────────────────────
 
-export const createPortfolio = async (data: { title: string; url: string }): Promise<PortfolioFull> => {
+export const createPortfolio = async (data: {
+    title: string;
+    url: string;
+}): Promise<PortfolioFull> => {
     return await api.post("/profile/portfolio", data);
 };
 
@@ -110,7 +113,11 @@ export const useDeleteEducation = () => {
 
 // ─── Language CRUD ─────────────────────────────────────────────────────
 
-export const createLanguage = async (data: { name: string; level: string; flag: string }): Promise<LanguageFull> => {
+export const createLanguage = async (data: {
+    name: string;
+    level: string;
+    flag: string;
+}): Promise<LanguageFull> => {
     return await api.post("/profile/languages", data);
 };
 

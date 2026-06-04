@@ -15,10 +15,15 @@ const getInitials = (firstName: string, lastName: string | null) => {
     return `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`.toUpperCase();
 };
 
-export const ProfileCard = ({ user, role, isEditing, editHeader, onHeaderChange, onEdit }: Props) => {
-    const fullName = [user.last_name, user.first_name, user.middle_name]
-        .filter(Boolean)
-        .join(" ");
+export const ProfileCard = ({
+    user,
+    role,
+    isEditing,
+    editHeader,
+    onHeaderChange,
+    onEdit,
+}: Props) => {
+    const fullName = [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(" ");
 
     const socials: { label: string; value: string }[] = [];
     if (user.tg_nickname) socials.push({ label: "Telegram", value: user.tg_nickname });
@@ -76,7 +81,11 @@ export const ProfileCard = ({ user, role, isEditing, editHeader, onHeaderChange,
                                         className="flex items-center gap-2 text-sm text-gray-700"
                                     >
                                         <Icon
-                                            name={s.label.toLowerCase() === "telegram" ? "telegram" : "vk"}
+                                            name={
+                                                s.label.toLowerCase() === "telegram"
+                                                    ? "telegram"
+                                                    : "vk"
+                                            }
                                             size={14}
                                             className="text-gray-400"
                                         />

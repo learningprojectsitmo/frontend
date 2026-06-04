@@ -26,7 +26,13 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
         if (!newPlatform.trim() || !newUrl.trim()) return;
         createMutation.mutate(
             { resumeId, data: { platform: newPlatform.trim(), url: newUrl.trim() } },
-            { onSuccess: () => { setNewPlatform(""); setNewUrl(""); setShowForm(false); } },
+            {
+                onSuccess: () => {
+                    setNewPlatform("");
+                    setNewUrl("");
+                    setShowForm(false);
+                },
+            },
         );
     };
 
@@ -56,7 +62,9 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 text-sm text-blue-600 hover:underline min-w-0 truncate"
                         >
-                            <span className="truncate">{platformLabels[link.platform.toLowerCase()] || link.platform}</span>
+                            <span className="truncate">
+                                {platformLabels[link.platform.toLowerCase()] || link.platform}
+                            </span>
                         </a>
                         {isEditing && (
                             <button
@@ -92,7 +100,9 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                         </button>
                         <button
                             onClick={handleAdd}
-                            disabled={!newPlatform.trim() || !newUrl.trim() || createMutation.isPending}
+                            disabled={
+                                !newPlatform.trim() || !newUrl.trim() || createMutation.isPending
+                            }
                             className="text-xs font-medium text-white bg-blue-500 px-3 py-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50"
                         >
                             {createMutation.isPending ? "..." : "Добавить"}

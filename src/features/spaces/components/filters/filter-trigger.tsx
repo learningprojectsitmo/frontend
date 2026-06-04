@@ -27,10 +27,7 @@ export function FilterTrigger({ activeCount, open, onClick }: FilterTriggerProps
             )}
             <ChevronDown
                 size={16}
-                className={cn(
-                    "text-[#6B7280] transition-transform",
-                    open && "rotate-180",
-                )}
+                className={cn("text-[#6B7280] transition-transform", open && "rotate-180")}
                 style={{ transitionDuration: "160ms" }}
             />
         </button>

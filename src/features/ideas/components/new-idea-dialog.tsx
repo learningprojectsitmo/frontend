@@ -32,8 +32,12 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node) &&
-                inputRef.current && !inputRef.current.contains(e.target as Node)) {
+            if (
+                suggestionRef.current &&
+                !suggestionRef.current.contains(e.target as Node) &&
+                inputRef.current &&
+                !inputRef.current.contains(e.target as Node)
+            ) {
                 setShowSuggestions(false);
             }
         };
@@ -177,7 +181,9 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                                                 className="w-full flex items-center justify-between px-3 py-2 text-sm text-[--grey-4] hover:bg-[#F3F4F6] transition-colors text-left"
                                             >
                                                 {tag.name}
-                                                <span className="text-xs text-[--azure-46]">{tag.count}</span>
+                                                <span className="text-xs text-[--azure-46]">
+                                                    {tag.count}
+                                                </span>
                                             </button>
                                         ))}
                                     </div>
@@ -198,7 +204,12 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                     <Button variant="outlineSoft" size="hug36" onClick={onClose}>
                         Отмена
                     </Button>
-                    <Button variant="dark" size="hug36" onClick={handleSubmit} disabled={!title.trim()}>
+                    <Button
+                        variant="dark"
+                        size="hug36"
+                        onClick={handleSubmit}
+                        disabled={!title.trim()}
+                    >
                         Отправить
                     </Button>
                 </div>

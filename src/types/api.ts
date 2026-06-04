@@ -525,3 +525,56 @@ export type JoinByLinkResponse = {
     message: string;
     workspace_id: number;
 };
+
+// ─── Profile responses / invitations / projects ────────────────────────
+
+export type MyResponseItem = {
+    id: number;
+    project_id: number;
+    project_name: string;
+    description: string;
+    role: string;
+    resume_url: string;
+    resume_title: string;
+    date: string;
+    status: string;
+};
+
+export type MyResponseListResponse = {
+    items: MyResponseItem[];
+    total: number;
+};
+
+export type MyInvitationItem = {
+    id: number;
+    project_id: number;
+    project_name: string;
+    description: string;
+    inviter_name: string;
+    role: string;
+    resume_url: string;
+    resume_title: string;
+    date: string;
+    status: string;
+};
+
+export type MyInvitationListResponse = {
+    items: MyInvitationItem[];
+    total: number;
+};
+
+export type MyProjectItem = {
+    id: number;
+    title: string;
+    description: string | null;
+    status: string;
+    progress: number;
+    start_date: string;
+    members_count: number;
+    roles: string[];
+};
+
+export type MyProjectListResponse = {
+    items: MyProjectItem[];
+    total: number;
+};

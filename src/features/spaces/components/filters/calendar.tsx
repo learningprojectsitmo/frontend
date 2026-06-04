@@ -36,8 +36,18 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 const MONTHS_RU = [
-    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь",
 ];
 
 export function Calendar({ selected, range, onSelect }: CalendarProps) {
@@ -45,10 +55,7 @@ export function Calendar({ selected, range, onSelect }: CalendarProps) {
     const [viewYear, setViewYear] = useState(today.getFullYear());
     const [viewMonth, setViewMonth] = useState(today.getMonth());
 
-    const days = useMemo(
-        () => getMonthDays(viewYear, viewMonth),
-        [viewYear, viewMonth],
-    );
+    const days = useMemo(() => getMonthDays(viewYear, viewMonth), [viewYear, viewMonth]);
 
     const prevMonth = () => {
         if (viewMonth === 0) {
@@ -109,10 +116,7 @@ export function Calendar({ selected, range, onSelect }: CalendarProps) {
 
                     const isSelected = selected && isSameDay(day, selected);
                     const isToday = isSameDay(day, today);
-                    const inRange =
-                        range &&
-                        day >= range.from &&
-                        day <= range.to;
+                    const inRange = range && day >= range.from && day <= range.to;
 
                     return (
                         <button

@@ -23,7 +23,10 @@ export function IdeasSearch({ search, sort, onSearchChange, onSortChange }: Idea
     return (
         <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--azure-46]" />
+                <Search
+                    size={18}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--azure-46]"
+                />
                 <input
                     type="text"
                     value={search}

@@ -6,11 +6,20 @@ import { mapResumeFromApi } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
 import { paths } from "@/config/paths";
+import { ResponsesSection } from "@/features/profile/components/responses-section";
+import { InvitationsSection } from "@/features/profile/components/invitations-section";
+import { SpacesSection } from "@/features/profile/components/spaces-section";
+import { ProjectsSection } from "@/features/profile/components/projects-section";
 
-const tabs = [
+const mainTabs = [
     { value: "resume", label: "Резюме" },
     { value: "responses", label: "Отклики и приглашения" },
     { value: "spaces", label: "Пространства и проекты" },
+];
+
+const spaceSubTabs = [
+    { value: "spaces", label: "Пространства" },
+    { value: "projects", label: "Проекты" },
 ];
 
 const socialsFromProfile = (
@@ -26,6 +35,7 @@ const socialsFromProfile = (
 const ProfileRoute = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("resume");
+    const [activeSpaceTab, setActiveSpaceTab] = useState("spaces");
     const { data: profile } = useProfile();
 
     return (
@@ -44,7 +54,7 @@ const ProfileRoute = () => {
                 />
 
                 <Tabs
-                    tabs={tabs}
+                    tabs={mainTabs}
                     value={activeTab}
                     onValueChange={setActiveTab}
                     variant="text"
@@ -70,11 +80,24 @@ const ProfileRoute = () => {
                     </div>
                 )}
 
-                {activeTab !== "resume" && (
-                    <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-sm text-gray-400">
-                        {activeTab === "responses"
-                            ? "Отклики и приглашения"
-                            : "Пространства и проекты"}
+                {activeTab === "responses" && (
+                    <div className="flex flex-col gap-10">
+                        <ResponsesSection />
+                        <InvitationsSection />
+                    </div>
+                )}
+
+                {activeTab === "spaces" && (
+                    <div>
+                        <Tabs
+                            tabs={spaceSubTabs}
+                            value={activeSpaceTab}
+                            onValueChange={setActiveSpaceTab}
+                            variant="text"
+                            className="mb-6"
+                        />
+                        {activeSpaceTab === "spaces" && <SpacesSection />}
+                        {activeSpaceTab === "projects" && <ProjectsSection />}
                     </div>
                 )}
             </div>
