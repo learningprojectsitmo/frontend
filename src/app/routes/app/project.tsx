@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
 import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
+import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
 import { useSearchParams } from "react-router";
@@ -136,6 +137,13 @@ const SpaceRoute = () => {
         [],
     );
     const updateProjectMutation = useUpdateProject();
+    const { addViewedProject } = useRecentlyViewed();
+
+    useEffect(() => {
+        if (dataProject?.id) {
+            addViewedProject(dataProject.id);
+        }
+    }, [dataProject, addViewedProject]);
 
     useEffect(() => {
         if (dataProject) {

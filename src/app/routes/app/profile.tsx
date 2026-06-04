@@ -17,11 +17,6 @@ const mainTabs = [
     { value: "spaces", label: "Пространства и проекты" },
 ];
 
-const spaceSubTabs = [
-    { value: "spaces", label: "Пространства" },
-    { value: "projects", label: "Проекты" },
-];
-
 const socialsFromProfile = (
     tg: string | null,
     vk: string | null,
@@ -35,7 +30,6 @@ const socialsFromProfile = (
 const ProfileRoute = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("resume");
-    const [activeSpaceTab, setActiveSpaceTab] = useState("spaces");
     const { data: profile } = useProfile();
 
     return (
@@ -88,16 +82,9 @@ const ProfileRoute = () => {
                 )}
 
                 {activeTab === "spaces" && (
-                    <div>
-                        <Tabs
-                            tabs={spaceSubTabs}
-                            value={activeSpaceTab}
-                            onValueChange={setActiveSpaceTab}
-                            variant="text"
-                            className="mb-6"
-                        />
-                        {activeSpaceTab === "spaces" && <SpacesSection />}
-                        {activeSpaceTab === "projects" && <ProjectsSection />}
+                    <div className="flex flex-col gap-10">
+                        <SpacesSection />
+                        <ProjectsSection />
                     </div>
                 )}
             </div>

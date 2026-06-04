@@ -67,6 +67,22 @@ export const useRecentProjectsList = () => {
     });
 };
 
+export const getProjectsByIds = async (ids: number[]): Promise<MyProjectListResponse> => {
+    const idsStr = ids.join(",");
+    return await api.get("/projects/by_ids", { params: { ids: idsStr } });
+};
+
+export const useProjectsByIds = (ids: number[]) => {
+    return useQuery({
+        queryKey: ["projects", "by_ids", ids],
+        queryFn: () => getProjectsByIds(ids),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        enabled: ids.length > 0,
+    });
+};
+
 export const useUpdateProject = () => {
     const queryClient = useQueryClient();
     return useMutation({

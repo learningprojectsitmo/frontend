@@ -108,6 +108,18 @@ export function useProfileSpaces() {
     });
 }
 
+export function useProfileCreatedProjects() {
+    return useQuery({
+        queryKey: ["profile", "created-projects"],
+        queryFn: async () => {
+            const data: MyProjectListResponse = await api.get("/projects/created");
+            return data.items.map(mapMyProjectItem);
+        },
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+}
+
 export function useProfileProjects() {
     return useQuery({
         queryKey: ["profile", "projects"],

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useProfileProjects } from "@/features/profile/api/use-profile-data";
+import { useProfileCreatedProjects } from "@/features/profile/api/use-profile-data";
 import { ProjectCard } from "@/components/ui/card/project-card";
 import { ListToolbar } from "./list-toolbar";
 import { Link } from "react-router";
@@ -13,7 +13,7 @@ const statusToTag: Record<string, { tag: string; label: string }> = {
 };
 
 export function ProjectsSection() {
-    const { data: projects, isLoading } = useProfileProjects();
+    const { data: projects, isLoading } = useProfileCreatedProjects();
     const [search, setSearch] = useState("");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const items = useMemo(() => projects ?? [], [projects]);
