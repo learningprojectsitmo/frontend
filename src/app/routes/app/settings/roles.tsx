@@ -12,8 +12,10 @@ import {
 } from "@/lib/settings";
 import type { Permission, Role } from "@/features/settings/types";
 import { useState, useEffect } from "react";
+import { useProfile } from "@/lib/profile";
 
 const RolesSettingsPage = () => {
+    const { data: profile } = useProfile();
     const [activeTab, setActiveTab] = useState("roles");
     const [selectedRoleId, setSelectedRoleId] = useState<string>("");
     const [roles, setRoles] = useState<Role[]>([]);
@@ -35,6 +37,15 @@ const RolesSettingsPage = () => {
         { value: "notifications", label: "Уведомления" },
         { value: "security", label: "Безопасность" },
     ];
+
+    const visibleTabs =
+        profile?.role === "admin" ? settingsTabs : settingsTabs.filter((t) => t.value !== "roles");
+
+    useEffect(() => {
+        if (profile && profile.role !== "admin" && activeTab === "roles") {
+            setActiveTab("general");
+        }
+    }, [profile, activeTab]);
 
     useEffect(() => {
         settingsApi
@@ -136,7 +147,7 @@ const RolesSettingsPage = () => {
                 </div>
 
                 <Tabs
-                    tabs={settingsTabs}
+                    tabs={visibleTabs}
                     value={activeTab}
                     onValueChange={setActiveTab}
                     variant="text"
