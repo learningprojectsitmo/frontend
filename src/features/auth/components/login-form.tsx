@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { paths } from "@/config/paths";
 import { useLogin, loginInputSchema, type LoginInput } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
- 
+
 type LoginFormProps = {
     onSuccess: () => void;
 };
