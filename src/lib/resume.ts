@@ -1,6 +1,7 @@
 import { api } from "./api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+    type ResumeCreate,
     type ResumeDetail,
     type ResumeEducation,
     type ResumeExperience,
@@ -42,6 +43,21 @@ export const useUpdateResume = () => {
         mutationFn: updateResume,
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["resume", variables.id, "detail"] });
+        },
+    });
+};
+
+export const createResume = async (data: ResumeCreate): Promise<ResumeFull> => {
+    return await api.post("/resumes/", data);
+};
+
+export const useCreateResume = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createResume,
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+            queryClient.invalidateQueries({ queryKey: ["resume", data.id, "detail"] });
         },
     });
 };

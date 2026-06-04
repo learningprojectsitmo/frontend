@@ -92,6 +92,10 @@ export const paths = {
             path: "/app/resume",
             getHref: (id: number, projectId?: number | null) =>
                 `/app/resume?id=${id}${projectId ? `&projectId=${projectId}` : ""}`,
+            create: {
+                path: "/app/resume",
+                getHref: () => "/app/resume",
+            },
         },
     },
 } as const;

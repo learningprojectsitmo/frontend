@@ -172,6 +172,17 @@ export type ProjectFullResponse = {
     vacancies: BackendVacancy[];
 };
 
+export type ResumeCreate = {
+    header: string;
+    resume_text?: string | null;
+    role?: string | null;
+    about?: string | null;
+    cover_letter?: string | null;
+    has_experience?: boolean;
+    no_experience_description?: string | null;
+    is_visible?: boolean;
+};
+
 export type ResumeUpdate = {
     header?: string;
     resume_text?: string | null;
@@ -180,6 +191,7 @@ export type ResumeUpdate = {
     cover_letter?: string | null;
     has_experience?: boolean;
     no_experience_description?: string | null;
+    is_visible?: boolean;
 };
 
 export type ResumeFull = {
@@ -192,6 +204,7 @@ export type ResumeFull = {
     cover_letter: string | null;
     has_experience: boolean;
     no_experience_description: string | null;
+    is_visible: boolean;
     created_at: string;
     updated_at: string;
 };

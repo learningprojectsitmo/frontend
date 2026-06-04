@@ -6,9 +6,10 @@ import { Icon } from "@/components/ui/icons";
 type ResumeListProps = {
     resumes: ResumeData[];
     onResumeClick?: (id: number) => void;
+    onCreateClick?: () => void;
 };
 
-export function ResumeList({ resumes, onResumeClick }: ResumeListProps) {
+export function ResumeList({ resumes, onResumeClick, onCreateClick }: ResumeListProps) {
     return (
         <section>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -27,6 +28,7 @@ export function ResumeList({ resumes, onResumeClick }: ResumeListProps) {
                         size="hug36"
                         icon={<Icon name="plus" size={14} />}
                         className="text-[13px] font-semibold gap-1.5 rounded-xl px-2 sm:px-3"
+                        onClick={onCreateClick}
                     >
                         <span className="hidden sm:inline">Создать резюме</span>
                     </Button>

@@ -23,6 +23,7 @@ type Props = {
         period_from: string | null;
         period_to: string | null;
         description: string | null;
+        responsibilities: string[] | null;
     };
     isNew?: boolean;
     onSave: (data: {
@@ -32,6 +33,7 @@ type Props = {
         period_from: string | null;
         period_to: string | null;
         description: string | null;
+        responsibilities: string[] | null;
     }) => void;
     onDelete: () => void;
     onCancel: () => void;
@@ -53,7 +55,8 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
         setExperienceType(experience.experience_type ?? "project");
         setPeriodFrom(experience.period_from?.slice(0, 7) ?? "");
         setPeriodTo(experience.period_to?.slice(0, 7) ?? "");
-        setDescription(experience.description ?? "");
+        const desc = experience.description ?? experience.responsibilities?.join("\n") ?? "";
+        setDescription(desc);
     }, [experience]);
 
     useEffect(() => {
@@ -79,6 +82,9 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
 
     const handleSave = () => {
         if (!company.trim() || !position.trim()) return;
+        const responsibilitiesArr = description
+            ? description.split("\n").map((s) => s.trim()).filter(Boolean)
+            : null;
         onSave({
             company: company.trim(),
             position: position.trim(),
@@ -86,6 +92,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
             period_from: periodFrom ? periodFrom + "-01" : null,
             period_to: periodTo ? periodTo + "-01" : null,
             description: description || null,
+            responsibilities: responsibilitiesArr,
         });
     };
 

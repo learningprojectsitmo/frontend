@@ -6,8 +6,8 @@ type Props = {
     user: ResumeUserInfo;
     role: string | null;
     isEditing?: boolean;
-    editRole?: string;
-    onRoleChange?: (value: string) => void;
+    editHeader?: string;
+    onHeaderChange?: (value: string) => void;
     onEdit?: () => void;
 };
 
@@ -15,7 +15,7 @@ const getInitials = (firstName: string, lastName: string | null) => {
     return `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`.toUpperCase();
 };
 
-export const ProfileCard = ({ user, role, isEditing, editRole, onRoleChange, onEdit }: Props) => {
+export const ProfileCard = ({ user, role, isEditing, editHeader, onHeaderChange, onEdit }: Props) => {
     const fullName = [user.last_name, user.first_name, user.middle_name]
         .filter(Boolean)
         .join(" ");
@@ -38,9 +38,9 @@ export const ProfileCard = ({ user, role, isEditing, editRole, onRoleChange, onE
                         </h1>
                         <input
                             type="text"
-                            value={editRole ?? ""}
-                            onChange={(e) => onRoleChange?.(e.target.value)}
-                            placeholder="Должность"
+                            value={editHeader ?? ""}
+                            onChange={(e) => onHeaderChange?.(e.target.value)}
+                            placeholder="Название резюме"
                             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-gray-500"
                         />
                     </div>

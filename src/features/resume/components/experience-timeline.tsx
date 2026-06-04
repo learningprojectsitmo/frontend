@@ -7,6 +7,7 @@ import { ExperienceEditCard } from "./ExperienceEditCard";
 const INITIAL_VISIBLE = 3;
 
 const formatDuration = (items: { duration: string | null }[]): string => {
+    if (items.length === 0) return "";
     const totalMonths = items.reduce((acc, item) => {
         const m = item.duration?.match(/(?:(\d+)\s*год)?\s*(?:(\d+)\s*месяц)?/);
         const y = m?.[1] ? Number.parseInt(m[1]) : 0;
@@ -18,7 +19,7 @@ const formatDuration = (items: { duration: string | null }[]): string => {
     const parts: string[] = [];
     if (years) parts.push(`${years} ${years === 1 ? "год" : years < 5 ? "года" : "лет"}`);
     if (months) parts.push(`${months} ${months === 1 ? "месяц" : months < 5 ? "месяца" : "месяцев"}`);
-    return parts.join(" ") || "0 месяцев";
+    return parts.join(" ");
 };
 
 type Props = {
@@ -62,6 +63,7 @@ export const ExperienceTimeline = ({
         period_from: string | null;
         period_to: string | null;
         description: string | null;
+        responsibilities: string[] | null;
     }) => {
         createMutation.mutate(
             { resumeId, data },
@@ -80,6 +82,7 @@ export const ExperienceTimeline = ({
         period_from: string | null;
         period_to: string | null;
         description: string | null;
+        responsibilities: string[] | null;
     }) => {
         updateMutation.mutate({ expId: exp.id, data });
     };
@@ -137,7 +140,7 @@ export const ExperienceTimeline = ({
                         {newCards.map((id) => (
                             <div key={id} className="p-6">
                                 <ExperienceEditCard
-                                    experience={{ id, company: "", position: "", experience_type: "project", period_from: null, period_to: null, description: null }}
+                                    experience={{ id, company: "", position: "", experience_type: "project", period_from: null, period_to: null, description: null, responsibilities: null }}
                                     isNew
                                     onSave={handleSaveNew(id)}
                                     onDelete={() => setNewCards((prev) => prev.filter((c) => c !== id))}

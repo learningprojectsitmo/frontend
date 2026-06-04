@@ -17,7 +17,7 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
         views: "—",
         invitations: "—",
         lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("ru-RU") : "—",
-        isVisible: true,
+        isVisible: item.is_visible,
     };
 }
 

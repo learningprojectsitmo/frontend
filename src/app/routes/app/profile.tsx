@@ -57,6 +57,7 @@ const ProfileRoute = () => {
                             <ResumeList
                                 resumes={(profile?.resumes ?? []).map(mapResumeFromApi)}
                                 onResumeClick={(id) => navigate(paths.app.resume.getHref(id))}
+                                onCreateClick={() => navigate(paths.app.resume.create.getHref())}
                             />
                         </div>
                         <div className="flex-[3] min-w-0">
