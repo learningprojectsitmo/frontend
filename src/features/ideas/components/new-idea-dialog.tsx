@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Plus, Check } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTags, useCreateTag } from "@/lib/api-ideas";
 

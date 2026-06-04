@@ -19,6 +19,15 @@ import { CheckboxGroup } from "@/features/spaces/components/filters/checkbox-gro
 import { DateFilter } from "@/features/spaces/components/filters/date-filter";
 import type { FiltersState } from "@/features/spaces/components/filters/types";
 import { Archive, CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
+const STATUS_LABELS: Record<string, string> = {
+    in_progress: "В работе",
+    review: "На проверке",
+    planned: "Запланирован",
+    completed: "Выполнен",
+    draft: "Черновик",
+    archived: "Архив",
+};
+
 const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
 
@@ -35,15 +44,6 @@ const SpacesRoute = () => {
         members: [],
         datePreset: "all",
     });
-
-    const STATUS_LABELS: Record<string, string> = {
-        in_progress: "В работе",
-        review: "На проверке",
-        planned: "Запланирован",
-        completed: "Выполнен",
-        draft: "Черновик",
-        archived: "Архив",
-    };
 
     const statusStyles: Record<string, { bg: string; text: string }> = {
         in_progress: { bg: "#DBEAFE", text: "#2563EB" },
