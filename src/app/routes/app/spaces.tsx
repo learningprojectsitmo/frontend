@@ -18,7 +18,7 @@ import { FilterSection } from "@/features/spaces/components/filters/filter-secti
 import { CheckboxGroup } from "@/features/spaces/components/filters/checkbox-group";
 import { DateFilter } from "@/features/spaces/components/filters/date-filter";
 import type { FiltersState } from "@/features/spaces/components/filters/types";
-import { CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
+import { Archive, CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
 const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
 
@@ -153,6 +153,14 @@ const SpacesRoute = () => {
     const filteredRawItems = useMemo(() => {
         let items = dataRecentProjects?.items ?? [];
 
+        // Preserve recency order from localStorage (most recent first)
+        const idOrder = new Map(viewedIds.map((id, idx) => [id, idx]));
+        items = [...items].sort((a, b) => {
+            const ai = idOrder.get(a.id) ?? Infinity;
+            const bi = idOrder.get(b.id) ?? Infinity;
+            return ai - bi;
+        });
+
         if (filterState.statuses.length > 0) {
             items = items.filter((p) => filterState.statuses.includes(p.status));
         }
@@ -195,7 +203,7 @@ const SpacesRoute = () => {
         }
 
         return items;
-    }, [dataRecentProjects, filterState, search]);
+    }, [dataRecentProjects, filterState, search, viewedIds]);
 
     const projects = useMemo(() => {
         return filteredRawItems.map((p) => ({
@@ -265,14 +273,24 @@ const SpacesRoute = () => {
                             Управляйте своими образовательными проектами и инициативами
                         </p>
                     </div>
-                    <Button
-                        variant="dark"
-                        size="hug36"
-                        icon={<Plus size={18} />}
-                        className="font-sans text-[13px] font-semibold gap-2"
-                    >
-                        Создать проект
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="dark"
+                            size="hug36"
+                            icon={<Plus size={18} />}
+                            className="font-sans text-[13px] font-semibold gap-2"
+                        >
+                            Создать проект
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            icon={<Archive size={18} />}
+                            className="font-sans text-[13px] font-semibold gap-2"
+                        >
+                            Архив
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-10">
@@ -313,7 +331,7 @@ const SpacesRoute = () => {
                     <section>
                         <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
                             <h2 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
-                                Мои проекты
+                                Недавние проекты
                             </h2>
                             <div className="flex items-center gap-3">
                                 <SearchBar
