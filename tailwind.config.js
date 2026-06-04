@@ -45,6 +45,17 @@ export default {
                 link: ["16px", { lineHeight: "1.5", letterSpacing: "0" }],
             },
             colors: {
+                // Design system tokens (from spec)
+                app: {
+                    background: "#F7F7F8",
+                    surface: "#FFFFFF",
+                    border: "#E5E7EB",
+                    "border-light": "#ECECF1",
+                    text: "#111827",
+                    muted: "#6B7280",
+                    primary: "#0F172A",
+                    blue: "#2563EB",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
@@ -108,10 +119,54 @@ export default {
                         height: "0",
                     },
                 },
+                "fade-in-up": {
+                    from: {
+                        opacity: "0",
+                        transform: "translateY(20px)",
+                    },
+                    to: {
+                        opacity: "1",
+                        transform: "translateY(0)",
+                    },
+                },
+                "fade-in-left": {
+                    from: {
+                        opacity: "0",
+                        transform: "translateX(-20px)",
+                    },
+                    to: {
+                        opacity: "1",
+                        transform: "translateX(0)",
+                    },
+                },
+                "fade-in-right": {
+                    from: {
+                        opacity: "0",
+                        transform: "translateX(20px)",
+                    },
+                    to: {
+                        opacity: "1",
+                        transform: "translateX(0)",
+                    },
+                },
+                "filter-in": {
+                    "0%": {
+                        opacity: "0",
+                        transform: "translateY(-4px)",
+                    },
+                    "100%": {
+                        opacity: "1",
+                        transform: "translateY(0)",
+                    },
+                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+                "fade-in-up": "fade-in-up 0.6s ease-out forwards",
+                "fade-in-left": "fade-in-left 0.5s ease-out forwards",
+                "fade-in-right": "fade-in-right 0.5s ease-out forwards",
+                "filter-in": "filter-in 160ms cubic-bezier(0.16, 1, 0.3, 1)",
             },
         },
     },

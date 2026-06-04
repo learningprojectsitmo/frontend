@@ -1,12 +1,25 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { SearchBar } from "@/components/ui/search-bar";
-import { Tabs } from "@/components/ui/tabs/tabs";
+import { Search, List } from "lucide-react";
+import { Icon } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProjectCard } from "@/components/ui/card/project-card";
-import { Icon, type IconName } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
 import { type ProjectListItemResponse } from "@/types/api";
+import {
+    ProjectFilters,
+    defaultFiltersState,
+    type FiltersState,
+} from "@/features/spaces/components/filters";
+import { SpaceProjectTable } from "@/features/spaces/components/space-project-table";
+
+const statusLabels: Record<string, string> = {
+    in_progress: "В работе",
+    review: "На проверке",
+    planned: "Запланирован",
+    completed: "Выполнен",
+    draft: "Черновик",
+};
 
 function formatDate(iso: string): string {
     const d = new Date(iso);
@@ -21,22 +34,10 @@ function mapProjectListItem(item: ProjectListItemResponse) {
     const statusName = item.status?.name || "draft";
     const isArchived = statusName === "archived";
 
-    const tagVariant = isArchived
-        ? "disabled"
-        : statusName === "in_progress"
-          ? "info"
-          : statusName === "completed"
-            ? "success"
-            : statusName === "review"
-              ? "warning"
-              : statusName === "planned"
-                ? "default"
-                : "default";
-
     return {
         id: item.id,
-        tag: statusName,
-        tagVariant: tagVariant as "disabled" | "info" | "success" | "warning" | "default",
+        tag: isArchived ? "draft" : statusName,
+        tagLabel: statusLabels[statusName] || statusName,
         title: item.name,
         description: item.description || "",
         progressValue: item.progress,
@@ -55,58 +56,145 @@ type SpaceProjectListProps = {
     isError: boolean;
 };
 
-export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceProjectListProps) {
-    const [activeView, setActiveView] = useState("grid");
+export function SpaceProjectList({
+    projects,
+    total: _total,
+    isLoading,
+    isError,
+}: SpaceProjectListProps) {
     const [search, setSearch] = useState("");
+    const [filters, setFilters] = useState<FiltersState>(defaultFiltersState);
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [visibleCount, setVisibleCount] = useState(9);
 
-    const mappedProjects = useMemo(() => projects.map(mapProjectListItem), [projects]);
+    const filteredRaw = useMemo(() => {
+        let result = projects;
 
-    const titles = mappedProjects.map((p) => p.title);
-    const descriptions = mappedProjects.map((p) => p.description);
-    const suggestions = [...titles, ...descriptions];
+        if (filters.statuses.length > 0) {
+            result = result.filter((p) => {
+                const statusName = p.status?.name || "draft";
+                return filters.statuses.includes(statusName);
+            });
+        }
 
-    const filteredProjects = useMemo(() => {
-        if (!search) return mappedProjects;
-        return mappedProjects.filter(
-            (project) =>
-                project.title.toLowerCase().includes(search.toLowerCase()) ||
-                project.description.toLowerCase().includes(search.toLowerCase()),
-        );
-    }, [mappedProjects, search]);
+        if (filters.tags.length > 0) {
+            result = result.filter((p) => p.tags.some((t) => filters.tags.includes(t)));
+        }
 
-    const visibleProjects = useMemo(() => {
-        return filteredProjects.slice(0, visibleCount);
-    }, [filteredProjects, visibleCount]);
+        if (filters.members.length > 0) {
+            result = result.filter((p) =>
+                p.participants_preview.some((m) => filters.members.includes(m.id)),
+            );
+        }
 
-    const hasMore = visibleCount < total;
+        if (filters.datePreset !== "all") {
+            result = result.filter((p) => {
+                if (!p.deadline) return false;
+                const d = new Date(p.deadline);
+                const now = new Date();
+                switch (filters.datePreset) {
+                    case "today":
+                        return (
+                            d.getFullYear() === now.getFullYear() &&
+                            d.getMonth() === now.getMonth() &&
+                            d.getDate() === now.getDate()
+                        );
+                    case "7days": {
+                        const diff = now.getTime() - d.getTime();
+                        return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+                    }
+                    case "30days": {
+                        const diff = now.getTime() - d.getTime();
+                        return diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+                    }
+                    case "custom":
+                        if (!filters.customDate) return true;
+                        return d >= filters.customDate.from && d <= filters.customDate.to;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(
+                (p) =>
+                    p.name.toLowerCase().includes(q) ||
+                    (p.description || "").toLowerCase().includes(q),
+            );
+        }
+
+        return result;
+    }, [projects, search, filters]);
+
+    const visibleRaw = useMemo(() => {
+        return filteredRaw.slice(0, visibleCount);
+    }, [filteredRaw, visibleCount]);
+
+    const mappedProjects = useMemo(() => {
+        return visibleRaw.map(mapProjectListItem);
+    }, [visibleRaw]);
+
+    const hasMore = visibleCount < filteredRaw.length;
     const handleLoadMore = () => setVisibleCount((prev) => prev + 6);
 
-    const viewTabs = [{ value: "grid", icon: "grid" as IconName }];
-
     return (
-        <section className="pt-4">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-800">Проекты</h2>
+        <section>
+            {/* Toolbar */}
+            <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-app-text">Проекты</h2>
 
-                <div className="flex flex-row items-center gap-3">
-                    <SearchBar
-                        placeholder="Ищите проекты"
-                        onChange={setSearch}
-                        suggestions={suggestions}
-                        value={search}
-                        className="w-[300px]"
+                <div className="flex items-center gap-3">
+                    {/* Search */}
+                    <div className="relative">
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Поиск проектов"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-[240px] h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[14px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"
+                        />
+                    </div>
+
+                    <ProjectFilters
+                        state={filters}
+                        onChange={setFilters}
+                        onReset={() => setFilters(defaultFiltersState)}
+                        projects={projects}
                     />
-                    <Tabs
-                        tabs={viewTabs}
-                        value={activeView}
-                        onValueChange={setActiveView}
-                        variant="icon"
-                        className="w-auto"
-                    />
+
+                    {/* Grid/List toggle */}
+                    <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                        <button
+                            onClick={() => setViewMode("grid")}
+                            className={`px-3 h-full flex items-center transition-colors ${
+                                viewMode === "grid"
+                                    ? "bg-[#111827] text-white"
+                                    : "text-[#6B7280] hover:bg-gray-50"
+                            }`}
+                        >
+                            <Icon name="grid" size={16} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode("list")}
+                            className={`px-3 h-full flex items-center transition-colors ${
+                                viewMode === "list"
+                                    ? "bg-[#111827] text-white"
+                                    : "text-[#6B7280] hover:bg-gray-50"
+                            }`}
+                        >
+                            <List size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            {/* Content */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                     <Spinner size="lg" />
@@ -115,21 +203,27 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                 <div className="text-center py-16 text-red-400 text-sm">
                     Не удалось загрузить проекты. Попробуйте обновить страницу.
                 </div>
-            ) : visibleProjects.length === 0 ? (
-                <div className="text-center py-16 text-gray-400 text-sm">
-                    {search ? "Проекты не найдены" : "В этом пространстве пока нет проектов"}
+            ) : filteredRaw.length === 0 ? (
+                <div className="text-center py-16 text-app-muted text-sm">
+                    {search ||
+                    filters.statuses.length > 0 ||
+                    filters.tags.length > 0 ||
+                    filters.members.length > 0 ||
+                    filters.datePreset !== "all"
+                        ? "Проекты не найдены"
+                        : "В этом пространстве пока нет проектов"}
                 </div>
-            ) : (
+            ) : viewMode === "grid" ? (
                 <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                    {visibleProjects.map((project) => (
+                    {mappedProjects.map((project) => (
                         <Link
                             key={project.id}
                             to={paths.app.project.getHref(project.id)}
-                            className="block"
+                            className="block h-full"
                         >
                             <ProjectCard
                                 tag={project.tag}
-                                tagVariant={project.tagVariant}
+                                tagLabel={project.tagLabel}
                                 title={project.title}
                                 description={project.description}
                                 progressValue={project.progressValue}
@@ -138,24 +232,27 @@ export function SpaceProjectList({ projects, total, isLoading, isError }: SpaceP
                                 membersCount={project.membersCount}
                                 users={project.users}
                                 archived={project.archived}
-                                onKebabClick={() => alert(`Menu opened for ${project.title}`)}
                             />
                         </Link>
                     ))}
                 </div>
+            ) : (
+                <div className="bg-white rounded-[20px] border border-[#E5E7EB] overflow-hidden">
+                    <SpaceProjectTable projects={visibleRaw} />
+                </div>
             )}
 
-            <div className="w-full flex justify-center">
-                {hasMore && (
+            {/* Load more */}
+            {hasMore && (
+                <div className="w-full flex justify-center mt-8">
                     <button
                         onClick={handleLoadMore}
-                        className="mt-4 px-4 py-2 font-sans text-[13px] font-semibold text-blue-600 rounded flex align-items gap-1"
+                        className="text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
                     >
-                        <Icon name="arrow-down" width={16} height={16} />
                         Загрузить ещё
                     </button>
-                )}
-            </div>
+                </div>
+            )}
         </section>
     );
 }

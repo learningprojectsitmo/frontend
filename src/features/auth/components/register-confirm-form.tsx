@@ -13,6 +13,7 @@ import { useRegister, useResendCode } from "@/lib/auth";
 import { ResendCodeTimer } from "@/components/ui/resend-code-timer/resend-code-timer";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
+import { toast } from "sonner";
 
 const RegisterConfirmFormSchema = z.object({
     code: z.string().min(6, "Код должен состоять из 6 цифр"),
@@ -37,16 +38,30 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
     });
 
     const onSubmit = (values: RegisterConfirmFormInput) => {
-        register.mutate({
-            email: email,
-            confirmationCode: values.code,
-        });
+        register.mutate(
+            {
+                email: email,
+                confirmationCode: values.code,
+            },
+            {
+                onError: () => {
+                    toast.error("Неверный код подтверждения");
+                },
+            },
+        );
     };
 
     const handleResendCode = () => {
-        resendCode.mutate({
-            email: email,
-        });
+        resendCode.mutate(
+            {
+                email: email,
+            },
+            {
+                onError: () => {
+                    toast.error("Ошибка при отправке кода");
+                },
+            },
+        );
     };
 
     return (

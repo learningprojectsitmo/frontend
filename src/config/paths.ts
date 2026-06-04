@@ -3,6 +3,10 @@ export const paths = {
         path: "/",
         getHref: () => "/",
     },
+    landing: {
+        path: "/landing",
+        getHref: () => "/landing",
+    },
 
     auth: {
         createAcc: {
@@ -68,9 +72,30 @@ export const paths = {
                 getHref: () => "/app/settings/roles",
             },
         },
+        profile: {
+            path: "/app/profile",
+            getHref: () => "/app/profile",
+        },
+        ideas: {
+            path: "/app/ideas",
+            getHref: () => "/app/ideas",
+            detail: {
+                path: "ideas/:id",
+                getHref: (id: number) => `/app/ideas/${id}`,
+            },
+        },
         kanban: {
             path: "kanban/:spaceId",
             getHref: (spaceId: string | number) => `/app/kanban/${spaceId}`,
+        },
+        resume: {
+            path: "/app/resume",
+            getHref: (id: number, projectId?: number | null) =>
+                `/app/resume?id=${id}${projectId ? `&projectId=${projectId}` : ""}`,
+            create: {
+                path: "/app/resume",
+                getHref: () => "/app/resume",
+            },
         },
     },
 } as const;

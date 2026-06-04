@@ -1,14 +1,22 @@
 import { ContentLayout } from "@/components/layouts";
-import { Dot, Ellipsis, PencilLine } from "lucide-react";
+import { Dot, Ellipsis, PencilLine, List as ListIcon } from "lucide-react";
+import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
-import { type IconName } from "@/components/ui/icons";
-import { useProject, useUpdateProject } from "@/lib/projects";
+import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
+import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
 import { useSearchParams } from "react-router";
 import { Plus, GraduationCapIcon } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select/select";
 import { SearchBar } from "@/components/ui/search-bar";
 import { toast } from "sonner";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
@@ -61,7 +69,7 @@ function formatDate(iso: string): string {
     });
 }
 
-function mapBackendProject(p: ProjectFullResponse) {
+function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
     const statusName = p.status?.name || "Неизвестно";
     const isArchived = statusName === "archived";
 
@@ -93,7 +101,9 @@ function mapBackendProject(p: ProjectFullResponse) {
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.date_added,
-            status: "default" as const,
+            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId
+                ? "delete"
+                : "default") as "default" | "delete",
         })),
         replycants: p.replycants.map((r) => ({
             id: r.id,
@@ -108,14 +118,14 @@ function mapBackendProject(p: ProjectFullResponse) {
 }
 
 const SpaceRoute = () => {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const urlId = searchParams.get("id") || "";
 
     const { data: dataProject, isLoading, error } = useProject(urlId);
     const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
     const { data: user } = useUser();
 
-    const project = dataProject ? mapBackendProject(dataProject) : null;
+    const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -127,6 +137,13 @@ const SpaceRoute = () => {
         [],
     );
     const updateProjectMutation = useUpdateProject();
+    const { addViewedProject } = useRecentlyViewed();
+
+    useEffect(() => {
+        if (dataProject?.id) {
+            addViewedProject(dataProject.id);
+        }
+    }, [dataProject, addViewedProject]);
 
     useEffect(() => {
         if (dataProject) {
@@ -146,20 +163,31 @@ const SpaceRoute = () => {
     const handleSave = async () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
-        await updateProjectMutation.mutateAsync({
-            id: String(dataProject.id),
-            data: {
-                name: editTitle,
-                description: editDescription,
-                tags: filtered,
-                vacancies: editRoles.map((r) => ({
-                    title: r.title,
-                    tasks: r.tasks,
-                    required_count: r.count,
-                })),
-            },
-        });
-        setIsEditing(false);
+        const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
+        if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
+            toast.error(
+                `Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`,
+            );
+            return;
+        }
+        try {
+            await updateProjectMutation.mutateAsync({
+                id: String(dataProject.id),
+                data: {
+                    name: editTitle,
+                    description: editDescription,
+                    tags: filtered,
+                    vacancies: editRoles.map((r) => ({
+                        title: r.title,
+                        tasks: r.tasks,
+                        required_count: r.count,
+                    })),
+                },
+            });
+            setIsEditing(false);
+        } catch {
+            toast.error("Не удалось сохранить изменения");
+        }
     };
 
     const addRole = () => {
@@ -207,9 +235,28 @@ const SpaceRoute = () => {
         dataSpaces?.spaces.find((space) => String(space.id) === String(project?.spaceId))?.title ||
         "";
 
-    const [activeTab, setActiveTab] = useState("view");
+    const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "view");
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                if (tab === "view") {
+                    next.delete("tab");
+                } else {
+                    next.set("tab", tab);
+                }
+                return next;
+            },
+            { replace: true },
+        );
+    };
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
     const [activeView, setActiveView] = useState("grid");
+    const [sortBy, setSortBy] = useState("default");
+
+    const removeParticipantMutation = useRemoveParticipant();
 
     // Kanban state
     const projectId = parseInt(urlId || "0", 10);
@@ -384,6 +431,25 @@ const SpaceRoute = () => {
         [kanbanUpdateColumn, refetch],
     );
 
+    const handleRemoveMember = useCallback(
+        (memberId: number) => {
+            const member = project?.members.find((m) => m.id === memberId);
+            if (!member) return;
+            removeParticipantMutation.mutate(
+                { projectId: project?.id || 0, userId: member.id },
+                {
+                    onSuccess: () => {
+                        toast.success("Участник удалён из команды");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось удалить участника");
+                    },
+                },
+            );
+        },
+        [project, removeParticipantMutation],
+    );
+
     const handleDeleteColumn = useCallback(
         (columnId: number) => {
             kanbanDeleteColumn.mutate(columnId, {
@@ -480,11 +546,6 @@ const SpaceRoute = () => {
         { value: "applications", label: "Отклики и приглашения" },
     ];
 
-    const viewTabs = [
-        { value: "grid", icon: "grid" as IconName },
-        { value: "settings", icon: "settings" as IconName },
-    ];
-
     const [search, setSearch] = useState("");
     const memberTitles = project?.members?.map((member) => member.name) || [];
     const replycantTitles = project?.replycants?.map((replycant) => replycant.name) || [];
@@ -499,14 +560,24 @@ const SpaceRoute = () => {
     const replycantSuggestions = [...replycantTitles, ...replycantContacts];
 
     const filteredMembers = useMemo(() => {
-        if (!search) return project?.members || [];
-        return (project?.members || []).filter(
-            (member) =>
-                member.name.toLowerCase().includes(search.toLowerCase()) ||
-                member.contacts.toLowerCase().includes(search.toLowerCase()) ||
-                member.role.toLowerCase().includes(search.toLowerCase()),
-        );
-    }, [project, search]);
+        let result = project?.members || [];
+        if (search) {
+            result = result.filter(
+                (member) =>
+                    member.name.toLowerCase().includes(search.toLowerCase()) ||
+                    member.contacts.toLowerCase().includes(search.toLowerCase()) ||
+                    member.role.toLowerCase().includes(search.toLowerCase()),
+            );
+        }
+        if (sortBy === "name") {
+            result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === "date") {
+            result = [...result].sort(
+                (a, b) => new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
+            );
+        }
+        return result;
+    }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
         if (!search) return project?.replycants || [];
@@ -537,7 +608,7 @@ const SpaceRoute = () => {
 
     return (
         <ContentLayout title={project.title}>
-            <div className="mx-auto max-w-7xl flex flex-col gap-6">
+            <div className="mx-auto max-w-7xl p-6 flex flex-col gap-6">
                 <Breadcrumb className="h-[34px] flex align-center">
                     <BreadcrumbList>
                         <BreadcrumbItem>
@@ -719,7 +790,7 @@ const SpaceRoute = () => {
                     <Tabs
                         tabs={textTabs}
                         value={activeTab}
-                        onValueChange={setActiveTab}
+                        onValueChange={handleTabChange}
                         variant="text"
                     />
                 </section>
@@ -804,6 +875,12 @@ const SpaceRoute = () => {
                                 <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
                                     Необходимые участники
                                 </div>
+                                {isEditing && dataProject?.max_participants && (
+                                    <div className="text-sm text-gray-400 mt-1">
+                                        Мест: {editRoles.reduce((s, r) => s + r.count, 0)} /{" "}
+                                        {dataProject.max_participants}
+                                    </div>
+                                )}
                             </div>
                             <div
                                 data-type="Required participants"
@@ -880,6 +957,10 @@ const SpaceRoute = () => {
                                                     <input
                                                         type="number"
                                                         min={1}
+                                                        max={
+                                                            dataProject?.max_participants ??
+                                                            undefined
+                                                        }
                                                         value={role.count}
                                                         onChange={(e) =>
                                                             updateRole(
@@ -937,6 +1018,16 @@ const SpaceRoute = () => {
                                         + Добавить роль
                                     </button>
                                 )}
+                                {isEditing &&
+                                    dataProject?.max_participants &&
+                                    editRoles.reduce((s, r) => s + r.count, 0) >
+                                        dataProject.max_participants && (
+                                        <div className="text-sm text-red-500 mt-2">
+                                            Сумма необходимых участников (
+                                            {editRoles.reduce((s, r) => s + r.count, 0)}) превышает
+                                            максимальное количество ({dataProject.max_participants})
+                                        </div>
+                                    )}
                             </div>
                         </section>
 
@@ -945,14 +1036,14 @@ const SpaceRoute = () => {
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     Список участников{" "}
                                     {activeApplicantTab === "team"
-                                        ? `(${project.members?.length || 0}/8)`
-                                        : `(${project.replycants?.length || 0}/10)`}
+                                        ? `(${project.members?.length || 0}${dataProject?.max_participants ? `/${dataProject.max_participants}` : ""})`
+                                        : `(${project.replycants?.length || 0})`}
                                 </h2>
                                 {/* сделать */}
 
                                 <div className="flex flex-row items-center gap-3">
                                     <SearchBar
-                                        placeholder="Ищите участников"
+                                        placeholder="Поиск..."
                                         onChange={setSearch}
                                         suggestions={
                                             activeApplicantTab === "team"
@@ -962,15 +1053,41 @@ const SpaceRoute = () => {
                                         value={search}
                                         className="w-[300px]"
                                     />
-                                    {/* сделать */}
-                                    <Tabs
-                                        tabs={viewTabs}
-                                        value={activeView}
-                                        onValueChange={setActiveView}
-                                        variant="icon"
-                                        className="w-auto"
-                                    />
-                                    {dataSpaces?.role !== "member" ? (
+                                    <Select value={sortBy} onValueChange={setSortBy}>
+                                        <SelectTrigger className="w-[160px] h-9 text-[13px] font-sans">
+                                            <SelectValue placeholder="По умолчанию" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="default">По умолчанию</SelectItem>
+                                            <SelectItem value="name">По имени</SelectItem>
+                                            <SelectItem value="date">По дате добавления</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="flex items-center h-9 bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
+                                        <button
+                                            onClick={() => setActiveView("grid")}
+                                            className={`px-2.5 h-full flex items-center transition-colors ${
+                                                activeView === "grid"
+                                                    ? "bg-[#111827] text-white"
+                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <Icon name="grid" size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveView("list")}
+                                            className={`px-2.5 h-full flex items-center transition-colors ${
+                                                activeView === "list"
+                                                    ? "bg-[#111827] text-white"
+                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <ListIcon size={16} />
+                                        </button>
+                                    </div>
+                                    {isCreator ||
+                                    dataSpaces?.role === "admin" ||
+                                    dataSpaces?.role === "teacher" ? (
                                         <Button
                                             variant="dark"
                                             size="hug36"
@@ -979,9 +1096,7 @@ const SpaceRoute = () => {
                                         >
                                             Пригласить
                                         </Button>
-                                    ) : (
-                                        ""
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
 
@@ -995,16 +1110,69 @@ const SpaceRoute = () => {
 
                         {
                             activeApplicantTab === "team" ? (
-                                <TableMembers
-                                    headerList={[
-                                        "Имя",
-                                        "Роль",
-                                        "Контакты",
-                                        "Резюме",
-                                        "Дата добавления",
-                                    ]}
-                                    members={filteredMembers}
-                                /> //removeMember={removeMember}
+                                activeView === "list" ? (
+                                    <TableMembers
+                                        headerList={[
+                                            "Имя",
+                                            "Роль",
+                                            "Контакты",
+                                            "Резюме",
+                                            "Дата добавления",
+                                        ]}
+                                        members={filteredMembers}
+                                        removeMember={handleRemoveMember}
+                                    />
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-6">
+                                        {filteredMembers.map((member) => (
+                                            <div
+                                                key={member.id}
+                                                className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
+                                                        {member.name
+                                                            .split(" ")
+                                                            .map((n) => n[0])
+                                                            .join("")
+                                                            .toUpperCase()
+                                                            .slice(0, 2)}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[15px] font-semibold text-app-text truncate">
+                                                            {member.name}
+                                                        </p>
+                                                        <p className="text-[13px] text-app-muted">
+                                                            {member.role}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {member.projects && member.projects.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {member.projects.map((p) => (
+                                                            <span
+                                                                key={p.id}
+                                                                className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
+                                                            >
+                                                                {p.title}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {member.resumeUrl && (
+                                                    <a
+                                                        href={member.resumeUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
+                                                    >
+                                                        Открыть резюме
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
                             ) : (
                                 <TableInvitations
                                     headerList={[

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input/input";
 import { useResetWithPassword } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
+import { toast } from "sonner";
 
 const resetPasswordFormSchema = z
     .object({
@@ -46,10 +47,17 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
     });
 
     const onSubmit = (values: ResetPasswordFormInput) => {
-        resetEmail.mutate({
-            password: values.password,
-            special_token: "12345678-1234-1234-1234-123456789012",
-        }); //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
+        resetEmail.mutate(
+            {
+                password: values.password,
+                special_token: "12345678-1234-1234-1234-123456789012",
+            }, //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
+            {
+                onError: () => {
+                    toast.error("Ошибка при сбросе пароля");
+                },
+            },
+        );
     };
 
     return (

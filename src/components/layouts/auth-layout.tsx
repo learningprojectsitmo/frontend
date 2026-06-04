@@ -32,9 +32,13 @@ export const AuthLayout = ({ children, title }: LayoutProps) => {
             <Head title={title} />
 
             <div
-                className="relative flex min-h-screen items-center justify-center bg-black bg-cover bg-center bg-no-repeat"
-                // 2. Apply the imported image via inline style
-                style={{ backgroundImage: `url(${backgroundImage})` }}
+                className="relative flex min-h-screen items-center justify-center bg-black"
+                style={{
+                    backgroundImage: `url(${backgroundImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                }}
             >
                 {/* 3. Overlay (Optional: adds contrast if the image is too bright) */}
                 {/* <div className="absolute inset-0 bg-black/40" /> */}

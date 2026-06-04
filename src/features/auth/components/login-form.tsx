@@ -33,7 +33,13 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     });
 
     const onSubmit = (values: LoginInput) => {
-        login.mutate(values);
+        login.mutate(values, {
+            onError: () => {
+                form.setError("root", {
+                    message: "Неверный email или пароль",
+                });
+            },
+        });
     };
 
     return (
@@ -126,6 +132,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                             Сбросить пароль
                         </Link>
                     </div>
+
+                    {form.formState.errors.root && (
+                        <p className="text-sm text-red-500 text-center">
+                            {form.formState.errors.root.message}
+                        </p>
+                    )}
 
                     <Button
                         variant="dark"

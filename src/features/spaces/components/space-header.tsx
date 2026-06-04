@@ -11,12 +11,17 @@ import { type Space } from "@/types/api";
 
 type SpaceHeaderProps = {
     spaceData: Space;
-    role?: string;
+    isAuthor: boolean;
     onSettingsOpen: () => void;
     onShareOpen: () => void;
 };
 
-export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: SpaceHeaderProps) {
+export function SpaceHeader({
+    spaceData,
+    isAuthor,
+    onSettingsOpen,
+    onShareOpen,
+}: SpaceHeaderProps) {
     return (
         <div className="self-stretch inline-flex justify-between items-start">
             <div className="flex justify-start items-start gap-5">
@@ -31,31 +36,33 @@ export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: Sp
                 </div>
                 <div className="inline-flex flex-col justify-start items-start gap-0.5">
                     <div className="self-stretch inline-flex justify-start items-center gap-3">
-                        <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
+                        <div className="justify-center text-app-text text-[40px] font-bold font-sans leading-[1.1]">
                             {spaceData.title}
                         </div>
-                        <button
-                            type="button"
-                            onClick={onSettingsOpen}
-                            data-have-badge="False"
-                            data-icon-alignment="Default"
-                            data-size="Default"
-                            data-state="Default"
-                            data-type="Main"
-                            className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
-                        >
-                            <Icon name="settings" size={20} className="h-5 w-5" />
-                        </button>
+                        {isAuthor && (
+                            <button
+                                type="button"
+                                onClick={onSettingsOpen}
+                                data-have-badge="False"
+                                data-icon-alignment="Default"
+                                data-size="Default"
+                                data-state="Default"
+                                data-type="Main"
+                                className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                            >
+                                <Icon name="settings" size={20} className="h-5 w-5" />
+                            </button>
+                        )}
                     </div>
                     <div className="self-stretch flex flex-col justify-start items-start">
-                        <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                        <div className="justify-center text-app-muted text-base font-medium font-sans leading-7">
                             {spaceData.description}
                         </div>
                     </div>
                     <div className="inline-flex justify-start items-center gap-3">
                         <div className="flex justify-start items-center gap-1">
                             <div className="inline-flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                <div className="justify-center text-app-muted text-[13px] font-normal font-sans leading-5 tracking-tight">
                                     {spaceData.projectsCount} проектов
                                 </div>
                             </div>
@@ -68,17 +75,12 @@ export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: Sp
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
-                                <circle
-                                    cx="8"
-                                    cy="8"
-                                    r="1.5"
-                                    fill="var(--color-azure-46, #6A7282)"
-                                />
+                                <circle cx="8" cy="8" r="1.5" fill="#6B7280" />
                             </svg>
                         </div>
                         <div className="flex justify-start items-center gap-1">
                             <div className="inline-flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                <div className="justify-center text-app-muted text-[13px] font-normal font-sans leading-5 tracking-tight">
                                     {spaceData.membersCount} участника
                                 </div>
                             </div>
@@ -86,45 +88,43 @@ export function SpaceHeader({ spaceData, role, onSettingsOpen, onShareOpen }: Sp
                     </div>
                 </div>
             </div>
-            {role !== "member" && (
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="dark"
-                        size="hug36"
-                        icon={<Plus size={18} />}
-                        className="font-sans text-[13px] font-semibold gap-2"
-                    >
-                        Создать проект
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                type="button"
-                                className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
-                            >
-                                <MoreHorizontal size={18} />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[180px]">
-                            <DropdownMenuItem
-                                className="gap-3 text-sm cursor-pointer"
-                                onSelect={onShareOpen}
-                            >
-                                <Share2 size={16} />
-                                Поделись
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                                <Upload size={16} />
-                                Экспортировать
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                                <Archive size={16} />
-                                Архивировать
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )}
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="dark"
+                    size="hug36"
+                    icon={<Plus size={18} />}
+                    className="font-sans text-[13px] font-semibold gap-2 !h-11 !rounded-[12px] !px-[18px]"
+                >
+                    Создать проект
+                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                        >
+                            <MoreHorizontal size={18} />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[180px]">
+                        <DropdownMenuItem
+                            className="gap-3 text-sm cursor-pointer"
+                            onSelect={onShareOpen}
+                        >
+                            <Share2 size={16} />
+                            Поделись
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                            <Upload size={16} />
+                            Экспортировать
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
+                            <Archive size={16} />
+                            Архивировать
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
     );
 }

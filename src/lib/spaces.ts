@@ -6,7 +6,9 @@ import {
     type SpacesListResponce,
     type CreateWorkspaceInput,
     type SpaceSettingsInput,
+    type SpaceSettingsFull,
     type WorkSpaceFull,
+    type WorkspaceParticipantListResponse,
     type InviteLinkResponse,
     type InviteLinkCreate,
     type JoinByLinkResponse,
@@ -69,9 +71,26 @@ export const useUpdateSpaceSettings = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: SpaceSettingsInput }) =>
             updateSpaceSettings(id, data),
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] });
+            queryClient.invalidateQueries({
+                queryKey: ["workspaces", variables.id, "settings"],
+            });
         },
+    });
+};
+
+export const getSpaceSettings = async (workspaceId: number): Promise<SpaceSettingsFull> => {
+    return await api.get(`/workspaces/${workspaceId}/settings`);
+};
+
+export const useSpaceSettings = (workspaceId: number, enabled?: boolean) => {
+    return useQuery({
+        queryKey: ["workspaces", workspaceId, "settings"],
+        queryFn: () => getSpaceSettings(workspaceId),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled: enabled ?? !!workspaceId,
     });
 };
 
@@ -124,12 +143,13 @@ export const revokeInviteLink = async (workspaceId: number): Promise<void> => {
     return await api.delete(`/workspaces/${workspaceId}/invite-link`);
 };
 
-export const useInviteLink = (workspaceId: number) => {
+export const useInviteLink = (workspaceId: number, enabled?: boolean) => {
     return useQuery({
         queryKey: ["workspaces", workspaceId, "invite-link"],
         queryFn: () => getInviteLink(workspaceId),
         staleTime: 5 * 60 * 1000,
         retry: false,
+        enabled: enabled ?? true,
     });
 };
 
@@ -165,5 +185,53 @@ export const joinByLink = async (token: string): Promise<JoinByLinkResponse> => 
 export const useJoinByLink = () => {
     return useMutation({
         mutationFn: joinByLink,
+    });
+};
+
+// === Workspace participants ===
+
+export type ParticipantsParams = {
+    page?: number;
+    limit?: number;
+    search?: string;
+    project_id?: number;
+    date_from?: string;
+    date_to?: string;
+};
+
+export const getWorkspaceParticipants = async (
+    workspaceId: number,
+    params?: ParticipantsParams,
+): Promise<WorkspaceParticipantListResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/participants`, { params });
+};
+
+export const useWorkspaceParticipants = (workspaceId: number, params?: ParticipantsParams) => {
+    return useQuery({
+        queryKey: ["workspaces", workspaceId, "participants", params],
+        queryFn: () => getWorkspaceParticipants(workspaceId, params),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled: !!workspaceId,
+    });
+};
+
+export const removeWorkspaceParticipant = async (
+    workspaceId: number,
+    userId: number,
+): Promise<void> => {
+    return await api.delete(`/workspaces/${workspaceId}/participants/${userId}`);
+};
+
+export const useRemoveWorkspaceParticipant = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ workspaceId, userId }: { workspaceId: number; userId: number }) =>
+            removeWorkspaceParticipant(workspaceId, userId),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: ["workspaces", variables.workspaceId, "participants"],
+            });
+        },
     });
 };

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input/input";
 import { useResetWithEmail, resetWithEmailInputSchema, type ResetWithEmailInput } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
+import { toast } from "sonner";
 
 export const ResetEmailForm = () => {
     const [searchParams] = useSearchParams();
@@ -23,7 +24,11 @@ export const ResetEmailForm = () => {
     });
 
     const onSubmit = (values: ResetWithEmailInput) => {
-        resetEmail.mutate(values);
+        resetEmail.mutate(values, {
+            onError: () => {
+                toast.error("Ошибка при отправке инструкции");
+            },
+        });
     };
 
     return (

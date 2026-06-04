@@ -9,8 +9,15 @@ import { z } from "zod";
 
 import { paths } from "@/config/paths";
 import { Spinner } from "@/components/ui/spinner/spinner";
+import { useNotifications } from "@/components/ui/notifications";
 import type { User, AuthTokenResponse } from "@/types/api";
-import { api, setAccessToken, clearAccessToken } from "./api-client";
+import {
+    api,
+    setAccessToken,
+    clearAccessToken,
+    isSessionExpired,
+    clearSessionExpired,
+} from "./api-client";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -244,6 +251,14 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }): Rea
     }
 
     if (!user) {
+        if (isSessionExpired()) {
+            useNotifications.getState().addNotification({
+                type: "error",
+                title: "Error",
+                message: "Сессия истекла. Пожалуйста, войдите снова.",
+            });
+            clearSessionExpired();
+        }
         return <Navigate to={paths.auth.login.getHref(location.pathname)} replace />;
     }
 

@@ -26,6 +26,18 @@
         --ring: 0 0% 3.9%;
         --radius: 0.5rem;
 
+        /* ============ SPACING SYSTEM (from spec) ============ */
+        --spacing-4: 4px;
+        --spacing-8: 8px;
+        --spacing-12: 12px;
+        --spacing-16: 16px;
+        --spacing-20: 20px;
+        --spacing-24: 24px;
+        --spacing-32: 32px;
+        --spacing-40: 40px;
+        --spacing-48: 48px;
+        --spacing-64: 64px;
+
         /* ============ CUSTOM COLORS FROM DESIGN SYSTEM ============ */
 
         /* ----- Azure ----- */
@@ -49,7 +61,7 @@
         --grey-93: #ececf0;
         --grey-94: #eceef2;
         --grey-96: #f3f3f5;
-        --grey-98: #f9fafb;
+        --grey-98: #f7f7f8;
 
         /* ----- Red ----- */
         --red-46: #d4183d;

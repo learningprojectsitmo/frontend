@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
 import { useAddContacts, telegramSchema, vkSchema } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
+import { toast } from "sonner";
 
 const registerContactsInputSchema = z.object({
     telegram: telegramSchema,
@@ -31,12 +32,19 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
     });
 
     const onSubmit = (values: RegisterContactsFormInput) => {
-        addContacts.mutate({
-            email: JSON.parse(sessionStorage.getItem("register") || "{}").email,
-            telegram: values.telegram,
-            vk: values.vk,
-            showMyContacts: values.showMyContacts,
-        });
+        addContacts.mutate(
+            {
+                email: JSON.parse(sessionStorage.getItem("register") || "{}").email,
+                telegram: values.telegram,
+                vk: values.vk,
+                showMyContacts: values.showMyContacts,
+            },
+            {
+                onError: () => {
+                    toast.error("Ошибка при сохранении контактов");
+                },
+            },
+        );
     };
 
     return (

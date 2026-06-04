@@ -81,6 +81,7 @@ export type SpacesListResponce = {
     page?: number;
     limit?: number;
     total?: number;
+    role: string;
 };
 
 export type Space = {
@@ -91,6 +92,7 @@ export type Space = {
     color: string;
     category: string;
     description: string;
+    author_id: number;
 };
 
 export type BackendProjectStatus = {
@@ -170,6 +172,163 @@ export type ProjectFullResponse = {
     vacancies: BackendVacancy[];
 };
 
+export type ResumeCreate = {
+    header: string;
+    resume_text?: string | null;
+    role?: string | null;
+    about?: string | null;
+    cover_letter?: string | null;
+    has_experience?: boolean;
+    no_experience_description?: string | null;
+    is_visible?: boolean;
+};
+
+export type ResumeUpdate = {
+    header?: string;
+    resume_text?: string | null;
+    role?: string | null;
+    about?: string | null;
+    cover_letter?: string | null;
+    has_experience?: boolean;
+    no_experience_description?: string | null;
+    is_visible?: boolean;
+};
+
+export type ResumeFull = {
+    id: number;
+    header: string;
+    author_id: number;
+    resume_text: string | null;
+    role: string | null;
+    about: string | null;
+    cover_letter: string | null;
+    has_experience: boolean;
+    no_experience_description: string | null;
+    is_visible: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
+export type ResumeExperience = {
+    id: number;
+    company: string;
+    position: string;
+    experience_type: string | null;
+    period_from: string | null;
+    period_to: string | null;
+    duration: string | null;
+    description: string | null;
+    responsibilities: string[] | null;
+    skills: string[] | null;
+    sort_order: number;
+};
+
+export type ResumeSkill = {
+    id: number;
+    name: string;
+    sort_order: number;
+};
+
+export type ResumeInterest = {
+    id: number;
+    name: string;
+    sort_order: number;
+};
+
+export type ResumeLink = {
+    id: number;
+    platform: string;
+    url: string;
+    sort_order: number;
+};
+
+export type ResumeEducation = {
+    id: number;
+    institution: string;
+    faculty: string | null;
+    degree: string | null;
+    years: string | null;
+    sort_order: number;
+};
+
+export type ResumeLanguage = {
+    id: number;
+    name: string;
+    level: string | null;
+    sort_order: number;
+};
+
+export type ResumeUserInfo = {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    middle_name: string;
+    email: string | null;
+    phone: string | null;
+    tg_nickname: string | null;
+    vk_nickname: string | null;
+    role: string | null;
+};
+
+export type ResumeDetail = {
+    resume: ResumeFull;
+    user: ResumeUserInfo;
+    experiences: ResumeExperience[];
+    skills: ResumeSkill[];
+    interests: ResumeInterest[];
+    links: ResumeLink[];
+    educations: ResumeEducation[];
+    languages: ResumeLanguage[];
+};
+
+export type ResumeListResponse = {
+    items: ResumeFull[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type PortfolioFull = {
+    id: number;
+    user_id: number;
+    title: string;
+    url: string;
+};
+
+export type EducationFull = {
+    id: number;
+    user_id: number;
+    institution: string;
+    faculty: string;
+    degree: string;
+    years: string;
+};
+
+export type LanguageFull = {
+    id: number;
+    user_id: number;
+    name: string;
+    level: string;
+    flag: string;
+};
+
+export type ProfileResponse = {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    middle_name: string;
+    email: string | null;
+    phone: string | null;
+    tg_nickname: string | null;
+    vk_nickname: string | null;
+    role: string;
+    resumes: ResumeFull[];
+    portfolio: PortfolioFull[];
+    education: EducationFull[];
+    languages: LanguageFull[];
+};
+
 export type CreateWorkspaceInput = {
     name: string;
     description?: string;
@@ -182,6 +341,22 @@ export type SpaceSettingsInput = {
     join_policy?: "open" | "link" | "invitation";
     default_role_id?: number | null;
     icon_url?: string | null;
+    allow_multi_project_participation?: boolean;
+    allow_multi_project_creation?: boolean;
+};
+
+export type SpaceSettingsFull = {
+    id: number;
+    space_id: number;
+    settings_type_id: number;
+    visibility: string;
+    join_policy: string;
+    default_role_id: number | null;
+    icon_url: string | null;
+    allow_multi_project_participation: boolean;
+    allow_multi_project_creation: boolean;
+    created_at: string;
+    updated_at: string;
 };
 
 export type WorkSpaceFull = {
@@ -313,6 +488,26 @@ export interface ApiProjectStats {
     column_names: Record<number, string>;
 }
 
+export type WorkspaceMember = {
+    id: number;
+    user_id: number;
+    name: string;
+    avatar_url: string | null;
+    projects: { id: number; title: string }[];
+    role: string;
+    contacts: { telegram?: string | null; email?: string | null; linkedin?: string | null };
+    resume_url: string;
+    created_at: string;
+};
+
+export type WorkspaceParticipantListResponse = {
+    items: WorkspaceMember[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
 export type InviteLinkResponse = {
     token: string;
     url: string;
@@ -329,4 +524,57 @@ export type InviteLinkCreate = {
 export type JoinByLinkResponse = {
     message: string;
     workspace_id: number;
+};
+
+// ─── Profile responses / invitations / projects ────────────────────────
+
+export type MyResponseItem = {
+    id: number;
+    project_id: number;
+    project_name: string;
+    description: string;
+    role: string;
+    resume_url: string;
+    resume_title: string;
+    date: string;
+    status: string;
+};
+
+export type MyResponseListResponse = {
+    items: MyResponseItem[];
+    total: number;
+};
+
+export type MyInvitationItem = {
+    id: number;
+    project_id: number;
+    project_name: string;
+    description: string;
+    inviter_name: string;
+    role: string;
+    resume_url: string;
+    resume_title: string;
+    date: string;
+    status: string;
+};
+
+export type MyInvitationListResponse = {
+    items: MyInvitationItem[];
+    total: number;
+};
+
+export type MyProjectItem = {
+    id: number;
+    title: string;
+    description: string | null;
+    status: string;
+    progress: number;
+    start_date: string;
+    members_count: number;
+    roles: string[];
+};
+
+export type MyProjectListResponse = {
+    items: MyProjectItem[];
+    total: number;
 };

@@ -45,7 +45,10 @@ export function UserNav() {
                     <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
                     <DropdownMenuGroup className="p-[6px] gap-1 flex flex-col">
-                        <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2">
+                        <DropdownMenuItem
+                            className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
+                            onClick={() => navigate(paths.app.profile.getHref())}
+                        >
                             <Icon name="profile" size={16} className="h-5 w-5 text-gray-500" />
                             <span className="text-[13px] font-sans font-medium text-gray-900">
                                 Профиль и Резюме

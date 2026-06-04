@@ -66,9 +66,9 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                             className={cn(
                                 "flex-1 h-8 rounded-[10px] text-[13px] font-medium transition-all",
                                 "flex items-center justify-center",
-                                "text-[--grey-4]",
-                                "px-3", // горизонтальные отступы 12px (3 * 4px = 12px)
-                                isActive && "bg-white shadow-sm",
+                                "px-1",
+                                isActive && "bg-white shadow-sm text-gray-900",
+                                "text-gray-500 hover:text-gray-700",
                                 isDisabled && "opacity-50 cursor-not-allowed",
                                 tabClassName,
                             )}

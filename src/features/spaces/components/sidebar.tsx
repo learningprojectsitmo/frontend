@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { NavLink, Link } from "react-router";
 import { paths } from "@/config/paths";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ function SidebarNotFoundCollapsed() {
     );
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
     isCollapsed,
     onToggle,
     activeCategories,
@@ -113,8 +113,8 @@ export function Sidebar({
             <CreateSpaceModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
             <aside
                 className={cn(
-                    "bg-white border-r border-gray-200 flex flex-col fixed top-16 left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
-                    isCollapsed ? "w-[56px]" : "w-[248px]",
+                    "bg-white border-r border-app-border flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
+                    isCollapsed ? "w-[56px]" : "w-[260px]",
                 )}
             >
                 {/* ── Кнопка «Все пространства» + кнопка сворачивания ── */}
@@ -246,7 +246,7 @@ export function Sidebar({
                             <div className="p-3 flex flex-col gap-5 flex-1">
                                 {activeCategories.map((category) => (
                                     <div key={category.name}>
-                                        <p className="px-1 mb-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                        <p className="px-1 mb-2 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-[0.08em]">
                                             {category.name}
                                         </p>
 
@@ -261,16 +261,18 @@ export function Sidebar({
                                                                     space.id,
                                                                 )}
                                                                 className={cn(
-                                                                    "flex items-center gap-3 w-full px-2 py-2 rounded-[12px] transition-all duration-150 group",
+                                                                    "flex items-center gap-3 w-full h-11 px-3.5 rounded-[12px] transition-all duration-150 group",
                                                                     isActive
-                                                                        ? "bg-white shadow-sm border border-gray-200"
-                                                                        : "hover:bg-white hover:shadow-sm hover:border-gray-200 border border-transparent",
+                                                                        ? "bg-[#EEF2FF]"
+                                                                        : "hover:bg-gray-50 border border-transparent",
                                                                 )}
                                                             >
                                                                 <div
                                                                     className={cn(
                                                                         "shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center text-white",
                                                                         space.color,
+                                                                        isActive &&
+                                                                            "ring-2 ring-blue-200",
                                                                     )}
                                                                 >
                                                                     <GraduationCapIcon size={15} />
@@ -318,7 +320,7 @@ export function Sidebar({
                 )}
 
                 {/* ── Footer — скрыт при загрузке и 404 ── */}
-                {!isLoading && !isNotFound && role !== "manager" && role !== "member" && (
+                {!isLoading && !isNotFound && (role === "admin" || role === "teacher") && (
                     <div className="border-t border-gray-200 p-3 flex-none">
                         {isCollapsed ? (
                             <Button
@@ -347,4 +349,4 @@ export function Sidebar({
             </aside>
         </>
     );
-}
+});

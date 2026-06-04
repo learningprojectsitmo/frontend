@@ -5,9 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import type { LoaderFunction, ActionFunction } from "react-router";
 
 import { paths } from "@/config/paths";
-import { ProtectedRoute } from "@/lib/auth";
 
-import { default as AppRoot, ErrorBoundary as AppRootErrorBoundary } from "./routes/app/root";
 import { Spinner } from "@/components/ui/spinner/spinner";
 
 type LazyModule = {
@@ -72,19 +70,14 @@ export const createAppRouter = (queryClient: QueryClient) =>
             hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
-            path: paths.join.path,
-            lazy: () => import("./routes/join").then(convert(queryClient)),
+            path: paths.landing.path,
+            lazy: () => import("./routes/landing").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />,
         },
         {
             path: paths.app.root.path,
-            element: (
-                <ProtectedRoute>
-                    <AppRoot />
-                </ProtectedRoute>
-            ),
-            ErrorBoundary: AppRootErrorBoundary,
-            hydrateFallbackElement: <LoadingFallback />, // Добавить
+            lazy: () => import("./routes/app/root").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
             children: [
                 {
                     path: paths.app.spaces.path,
@@ -106,11 +99,36 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
+                    path: paths.app.profile.path,
+                    lazy: () => import("./routes/app/profile").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
+                    path: paths.app.resume.path,
+                    lazy: () => import("./routes/app/resume").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
+                    path: paths.app.ideas.path,
+                    lazy: () => import("./routes/app/ideas").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
+                    path: paths.app.ideas.detail.path,
+                    lazy: () => import("./routes/app/ideas.$id").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.settings.roles.path,
                     lazy: () => import("./routes/app/settings/roles").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
             ],
+        },
+        {
+            path: paths.join.path,
+            lazy: () => import("./routes/join").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
         },
         {
             path: "*",
