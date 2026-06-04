@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SpacesCard } from "@/components/ui/card/spaces-card.tsx";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import { useSpacesList } from "@/lib/spaces";
 import { useRecentProjectsList } from "@/lib/projects";
@@ -78,6 +78,7 @@ const SpacesRoute = () => {
     };
 
     const [visibleCount, setVisibleCount] = useState(6);
+    const [projectsVisibleCount, setProjectsVisibleCount] = useState(6);
 
     const visibleSpaces = useMemo(() => {
         return dataSpaces?.spaces.slice(0, visibleCount);
@@ -211,6 +212,23 @@ const SpacesRoute = () => {
             archived: p.status === "completed" || p.status === "archived",
         }));
     }, [filteredRawItems]);
+
+    useEffect(() => {
+        setProjectsVisibleCount(6);
+    }, [search, filterState]);
+
+    const projectsHasMore = projectsVisibleCount < filteredRawItems.length;
+    const handleProjectsLoadMore = () => setProjectsVisibleCount((prev) => prev + 6);
+
+    const visibleFilteredRawItems = useMemo(
+        () => filteredRawItems.slice(0, projectsVisibleCount),
+        [filteredRawItems, projectsVisibleCount],
+    );
+
+    const visibleProjects = useMemo(
+        () => projects.slice(0, projectsVisibleCount),
+        [projects, projectsVisibleCount],
+    );
 
     const textTabs = [
         { value: "all", label: "Все проекты" },
@@ -433,7 +451,7 @@ const SpacesRoute = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredRawItems.map((raw) => {
+                                    {visibleFilteredRawItems.map((raw) => {
                                         const style =
                                             statusStyles[raw.status] || statusStyles.draft;
                                         const label = STATUS_LABELS[raw.status] || raw.status;
@@ -524,7 +542,7 @@ const SpacesRoute = () => {
                         </div>
                     ) : (
                         <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                            {projects.map((project) => (
+                            {visibleProjects.map((project) => (
                                 <Link
                                     key={project.id}
                                     to={paths.app.project.getHref(project.id)}
@@ -546,6 +564,18 @@ const SpacesRoute = () => {
                                     />
                                 </Link>
                             ))}
+                        </div>
+                    )}
+
+                    {projectsHasMore && (
+                        <div className="w-full flex justify-center mt-8">
+                            <button
+                                onClick={handleProjectsLoadMore}
+                                className="flex items-center gap-1 px-4 py-2 text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
+                            >
+                                <Icon name="arrow-down" width={16} height={16} />
+                                Загрузить ещё
+                            </button>
                         </div>
                     )}
                 </section>
