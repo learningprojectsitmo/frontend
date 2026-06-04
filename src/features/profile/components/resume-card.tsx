@@ -14,8 +14,8 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
     return {
         id: item.id,
         position: item.header,
-        views: "—",
-        invitations: "—",
+        views: String(item.views_count ?? 0),
+        invitations: String(item.invitations_count ?? 0),
         lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("ru-RU") : "—",
         isVisible: item.is_visible,
     };

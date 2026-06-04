@@ -198,6 +198,8 @@ export type ResumeFull = {
     id: number;
     header: string;
     author_id: number;
+    views_count: number;
+    invitations_count: number;
     resume_text: string | null;
     role: string | null;
     about: string | null;
