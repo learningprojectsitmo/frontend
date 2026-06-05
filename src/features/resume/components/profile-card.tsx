@@ -108,7 +108,7 @@ export const ProfileCard = ({
             email={user.email}
             phone={user.phone}
             socials={socials}
-            showActions
+            showActions={!!onEdit}
             onEdit={onEdit}
         />
     );

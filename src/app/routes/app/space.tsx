@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router";
 import { Link } from "react-router";
 import { SpaceHeader } from "@/features/spaces/components/space-header";
 import { SpaceProjectList } from "@/features/spaces/components/space-project-list";
+import { SpaceResumeSection } from "@/features/spaces/components/space-resume-section";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import {
     useSpacesList,
     useWorkspaceParticipants,
+    useWorkspaceResumes,
     useRemoveWorkspaceParticipant,
 } from "@/lib/spaces";
 import { useProjectsList } from "@/lib/projects";
@@ -199,6 +201,8 @@ const SpaceRoute = () => {
         project_id: projectIdFilter,
     });
 
+    const { data: resumesData, isLoading: isResumesLoading } = useWorkspaceResumes(workspaceId);
+
     const removeParticipantMutation = useRemoveWorkspaceParticipant();
 
     const handleRemoveParticipant = useCallback(
@@ -313,6 +317,12 @@ const SpaceRoute = () => {
                     total={dataProjects?.total || 0}
                     isLoading={isProjectsLoading}
                     isError={isError}
+                />
+
+                <SpaceResumeSection
+                    items={resumesData?.items || []}
+                    isLoading={isResumesLoading}
+                    workspaceId={workspaceId}
                 />
 
                 {/* Participants section */}

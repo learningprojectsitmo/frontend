@@ -510,6 +510,20 @@ export type WorkspaceParticipantListResponse = {
     total_pages: number;
 };
 
+export type WorkspaceResumeItem = {
+    id: number;
+    header: string;
+    skills: string[];
+    interests: string[];
+    participant_name: string;
+    participant_id: number;
+};
+
+export type WorkspaceResumeListResponse = {
+    items: WorkspaceResumeItem[];
+    total: number;
+};
+
 export type InviteLinkResponse = {
     token: string;
     url: string;
