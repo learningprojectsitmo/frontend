@@ -24,6 +24,7 @@ export interface Replycant {
     type: "response" | "invitation";
     responseStatus: "pending" | "accepted" | "rejected" | "withdrawn";
     status: "invite" | "invited";
+    userId: number;
 }
 
 export interface Role {

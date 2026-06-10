@@ -14,6 +14,9 @@ interface TableInvitationsProps {
     addToTeam?: (id: number) => void;
     onReject?: (id: number) => void;
     canManage?: boolean;
+    currentUserId?: number;
+    onAcceptInvitation?: (id: number) => void;
+    onRejectInvitation?: (id: number) => void;
 }
 
 export const TableInvitations = ({
@@ -22,6 +25,9 @@ export const TableInvitations = ({
     addToTeam,
     onReject,
     canManage = false,
+    currentUserId,
+    onAcceptInvitation,
+    onRejectInvitation,
 }: TableInvitationsProps) => {
     const typeLabels: Record<string, string> = {
         response: "Отклик",
@@ -117,11 +123,29 @@ export const TableInvitations = ({
                                             Ожидает решения
                                         </span>
                                     )}
-                                    {member.type === "invitation" && (
-                                        <span className="text-gray-400 text-[12px]">
-                                            Приглашение отправлено
-                                        </span>
-                                    )}
+                                    {member.type === "invitation" &&
+                                        member.userId === currentUserId && (
+                                            <>
+                                                <button
+                                                    onClick={() => onAcceptInvitation?.(member.id)}
+                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                >
+                                                    Принять
+                                                </button>
+                                                <button
+                                                    onClick={() => onRejectInvitation?.(member.id)}
+                                                    className="font-medium text-red-500 hover:text-red-700"
+                                                >
+                                                    Отклонить
+                                                </button>
+                                            </>
+                                        )}
+                                    {member.type === "invitation" &&
+                                        member.userId !== currentUserId && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                Приглашение отправлено
+                                            </span>
+                                        )}
                                 </div>
                             </td>
                         </tr>

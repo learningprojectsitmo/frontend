@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select/select";
 import { SearchBar } from "@/components/ui/search-bar";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -123,6 +125,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
             type: r.type || "response",
             responseStatus: r.status || "pending",
             status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
+            userId: r.user_id,
         })),
     };
 }
@@ -513,6 +516,34 @@ const SpaceRoute = () => {
             );
         },
         [project, rejectResponseMutation],
+    );
+
+    const queryClient = useQueryClient();
+
+    const handleAcceptInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/accept`);
+                toast.success("Приглашение принято");
+                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+            } catch {
+                toast.error("Не удалось принять приглашение");
+            }
+        },
+        [project, queryClient],
+    );
+
+    const handleRejectInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/reject`);
+                toast.success("Приглашение отклонено");
+                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+            } catch {
+                toast.error("Не удалось отклонить приглашение");
+            }
+        },
+        [project, queryClient],
     );
 
     const handleDeleteColumn = useCallback(
@@ -1291,6 +1322,9 @@ const SpaceRoute = () => {
                                 addToTeam={handleAcceptResponse}
                                 onReject={handleRejectResponse}
                                 canManage={isCreator}
+                                currentUserId={user?.id}
+                                onAcceptInvitation={handleAcceptInvitation}
+                                onRejectInvitation={handleRejectInvitation}
                             />
                         )}
                     </>

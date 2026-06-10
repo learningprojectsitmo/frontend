@@ -91,18 +91,24 @@ export function NotificationsNav() {
         navigate("/app/profile?tab=responses");
     };
 
-    const handleInvitationAction = async (
+    const handleNotificationAction = async (
         e: React.MouseEvent,
-        invitationId: number | undefined,
+        type: string,
+        id: number | undefined,
         action: "accept" | "reject",
         notificationId: number,
     ) => {
         e.stopPropagation();
-        if (!invitationId) return;
+        if (!id) return;
         try {
-            await api.patch(`/invitations/${invitationId}/${action}`);
+            if (type === "invitation_received") {
+                await api.patch(`/invitations/${id}/${action}`);
+                queryClient.invalidateQueries({ queryKey: ["profile", "invitations"] });
+            } else if (type === "response_accepted" && action === "accept") {
+                await api.patch(`/responses/${id}/confirm-join`);
+                queryClient.invalidateQueries({ queryKey: ["profile", "responses"] });
+            }
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
-            queryClient.invalidateQueries({ queryKey: ["profile", "invitations"] });
             markRead.mutate(notificationId);
         } catch {
             // ignore
@@ -190,7 +196,13 @@ export function NotificationsNav() {
                                 });
                                 const timeStr = formatRelativeTime(item.created_at, t);
                                 const initials = getInitials(item.data.actor_name);
-                                const isInvitation = item.type === "invitation_received";
+                                const hasActions =
+                                    (item.type === "invitation_received" && item.data.invitation_id) ||
+                                    (item.type === "response_accepted" && item.data.response_id);
+                                const actionId =
+                                    item.type === "invitation_received"
+                                        ? item.data.invitation_id
+                                        : item.data.response_id;
 
                                 return (
                                     <React.Fragment key={item.id}>
@@ -203,7 +215,7 @@ export function NotificationsNav() {
                                             </div>
 
                                             <div className="flex-1 flex flex-row justify-between min-w-0">
-                                                {isInvitation && item.data.invitation_id ? (
+                                                {hasActions ? (
                                                     <>
                                                         <div className="w-[280px]">
                                                             <p className="font-sans text-[13px] text-gray-900 text-left">
@@ -217,9 +229,10 @@ export function NotificationsNav() {
                                                             <button
                                                                 type="button"
                                                                 onClick={(e) =>
-                                                                    handleInvitationAction(
+                                                                    handleNotificationAction(
                                                                         e,
-                                                                        item.data.invitation_id,
+                                                                        item.type,
+                                                                        actionId,
                                                                         "accept",
                                                                         item.id,
                                                                     )
@@ -231,9 +244,10 @@ export function NotificationsNav() {
                                                             <button
                                                                 type="button"
                                                                 onClick={(e) =>
-                                                                    handleInvitationAction(
+                                                                    handleNotificationAction(
                                                                         e,
-                                                                        item.data.invitation_id,
+                                                                        item.type,
+                                                                        actionId,
                                                                         "reject",
                                                                         item.id,
                                                                     )
