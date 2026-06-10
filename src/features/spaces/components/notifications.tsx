@@ -1,4 +1,9 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+
 import { IconButton } from "@/components/ui/button/icon-button";
 import {
     DropdownMenu,
@@ -12,178 +17,97 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/utils/cn";
 import { LineButton } from "@/components/ui/button";
-import { type Notification } from "@/types/api";
+import { useMyNotifications, useMarkAllNotificationsRead, useMarkNotificationRead } from "@/lib/notifications";
+import { api } from "@/lib/api-client";
+import type { NotificationType } from "@/types/api";
 
-// Моковые данные
-const notificationsMock: Notification[] = [
-    {
-        id: 1,
-        type: "mention",
-        name: "Anna N.",
-        action: "mentioned you in",
-        project: "AI Learning Platform",
-        time: "5d ago",
-        avatar: "AN",
-        read: false,
-    },
-    {
-        id: 2,
-        type: "request",
-        name: "Edward W.",
-        action: "asks to join project",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "EW",
-        read: false,
-    },
-    {
-        id: 3,
-        type: "join",
-        name: "Will B.",
-        action: "joined to",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "WB",
-        read: true,
-    },
-    {
-        id: 4,
-        type: "mention",
-        name: "Anna N.",
-        action: "mentioned you in",
-        project: "AI Learning Platform",
-        time: "5d ago",
-        avatar: "AN",
-        read: true,
-    },
-    {
-        id: 5,
-        type: "request",
-        name: "Edward W.",
-        action: "asks to join project",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "EW",
-        read: false,
-    },
-    {
-        id: 6,
-        type: "join",
-        name: "Will B.",
-        action: "joined to",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "WB",
-        read: false,
-    },
-    {
-        id: 7,
-        type: "mention",
-        name: "Anna N.",
-        action: "mentioned you in",
-        project: "AI Learning Platform",
-        time: "5d ago",
-        avatar: "AN",
-        read: false,
-    },
-    {
-        id: 8,
-        type: "request",
-        name: "Edward W.",
-        action: "asks to join project",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "EW",
-        read: false,
-    },
-    {
-        id: 9,
-        type: "join",
-        name: "Will B.",
-        action: "joined to",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "WB",
-        read: true,
-    },
-    {
-        id: 10,
-        type: "mention",
-        name: "Anna N.",
-        action: "mentioned you in",
-        project: "AI Learning Platform",
-        time: "5d ago",
-        avatar: "AN",
-        read: true,
-    },
-    {
-        id: 11,
-        type: "request",
-        name: "Edward W.",
-        action: "asks to join project",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "EW",
-        read: false,
-    },
-    {
-        id: 12,
-        type: "join",
-        name: "Will B.",
-        action: "joined to",
-        project: "AI Learning Platform",
-        time: "5h ago",
-        avatar: "WB",
-        read: false,
-    },
-];
+const RESPONSE_TYPES: NotificationType[] = ["response_received", "response_accepted", "response_rejected"];
+const INVITATION_TYPES: NotificationType[] = ["invitation_received", "invitation_accepted", "invitation_rejected"];
 
-// Фиксированные табы (без archive в данных, но оставим для дизайна)
 const tabs = [
-    { key: "all", label: "Все" },
-    { key: "mentions", label: "Упоминания" },
-    { key: "requests", label: "Запросы" },
-    { key: "archive", label: "Архив" },
+    { key: "all", labelKey: "notifications.tabs.all" },
+    { key: "responses", labelKey: "notifications.tabs.responses" },
+    { key: "invitations", labelKey: "notifications.tabs.invitations" },
+    { key: "archive", labelKey: "notifications.tabs.archive" },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
 
-export function NotificationsNav({ notifications }: { notifications: Notification[] | undefined }) {
+function getInitials(name: string): string {
+    return name
+        .split(" ")
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+}
+
+function formatRelativeTime(dateStr: string, t: (key: string, opts?: object) => string): string {
+    const now = dayjs();
+    const date = dayjs(dateStr);
+    const diffMinutes = now.diff(date, "minute");
+    const diffHours = now.diff(date, "hour");
+    const diffDays = now.diff(date, "day");
+
+    if (diffMinutes < 1) return t("notifications.time.justNow");
+    if (diffMinutes < 60) return t("notifications.time.minutesAgo", { minutes: diffMinutes });
+    if (diffHours < 24) return t("notifications.time.hoursAgo", { hours: diffHours });
+    return t("notifications.time.daysAgo", { days: diffDays });
+}
+
+export function NotificationsNav() {
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = React.useState<TabKey>("all");
+    const { data, isLoading } = useMyNotifications();
+    const markAllRead = useMarkAllNotificationsRead();
+    const markRead = useMarkNotificationRead();
 
-    const data = notifications || notificationsMock; //пока что будут mock данные
+    const notifications = data?.items ?? [];
 
-    // Подсчёт количества для каждого таба (для отображения рядом с названием)
+    const unreadCount = data?.unread_count ?? 0;
+
     const counts = React.useMemo(() => {
-        const all = data.length;
-        const mentions = data.filter((n) => n.type === "mention").length;
-        const requests = data.filter((n) => n.type === "request").length;
-        // Для archive пока всегда 0, так как тип archive отсутствует
-        const archive = 0;
-        return { all, mentions, requests, archive };
-    }, [data]);
+        const all = notifications.length;
+        const responses = notifications.filter((n) => RESPONSE_TYPES.includes(n.type)).length;
+        const invitations = notifications.filter((n) => INVITATION_TYPES.includes(n.type)).length;
+        return { all, responses, invitations, archive: 0 };
+    }, [notifications]);
 
-    // Фильтрация уведомлений по активному табу
     const filteredNotifications = React.useMemo(() => {
-        if (activeTab === "all") return data;
-        if (activeTab === "mentions") return data.filter((n) => n.type === "mention");
-        if (activeTab === "requests") return data.filter((n) => n.type === "request");
-        if (activeTab === "archive") return []; // В архиве пока пусто
+        if (activeTab === "all") return notifications;
+        if (activeTab === "responses") return notifications.filter((n) => RESPONSE_TYPES.includes(n.type));
+        if (activeTab === "invitations") return notifications.filter((n) => INVITATION_TYPES.includes(n.type));
         return [];
-    }, [data, activeTab]);
+    }, [notifications, activeTab]);
 
-    // Отметить все как прочитанные
     const handleMarkAllAsRead = () => {
-        // Здесь будет логика обновления данных
+        markAllRead.mutate();
     };
 
-    // Клик по уведомлению
-    //const handleNotificationClick = (id: number) => {
-    //  console.log("Notification clicked", id);
-    //};
+    const handleNotificationClick = (notificationId: number) => {
+        markRead.mutate(notificationId);
+        navigate("/app/profile?tab=responses");
+    };
 
-    // Количество непрочитанных для бейджа
-    const unreadCount = data.filter((n) => !n.read).length;
+    const handleInvitationAction = async (
+        e: React.MouseEvent,
+        invitationId: number | undefined,
+        action: "accept" | "reject",
+        notificationId: number,
+    ) => {
+        e.stopPropagation();
+        if (!invitationId) return;
+        try {
+            await api.patch(`/invitations/${invitationId}/${action}`);
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            queryClient.invalidateQueries({ queryKey: ["profile", "invitations"] });
+            markRead.mutate(notificationId);
+        } catch {
+            // ignore
+        }
+    };
 
     return (
         <DropdownMenu modal={false}>
@@ -202,20 +126,18 @@ export function NotificationsNav({ notifications }: { notifications: Notificatio
                     align="end"
                     sideOffset={4}
                 >
-                    {/* Шапка */}
                     <div className="flex items-center justify-between py-1 px-3.5 gap-1">
                         <DropdownMenuLabel className="font-sans text-[17px] font-semibold p-0">
-                            Уведомления
+                            {t("notifications.title")}
                         </DropdownMenuLabel>
                         <LineButton
                             onClick={handleMarkAllAsRead}
                             className="font-sans text-[13px] font-semibold p-0 pt-1"
                         >
-                            Пометить все как прочитанные
+                            {t("notifications.markAllRead")}
                         </LineButton>
                     </div>
 
-                    {/* Табы */}
                     <div className="flex gap-1 px-3 py-2">
                         {tabs.map((tab) => {
                             const count = counts[tab.key as keyof typeof counts];
@@ -230,7 +152,7 @@ export function NotificationsNav({ notifications }: { notifications: Notificatio
                                             : "text-gray-600 hover:bg-gray-100",
                                     )}
                                 >
-                                    <span>{tab.label}</span>
+                                    <span>{t(tab.labelKey)}</span>
                                     <span
                                         className={cn(
                                             "px-1.5 py-0.5 rounded-[6px] font-semibold font-sans text-[11px]",
@@ -248,83 +170,101 @@ export function NotificationsNav({ notifications }: { notifications: Notificatio
 
                     <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
-                    {/* Список уведомлений */}
                     <div className="max-h-96 overflow-y-auto overflow-x-hidden pb-2">
-                        {filteredNotifications.length === 0 ? (
+                        {isLoading ? (
+                            <div className="px-4 py-8 pb-10 text-center text-gray-500 text-sm font-sans">
+                                Загрузка...
+                            </div>
+                        ) : filteredNotifications.length === 0 ? (
                             <>
                                 <div className="px-4 py-8 pb-10 text-center text-gray-500 text-sm font-sans">
-                                    Нет уведомлений
+                                    {t("notifications.empty")}
                                 </div>
                                 <DropdownMenuSeparator className="bg-gray-200 my-0 shrink-0" />
                             </>
                         ) : (
-                            filteredNotifications.map((item) => (
-                                <React.Fragment key={item.id}>
-                                    <DropdownMenuItem
-                                        className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 focus:bg-gray-50 rounded-none"
-                                        //onSelect={() => handleNotificationClick(item.id)}
-                                    >
-                                        {/* Аватар */}
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-sans text-signature-small font-medium shrink-0 border-white border border-[2px]">
-                                            {item.avatar}
-                                        </div>
+                            filteredNotifications.map((item) => {
+                                const msg = t(`notifications.types.${item.type}`, {
+                                    actor_name: item.data.actor_name,
+                                    project_name: item.data.project_name,
+                                });
+                                const timeStr = formatRelativeTime(item.created_at, t);
+                                const initials = getInitials(item.data.actor_name);
+                                const isInvitation = item.type === "invitation_received";
 
-                                        {/* Контент */}
-                                        <div className="flex-1 flex flex-row justify-between min-w-0">
-                                            {item.type === "request" ? (
-                                                <>
-                                                    <div className="w-[280px]">
-                                                        <p className="font-sans text-[13px] text-gray-900 truncate text-left">
-                                                            <span className="font-semibold ">
-                                                                {item.name}
-                                                            </span>{" "}
-                                                            {item.action}{" "}
-                                                            <span className="font-semibold">
-                                                                {item.project}
-                                                            </span>
+                                return (
+                                    <React.Fragment key={item.id}>
+                                        <DropdownMenuItem
+                                            className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 focus:bg-gray-50 rounded-none"
+                                            onClick={() => handleNotificationClick(item.id)}
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-sans text-signature-small font-medium shrink-0 border-white border border-[2px]">
+                                                {initials}
+                                            </div>
+
+                                            <div className="flex-1 flex flex-row justify-between min-w-0">
+                                                {isInvitation && item.data.invitation_id ? (
+                                                    <>
+                                                        <div className="w-[280px]">
+                                                            <p className="font-sans text-[13px] text-gray-900 text-left">
+                                                                {msg}
+                                                            </p>
+                                                            <p className="font-sans text-[10px] text-gray-500 font-medium">
+                                                                {timeStr}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex ml-4 flex-row items-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) =>
+                                                                    handleInvitationAction(
+                                                                        e,
+                                                                        item.data.invitation_id,
+                                                                        "accept",
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                className="p-2 flex items-center justify-center hover:bg-gray-200 rounded-[8px]"
+                                                            >
+                                                                <Icon name="check" size={20} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) =>
+                                                                    handleInvitationAction(
+                                                                        e,
+                                                                        item.data.invitation_id,
+                                                                        "reject",
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                className="p-2 flex items-center justify-center hover:bg-gray-200 rounded-[8px]"
+                                                            >
+                                                                <Icon name="cross" size={20} />
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex flex-col">
+                                                        <p className="font-sans text-[13px] text-gray-900 text-left">
+                                                            {msg}
                                                         </p>
                                                         <p className="font-sans text-[10px] text-gray-500 font-medium">
-                                                            {item.time}
+                                                            {timeStr}
                                                         </p>
                                                     </div>
-                                                    <div className="flex ml-4 flex-row items-center">
-                                                        <button className="p-2 flex items-center justify-center hover:bg-gray-200 rounded-[8px]">
-                                                            <Icon name="check" size={20} />
-                                                        </button>
-                                                        <button className="p-2 flex items-center justify-center hover:bg-gray-200 rounded-[8px]">
-                                                            <Icon name="cross" size={20} />
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="flex flex-col">
-                                                    <p className="font-sans text-[13px] text-gray-900 truncate text-left">
-                                                        <span className="font-semibold ">
-                                                            {item.name}
-                                                        </span>{" "}
-                                                        {item.action}{" "}
-                                                        <span className="font-semibold">
-                                                            {item.project}
-                                                        </span>
-                                                    </p>
-                                                    <p className="font-sans text-[10px] text-gray-500 font-medium">
-                                                        {item.time}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Индикатор непрочитанного убран, так как на дизайне его нет */}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-gray-200 my-0 shrink-0" />
-                                </React.Fragment>
-                            ))
+                                                )}
+                                            </div>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="bg-gray-200 my-0 shrink-0" />
+                                    </React.Fragment>
+                                );
+                            })
                         )}
-                        {/* Footer */}
 
                         <div className="px-3 text-center shrink-0">
                             <button className="text-sm text-blue-600 hover:text-blue-700 font-medium font-sans w-full py-4">
-                                Показать все
+                                {t("notifications.showAll")}
                             </button>
                         </div>
                     </div>

@@ -10,7 +10,6 @@ import {
     useRemoveParticipant,
     useAcceptResponse,
     useRejectResponse,
-    useApplyForProject,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
@@ -42,6 +41,7 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
+import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -155,8 +155,8 @@ const SpaceRoute = () => {
         [],
     );
     const updateProjectMutation = useUpdateProject();
-    const applyMutation = useApplyForProject();
     const { addViewedProject } = useRecentlyViewed();
+    const [applyDialogOpen, setApplyDialogOpen] = useState(false);
 
     const showApplyButton = !!(user?.id &&
         dataProject &&
@@ -1096,10 +1096,13 @@ const SpaceRoute = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
                                                     <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
                                                         {role.count}
                                                     </div>
+                                                    <span className="text-[11px] text-[#6A7282] font-sans">
+                                                        осталось
+                                                    </span>
                                                 </div>
                                             </div>
                                         )}
@@ -1188,27 +1191,9 @@ const SpaceRoute = () => {
                                             variant="dark"
                                             size="hug36"
                                             className="font-sans text-[13px] font-semibold gap-2"
-                                            onClick={() => {
-                                                applyMutation.mutate(
-                                                    { projectId: dataProject!.id },
-                                                    {
-                                                        onSuccess: () => {
-                                                            toast.success("Отклик отправлен");
-                                                        },
-                                                        onError: (error) => {
-                                                            toast.error(
-                                                                error?.message ||
-                                                                    "Не удалось откликнуться",
-                                                            );
-                                                        },
-                                                    },
-                                                );
-                                            }}
-                                            disabled={applyMutation.isPending}
+                                            onClick={() => setApplyDialogOpen(true)}
                                         >
-                                            {applyMutation.isPending
-                                                ? "Отправка..."
-                                                : "Откликнуться"}
+                                            Откликнуться
                                         </Button>
                                     )}
                                     {canManageProject ? (
@@ -1310,6 +1295,13 @@ const SpaceRoute = () => {
                         )}
                     </>
                 )}
+                <ApplyDialog
+                    open={applyDialogOpen}
+                    onOpenChange={setApplyDialogOpen}
+                    projectId={dataProject?.id ?? 0}
+                    vacancies={dataProject?.vacancies ?? []}
+                />
+
                 {activeTab === "kanban" && (
                     <>
                         <section>

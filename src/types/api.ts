@@ -24,6 +24,7 @@ export type User = Entity<{
     last_name: string;
     middle_name: string;
     email: string;
+    lang: string;
 }>;
 
 export type LoginResponse = {
@@ -384,17 +385,39 @@ export type Category = {
     color: string;
 };
 
-export type NotificationType = "mention" | "request" | "join";
+export type NotificationType =
+    | "response_received"
+    | "response_accepted"
+    | "response_rejected"
+    | "invitation_received"
+    | "invitation_accepted"
+    | "invitation_rejected";
+
+export interface NotificationData {
+    actor_id: number | null;
+    actor_name: string;
+    project_id: number;
+    project_name: string;
+    vacancy_title: string | null;
+    invitation_id?: number;
+    response_id?: number;
+}
 
 export interface Notification {
     id: number;
     type: NotificationType;
-    name: string;
-    action: string;
-    project: string;
-    time: string;
-    avatar: string;
+    data: NotificationData;
     read: boolean;
+    created_at: string;
+}
+
+export interface NotificationListResponse {
+    items: Notification[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    unread_count: number;
 }
 
 // ========== ДОСКА ==========

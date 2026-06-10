@@ -121,7 +121,7 @@ function SpaceLayoutNotFound() {
                     >
                         <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                     </Link>
-                    <NotificationsNav notifications={undefined} />
+                    <NotificationsNav />
                     <UserNav />
                 </div>
             </header>
@@ -246,7 +246,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
                 >
                     <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                 </Link>
-                <NotificationsNav notifications={undefined} />
+                <NotificationsNav />
                 <UserNav />
             </div>
         </header>

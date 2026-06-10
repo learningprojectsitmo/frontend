@@ -116,12 +116,15 @@ export const useRemoveParticipant = () => {
 export const applyForProject = async ({
     projectId,
     vacancyId,
+    resumeId,
 }: {
     projectId: number;
     vacancyId?: number | null;
+    resumeId?: number | null;
 }): Promise<{ message: string }> => {
     return await api.post(`/projects/${projectId}/apply`, {
         vacancy_id: vacancyId ?? null,
+        resume_id: resumeId ?? null,
     });
 };
 
@@ -139,14 +142,17 @@ export const inviteToProject = async ({
     projectId,
     userId,
     vacancyId,
+    resumeId,
 }: {
     projectId: number;
     userId: number;
     vacancyId?: number | null;
+    resumeId?: number | null;
 }): Promise<{ message: string }> => {
     return await api.post(`/projects/${projectId}/invite`, {
         user_id: userId,
         vacancy_id: vacancyId ?? null,
+        resume_id: resumeId ?? null,
     });
 };
 
