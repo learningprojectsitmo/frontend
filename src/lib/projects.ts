@@ -112,3 +112,90 @@ export const useRemoveParticipant = () => {
         },
     });
 };
+
+export const applyForProject = async ({
+    projectId,
+    vacancyId,
+}: {
+    projectId: number;
+    vacancyId?: number | null;
+}): Promise<{ message: string }> => {
+    return await api.post(`/projects/${projectId}/apply`, {
+        vacancy_id: vacancyId ?? null,
+    });
+};
+
+export const useApplyForProject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: applyForProject,
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+        },
+    });
+};
+
+export const inviteToProject = async ({
+    projectId,
+    userId,
+    vacancyId,
+}: {
+    projectId: number;
+    userId: number;
+    vacancyId?: number | null;
+}): Promise<{ message: string }> => {
+    return await api.post(`/projects/${projectId}/invite`, {
+        user_id: userId,
+        vacancy_id: vacancyId ?? null,
+    });
+};
+
+export const useInviteToProject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: inviteToProject,
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+        },
+    });
+};
+
+export const acceptResponse = async ({
+    projectId,
+    responseId,
+}: {
+    projectId: number;
+    responseId: number;
+}): Promise<{ message: string }> => {
+    return await api.put(`/projects/${projectId}/responses/${responseId}/accept`);
+};
+
+export const useAcceptResponse = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: acceptResponse,
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+        },
+    });
+};
+
+export const rejectResponse = async ({
+    projectId,
+    responseId,
+}: {
+    projectId: number;
+    responseId: number;
+}): Promise<{ message: string }> => {
+    return await api.put(`/projects/${projectId}/responses/${responseId}/reject`);
+};
+
+export const useRejectResponse = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: rejectResponse,
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+        },
+    });
+};

@@ -327,13 +327,32 @@ const SpaceRoute = () => {
 
                 {/* Participants section */}
                 <section className="mt-14">
-                    <div className="mb-6 flex flex-col gap-5">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-[32px] font-bold text-app-text leading-tight">
+                    <div className="mb-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-[32px] font-bold text-app-text leading-tight shrink-0">
                                 Список участников ({totalParticipants})
                             </h2>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <SearchBar
+                                    placeholder="Поиск участников"
+                                    onChange={setParticipantSearch}
+                                    value={participantSearch}
+                                    className="w-[200px]"
+                                />
+
+                                {projectOptions.length > 0 && (
+                                    <FilterDropdown
+                                        options={projectOptions}
+                                        selected={selectedProjects}
+                                        onChange={(v) => {
+                                            setSelectedProjects(v);
+                                            setParticipantPage(1);
+                                        }}
+                                        onReset={handleFilterReset}
+                                    />
+                                )}
+
                                 <Button
                                     variant="dark"
                                     size="hug36"
@@ -358,27 +377,6 @@ const SpaceRoute = () => {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3">
-                            <SearchBar
-                                placeholder="Поиск участников"
-                                onChange={setParticipantSearch}
-                                value={participantSearch}
-                                className="w-[280px]"
-                            />
-
-                            {projectOptions.length > 0 && (
-                                <FilterDropdown
-                                    options={projectOptions}
-                                    selected={selectedProjects}
-                                    onChange={(v) => {
-                                        setSelectedProjects(v);
-                                        setParticipantPage(1);
-                                    }}
-                                    onReset={handleFilterReset}
-                                />
-                            )}
                         </div>
                     </div>
 

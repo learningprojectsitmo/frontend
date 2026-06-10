@@ -200,9 +200,7 @@ const ResumeRoute = () => {
     const resumeTitle = data.resume.header || fullName;
 
     const workspaceId = workspaceIdParam ? parseInt(workspaceIdParam, 10) : null;
-    const workspace = workspaceId
-        ? dataSpaces?.spaces.find((s) => s.id === workspaceId)
-        : null;
+    const workspace = workspaceId ? dataSpaces?.spaces.find((s) => s.id === workspaceId) : null;
 
     return (
         <ContentLayout title={`Резюме — ${resumeTitle}`}>

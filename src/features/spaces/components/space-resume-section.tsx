@@ -25,10 +25,7 @@ function ResumeCard({ resume, workspaceId }: { resume: WorkspaceResumeItem; work
         .slice(0, 2);
 
     return (
-        <Link
-            to={paths.app.resume.getHref(resume.id, null, workspaceId)}
-            className="block h-full"
-        >
+        <Link to={paths.app.resume.getHref(resume.id, null, workspaceId)} className="block h-full">
             <div className="bg-white border border-[#E5E7EB] rounded-[20px] transition-all duration-200 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] min-w-[320px] h-full flex flex-col">
                 <div className="p-5 flex flex-col gap-4 flex-1">
                     <div className="flex items-start justify-between">
@@ -90,9 +87,7 @@ function ResumeCard({ resume, workspaceId }: { resume: WorkspaceResumeItem; work
                 <div className="px-5 pt-4 pb-5 border-t border-[#F1F1F1]">
                     <div className="flex items-center gap-2">
                         <Eye size={16} className="text-[#6B7280] shrink-0" />
-                        <span className="text-[13px] text-[#4B5563]">
-                            Открыть резюме
-                        </span>
+                        <span className="text-[13px] text-[#4B5563]">Открыть резюме</span>
                     </div>
                 </div>
             </div>
@@ -133,15 +128,11 @@ export function SpaceResumeSection({ items, isLoading, workspaceId }: SpaceResum
         }
 
         if (selectedSkills.length > 0) {
-            result = result.filter((r) =>
-                selectedSkills.some((s) => r.skills.includes(s)),
-            );
+            result = result.filter((r) => selectedSkills.some((s) => r.skills.includes(s)));
         }
 
         if (selectedInterests.length > 0) {
-            result = result.filter((r) =>
-                selectedInterests.some((i) => r.interests.includes(i)),
-            );
+            result = result.filter((r) => selectedInterests.some((i) => r.interests.includes(i)));
         }
 
         return result;
@@ -250,11 +241,7 @@ export function SpaceResumeSection({ items, isLoading, workspaceId }: SpaceResum
             ) : (
                 <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                     {filteredItems.map((resume) => (
-                        <ResumeCard
-                            key={resume.id}
-                            resume={resume}
-                            workspaceId={workspaceId}
-                        />
+                        <ResumeCard key={resume.id} resume={resume} workspaceId={workspaceId} />
                     ))}
                 </div>
             )}

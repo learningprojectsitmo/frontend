@@ -130,6 +130,10 @@ export type BackendReplycant = {
     contacts: string;
     resume_url: string;
     response_date: string;
+    vacancy_id: number | null;
+    role: string;
+    type: "response" | "invitation";
+    status: "pending" | "accepted" | "rejected" | "withdrawn";
 };
 
 export type ProjectListItemResponse = {
@@ -156,6 +160,9 @@ export type ProjectFullResponse = {
     id: number;
     name: string;
     author_id: number;
+    author_name: string;
+    author_email: string | null;
+    has_user_applied: boolean;
     description: string | null;
     max_participants: number | null;
     status_id: number | null;
