@@ -1,6 +1,7 @@
 import { configureAuth } from "react-query-auth";
 import {
     useMutation,
+    useQueryClient,
     type UseMutationResult,
     type UseMutationOptions,
 } from "@tanstack/react-query";
@@ -202,7 +203,21 @@ const authConfig = {
     },
 };
 
-export const { useUser, useLogin, useLogout, useRegister, AuthLoader } = configureAuth(authConfig);
+const { useLogout: useLogoutBase, ...auth } = configureAuth(authConfig);
+
+export const useLogout = (options?: Parameters<typeof useLogoutBase>[0]) => {
+    const queryClient = useQueryClient();
+    return useLogoutBase({
+        ...options,
+        onSuccess: (...args) => {
+            queryClient.clear();
+            localStorage.removeItem("recently_viewed_project_ids");
+            options?.onSuccess?.(...args);
+        },
+    });
+};
+
+export const { useUser, useLogin, useRegister, AuthLoader } = auth;
 
 // ─── Custom Mutation Hooks ────────────────────────────────────────────────────
 

@@ -20,7 +20,11 @@ export interface Replycant {
     resumeUrl: string;
     responseDate: string;
     avatarUrl?: string;
+    role: string;
+    type: "response" | "invitation";
+    responseStatus: "pending" | "accepted" | "rejected" | "withdrawn";
     status: "invite" | "invited";
+    userId: number;
 }
 
 export interface Role {

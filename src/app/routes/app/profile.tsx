@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
 import { mapResumeFromApi } from "@/features/profile/components/resume-card";
@@ -29,8 +29,14 @@ const socialsFromProfile = (
 
 const ProfileRoute = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState("resume");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "resume");
     const { data: profile } = useProfile();
+
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        setSearchParams(value === "resume" ? {} : { tab: value }, { replace: true });
+    };
 
     return (
         <ContentLayout title="Профиль и Резюме">
@@ -50,7 +56,7 @@ const ProfileRoute = () => {
                 <Tabs
                     tabs={mainTabs}
                     value={activeTab}
-                    onValueChange={setActiveTab}
+                    onValueChange={handleTabChange}
                     variant="text"
                     className="mb-6"
                 />

@@ -9,6 +9,7 @@ import {
     type SpaceSettingsFull,
     type WorkSpaceFull,
     type WorkspaceParticipantListResponse,
+    type WorkspaceResumeListResponse,
     type InviteLinkResponse,
     type InviteLinkCreate,
     type JoinByLinkResponse,
@@ -233,5 +234,21 @@ export const useRemoveWorkspaceParticipant = () => {
                 queryKey: ["workspaces", variables.workspaceId, "participants"],
             });
         },
+    });
+};
+
+// === Workspace resumes ===
+
+export const getWorkspaceResumes = async (
+    workspaceId: number,
+): Promise<WorkspaceResumeListResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/resumes`);
+};
+
+export const useWorkspaceResumes = (workspaceId: number) => {
+    return useQuery({
+        queryKey: ["workspaces", workspaceId, "resumes"],
+        queryFn: () => getWorkspaceResumes(workspaceId),
+        enabled: !!workspaceId,
     });
 };

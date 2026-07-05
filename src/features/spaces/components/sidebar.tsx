@@ -4,7 +4,7 @@ import { paths } from "@/config/paths";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
-import { GraduationCapIcon, Plus, PanelLeftClose, PanelLeftOpen, SearchX } from "lucide-react";
+import { GraduationCapIcon, PanelLeftClose, PanelLeftOpen, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateSpaceModal } from "./create-space-modal";
 
@@ -202,55 +202,57 @@ export const Sidebar = memo(function Sidebar({
                                     <Icon name="home" size={16} />
                                 </NavLink>
 
-                                <div className="w-5 h-px bg-gray-200 my-1" />
+                                {activeCategories.some((c) => c.spaces.length > 0) && (
+                                    <div className="w-5 h-px bg-gray-200 my-1" />
+                                )}
 
-                                {activeCategories.map((category, index) => (
-                                    <div
-                                        key={category.name}
-                                        className="flex flex-col gap-2 items-center w-full"
-                                    >
-                                        {category.spaces.map((space) => {
-                                            const isActive = urlId === String(space.id);
-                                            return (
-                                                <Link
-                                                    key={space.id}
-                                                    to={paths.app.space.getHref(space.id)}
-                                                    title={space.title}
-                                                    className={cn(
-                                                        "shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center text-white transition-all duration-150",
-                                                        space.color,
-                                                        isActive
-                                                            ? "ring-2 ring-offset-1 ring-gray-400"
-                                                            : "hover:opacity-90 hover:scale-105",
-                                                    )}
-                                                >
-                                                    <GraduationCapIcon size={15} />
-                                                </Link>
-                                            );
-                                        })}
+                                {activeCategories
+                                    .filter((category) => category.spaces.length > 0)
+                                    .map((category, index) => (
+                                        <div
+                                            key={category.name}
+                                            className="flex flex-col gap-2 items-center w-full"
+                                        >
+                                            {category.spaces.map((space) => {
+                                                const isActive = urlId === String(space.id);
+                                                return (
+                                                    <Link
+                                                        key={space.id}
+                                                        to={paths.app.space.getHref(space.id)}
+                                                        title={space.title}
+                                                        className={cn(
+                                                            "shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center text-white transition-all duration-150",
+                                                            space.color,
+                                                            isActive
+                                                                ? "ring-2 ring-offset-1 ring-gray-400"
+                                                                : "hover:opacity-90 hover:scale-105",
+                                                        )}
+                                                    >
+                                                        <GraduationCapIcon size={15} />
+                                                    </Link>
+                                                );
+                                            })}
 
-                                        {category.spaces.length === 0 && (
-                                            <div className="shrink-0 h-8 w-8 rounded-[10px] bg-blue-500 flex items-center justify-center text-white">
-                                                <Plus size={15} />
-                                            </div>
-                                        )}
-
-                                        {index < activeCategories.length - 1 && (
-                                            <div className="w-5 h-px bg-gray-200 my-1" />
-                                        )}
-                                    </div>
-                                ))}
+                                            {index <
+                                                activeCategories.filter((c) => c.spaces.length > 0)
+                                                    .length -
+                                                    1 && (
+                                                <div className="w-5 h-px bg-gray-200 my-1" />
+                                            )}
+                                        </div>
+                                    ))}
                             </div>
                         ) : (
                             /* ── Expanded ── */
                             <div className="p-3 flex flex-col gap-5 flex-1">
-                                {activeCategories.map((category) => (
-                                    <div key={category.name}>
-                                        <p className="px-1 mb-2 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-[0.08em]">
-                                            {category.name}
-                                        </p>
+                                {activeCategories
+                                    .filter((category) => category.spaces.length > 0)
+                                    .map((category) => (
+                                        <div key={category.name}>
+                                            <p className="px-1 mb-2 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-[0.08em]">
+                                                {category.name}
+                                            </p>
 
-                                        {category.spaces.length > 0 ? (
                                             <ul className="space-y-0.5">
                                                 {category.spaces.map((space) => {
                                                     const isActive = urlId === String(space.id);
@@ -291,29 +293,8 @@ export const Sidebar = memo(function Sidebar({
                                                     );
                                                 })}
                                             </ul>
-                                        ) : (
-                                            <div className="text-[12px] text-gray-400 px-1 mb-1">
-                                                Здесь будут ваши пространства
-                                            </div>
-                                        )}
-
-                                        {category.spaces.length === 0 && (
-                                            <button className="flex items-center gap-3 w-full px-2 py-2 rounded-[12px] border border-dashed border-gray-200 hover:border-blue-300 transition-colors group">
-                                                <div className="shrink-0 h-8 w-8 rounded-[10px] bg-blue-500 flex items-center justify-center text-white">
-                                                    <Plus size={15} />
-                                                </div>
-                                                <div className="flex flex-col min-w-0 text-left">
-                                                    <span className="text-[13px] font-semibold text-gray-700">
-                                                        Создать пространство
-                                                    </span>
-                                                    <span className="text-[11px] text-gray-400 font-medium">
-                                                        Нет проектов
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                        </div>
+                                    ))}
                             </div>
                         )}
                     </nav>

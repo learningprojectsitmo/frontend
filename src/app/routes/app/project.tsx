@@ -4,7 +4,13 @@ import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
-import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
+import {
+    useProject,
+    useUpdateProject,
+    useRemoveParticipant,
+    useAcceptResponse,
+    useRejectResponse,
+} from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
@@ -19,6 +25,8 @@ import {
 } from "@/components/ui/select/select";
 import { SearchBar } from "@/components/ui/search-bar";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -35,6 +43,7 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
+import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -112,7 +121,11 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
             contacts: r.contacts,
             resumeUrl: r.resume_url,
             responseDate: r.response_date,
-            status: "invite" as const,
+            role: r.role || "",
+            type: r.type || "response",
+            responseStatus: r.status || "pending",
+            status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
+            userId: r.user_id,
         })),
     };
 }
@@ -128,6 +141,14 @@ const SpaceRoute = () => {
     const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
 
+    const canManageProject = useMemo(() => {
+        if (isCreator) return true;
+        if (!dataProject?.workspace_id || !dataSpaces || !user) return false;
+        if (dataSpaces.role === "admin" || dataSpaces.role === "teacher") return true;
+        const space = dataSpaces.spaces?.find((s) => s.id === dataProject.workspace_id);
+        return space?.author_id === user.id;
+    }, [isCreator, dataProject, dataSpaces, user]);
+
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
@@ -138,6 +159,13 @@ const SpaceRoute = () => {
     );
     const updateProjectMutation = useUpdateProject();
     const { addViewedProject } = useRecentlyViewed();
+    const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+
+    const showApplyButton = !!(user?.id &&
+        dataProject &&
+        dataProject.author_id !== user.id &&
+        !dataProject.members.some(m => m.user_id === user.id) &&
+        !dataProject.has_user_applied);
 
     useEffect(() => {
         if (dataProject?.id) {
@@ -257,6 +285,8 @@ const SpaceRoute = () => {
     const [sortBy, setSortBy] = useState("default");
 
     const removeParticipantMutation = useRemoveParticipant();
+    const acceptResponseMutation = useAcceptResponse();
+    const rejectResponseMutation = useRejectResponse();
 
     // Kanban state
     const projectId = parseInt(urlId || "0", 10);
@@ -450,6 +480,72 @@ const SpaceRoute = () => {
         [project, removeParticipantMutation],
     );
 
+    const handleAcceptResponse = useCallback(
+        (responseId: number) => {
+            const replycant = project?.replycants.find((r) => r.id === responseId);
+            if (!replycant) return;
+            acceptResponseMutation.mutate(
+                { projectId: project?.id || 0, responseId },
+                {
+                    onSuccess: () => {
+                        toast.success("Отклик принят");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось принять отклик");
+                    },
+                },
+            );
+        },
+        [project, acceptResponseMutation],
+    );
+
+    const handleRejectResponse = useCallback(
+        (responseId: number) => {
+            const replycant = project?.replycants.find((r) => r.id === responseId);
+            if (!replycant) return;
+            rejectResponseMutation.mutate(
+                { projectId: project?.id || 0, responseId },
+                {
+                    onSuccess: () => {
+                        toast.success("Отклик отклонён");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось отклонить отклик");
+                    },
+                },
+            );
+        },
+        [project, rejectResponseMutation],
+    );
+
+    const queryClient = useQueryClient();
+
+    const handleAcceptInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/accept`);
+                toast.success("Приглашение принято");
+                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+            } catch {
+                toast.error("Не удалось принять приглашение");
+            }
+        },
+        [project, queryClient],
+    );
+
+    const handleRejectInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/reject`);
+                toast.success("Приглашение отклонено");
+                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+            } catch {
+                toast.error("Не удалось отклонить приглашение");
+            }
+        },
+        [project, queryClient],
+    );
+
     const handleDeleteColumn = useCallback(
         (columnId: number) => {
             kanbanDeleteColumn.mutate(columnId, {
@@ -580,12 +676,16 @@ const SpaceRoute = () => {
     }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
-        if (!search) return project?.replycants || [];
-        return (project?.replycants || []).filter(
-            (replycant) =>
-                replycant.name.toLowerCase().includes(search.toLowerCase()) ||
-                replycant.contacts.toLowerCase().includes(search.toLowerCase()),
-        );
+        let result = (project?.replycants || []).filter((r) => r.responseStatus === "pending");
+        if (search) {
+            result = result.filter(
+                (replycant) =>
+                    replycant.name.toLowerCase().includes(search.toLowerCase()) ||
+                    replycant.contacts.toLowerCase().includes(search.toLowerCase()) ||
+                    replycant.role.toLowerCase().includes(search.toLowerCase()),
+            );
+        }
+        return result;
     }, [project, search]);
 
     if (isLoading) {
@@ -732,6 +832,33 @@ const SpaceRoute = () => {
                                         />
                                     </svg>
                                 </div>
+                                {dataProject?.author_name && (
+                                    <div className="flex justify-start items-center gap-1">
+                                        <div className="inline-flex flex-col justify-start items-start">
+                                            <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                                Автор: {dataProject.author_name}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {dataProject?.author_name && (
+                                    <div data-svg-wrapper className="relative">
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 16 16"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <circle
+                                                cx="8"
+                                                cy="8"
+                                                r="1.5"
+                                                fill="var(--color-azure-46, #6A7282)"
+                                            />
+                                        </svg>
+                                    </div>
+                                )}
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
                                         <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
@@ -1000,10 +1127,13 @@ const SpaceRoute = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
                                                     <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
                                                         {role.count}
                                                     </div>
+                                                    <span className="text-[11px] text-[#6A7282] font-sans">
+                                                        осталось
+                                                    </span>
                                                 </div>
                                             </div>
                                         )}
@@ -1034,10 +1164,12 @@ const SpaceRoute = () => {
                         <section className="pt-4">
                             <div className="mb-4 flex items-center justify-between">
                                 <h2 className="text-lg font-semibold text-gray-800">
-                                    Список участников{" "}
+                                    {activeApplicantTab === "team"
+                                        ? "Команда"
+                                        : "Заявки и приглашения"}{" "}
                                     {activeApplicantTab === "team"
                                         ? `(${project.members?.length || 0}${dataProject?.max_participants ? `/${dataProject.max_participants}` : ""})`
-                                        : `(${project.replycants?.length || 0})`}
+                                        : `(${filteredReplycants.length})`}
                                 </h2>
                                 {/* сделать */}
 
@@ -1085,14 +1217,25 @@ const SpaceRoute = () => {
                                             <ListIcon size={16} />
                                         </button>
                                     </div>
-                                    {isCreator ||
-                                    dataSpaces?.role === "admin" ||
-                                    dataSpaces?.role === "teacher" ? (
+                                    {showApplyButton && (
+                                        <Button
+                                            variant="dark"
+                                            size="hug36"
+                                            className="font-sans text-[13px] font-semibold gap-2"
+                                            onClick={() => setApplyDialogOpen(true)}
+                                        >
+                                            Откликнуться
+                                        </Button>
+                                    )}
+                                    {canManageProject ? (
                                         <Button
                                             variant="dark"
                                             size="hug36"
                                             icon={<Plus size={18} />}
                                             className="font-sans text-[13px] font-semibold gap-2"
+                                            onClick={() =>
+                                                toast.info("Модалка приглашения появится позже")
+                                            }
                                         >
                                             Пригласить
                                         </Button>
@@ -1108,86 +1251,91 @@ const SpaceRoute = () => {
                             />
                         </section>
 
-                        {
-                            activeApplicantTab === "team" ? (
-                                activeView === "list" ? (
-                                    <TableMembers
-                                        headerList={[
-                                            "Имя",
-                                            "Роль",
-                                            "Контакты",
-                                            "Резюме",
-                                            "Дата добавления",
-                                        ]}
-                                        members={filteredMembers}
-                                        removeMember={handleRemoveMember}
-                                    />
-                                ) : (
-                                    <div className="grid grid-cols-3 gap-6">
-                                        {filteredMembers.map((member) => (
-                                            <div
-                                                key={member.id}
-                                                className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
-                                                        {member.name
-                                                            .split(" ")
-                                                            .map((n) => n[0])
-                                                            .join("")
-                                                            .toUpperCase()
-                                                            .slice(0, 2)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[15px] font-semibold text-app-text truncate">
-                                                            {member.name}
-                                                        </p>
-                                                        <p className="text-[13px] text-app-muted">
-                                                            {member.role}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {member.projects && member.projects.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {member.projects.map((p) => (
-                                                            <span
-                                                                key={p.id}
-                                                                className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
-                                                            >
-                                                                {p.title}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                {member.resumeUrl && (
-                                                    <a
-                                                        href={member.resumeUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
-                                                    >
-                                                        Открыть резюме
-                                                    </a>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            ) : (
-                                <TableInvitations
+                        {activeApplicantTab === "team" ? (
+                            activeView === "list" ? (
+                                <TableMembers
                                     headerList={[
                                         "Имя",
-                                        "Приоритет",
+                                        "Роль",
                                         "Контакты",
                                         "Резюме",
-                                        "Дата отклика",
+                                        "Дата добавления",
                                     ]}
-                                    members={filteredReplycants}
+                                    members={filteredMembers}
+                                    removeMember={handleRemoveMember}
                                 />
-                            ) //addToTeam={addToTeam}
-                        }
+                            ) : (
+                                <div className="grid grid-cols-3 gap-6">
+                                    {filteredMembers.map((member) => (
+                                        <div
+                                            key={member.id}
+                                            className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
+                                                    {member.name
+                                                        .split(" ")
+                                                        .map((n) => n[0])
+                                                        .join("")
+                                                        .toUpperCase()
+                                                        .slice(0, 2)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[15px] font-semibold text-app-text truncate">
+                                                        {member.name}
+                                                    </p>
+                                                    <p className="text-[13px] text-app-muted">
+                                                        {member.role}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {member.projects && member.projects.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {member.projects.map((p) => (
+                                                        <span
+                                                            key={p.id}
+                                                            className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
+                                                        >
+                                                            {p.title}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {member.resumeUrl && (
+                                                <a
+                                                    href={member.resumeUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
+                                                >
+                                                    Открыть резюме
+                                                </a>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        ) : (
+                            <TableInvitations
+                                headerList={["Имя", "Роль", "Тип", "Контакты", "Резюме", "Дата"]}
+                                members={filteredReplycants}
+                                addToTeam={handleAcceptResponse}
+                                onReject={handleRejectResponse}
+                                canManage={isCreator}
+                                currentUserId={user?.id}
+                                onAcceptInvitation={handleAcceptInvitation}
+                                onRejectInvitation={handleRejectInvitation}
+                            />
+                        )}
                     </>
                 )}
+                <ApplyDialog
+                    open={applyDialogOpen}
+                    onOpenChange={setApplyDialogOpen}
+                    projectId={dataProject?.id ?? 0}
+                    vacancies={dataProject?.vacancies ?? []}
+                />
+
                 {activeTab === "kanban" && (
                     <>
                         <section>

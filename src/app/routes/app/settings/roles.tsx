@@ -1,20 +1,35 @@
-// app/routes/app/settings/roles.tsx
 import { ContentLayout } from "@/components/layouts";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { RoleSelect } from "@/features/settings/components/role-select";
 import { PermissionsTable } from "@/features/settings/components/permissions-table";
-import { mockRoles, mockRolePermissions } from "@/features/settings/mock-data";
-import type { Permission } from "@/features/settings/types";
+import { UsersTable } from "@/features/settings/components/users-table";
+import {
+    settingsApi,
+    permissionMatrixToPermissions,
+    permissionsToPermissionMatrix,
+} from "@/lib/settings";
+import type { Permission, Role } from "@/features/settings/types";
 import { useState, useEffect } from "react";
+import { useProfile } from "@/lib/profile";
 
 const RolesSettingsPage = () => {
+    const { data: profile } = useProfile();
     const [activeTab, setActiveTab] = useState("roles");
-    const [selectedRoleId, setSelectedRoleId] = useState("1");
+    const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+    const [roles, setRoles] = useState<Role[]>([]);
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalPermissions, setOriginalPermissions] = useState<Permission[]>([]);
+    const [rolesLoading, setRolesLoading] = useState(true);
+    const [saveLoading, setSaveLoading] = useState(false);
+
+    const [users, setUsers] = useState<import("@/features/settings/types").User[]>([]);
+    const [usersPage, setUsersPage] = useState(1);
+    const [usersTotalPages, setUsersTotalPages] = useState(1);
+    const [usersLoading, setUsersLoading] = useState(true);
+    const USERS_LIMIT = 10;
 
     const settingsTabs = [
         { value: "roles", label: "Роли и доступы" },
@@ -23,26 +38,54 @@ const RolesSettingsPage = () => {
         { value: "security", label: "Безопасность" },
     ];
 
-    // Загружаем разрешения при выборе роли
+    const visibleTabs =
+        profile?.role === "admin" ? settingsTabs : settingsTabs.filter((t) => t.value !== "roles");
+
     useEffect(() => {
-        const rolePermissions = mockRolePermissions[selectedRoleId] || [];
-        setPermissions(rolePermissions);
-        setOriginalPermissions(JSON.parse(JSON.stringify(rolePermissions))); // глубокое копирование
-        setHasChanges(false);
+        if (profile && profile.role !== "admin" && activeTab === "roles") {
+            setActiveTab("general");
+        }
+    }, [profile, activeTab]);
+
+    useEffect(() => {
+        settingsApi
+            .getRoles()
+            .then((data) => {
+                const mapped: Role[] = data.items.map((r) => ({
+                    id: String(r.id),
+                    name: r.name,
+                    description: r.description,
+                }));
+                setRoles(mapped);
+            })
+            .finally(() => setRolesLoading(false));
+    }, []);
+
+    // Устанавливаем первую роль после загрузки
+    useEffect(() => {
+        if (roles.length > 0 && !selectedRoleId) {
+            setSelectedRoleId(roles[0].id);
+        }
+    }, [roles, selectedRoleId]);
+
+    useEffect(() => {
+        if (!selectedRoleId) return;
+        settingsApi.getRolePermissions(Number(selectedRoleId)).then((matrix) => {
+            const perms = permissionMatrixToPermissions(matrix);
+            setPermissions(perms);
+            setOriginalPermissions(JSON.parse(JSON.stringify(perms)));
+            setHasChanges(false);
+        });
     }, [selectedRoleId]);
 
-    // Отслеживаем изменения
     useEffect(() => {
         if (permissions.length === 0 || originalPermissions.length === 0) {
             setHasChanges(false);
             return;
         }
-
-        // Сравниваем текущие разрешения с оригинальными
         const hasUnsavedChanges = permissions.some((perm) => {
             const original = originalPermissions.find((op) => op.id === perm.id);
             if (!original) return true;
-
             return (
                 original.canAdd !== perm.canAdd ||
                 original.canEdit !== perm.canEdit ||
@@ -50,9 +93,19 @@ const RolesSettingsPage = () => {
                 original.canView !== perm.canView
             );
         });
-
         setHasChanges(hasUnsavedChanges);
     }, [permissions, originalPermissions]);
+
+    useEffect(() => {
+        setUsersLoading(true);
+        settingsApi
+            .getUsers(usersPage, USERS_LIMIT)
+            .then((data) => {
+                setUsers(data.items);
+                setUsersTotalPages(data.total_pages);
+            })
+            .finally(() => setUsersLoading(false));
+    }, [usersPage]);
 
     const handlePermissionChange = (
         permissionId: string,
@@ -64,17 +117,24 @@ const RolesSettingsPage = () => {
         );
     };
 
-    const handleSave = () => {
-        // Здесь будет API вызов для сохранения
-        setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
-        setHasChanges(false);
-        alert("Изменения сохранены");
+    const handleSave = async () => {
+        setSaveLoading(true);
+        try {
+            const matrix = permissionsToPermissionMatrix(permissions);
+            await settingsApi.updateRolePermissions(Number(selectedRoleId), matrix);
+            setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
+            setHasChanges(false);
+        } finally {
+            setSaveLoading(false);
+        }
     };
 
     const handleCancel = () => {
         setPermissions(JSON.parse(JSON.stringify(originalPermissions)));
         setHasChanges(false);
     };
+
+    const selectedRole = roles.find((r) => r.id === selectedRoleId);
 
     return (
         <ContentLayout title="Настройки">
@@ -87,7 +147,7 @@ const RolesSettingsPage = () => {
                 </div>
 
                 <Tabs
-                    tabs={settingsTabs}
+                    tabs={visibleTabs}
                     value={activeTab}
                     onValueChange={setActiveTab}
                     variant="text"
@@ -96,10 +156,9 @@ const RolesSettingsPage = () => {
 
                 {activeTab === "roles" && (
                     <div className="space-y-6">
-                        {/* Header with role select and action buttons */}
                         <div className="flex items-center justify-between">
                             <RoleSelect
-                                roles={mockRoles}
+                                roles={roles}
                                 selectedRoleId={selectedRoleId}
                                 onRoleChange={setSelectedRoleId}
                             />
@@ -119,23 +178,42 @@ const RolesSettingsPage = () => {
                                     size="hug36"
                                     icon={<Icon name="check" size={18} />}
                                     onClick={handleSave}
-                                    disabled={!hasChanges}
+                                    disabled={!hasChanges || saveLoading}
                                 >
-                                    Сохранить
+                                    {saveLoading ? "Сохранение..." : "Сохранить"}
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Permissions Table */}
-                        <PermissionsTable
-                            permissions={permissions}
-                            onPermissionChange={handlePermissionChange}
-                        />
+                        {rolesLoading ? (
+                            <div className="text-center py-16 text-sm text-[--azure-46]">
+                                Загрузка...
+                            </div>
+                        ) : (
+                            <>
+                                <PermissionsTable
+                                    permissions={permissions}
+                                    onPermissionChange={handlePermissionChange}
+                                />
 
-                        {/* Role info */}
-                        <div className="text-sm text-[--azure-46] bg-[--grey-96] p-4 rounded-lg">
-                            <span className="font-medium text-[--grey-4]">Роль: </span>
-                            {mockRoles.find((r) => r.id === selectedRoleId)?.description}
+                                <div className="text-sm text-[--azure-46] bg-[--grey-96] p-4 rounded-lg">
+                                    <span className="font-medium text-[--grey-4]">Роль: </span>
+                                    {selectedRole?.description}
+                                </div>
+                            </>
+                        )}
+
+                        <div className="border-t border-[--color-black-10] pt-8 mt-8">
+                            <h2 className="text-xl font-bold text-[--grey-4] mb-4">
+                                Список пользователей
+                            </h2>
+                            <UsersTable
+                                users={users}
+                                page={usersPage}
+                                totalPages={usersTotalPages}
+                                onPageChange={setUsersPage}
+                                loading={usersLoading}
+                            />
                         </div>
                     </div>
                 )}

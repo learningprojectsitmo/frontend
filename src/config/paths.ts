@@ -90,8 +90,8 @@ export const paths = {
         },
         resume: {
             path: "/app/resume",
-            getHref: (id: number, projectId?: number | null) =>
-                `/app/resume?id=${id}${projectId ? `&projectId=${projectId}` : ""}`,
+            getHref: (id: number, projectId?: number | null, workspaceId?: number | null) =>
+                `/app/resume?id=${id}${projectId ? `&projectId=${projectId}` : ""}${workspaceId ? `&workspaceId=${workspaceId}` : ""}`,
             create: {
                 path: "/app/resume",
                 getHref: () => "/app/resume",

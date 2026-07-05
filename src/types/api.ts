@@ -24,6 +24,7 @@ export type User = Entity<{
     last_name: string;
     middle_name: string;
     email: string;
+    lang: string;
 }>;
 
 export type LoginResponse = {
@@ -130,6 +131,10 @@ export type BackendReplycant = {
     contacts: string;
     resume_url: string;
     response_date: string;
+    vacancy_id: number | null;
+    role: string;
+    type: "response" | "invitation";
+    status: "pending" | "accepted" | "rejected" | "withdrawn";
 };
 
 export type ProjectListItemResponse = {
@@ -156,6 +161,9 @@ export type ProjectFullResponse = {
     id: number;
     name: string;
     author_id: number;
+    author_name: string;
+    author_email: string | null;
+    has_user_applied: boolean;
     description: string | null;
     max_participants: number | null;
     status_id: number | null;
@@ -198,6 +206,8 @@ export type ResumeFull = {
     id: number;
     header: string;
     author_id: number;
+    views_count: number;
+    invitations_count: number;
     resume_text: string | null;
     role: string | null;
     about: string | null;
@@ -375,17 +385,39 @@ export type Category = {
     color: string;
 };
 
-export type NotificationType = "mention" | "request" | "join";
+export type NotificationType =
+    | "response_received"
+    | "response_accepted"
+    | "response_rejected"
+    | "invitation_received"
+    | "invitation_accepted"
+    | "invitation_rejected";
+
+export interface NotificationData {
+    actor_id: number | null;
+    actor_name: string;
+    project_id: number;
+    project_name: string;
+    vacancy_title: string | null;
+    invitation_id?: number;
+    response_id?: number;
+}
 
 export interface Notification {
     id: number;
     type: NotificationType;
-    name: string;
-    action: string;
-    project: string;
-    time: string;
-    avatar: string;
+    data: NotificationData;
     read: boolean;
+    created_at: string;
+}
+
+export interface NotificationListResponse {
+    items: Notification[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    unread_count: number;
 }
 
 // ========== ДОСКА ==========
@@ -506,6 +538,20 @@ export type WorkspaceParticipantListResponse = {
     page: number;
     limit: number;
     total_pages: number;
+};
+
+export type WorkspaceResumeItem = {
+    id: number;
+    header: string;
+    skills: string[];
+    interests: string[];
+    participant_name: string;
+    participant_id: number;
+};
+
+export type WorkspaceResumeListResponse = {
+    items: WorkspaceResumeItem[];
+    total: number;
 };
 
 export type InviteLinkResponse = {

@@ -3,6 +3,7 @@ import { ContentLayout } from "@/components/layouts";
 import { useSearchParams, Link, useNavigate } from "react-router";
 import { useResumeDetail, useUpdateResume, useCreateResume } from "@/lib/resume";
 import { useProfile } from "@/lib/profile";
+import { useSpacesList } from "@/lib/spaces";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import {
     Breadcrumb,
@@ -23,9 +24,11 @@ const ResumeRoute = () => {
     const id = parseInt(rawId || "0", 10);
     const isCreateMode = !rawId || id === 0;
     const projectId = searchParams.get("projectId");
+    const workspaceIdParam = searchParams.get("workspaceId");
 
     const { data, isLoading, error } = useResumeDetail(id);
     const { data: profile } = useProfile();
+    const { data: dataSpaces } = useSpacesList();
     const updateResumeMutation = useUpdateResume();
     const createResumeMutation = useCreateResume();
 
@@ -62,7 +65,7 @@ const ResumeRoute = () => {
                 no_experience_description: fields.no_experience_description,
                 is_visible: fields.is_visible,
             });
-            navigate(paths.app.resume.getHref(resume.id));
+            navigate(paths.app.resume.getHref(resume.id, null, workspaceId));
         } else {
             await updateResumeMutation.mutateAsync({ id, data: fields });
             setIsEditing(false);
@@ -190,10 +193,14 @@ const ResumeRoute = () => {
         );
     }
 
+    const isOwner = profile?.id === data.resume.author_id;
     const fullName = [data.user.last_name, data.user.first_name, data.user.middle_name]
         .filter(Boolean)
         .join(" ");
     const resumeTitle = data.resume.header || fullName;
+
+    const workspaceId = workspaceIdParam ? parseInt(workspaceIdParam, 10) : null;
+    const workspace = workspaceId ? dataSpaces?.spaces.find((s) => s.id === workspaceId) : null;
 
     return (
         <ContentLayout title={`Резюме — ${resumeTitle}`}>
@@ -210,7 +217,21 @@ const ResumeRoute = () => {
                                 </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
-                        {projectId ? (
+                        {workspace ? (
+                            <>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink asChild>
+                                        <Link
+                                            to={`/app/space?id=${workspace.id}`}
+                                            className="font-sans font-medium text-sm sm:text-base"
+                                        >
+                                            {workspace.title}
+                                        </Link>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                            </>
+                        ) : projectId ? (
                             <>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
@@ -251,9 +272,9 @@ const ResumeRoute = () => {
                 <ResumePage
                     data={data}
                     isEditing={isEditing}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
+                    onEdit={isOwner ? handleEdit : undefined}
+                    onSave={isOwner ? handleSave : undefined}
+                    onCancel={isOwner ? handleCancel : undefined}
                 />
             </div>
         </ContentLayout>
