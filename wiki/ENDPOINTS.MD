@@ -1,146 +1,250 @@
-### Эндпоинты для авторизации
 
-- /auth/login
+## 🔐 Authentication
 
-Content-Type: application/x-www-form-urlencoded
+### POST `/auth/login`
 
-grant_type: password
-email: string
-password: string (длина от 5 до 64 символов)
-remember_me: boolean
+Log in with email and password.
 
-## Response: access_token: string
+- **Content-Type:** `application/x-www-form-urlencoded`
 
-- /auth/createacc
+**Request Body Parameters:**
 
-`первый запрос для регистрации, нужен чтобы сервер отправил по почте код подтверждения, который пользователь введет на следующем шаге`
+| Field        | Type    | Constraints               | Description                |
+|--------------|---------|---------------------------|----------------------------|
+| `grant_type` | string  | `"password"` (fixed)      | Grant type                 |
+| `email`      | string  |                           | User email                 |
+| `password`   | string  | 5–64 characters           | User password              |
+| `remember_me`| boolean |                           | Persist session            |
 
-Content-Type: application/json
+**Response:**
 
-email: string  
-password: string (длина от 5 до 64 символов)
-
----
-
-- /auth/register
-
-`второй запрос для регистрации, который подтверждает код из почты`
-
-Content-Type: application/json
-
-email: string
-confirmationCode: 111111 string
+```json
+{
+  "access_token": "string"
+}
+```
 
 ---
 
-- /auth/resendcode
+### POST `/auth/createacc`
 
-`запрос для повторной отправки кода подтверждения на почту`
+First step of registration. Sends a confirmation code to the provided email.
 
-Content-Type: application/json
+- **Content-Type:** `application/json`
 
-email: string
+**Request Body:**
 
----
-
-- /auth/addcontacts
-
-`третий запрос для регистрации, добавление контактов (телеграм, вк) и настройка их отображения в профиле, после которого приходит access токен и пользователь считается полностью зарегистрированным и авторизованным в системе`
-
-Content-Type: application/json
-
-email: string  
-telegram: '@yournickname'
-vk: '@yournickname'  
-showMyContacts: boolean
-
-## Response: access_token: string
-
-- /auth/resetemail
-
-`запрос для начала процесса восстановления пароля, сервер отправляет на почту ссылку на форму смены пароля`
-
-Content-Type: application/json
-
-email: string
+```json
+{
+  "email": "string",
+  "password": "string (5–64 characters)"
+}
+```
 
 ---
 
-- /auth/resetpassword
+### POST `/auth/register`
 
-`запрос для завершения процесса восстановления пароля`
+Second step of registration. Validates the confirmation code received via email.
 
-Content-Type: application/json
+- **Content-Type:** `application/json`
 
-password: string (длина от 5 до 64 символов)
-special_token: string `нужен какой нибудь ключ чтобы сторонний пользователь не мог просто так вызвать этот эндпоинт и сбросить пароль, например, uuid, который придет в теле ссылки на почту`
+**Request Body:**
+
+```json
+{
+  "email": "string",
+  "confirmationCode": "111111"  // string
+}
+```
 
 ---
 
-- /auth/logout
-  оставялем как есть
+### POST `/auth/resendcode`
 
-# Spaces
+Resends the confirmation code to the email.
 
-- api.get("/app/spaces");
+- **Content-Type:** `application/json`
+
+**Request Body:**
+
+```json
+{
+  "email": "string"
+}
+```
+
+---
+
+### POST `/auth/addcontacts`
+
+Third and final registration step. Saves contacts and visibility preference, then returns an access token. The user is now fully registered and authorized.
+
+- **Content-Type:** `application/json`
+
+**Request Body:**
+
+```json
+{
+  "email": "string",
+  "telegram": "@yournickname",
+  "vk": "@yournickname",
+  "showMyContacts": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "string"
+}
+```
+
+---
+
+### POST `/auth/resetemail`
+
+Initiates password recovery. A reset link is sent to the user's email.
+
+- **Content-Type:** `application/json`
+
+**Request Body:**
+
+```json
+{
+  "email": "string"
+}
+```
+
+---
+
+### POST `/auth/resetpassword`
+
+Completes the password recovery process.
+
+- **Content-Type:** `application/json`
+
+**Request Body:**
+
+```json
+{
+  "password": "string (5–64 characters)",
+  "special_token": "string (e.g. UUID from the reset link)"
+}
+```
+
+> **Note:** `special_token` prevents unauthorized password resets. It should be a unique token like a UUID embedded in the reset link sent to the email.
+
+---
+
+### POST `/auth/logout`
+
+Logs the user out. Implementation details remain as-is.
+
+---
+
+## 🧩 Spaces
+
+### `GET /app/spaces`
+
+Retrieves the list of spaces and the user's role.
+
+**Response Type:**
+
+```ts
+export type SpacesListResponse = {
+  categories: { name: string }[];
+  spaces: Space[];
+  role: "root" | "admin" | "manager" | "member";
+};
 
 export type Space = {
-id: number;
-title: string;
-projectsCount: number;
-membersCount: number;
-color: string;
-category: string;
-description: string;
-}
+  id: number;
+  title: string;
+  projectsCount: number;
+  membersCount: number;
+  color: string;
+  category: string;
+  description: string;
+};
+```
 
-export type SpacesListResponce = {
-categories: {name: string}[],
-spaces: Space[]
-role: "root" | "admin" | "manager" | "member"
-}
+---
 
-# Search Bar suggestions
+## 🔎 Search Bar Suggestions
 
-- api.get("/app/suggestions", { params: { search: string } });
+### `GET /app/suggestions`
 
-Responce: string[]
+Fetches search suggestions based on a query string.
 
-# Notifications
+**Query Parameters:**
 
-- api.get("/app/notifications");
+| Parameter | Type   | Description        |
+|-----------|--------|--------------------|
+| `search`  | string | Search query text  |
 
-Responce: Notification[]
+**Response:** `string[]`
 
+---
+
+## 🔔 Notifications
+
+### `GET /app/notifications`
+
+Returns a list of user notifications.
+
+**Response Type:**
+
+```ts
 export type NotificationType = "mention" | "request" | "join";
 
 export interface Notification {
-id: number;
-type: NotificationType;
-name: string;
-action: string;
-project: string;
-time: string;
-avatar: string;
-read: boolean;
+  id: number;
+  type: NotificationType;
+  name: string;
+  action: string;
+  project: string;
+  time: string;
+  avatar: string;
+  read: boolean;
 }
+```
 
-# Recent Projects
+**Response:** `Notification[]`
 
-- api.get("/app/recentprojects");
+---
 
-Responce: Project[]
+## 📁 Recent Projects
 
+### `GET /app/recentprojects`
+
+Retrieves a list of recent projects.
+
+**Response Type:**
+
+```ts
 export type Project = {
-id: number;
-tag: string;
-tagVariant: "error" | "type" | "disabled" | "default" | "info" | "warning" | "success" | "secondary" | undefined
-title: string;
-description: string;
-progressValue: number;
-dateText: string;
-tags: { text: string }[],
-membersCount: number;
-users: { name: string }[],
-archived: boolean,
-}
+  id: number;
+  tag: string;
+  tagVariant:
+    | "error"
+    | "type"
+    | "disabled"
+    | "default"
+    | "info"
+    | "warning"
+    | "success"
+    | "secondary"
+    | undefined;
+  title: string;
+  description: string;
+  progressValue: number;
+  dateText: string;
+  tags: { text: string }[];
+  membersCount: number;
+  users: { name: string }[];
+  archived: boolean;
+};
+```
+**Response:** `Project[]`

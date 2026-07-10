@@ -1,10 +1,10 @@
-# UI-компоненты
+# UI Components
 
-## 📦 Компонентный стек
+## 📦 Component Stack
 
-- **shadcn/ui** — базовые компоненты
-- **Radix UI** — доступные примитивы
-- **Lucide React** — иконки
+- **shadcn/ui** — base components
+- **Radix UI** — accessible primitives
+- **Lucide React** — icons
 
 ---
 
@@ -14,7 +14,7 @@
 import { Button } from "@/components/ui/button";
 
 <Button variant="primary" size="md">
-    Нажми меня
+    Click me
 </Button>;
 ```
 
@@ -25,16 +25,16 @@ import { Button } from "@/components/ui/button";
 ```tsx
 import { Link } from "@/components/ui/link";
 
-<Link to="/auth/login">Войти</Link>;
+<Link to="/auth/login">Sign In</Link>;
 ```
 
-**Стили по умолчанию:** `text-slate-600 hover:text-slate-900`
+**Default styles:** `text-slate-600 hover:text-slate-900`
 
 ---
 
 ## 🔘 Switch
 
-Radix UI компонент для переключателя.
+Radix UI component for a toggle switch.
 
 ```tsx
 import { Switch } from "@/components/ui/switch";
@@ -42,16 +42,16 @@ import { Switch } from "@/components/ui/switch";
 <Switch checked={isEnabled} onCheckedChange={setEnabled} />;
 ```
 
-**CSS классы:**
+**CSS classes:**
 
-- `data-[state=checked]:bg-primary` — включённое состояние
-- `data-[state=unchecked]:bg-input` — выключенное состояние
+- `data-[state=checked]:bg-primary` — checked state
+- `data-[state=unchecked]:bg-input` — unchecked state
 
 ---
 
 ## ↻ Spinner
 
-Индикатор загрузки.
+Loading indicator.
 
 ```tsx
 import { Spinner } from "@/components/ui/spinner";
@@ -61,37 +61,37 @@ import { Spinner } from "@/components/ui/spinner";
 
 **Props:**
 
-- Все стандартные SVG props
-- `className` — дополнительные классы
+- All standard SVG props
+- `className` — additional classes
 
 ---
 
 ## 🔔 Notifications
 
-Система уведомлений.
+Notification system.
 
 ```tsx
 import { useNotifications } from "@/components/ui/notifications";
 
-// Добавление
+// Adding
 const { addNotification } = useNotifications();
 
 addNotification({
     type: "error",
-    title: "Ошибка",
-    message: "Не удалось сохранить данные",
+    title: "Error",
+    message: "Failed to save data",
 });
 ```
 
-### Типы уведомлений
+### Notification Types
 
 ```tsx
 type NotificationType = "error" | "success" | "info" | "warning";
 ```
 
-### Компонент Notifications
+### Notifications Component
 
-Размещается глобально (обычно в App):
+Placed globally (usually in App):
 
 ```tsx
 import { Notifications } from "@/components/ui/notifications";
@@ -99,15 +99,15 @@ import { Notifications } from "@/components/ui/notifications";
 <Notifications />;
 ```
 
-**Позиционирование:**
+**Positioning:**
 
-- `fixed inset-0` — фиксированная позиция
-- `flex flex-col items-end` — правый верхний угол
-- `pointer-events-none` — не блокирует клики
+- `fixed inset-0` — fixed position
+- `flex flex-col items-end` — top right corner
+- `pointer-events-none` — doesn't block clicks
 
 ---
 
-## 📅 Форматирование дат
+## 📅 Date Formatting
 
 ```tsx
 import { formatDate } from "@/utils/format";
@@ -115,34 +115,34 @@ import { formatDate } from "@/utils/format";
 formatDate(Date.now()); // "January 25, 2026 10:30 AM"
 ```
 
-**Использует:** dayjs
+**Uses:** dayjs
 
 ---
 
-## 🎨 Утилиты стилей
+## 🎨 Style Utilities
 
 ### cn()
 
-Объединение и мердж классов.
+Merging and combining classes.
 
 ```tsx
 import { cn } from "@/utils/cn";
 
 cn(
-    "px-4 py-2", // базовые классы
-    isActive && "bg-blue", // условные
-    className, // проп извне
+    "px-4 py-2", // base classes
+    isActive && "bg-blue", // conditional
+    className, // external prop
 );
 // → "px-4 py-2 bg-blue"
 ```
 
-**Порядок мерджа:** Tailwind классы перезаписывают предыдущие при конфликте.
+**Merge order:** Tailwind classes override previous ones in case of conflict.
 
 ---
 
 ## 🎯 Best Practices
 
-1. **Используйте компоненты из `@/components/ui`** вместо нативных HTML-тегов
-2. **Компонуйте** маленькие компоненты в большие
-3. **Типизируйте** props через TypeScript интерфейсы
-4. **Следуйте a11y** — используйте ARIA атрибуты
+1. **Use components from `@/components/ui`** instead of native HTML tags
+2. **Compose** small components into larger ones
+3. **Type** props via TypeScript interfaces
+4. **Follow a11y** — use ARIA attributes

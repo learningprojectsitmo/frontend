@@ -1,61 +1,61 @@
-# Компонентная архитектура
+# Component Architecture
 
-## 🎯 Принципы
+## 🎯 Principles
 
-1. **Композиция** — компоненты строятся из малых частей
-2. **Разделение ответственности** — каждый компонент делает одну вещь
-3. **Типизация** — все props типизированы через TypeScript
-4. **Доступность (a11y)** — ARIA-атрибуты и семантическая разметка
+1. **Composition** — components are built from small parts
+2. **Separation of Concerns** — each component does one thing
+3. **Typing** — all props are typed via TypeScript
+4. **Accessibility (a11y)** — ARIA attributes and semantic markup
 
 ---
 
-## 📁 Структура компонентов
+## 📁 Component Structure
 
 ```
 src/components/
-├── layouts/           # Layout-компоненты
+├── layouts/           # Layout components
 │   ├── auth-layout.tsx
 │   ├── spase-layout.tsx
 │   └── content-layout.tsx
-├── ui/                # Базовые UI-компоненты (shadcn/ui)
+├── ui/                # Base UI components (shadcn/ui)
 │   ├── button/
 │   ├── link/
 │   ├── switch/
 │   ├── spinner/
 │   └── notifications/
 ├── errors/            # Error boundaries
-└── index.ts           # Экспорты
+└── index.ts           # Exports
 ```
 
 ---
 
-## 🏗 Layout-компоненты
+## 🏗 Layout Components
 
 ### AuthLayout
 
-Используется для страниц аутентификации (логин, регистрация).
+Used for authentication pages (login, registration).
 
 ```tsx
 import { AuthLayout } from "@/components/layouts";
 
 const LoginPage = () => {
     return (
-        <AuthLayout title="Вход в систему">
+        <AuthLayout title="Sign In">
             <Form />
         </AuthLayout>
     );
 };
 ```
 
-**Особенности:**
+**Features:**
 
-- Автоматический редирект авторизованных пользователей
-- Фоновое изображение
-- Поддержка `redirectTo` через query-параметры
+- Automatic redirect of authenticated users
+- Background image
+- Support for `redirectTo` via query parameters
 
 ### spaseLayout
 
-Основной layout для защищённых страниц приложения.
+Main layout for protected application pages.
 
 ```tsx
 import { spaseLayout } from "@/components/layouts";
@@ -73,42 +73,42 @@ const spasePage = () => {
 
 ## 🔗 Link Component
 
-Кастомный компонент на базе React Router.
+Custom component based on React Router.
 
 ```tsx
 import { Link } from "@/components/ui/link";
 import { paths } from "@/config/paths";
 
-<Link to={paths.auth.login.getHref()}>Войти</Link>;
+<Link to={paths.auth.login.getHref()}>Login</Link>;
 ```
 
 **Props:**
 
-- Все стандартные `LinkProps` от React Router
-- Автоматическое применение классов: `text-slate-600 hover:text-slate-900`
+- All standard `LinkProps` from React Router
+- Automatic application of classes: `text-slate-600 hover:text-slate-900`
 
 ---
 
 ## 🔔 Notifications
 
-Система уведомлений с глобальным состоянием.
+Notification system with global state.
 
 ```tsx
 import { useNotifications } from "@/components/ui/notifications";
 
-// Добавление уведомления
+// Adding a notification
 useNotifications.getState().addNotification({
     type: "error" | "success" | "info" | "warning",
-    title: "Заголовок",
-    message: "Текст уведомления",
+    title: "Title",
+    message: "Notification message",
 });
 ```
 
-**Компонент `<Notifications />`**:
+**Component `<Notifications />`**:
 
-- Фиксированное позиционирование (правый верхний угол)
-- Автоматическое скрытие
-- Поддержка нескольких уведомлений одновременно
+- Fixed positioning (top right corner)
+- Auto-hide
+- Support for multiple notifications simultaneously
 
 ---
 
@@ -116,12 +116,12 @@ useNotifications.getState().addNotification({
 
 ### MainErrorFallback
 
-Компонент для отлова критических ошибок.
+Component for catching critical errors.
 
 ```tsx
 import { MainErrorFallback } from "@/components/errors/main";
 
-// Использование в ErrorBoundary
+// Usage in ErrorBoundary
 <ErrorBoundary fallback={<MainErrorFallback />}>
     <App />
 </ErrorBoundary>;
@@ -129,11 +129,11 @@ import { MainErrorFallback } from "@/components/errors/main";
 
 ---
 
-## 🎨 Утилитарные функции
+## 🎨 Utility Functions
 
 ### cn()
 
-Объединение CSS-классов с разрешением конфликтов.
+Merging CSS classes with conflict resolution.
 
 ```tsx
 import { cn } from "@/utils/cn";
@@ -141,7 +141,7 @@ import { cn } from "@/utils/cn";
 <div className={cn("base-class", condition && "conditional-class", className)} />;
 ```
 
-**Использует:**
+**Uses:**
 
-- `clsx` — для условных классов
-- `twMerge` — для разрешения конфликтов Tailwind
+- `clsx` — for conditional classes
+- `twMerge` — for resolving Tailwind conflicts
