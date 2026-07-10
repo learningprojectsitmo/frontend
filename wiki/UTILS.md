@@ -69,7 +69,7 @@ export const formatDate = (date: number) => dayjs(date).format("MMMM D, YYYY h:m
 ### Format Tokens
 
 | Token  | Description          |
-|--------|----------------------|
+| ------ | -------------------- |
 | `MMMM` | Full month name      |
 | `D`    | Day of the month     |
 | `YYYY` | 4-digit year         |
@@ -175,6 +175,6 @@ These can also be viewed and customized in `tailwind.config.js`.
 ## ⏱ Debounce
 
 ```tsx
-import { useDebounce } from '../../utils/debounce';
+import { useDebounce } from "../../utils/debounce";
 const debouncedSearch = useDebounce(value, delay); // delay = 500ms
 ```

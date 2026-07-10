@@ -5,10 +5,12 @@
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
 # Frontend of the platform for managing projects
+
 ![logo](public/eduflow.png)
+
 ## 📋 Description
 
-A web platform for managing collaborative study projects featuring team distribution (auto/manual based on skills and interests), project management (milestones, tasks, roles, progress tracking, notifications), assessment by the teachers, and a public landing site for discovery and onboarding. 
+A web platform for managing collaborative study projects featuring team distribution (auto/manual based on skills and interests), project management (milestones, tasks, roles, progress tracking, notifications), assessment by the teachers, and a public landing site for discovery and onboarding.
 
 Backend repository of the project is available [here](https://github.com/learningprojectsitmo/backend).
 
@@ -27,7 +29,6 @@ npm run build
 # Linting
 npm run lint
 ```
-
 
 ## 🛠 Tech Stack
 
@@ -75,6 +76,7 @@ npm run lint
 -**dayjs** — date formatting
 
 ## Requirements
+
 For more information, see the file **[package.json](https://github.com/learningprojectsitmo/frontend/blob/main/package.json)**.
 
 ## 📁 Project Structure
@@ -98,7 +100,6 @@ src/
 
 ```
 
-
 ## 📚 Documentation
 
 - [Component Architecture](wiki/ARCHITECTURE.md)
@@ -108,6 +109,8 @@ src/
 - [Utilities and Helpers](wiki/UTILS.md)
 
 ## Contacts
+
 Our contacts:
+
 - Afanasiev Anton, orderkworinaa@gmail.com
 - Karagulov Mansur, mrkaragulov@itmo.ru

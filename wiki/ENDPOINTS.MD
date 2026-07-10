@@ -1,4 +1,3 @@
-
 ## 🔐 Authentication
 
 ### POST `/auth/login`
@@ -9,18 +8,18 @@ Log in with email and password.
 
 **Request Body Parameters:**
 
-| Field        | Type    | Constraints               | Description                |
-|--------------|---------|---------------------------|----------------------------|
-| `grant_type` | string  | `"password"` (fixed)      | Grant type                 |
-| `email`      | string  |                           | User email                 |
-| `password`   | string  | 5–64 characters           | User password              |
-| `remember_me`| boolean |                           | Persist session            |
+| Field         | Type    | Constraints          | Description     |
+| ------------- | ------- | -------------------- | --------------- |
+| `grant_type`  | string  | `"password"` (fixed) | Grant type      |
+| `email`       | string  |                      | User email      |
+| `password`    | string  | 5–64 characters      | User password   |
+| `remember_me` | boolean |                      | Persist session |
 
 **Response:**
 
 ```json
 {
-  "access_token": "string"
+    "access_token": "string"
 }
 ```
 
@@ -36,8 +35,8 @@ First step of registration. Sends a confirmation code to the provided email.
 
 ```json
 {
-  "email": "string",
-  "password": "string (5–64 characters)"
+    "email": "string",
+    "password": "string (5–64 characters)"
 }
 ```
 
@@ -53,8 +52,8 @@ Second step of registration. Validates the confirmation code received via email.
 
 ```json
 {
-  "email": "string",
-  "confirmationCode": "111111"  // string
+    "email": "string",
+    "confirmationCode": "111111" // string
 }
 ```
 
@@ -70,7 +69,7 @@ Resends the confirmation code to the email.
 
 ```json
 {
-  "email": "string"
+    "email": "string"
 }
 ```
 
@@ -86,10 +85,10 @@ Third and final registration step. Saves contacts and visibility preference, the
 
 ```json
 {
-  "email": "string",
-  "telegram": "@yournickname",
-  "vk": "@yournickname",
-  "showMyContacts": true
+    "email": "string",
+    "telegram": "@yournickname",
+    "vk": "@yournickname",
+    "showMyContacts": true
 }
 ```
 
@@ -97,7 +96,7 @@ Third and final registration step. Saves contacts and visibility preference, the
 
 ```json
 {
-  "access_token": "string"
+    "access_token": "string"
 }
 ```
 
@@ -113,7 +112,7 @@ Initiates password recovery. A reset link is sent to the user's email.
 
 ```json
 {
-  "email": "string"
+    "email": "string"
 }
 ```
 
@@ -129,8 +128,8 @@ Completes the password recovery process.
 
 ```json
 {
-  "password": "string (5–64 characters)",
-  "special_token": "string (e.g. UUID from the reset link)"
+    "password": "string (5–64 characters)",
+    "special_token": "string (e.g. UUID from the reset link)"
 }
 ```
 
@@ -154,19 +153,19 @@ Retrieves the list of spaces and the user's role.
 
 ```ts
 export type SpacesListResponse = {
-  categories: { name: string }[];
-  spaces: Space[];
-  role: "root" | "admin" | "manager" | "member";
+    categories: { name: string }[];
+    spaces: Space[];
+    role: "root" | "admin" | "manager" | "member";
 };
 
 export type Space = {
-  id: number;
-  title: string;
-  projectsCount: number;
-  membersCount: number;
-  color: string;
-  category: string;
-  description: string;
+    id: number;
+    title: string;
+    projectsCount: number;
+    membersCount: number;
+    color: string;
+    category: string;
+    description: string;
 };
 ```
 
@@ -180,9 +179,9 @@ Fetches search suggestions based on a query string.
 
 **Query Parameters:**
 
-| Parameter | Type   | Description        |
-|-----------|--------|--------------------|
-| `search`  | string | Search query text  |
+| Parameter | Type   | Description       |
+| --------- | ------ | ----------------- |
+| `search`  | string | Search query text |
 
 **Response:** `string[]`
 
@@ -200,14 +199,14 @@ Returns a list of user notifications.
 export type NotificationType = "mention" | "request" | "join";
 
 export interface Notification {
-  id: number;
-  type: NotificationType;
-  name: string;
-  action: string;
-  project: string;
-  time: string;
-  avatar: string;
-  read: boolean;
+    id: number;
+    type: NotificationType;
+    name: string;
+    action: string;
+    project: string;
+    time: string;
+    avatar: string;
+    read: boolean;
 }
 ```
 
@@ -225,26 +224,27 @@ Retrieves a list of recent projects.
 
 ```ts
 export type Project = {
-  id: number;
-  tag: string;
-  tagVariant:
-    | "error"
-    | "type"
-    | "disabled"
-    | "default"
-    | "info"
-    | "warning"
-    | "success"
-    | "secondary"
-    | undefined;
-  title: string;
-  description: string;
-  progressValue: number;
-  dateText: string;
-  tags: { text: string }[];
-  membersCount: number;
-  users: { name: string }[];
-  archived: boolean;
+    id: number;
+    tag: string;
+    tagVariant:
+        | "error"
+        | "type"
+        | "disabled"
+        | "default"
+        | "info"
+        | "warning"
+        | "success"
+        | "secondary"
+        | undefined;
+    title: string;
+    description: string;
+    progressValue: number;
+    dateText: string;
+    tags: { text: string }[];
+    membersCount: number;
+    users: { name: string }[];
+    archived: boolean;
 };
 ```
+
 **Response:** `Project[]`
