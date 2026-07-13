@@ -1,112 +1,116 @@
-# BulletProof App
+![ITMO](https://raw.githubusercontent.com/aimclub/open-source-ops/43bb283758b43d75ec1df0a6bb4ae3eb20066323/badges/ITMO_badge_rus.svg)
+![Docker](https://img.shields.io/badge/Docker-%232496ED?logo=docker&logoColor=white)
 
-## 📋 Обзор проекта
+![Typescript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
-**BulletProof App** — это веб-приложение, построенное на современном стеке технологий с акцентом на типобезопасность, производительность и удобство разработки.
+# Frontend of the platform for managing projects
 
----
+![logo](public/eduflow.png)
 
-## 🛠 Стек технологий
+## 📋 Description
 
-### Ядро
+A web platform for managing collaborative study projects featuring team distribution (auto/manual based on skills and interests), project management (milestones, tasks, roles, progress tracking, notifications), assessment by the teachers, and a public landing site for discovery and onboarding.
 
--**React 18** + **TypeScript** — UI и типизация
+Backend repository of the project is available [here](https://github.com/learningprojectsitmo/backend).
 
--**Vite** — сборка и dev-сервер
+## 🚀 Installation
 
--**ESBuild** — быстрая компиляция
+```bash
+# Install dependencies
+npm install
 
-### Маршрутизация
+# Start dev server
+npm run dev
 
--**React Router v6** — клиентская маршрутизация
+# Build
+npm run build
 
-- Файл конфигурации: `src/config/paths.ts`
+# Linting
+npm run lint
+```
 
-### Управление состоянием
+## 🛠 Tech Stack
 
--**TanStack Query (React Query)** — серверное состояние
+### Core
 
-- Конфигурация: `src/lib/react-query.ts`
+-**React 18** + **TypeScript** — UI and typing
 
-### Сетевой слой
+-**Vite** — build and dev server
 
--**Axios** — HTTP-клиент
+-**ESBuild** — fast compilation
 
-- Перехватчики (interceptors) для auth и error handling
-- Файл: `src/lib/api-client.ts`
+### Routing
 
-### UI и стилизация
+-**React Router v6** — client-side routing
 
--**Tailwind CSS** — утилитарные классы
+- Configuration file: `src/config/paths.ts`
 
--**shadcn/ui** — компонентная библиотека
+### State Management
 
--**Radix UI** — доступные примитивы
+-**TanStack Query (React Query)** — server state
 
--**Lucide React** — иконки
+- Configuration: `src/lib/react-query.ts`
 
-### Утилиты
+### Network Layer
 
--**clsx** + **tailwind-merge** — управление классами
+-**Axios** — HTTP client
 
--**dayjs** — форматирование дат
+- Interceptors for auth and error handling
+- File: `src/lib/api-client.ts`
 
----
+### UI and Styling
 
-## 📁 Структура проекта
+-**Tailwind CSS** — utility classes
+
+-**shadcn/ui** — component library
+
+-**Radix UI** — accessible primitives
+
+-**Lucide React** — icons
+
+### Utilities
+
+-**clsx** + **tailwind-merge** — class management
+
+-**dayjs** — date formatting
+
+## Requirements
+
+For more information, see the file **[package.json](https://github.com/learningprojectsitmo/frontend/blob/main/package.json)**.
+
+## 📁 Project Structure
 
 ```
 
 src/
-├── app/                    # Точка входа и маршруты
-│   ├── index.tsx          # App компонент с провайдерами
-│   └── routes/            # Роуты приложения
+├── app/                    # Entry point and routes
+│   ├── index.tsx          # App component with providers
+│   └── routes/            # Application routes
 ├── components/
-│   ├── layouts/           # Layout компоненты
+│   ├── layouts/           # Layout components
 │   ├── ui/                # UI-kit (shadcn/ui)
 │   └── errors/            # Error boundaries
-├── config/                # Конфигурация (paths, env)
-├── lib/                   # Библиотеки и утилиты
-├── hooks/                 # Кастомные хуки
-├── types/                 # TypeScript типы
-├── utils/                 # Утилитарные функции
-└── assets/                # Статические ресурсы
+├── config/                # Configuration (paths, env)
+├── lib/                   # Libraries and utilities
+├── hooks/                 # Custom hooks
+├── types/                 # TypeScript types
+├── utils/                 # Utility functions
+└── assets/                # Static assets
 
 ```
 
----
+## 📚 Documentation
 
-## 🚀 Быстрый старт
+- [Component Architecture](wiki/ARCHITECTURE.md)
+- [Working with API](wiki/API.md)
+- [Routing and Navigation](wiki/ROUTING.md)
+- [UI Components](wiki/COMPONENTS.md)
+- [Utilities and Helpers](wiki/UTILS.md)
 
-```bash
+## Contacts
 
-# Установка зависимостей
+Our contacts:
 
-npm install
-
-
-# Запуск dev-сервера
-
-npm run dev
-
-
-# Сборка
-
-npm run build
-
-
-# Линтинг
-
-npm run lint
-
-```
-
----
-
-## 📚 Документация
-
-- [Архитектура компонентов](wiki/ARCHITECTURE.md)
-- [Работа с API](wiki/API.md)
-- [Роутинг и навигация](wiki/ROUTING.md)
-- [UI-компоненты](wiki/COMPONENTS.md)
-- [Утилиты и хелперы](wiki/UTILS.md)
+- Afanasiev Anton, orderkworinaa@gmail.com
+- Karagulov Mansur, mrkaragulov@itmo.ru

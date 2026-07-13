@@ -1,10 +1,10 @@
-# Роутинг и навигация
+# Routing and Navigation
 
-## 🛤️ Маршруты
+## 🛤️ Routes
 
-### Конфигурация путей
+### Path Configuration
 
-Файл: `src/config/paths.ts`
+File: `src/config/paths.ts`
 
 ```tsx
 export const paths = {
@@ -39,38 +39,38 @@ export const paths = {
 } as const;
 ```
 
-### Использование
+### Usage
 
 ```tsx
 import { paths } from '@/config/paths';
 
-// Простой путь
+// Simple path
 <Link to={paths.home.getHref()} />
 
-// С редиректом
+// With redirect
 <Link to={paths.auth.login.getHref('/app/spase')} />
-// Результат: /auth/login?redirectTo=%2Fapp%2Fspase
+// Result: /auth/login?redirectTo=%2Fapp%2Fspase
 ```
 
 ---
 
-## 🏗 Структура роутов
+## 🏗 Route Structure
 
 ```
 src/app/routes/
 ├── app/
 │   └── root.tsx          # /app layout + spase
-├── not-found.tsx         # 404 страница
-└── index.tsx             # Редирект на /app
+├── not-found.tsx         # 404 page
+└── index.tsx             # Redirect to /app
 ```
 
 ---
 
-## 📄 Страницы
+## 📄 Pages
 
 ### Not Found (404)
 
-Файл: `src/app/routes/not-found.tsx`
+File: `src/app/routes/not-found.tsx`
 
 ```tsx
 import { Link } from "@/components/ui/link";
@@ -91,37 +91,37 @@ const NotFoundRoute = () => {
 
 ---
 
-## 🔀 Навигация
+## 🔀 Navigation
 
-### Использование Link
+### Using Link
 
 ```tsx
 import { Link } from "@/components/ui/link";
 
-<Link to="/app/spase">Дашборд</Link>;
+<Link to="/app/spase">Dashboard</Link>;
 ```
 
-### Программная навигация
+### Programmatic Navigation
 
 ```tsx
 import { useNavigate } from "react-router";
 
 const navigate = useNavigate();
 
-// Простой редирект
+// Simple redirect
 navigate("/app/spase");
 
-// С заменой истории
+// With history replacement
 navigate("/app", { replace: true });
 ```
 
 ---
 
-## 🔐 Protected Routes (Защищённые роуты)
+## 🔐 Protected Routes
 
 ### AuthLayout
 
-Компонент `AuthLayout` автоматически проверяет авторизацию:
+The `AuthLayout` component automatically checks authentication:
 
 ```tsx
 export const AuthLayout = ({ children, title }: LayoutProps) => {
@@ -151,8 +151,8 @@ export const AuthLayout = ({ children, title }: LayoutProps) => {
 
 ```tsx
 function spaseLayout({ children }: { children?: React.ReactNode }) {
-    // Здесь можно добавить проверку авторизации
-    // и редирект на /auth/login если не авторизован
+    // You can add an authentication check here
+    // and redirect to /auth/login if not authenticated
 
     return <>{children}</>;
 }
@@ -162,7 +162,7 @@ function spaseLayout({ children }: { children?: React.ReactNode }) {
 
 ## 🏷 Head (Meta Tags)
 
-Установка title страницы:
+Setting the page title:
 
 ```tsx
 import { Head } from "@/components/seo";
