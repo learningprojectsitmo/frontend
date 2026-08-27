@@ -24,6 +24,7 @@ import {
     useWorkspaceParticipants,
     useWorkspaceResumes,
     useRemoveWorkspaceParticipant,
+    useSpaceSettings,
 } from "@/lib/spaces";
 import { useProjectsList } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
@@ -184,6 +185,8 @@ const SpaceRoute = () => {
 
     // Participants state
     const workspaceId = spaceData?.id ?? 0;
+    const { data: spaceSettings } = useSpaceSettings(workspaceId, !!spaceData);
+    const isPrivate = spaceSettings?.visibility === "private";
     const [participantSearch, setParticipantSearch] = useState("");
     const [participantPage, setParticipantPage] = useState(1);
     const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -324,6 +327,7 @@ const SpaceRoute = () => {
                     items={resumesData?.items || []}
                     isLoading={isResumesLoading}
                     workspaceId={workspaceId}
+                    isPrivate={isPrivate}
                 />
 
                 {/* Participants section */}

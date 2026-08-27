@@ -568,6 +568,7 @@ export type WorkspaceResumeItem = {
     interests: string[];
     participant_name: string;
     participant_id: number;
+    in_team: boolean;
 };
 
 export type WorkspaceResumeListResponse = {

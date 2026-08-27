@@ -14,9 +14,18 @@ type SpaceResumeSectionProps = {
     items: WorkspaceResumeItem[];
     isLoading: boolean;
     workspaceId: number;
+    isPrivate?: boolean;
 };
 
-function ResumeCard({ resume, workspaceId }: { resume: WorkspaceResumeItem; workspaceId: number }) {
+function ResumeCard({
+    resume,
+    workspaceId,
+    isPrivate,
+}: {
+    resume: WorkspaceResumeItem;
+    workspaceId: number;
+    isPrivate?: boolean;
+}) {
     const initials = resume.participant_name
         .split(" ")
         .map((n) => n[0])
@@ -28,11 +37,16 @@ function ResumeCard({ resume, workspaceId }: { resume: WorkspaceResumeItem; work
         <Link to={paths.app.resume.getHref(resume.id, null, workspaceId)} className="block h-full">
             <div className="bg-white border border-[#E5E7EB] rounded-[20px] transition-all duration-200 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] min-w-[320px] h-full flex flex-col">
                 <div className="p-5 flex flex-col gap-4 flex-1">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                         <span className="inline-flex items-center h-7 px-2.5 rounded-full text-[13px] font-medium leading-none bg-[#EEF2FF] text-[#4F46E5]">
                             <GraduationCap size={14} className="mr-1.5" />
                             Резюме
                         </span>
+                        {isPrivate && !resume.in_team && (
+                            <span className="inline-flex items-center h-7 px-2.5 rounded-full text-[12px] font-medium leading-none bg-[#FEF3C7] text-[#92400E] whitespace-nowrap">
+                                Ещё не в команде
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-1">
@@ -95,7 +109,12 @@ function ResumeCard({ resume, workspaceId }: { resume: WorkspaceResumeItem; work
     );
 }
 
-export function SpaceResumeSection({ items, isLoading, workspaceId }: SpaceResumeSectionProps) {
+export function SpaceResumeSection({
+    items,
+    isLoading,
+    workspaceId,
+    isPrivate = false,
+}: SpaceResumeSectionProps) {
     const [search, setSearch] = useState("");
     const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -241,7 +260,12 @@ export function SpaceResumeSection({ items, isLoading, workspaceId }: SpaceResum
             ) : (
                 <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                     {filteredItems.map((resume) => (
-                        <ResumeCard key={resume.id} resume={resume} workspaceId={workspaceId} />
+                        <ResumeCard
+                            key={resume.id}
+                            resume={resume}
+                            workspaceId={workspaceId}
+                            isPrivate={isPrivate}
+                        />
                     ))}
                 </div>
             )}
