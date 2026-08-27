@@ -2,14 +2,16 @@ import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
-import { useAddContacts, telegramSchema, vkSchema } from "@/lib/auth";
+import { useUpdateContacts, useUser, telegramSchema, vkSchema } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
-import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner/spinner";
+import { notifyError } from "@/components/ui/notifications";
 
 const registerContactsInputSchema = z.object({
     telegram: telegramSchema,
@@ -20,7 +22,9 @@ const registerContactsInputSchema = z.object({
 type RegisterContactsFormInput = z.infer<typeof registerContactsInputSchema>;
 
 export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void }) => {
-    const addContacts = useAddContacts({ onSuccess });
+    const { data: user, isLoading } = useUser();
+    const updateContacts = useUpdateContacts(user?.id ?? 0);
+    const [showPublicityText, setShowPublicityText] = useState(false);
 
     const form = useForm<RegisterContactsFormInput>({
         resolver: zodResolver(registerContactsInputSchema),
@@ -31,21 +35,26 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
         },
     });
 
-    const onSubmit = (values: RegisterContactsFormInput) => {
-        addContacts.mutate(
-            {
-                email: JSON.parse(sessionStorage.getItem("register") || "{}").email,
-                telegram: values.telegram,
-                vk: values.vk,
-                showMyContacts: values.showMyContacts,
-            },
-            {
-                onError: () => {
-                    toast.error("Ошибка при сохранении контактов");
-                },
-            },
-        );
+    const onSubmit = async (values: RegisterContactsFormInput) => {
+        try {
+            await updateContacts.mutateAsync(values);
+            onSuccess();
+        } catch {
+            notifyError("Ошибка при сохранении контактов");
+        }
     };
+
+    const handleSkip = () => {
+        onSuccess();
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-[300px]">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
@@ -123,7 +132,10 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                         <FormControl>
                                             <Checkbox
                                                 checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={(v) => {
+                                                    setShowPublicityText(Boolean(v));
+                                                    field.onChange(v);
+                                                }}
                                                 id="showMyContacts"
                                             />
                                         </FormControl>
@@ -139,23 +151,30 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                         </div>
                     </div>
 
+                    {showPublicityText ? (
+                        <p className="text-sm text-blue-600 font-sans">
+                            Отметив эту галочку, вы разрешите другим пользователям связаться с вами.
+                            Ваши профили в Telegram и VK будут видны всем участникам.
+                        </p>
+                    ) : null}
+
                     <Button
                         type="submit"
                         // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
                         className="w-full h-12 bg-[#030213] text-white"
-                        disabled={addContacts.isPending}
+                        disabled={updateContacts.isPending}
                     >
-                        {addContacts.isPending ? "Сохранить..." : "Сохранить"}
+                        {updateContacts.isPending ? "Сохранить..." : "Сохранить"}
                     </Button>
 
                     <Button
-                        type="submit"
+                        type="button"
                         variant="outline"
                         className="w-full h-12 border-gray-200"
-                        asChild
-                        disabled={addContacts.isPending}
+                        onClick={handleSkip}
+                        disabled={updateContacts.isPending}
                     >
-                        {addContacts.isPending ? "Пропустить..." : "Пропустить"}
+                        Пропустить
                     </Button>
                 </form>
             </Form>

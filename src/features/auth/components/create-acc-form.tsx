@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/api-client";
 import { Icon } from "@/components/ui/icons";
-import { toast } from "sonner";
+import { notifyError } from "@/components/ui/notifications";
 
 const CreateAccFormSchema = z
     .object({
@@ -35,11 +36,12 @@ export const CreateAccForm = () => {
     const redirectTo = searchParams.get("redirectTo");
 
     const createAcc = useCreateAcc({
-        onSuccess: () => {
+        onSuccess: (data) => {
             sessionStorage.setItem(
                 "register",
                 JSON.stringify({
-                    email: form.getValues("email"),
+                    email: data.email,
+                    newuser_id: data.id,
                 }),
             );
 
@@ -64,8 +66,8 @@ export const CreateAccForm = () => {
                 password: values.password,
             },
             {
-                onError: () => {
-                    toast.error("Ошибка при создании аккаунта");
+                onError: (error) => {
+                    notifyError(getApiErrorMessage(error, "Ошибка при создании аккаунта"));
                 },
             },
         );

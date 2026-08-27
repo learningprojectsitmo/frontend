@@ -71,7 +71,6 @@ src/
 ├── types/                 # TypeScript типы
 ├── utils/                 # Утилитарные функции
 └── assets/                # Статические ресурсы
-
 ```
 
 ---
@@ -98,7 +97,6 @@ npm run build
 # Линтинг
 
 npm run lint
-
 ```
 
 ---

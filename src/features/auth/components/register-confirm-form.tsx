@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
 
 import { useRegister, useResendCode } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/api-client";
 import { ResendCodeTimer } from "@/components/ui/resend-code-timer/resend-code-timer";
 import { Icon } from "@/components/ui/icons";
+import { notifyError } from "@/components/ui/notifications";
 import { paths } from "@/config/paths";
-import { toast } from "sonner";
 
 const RegisterConfirmFormSchema = z.object({
     code: z.string().min(6, "Код должен состоять из 6 цифр"),
@@ -28,7 +29,7 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
 
     const resendCode = useResendCode();
     const sessionData = JSON.parse(sessionStorage.getItem("register") || "{}");
-    const email = sessionData.email;
+    const newuserId = Number(sessionData.newuser_id);
 
     const form = useForm<RegisterConfirmFormInput>({
         resolver: zodResolver(RegisterConfirmFormSchema),
@@ -40,12 +41,12 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
     const onSubmit = (values: RegisterConfirmFormInput) => {
         register.mutate(
             {
-                email: email,
-                confirmationCode: values.code,
+                newuser_id: newuserId,
+                code: values.code,
             },
             {
-                onError: () => {
-                    toast.error("Неверный код подтверждения");
+                onError: (error) => {
+                    notifyError(getApiErrorMessage(error, "Неверный код подтверждения"));
                 },
             },
         );
@@ -54,11 +55,11 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
     const handleResendCode = () => {
         resendCode.mutate(
             {
-                email: email,
+                newuser_id: newuserId,
             },
             {
-                onError: () => {
-                    toast.error("Ошибка при отправке кода");
+                onError: (error) => {
+                    notifyError(getApiErrorMessage(error, "Ошибка при отправке кода"));
                 },
             },
         );

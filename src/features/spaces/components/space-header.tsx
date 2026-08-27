@@ -5,6 +5,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuShortcut,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { type Space } from "@/types/api";
@@ -89,41 +90,47 @@ export function SpaceHeader({
                 </div>
             </div>
             <div className="flex items-center gap-1">
-                <Button
-                    variant="dark"
-                    size="hug36"
-                    icon={<Plus size={18} />}
-                    className="font-sans text-[13px] font-semibold gap-2 !h-11 !rounded-[12px] !px-[18px]"
-                >
-                    Создать проект
-                </Button>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
-                        >
-                            <MoreHorizontal size={18} />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[180px]">
-                        <DropdownMenuItem
-                            className="gap-3 text-sm cursor-pointer"
-                            onSelect={onShareOpen}
-                        >
-                            <Share2 size={16} />
-                            Поделись
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                            <Upload size={16} />
-                            Экспортировать
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-3 text-sm cursor-pointer">
-                            <Archive size={16} />
-                            Архивировать
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {isAuthor && (
+                    <Button
+                        variant="dark"
+                        size="hug36"
+                        icon={<Plus size={18} />}
+                        className="font-sans text-[13px] font-semibold gap-2 !h-11 !rounded-[12px] !px-[18px]"
+                    >
+                        Создать проект
+                    </Button>
+                )}
+                {isAuthor && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="w-9 h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                            >
+                                <MoreHorizontal size={18} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[200px]">
+                            <DropdownMenuItem
+                                className="gap-3 text-sm cursor-pointer"
+                                onSelect={onShareOpen}
+                            >
+                                <Share2 size={16} />
+                                Поделись
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer" disabled>
+                                <Upload size={16} />
+                                Экспортировать
+                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-3 text-sm cursor-pointer" disabled>
+                                <Archive size={16} />
+                                Архивировать
+                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
         </div>
     );

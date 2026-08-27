@@ -25,7 +25,28 @@ export type User = Entity<{
     middle_name: string;
     email: string;
     lang: string;
+    tg_nickname?: string | null;
+    vk_nickname?: string | null;
+    show_my_contacts?: boolean;
 }>;
+
+export type UserUpdate = {
+    email?: string;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
+    isu_number?: number;
+    tg_nickname?: string | null;
+    phone?: string | null;
+    vk_nickname?: string | null;
+    role_id?: number;
+    show_my_contacts?: boolean;
+};
+
+export type NewUserResponse = {
+    id: number;
+    email: string;
+};
 
 export type LoginResponse = {
     access_token: string;

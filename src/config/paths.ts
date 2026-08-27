@@ -19,6 +19,11 @@ export const paths = {
             getHref: (redirectTo?: string | null | undefined) =>
                 `/auth/registerconfirm${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
         },
+        registerName: {
+            path: "/auth/registername",
+            getHref: (redirectTo?: string | null | undefined) =>
+                `/auth/registername${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`,
+        },
         registerContacts: {
             path: "/auth/registercontacts",
             getHref: (redirectTo?: string | null | undefined) =>

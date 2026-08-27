@@ -11,21 +11,29 @@ import backgroundImage from "@/assets/back-ground.svg";
 type LayoutProps = {
     children: React.ReactNode;
     title: string;
+    redirectIfAuthed?: boolean;
 };
 
-export const AuthLayout = ({ children, title }: LayoutProps) => {
+export const AuthLayout = ({
+    children,
+    title,
+    redirectIfAuthed = true,
+}: LayoutProps) => {
     const user = useUser();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user.data) {
+        // На шагах регистрации (код → ФИО → контакты) пользователь уже
+        // авторизован (verify возвращает токен), но цепочка ещё не завершена —
+        // редирект в /app отключаем.
+        if (redirectIfAuthed && user.data) {
             navigate(redirectTo ? redirectTo : paths.app.spaces.getHref(), {
                 replace: true,
             });
         }
-    }, [user.data, navigate, redirectTo]);
+    }, [user.data, navigate, redirectTo, redirectIfAuthed]);
 
     return (
         <>

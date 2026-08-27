@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input/input";
 import { useResetWithPassword } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
-import { toast } from "sonner";
+import { notifyError } from "@/components/ui/notifications";
 
 const resetPasswordFormSchema = z
     .object({
@@ -54,7 +54,7 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
             }, //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
             {
                 onError: () => {
-                    toast.error("Ошибка при сбросе пароля");
+                    notifyError("Ошибка при сбросе пароля");
                 },
             },
         );

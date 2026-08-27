@@ -125,3 +125,25 @@ refreshApi.interceptors.request.use((config) => {
 });
 
 refreshApi.interceptors.response.use((response) => response.data);
+
+// ─── User-friendly error mapping ────────────────────────────────────────────
+// Бэкенд отдаёт детали ошибок на английском; здесь переводим известные в русский,
+// чтобы показывать пользователю понятный текст.
+
+const ERROR_TRANSLATIONS: Record<string, string> = {
+    "User with this email already exists": "Пользователь с такой почтой уже зарегистрирован",
+    "Signup already in progress for this email":
+        "Регистрация для этой почты уже начата. Проверьте письмо с кодом подтверждения",
+    "Invalid confirmation code": "Неверный код подтверждения",
+    "Confirmation code has expired": "Срок действия кода истёк. Запросите новый код",
+    "Signup request not found": "Регистрация не найдена. Начните заново",
+};
+
+export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+    const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail;
+    if (detail && ERROR_TRANSLATIONS[detail]) {
+        return ERROR_TRANSLATIONS[detail];
+    }
+    return fallback;
+};

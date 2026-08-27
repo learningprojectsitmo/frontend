@@ -50,6 +50,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
+            path: paths.auth.registerName.path,
+            lazy: () => import("./routes/auth/register-name").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />, // Добавить
+        },
+        {
             path: paths.auth.registerContacts.path,
             lazy: () => import("./routes/auth/register-contacts").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />, // Добавить

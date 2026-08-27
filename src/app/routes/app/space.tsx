@@ -15,6 +15,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuShortcut,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Search, Check, X, Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -353,29 +354,48 @@ const SpaceRoute = () => {
                                     />
                                 )}
 
-                                <Button
-                                    variant="dark"
-                                    size="hug36"
-                                    className="font-sans text-[13px] font-semibold"
-                                    onClick={() => setShareOpen(true)}
-                                >
-                                    Пригласить
-                                </Button>
+                                {isAuthor && (
+                                    <Button
+                                        variant="dark"
+                                        size="hug36"
+                                        className="font-sans text-[13px] font-semibold"
+                                        onClick={() => setShareOpen(true)}
+                                    >
+                                        Пригласить
+                                    </Button>
+                                )}
 
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="hug36" className="px-2">
-                                            <Ellipsis className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>Экспорт списка</DropdownMenuItem>
-                                        <DropdownMenuItem>Импорт участников</DropdownMenuItem>
-                                        <DropdownMenuItem>Массовое удаление</DropdownMenuItem>
-                                        <DropdownMenuItem>Настройки ролей</DropdownMenuItem>
-                                        <DropdownMenuItem>Управление доступами</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                {isAuthor && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="hug36" className="px-2">
+                                                <Ellipsis className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-[220px]">
+                                            <DropdownMenuItem disabled>
+                                                Экспорт списка
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Импорт участников
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Массовое удаление
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Настройки ролей
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Управление доступами
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
                             </div>
                         </div>
                     </div>
