@@ -1256,13 +1256,6 @@ const SpaceRoute = () => {
                         {activeApplicantTab === "team" ? (
                             activeView === "list" ? (
                                 <TableMembers
-                                    headerList={[
-                                        "Имя",
-                                        "Роль",
-                                        "Контакты",
-                                        "Резюме",
-                                        "Дата добавления",
-                                    ]}
                                     members={filteredMembers}
                                     removeMember={handleRemoveMember}
                                 />

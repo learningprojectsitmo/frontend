@@ -255,14 +255,6 @@ const SpaceRoute = () => {
     const totalParticipants = participantsData?.total ?? 0;
     const totalPages = participantsData?.total_pages ?? 0;
 
-    const headerList = useMemo(() => {
-        const base = ["Имя", "Роль", "Контакты", "Резюме", "Дата добавления"];
-        if (projectOptions.length > 0) {
-            base.splice(1, 0, "Проекты");
-        }
-        return base;
-    }, [projectOptions]);
-
     const handleFilterReset = useCallback(() => {
         setSelectedProjects([]);
         setParticipantPage(1);
@@ -421,7 +413,6 @@ const SpaceRoute = () => {
                     ) : (
                         <>
                             <TableMembers
-                                headerList={headerList}
                                 members={mappedMembers}
                                 removeMember={handleRemoveParticipant}
                                 showProject

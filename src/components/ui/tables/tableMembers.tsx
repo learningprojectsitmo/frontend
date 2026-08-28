@@ -16,14 +16,33 @@ const getInitials = (name: string) => {
         .toUpperCase();
 };
 
+const formatDateAdded = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+};
+
 function isStringContacts(
     c: string | { telegram?: string | null; email?: string | null; linkedin?: string | null },
 ): c is string {
     return typeof c === "string";
 }
 
+const HEADER_CELLS: { label: string; className?: string }[] = [
+    { label: "Имя" },
+    { label: "Проекты" },
+    { label: "Роль" },
+    { label: "Контакты", className: "hidden sm:table-cell" },
+    { label: "Резюме", className: "hidden md:table-cell" },
+    { label: "Дата добавления", className: "hidden md:table-cell" },
+    { label: "Статус" },
+];
+
 interface TableProps {
-    headerList: string[];
     members: Member[] | [];
     removeMember?: (id: number) => void;
     showProject?: boolean;
@@ -32,32 +51,39 @@ interface TableProps {
 }
 
 export const TableMembers = ({
-    headerList,
     members,
     removeMember,
     showProject = false,
     showStatus = false,
     onRowClick,
 }: TableProps) => {
+    const headers = [
+        HEADER_CELLS[0],
+        ...(showProject ? [HEADER_CELLS[1]] : []),
+        HEADER_CELLS[2],
+        HEADER_CELLS[3],
+        HEADER_CELLS[4],
+        HEADER_CELLS[5],
+        ...(showStatus ? [HEADER_CELLS[6]] : []),
+    ];
     return (
         <div className="w-full overflow-hidden rounded-[20px] border border-gray-200 bg-app-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
                     <thead className="text-app-text border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
                         <tr>
-                            {headerList.map((header) => (
+                            {headers.map((header) => (
                                 <th
-                                    key={header}
+                                    key={header.label}
                                     className={cn(
                                         "px-6 h-14 text-[15px] font-sans font-semibold whitespace-nowrap",
-                                        (header === "Резюме" || header === "Дата добавления") &&
-                                            "hidden md:table-cell",
-                                        header === "Контакты" && "hidden sm:table-cell",
+                                        header.className,
                                     )}
                                 >
-                                    {header}
+                                    {header.label}
                                 </th>
                             ))}
+                            <th className="px-6 h-14 text-[15px] font-sans font-semibold" />
                         </tr>
                     </thead>
 
@@ -172,7 +198,7 @@ export const TableMembers = ({
                                 </td>
 
                                 <td className="px-6 py-4 text-app-text font-sans hidden md:table-cell">
-                                    {member.dateAdded}
+                                    {formatDateAdded(member.dateAdded)}
                                 </td>
 
                                 {showStatus && (
