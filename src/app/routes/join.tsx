@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Head } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -10,6 +11,7 @@ const JoinRoute = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token") || "";
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { data: user, isLoading: isAuthLoading } = useUser();
     const joinMutation = useJoinByLink();
 
@@ -17,6 +19,8 @@ const JoinRoute = () => {
         if (!token) return;
         joinMutation.mutate(token, {
             onSuccess: (data) => {
+                queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+                queryClient.invalidateQueries({ queryKey: ["projects"] });
                 navigate(paths.app.space.getHref(data.workspace_id));
             },
         });
@@ -103,7 +107,9 @@ const JoinRoute = () => {
                         <div>
                             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                                 <p className="text-sm text-green-700 font-medium">
-                                    Вы успешно присоединились к пространству!
+                                    {joinMutation.data.already_member
+                                        ? "Вы уже являетесь участником этого пространства"
+                                        : "Вы успешно присоединились к пространству!"}
                                 </p>
                             </div>
                             <Button

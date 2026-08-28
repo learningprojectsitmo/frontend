@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group/radio-group";
-import { useInviteLink, useCreateInviteLink, useRevokeInviteLink } from "@/lib/spaces";
-import { Copy, Check, Link2 } from "lucide-react";
+import { useInviteLinks, useCreateInviteLink, useRevokeInviteLink } from "@/lib/spaces";
+import { Copy, Check, Link2, Trash2 } from "lucide-react";
 import type { InviteLinkResponse } from "@/types/api";
 
 interface ShareSpaceModalProps {
@@ -19,74 +19,52 @@ const roleOptions: RadioOption[] = [
     { value: "1", label: "Администратор" },
 ];
 
+const roleLabel = (roleId: number): string =>
+    roleOptions.find((r) => Number(r.value) === roleId)?.label ?? `Роль ${roleId}`;
+
 export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModalProps) => {
-    const { data: existingLink, isLoading: isLinkLoading } = useInviteLink(spaceId, open);
+    const { data, isLoading: isLinksLoading } = useInviteLinks(spaceId, open);
+    const links = data?.links ?? [];
     const createLink = useCreateInviteLink();
     const revokeLink = useRevokeInviteLink();
-    const [copied, setCopied] = useState(false);
+    const [copiedToken, setCopiedToken] = useState<string | null>(null);
     const [selectedRole, setSelectedRole] = useState("2");
-    const [generatedLink, setGeneratedLink] = useState<InviteLinkResponse | null>(null);
 
     useEffect(() => {
         if (open) {
-            if (existingLink) {
-                setGeneratedLink(existingLink);
-            }
-            setCopied(false);
+            setCopiedToken(null);
         }
-    }, [open, existingLink]);
+    }, [open]);
 
     const handleGenerate = () => {
-        createLink.mutate(
-            { id: spaceId, data: { role_id: Number(selectedRole) } },
-            {
-                onSuccess: (data) => {
-                    setGeneratedLink(data);
-                },
-            },
-        );
+        createLink.mutate({ id: spaceId, data: { role_id: Number(selectedRole) } });
     };
 
-    const handleCopy = async () => {
-        if (!generatedLink?.url) return;
+    const handleCopy = async (link: InviteLinkResponse) => {
         try {
-            await navigator.clipboard.writeText(generatedLink.url);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            await navigator.clipboard.writeText(link.url);
+            setCopiedToken(link.token);
+            setTimeout(() => setCopiedToken(null), 2000);
         } catch {
             const el = document.createElement("textarea");
-            el.value = generatedLink.url;
+            el.value = link.url;
             document.body.appendChild(el);
             el.select();
             document.execCommand("copy");
             document.body.removeChild(el);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            setCopiedToken(link.token);
+            setTimeout(() => setCopiedToken(null), 2000);
         }
     };
 
-    const handleRevoke = () => {
-        revokeLink.mutate(spaceId, {
-            onSuccess: () => {
-                setGeneratedLink(null);
-            },
-        });
-    };
-
-    const handleOpenChange = (open: boolean) => {
-        if (!open) {
-            setGeneratedLink(null);
-            setCopied(false);
-            setSelectedRole("2");
-        }
-        onOpenChange(open);
+    const handleRevoke = (token: string) => {
+        revokeLink.mutate({ id: spaceId, token });
     };
 
     const isPending = createLink.isPending || revokeLink.isPending;
-    const hasLink = !!generatedLink;
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Поделиться пространством</DialogTitle>
@@ -100,7 +78,6 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
                         <p className="text-xs text-gray-500 mb-3">
                             Роль будет автоматически назначена при вступлении по ссылке
                         </p>
-                        <p className="text-xs font-medium text-gray-700 mb-2">Роль участника</p>
                         <RadioGroup
                             options={roleOptions}
                             value={selectedRole}
@@ -111,71 +88,90 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
 
                     <hr className="border-gray-100" />
 
-                    {/* Link section */}
+                    {/* Links section */}
                     <div>
                         <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                            Ссылка для приглашения
+                            Ссылки для приглашения
                         </h3>
 
-                        {isLinkLoading ? (
+                        <div className="flex items-center gap-3">
+                            <Button
+                                type="button"
+                                variant="dark"
+                                size="hug36"
+                                onClick={handleGenerate}
+                                disabled={isPending}
+                                className="flex items-center gap-2"
+                            >
+                                <Link2 size={16} />
+                                {createLink.isPending ? "Создание..." : "Создать ссылку"}
+                            </Button>
+                            <span className="text-xs text-gray-400">
+                                Активных ссылок: {links.length}
+                            </span>
+                        </div>
+
+                        {isLinksLoading ? (
                             <div className="text-sm text-gray-400 py-2">Загрузка...</div>
-                        ) : !hasLink ? (
-                            <div>
-                                <p className="text-xs text-gray-500 mb-4">
-                                    Создайте ссылку, чтобы пригласить участников в пространство
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="dark"
-                                    size="hug36"
-                                    onClick={handleGenerate}
-                                    disabled={isPending}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Link2 size={16} />
-                                    {createLink.isPending ? "Создание..." : "Создать ссылку"}
-                                </Button>
+                        ) : links.length === 0 ? (
+                            <div className="mt-4 text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
+                                Создайте ссылку, чтобы пригласить участников в пространство
                             </div>
                         ) : (
-                            <div>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    Скопируйте ссылку и отправьте ее участникам
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1 relative">
-                                        <Input
-                                            value={generatedLink.url}
-                                            readOnly
-                                            className="pr-2 text-sm text-gray-600 bg-gray-50 border-gray-200 cursor-default"
-                                            onClick={(e) => (e.target as HTMLInputElement).select()}
-                                        />
+                            <div className="mt-4 space-y-3">
+                                {links.map((link) => (
+                                    <div
+                                        key={link.token}
+                                        className="border border-gray-200 rounded-lg p-3 space-y-2"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-xs font-semibold text-gray-700">
+                                                {roleLabel(link.role_id)}
+                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-gray-400">
+                                                    Переходов: {link.use_count}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRevoke(link.token)}
+                                                    disabled={isPending}
+                                                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                                                >
+                                                    <Trash2 size={13} />
+                                                    Отозвать
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                value={link.url}
+                                                readOnly
+                                                className="text-sm text-gray-600 bg-gray-50 border-gray-200 cursor-default"
+                                                onClick={(e) =>
+                                                    (e.target as HTMLInputElement).select()
+                                                }
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="blue"
+                                                size="hug36"
+                                                onClick={() => handleCopy(link)}
+                                                disabled={isPending}
+                                                className="flex items-center gap-1.5 whitespace-nowrap"
+                                            >
+                                                {copiedToken === link.token ? (
+                                                    <Check size={16} />
+                                                ) : (
+                                                    <Copy size={16} />
+                                                )}
+                                                {copiedToken === link.token
+                                                    ? "Скопировано"
+                                                    : "Копировать"}
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="blue"
-                                        size="hug36"
-                                        onClick={handleCopy}
-                                        disabled={isPending}
-                                        className="flex items-center gap-1.5 whitespace-nowrap"
-                                    >
-                                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                                        {copied ? "Скопировано" : "Копировать"}
-                                    </Button>
-                                </div>
-
-                                <div className="flex items-center justify-between mt-3">
-                                    <span className="text-xs text-gray-400">
-                                        Переходов: {generatedLink.use_count}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={handleRevoke}
-                                        disabled={isPending}
-                                        className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
-                                    >
-                                        Отозвать ссылку
-                                    </button>
-                                </div>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -186,7 +182,7 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
                             type="button"
                             variant="dark"
                             size="hug36"
-                            onClick={() => handleOpenChange(false)}
+                            onClick={() => onOpenChange(false)}
                         >
                             Готово
                         </Button>

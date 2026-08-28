@@ -11,6 +11,7 @@ import {
     type WorkspaceParticipantListResponse,
     type WorkspaceResumeListResponse,
     type InviteLinkResponse,
+    type InviteLinkListResponse,
     type InviteLinkCreate,
     type JoinByLinkResponse,
 } from "@/types/api";
@@ -129,7 +130,7 @@ export const useDeleteWorkspace = () => {
 
 // === Invite link ===
 
-export const getInviteLink = async (workspaceId: number): Promise<InviteLinkResponse> => {
+export const getInviteLinks = async (workspaceId: number): Promise<InviteLinkListResponse> => {
     return await api.get(`/workspaces/${workspaceId}/invite-link`);
 };
 
@@ -140,14 +141,18 @@ export const createInviteLink = async (
     return await api.post(`/workspaces/${workspaceId}/invite-link`, data ?? {});
 };
 
-export const revokeInviteLink = async (workspaceId: number): Promise<void> => {
+export const revokeInviteLink = async (workspaceId: number, token: string): Promise<void> => {
+    return await api.delete(`/workspaces/${workspaceId}/invite-link/${token}`);
+};
+
+export const revokeAllInviteLinks = async (workspaceId: number): Promise<void> => {
     return await api.delete(`/workspaces/${workspaceId}/invite-link`);
 };
 
-export const useInviteLink = (workspaceId: number, enabled?: boolean) => {
+export const useInviteLinks = (workspaceId: number, enabled?: boolean) => {
     return useQuery({
         queryKey: ["workspaces", workspaceId, "invite-link"],
-        queryFn: () => getInviteLink(workspaceId),
+        queryFn: () => getInviteLinks(workspaceId),
         staleTime: 5 * 60 * 1000,
         retry: false,
         enabled: enabled ?? true,
@@ -170,9 +175,23 @@ export const useCreateInviteLink = () => {
 export const useRevokeInviteLink = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: revokeInviteLink,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+        mutationFn: ({ id, token }: { id: number; token: string }) => revokeInviteLink(id, token),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: ["workspaces", variables.id, "invite-link"],
+            });
+        },
+    });
+};
+
+export const useRevokeAllInviteLinks = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: revokeAllInviteLinks,
+        onSuccess: (_data, id) => {
+            queryClient.invalidateQueries({
+                queryKey: ["workspaces", id, "invite-link"],
+            });
         },
     });
 };

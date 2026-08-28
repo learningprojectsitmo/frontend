@@ -585,6 +585,10 @@ export type InviteLinkResponse = {
     created_at: string;
 };
 
+export type InviteLinkListResponse = {
+    links: InviteLinkResponse[];
+};
+
 export type InviteLinkCreate = {
     role_id?: number;
 };
@@ -592,6 +596,7 @@ export type InviteLinkCreate = {
 export type JoinByLinkResponse = {
     message: string;
     workspace_id: number;
+    already_member: boolean;
 };
 
 // ─── Profile responses / invitations / projects ────────────────────────
