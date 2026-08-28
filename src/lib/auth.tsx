@@ -84,7 +84,7 @@ export const registerNameInputSchema = z.object({
 export const addContactsInputSchema = z.object({
     telegram: telegramSchema,
     vk: vkSchema,
-    showMyContacts: z.boolean().default(false),
+    showMyContacts: z.boolean().default(true),
 });
 
 export const resetWithEmailInputSchema = z.object({

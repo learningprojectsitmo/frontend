@@ -16,7 +16,7 @@ import { notifyError } from "@/components/ui/notifications";
 const registerContactsInputSchema = z.object({
     telegram: telegramSchema,
     vk: vkSchema,
-    showMyContacts: z.boolean().default(false),
+    showMyContacts: z.boolean().default(true),
 });
 
 type RegisterContactsFormInput = z.infer<typeof registerContactsInputSchema>;
@@ -24,14 +24,14 @@ type RegisterContactsFormInput = z.infer<typeof registerContactsInputSchema>;
 export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const { data: user, isLoading } = useUser();
     const updateContacts = useUpdateContacts(user?.id ?? 0);
-    const [showPublicityText, setShowPublicityText] = useState(false);
+    const [showPublicityText, setShowPublicityText] = useState(true);
 
     const form = useForm<RegisterContactsFormInput>({
         resolver: zodResolver(registerContactsInputSchema),
         defaultValues: {
             telegram: "",
             vk: "",
-            showMyContacts: false,
+            showMyContacts: true,
         },
     });
 

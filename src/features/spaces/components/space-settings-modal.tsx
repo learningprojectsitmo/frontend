@@ -62,6 +62,12 @@ const defaultRoleOptions: RadioOption[] = [
     { value: "3", label: "Администратор" },
 ];
 
+const StubBadge = () => (
+    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 align-middle">
+        Заглушка
+    </span>
+);
+
 export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsModalProps) => {
     const updateSettings = useUpdateSpaceSettings();
     const updateName = useUpdateWorkspaceName();
@@ -168,6 +174,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                     >
                                         [изменить]
                                     </button>
+                                    <StubBadge />
                                 </div>
                             </div>
 
@@ -239,6 +246,9 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                         name="visibility"
                                                     />
                                                 </FormControl>
+                                                <p className="text-xs text-amber-600 mt-1">
+                                                    Работает пока только для списка пространств
+                                                </p>
                                             </FormItem>
                                         )}
                                     />
@@ -248,7 +258,10 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                         name="join_policy"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Кто может вступать</FormLabel>
+                                                <FormLabel>
+                                                    Кто может вступать
+                                                    <StubBadge />
+                                                </FormLabel>
                                                 <FormControl>
                                                     <RadioGroup
                                                         options={joinPolicyOptions}
@@ -277,7 +290,10 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                     name="default_role_id"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Роль по умолчанию</FormLabel>
+                                            <FormLabel>
+                                                Роль по умолчанию
+                                                <StubBadge />
+                                            </FormLabel>
                                             <FormControl>
                                                 <RadioGroup
                                                     options={defaultRoleOptions}
@@ -311,6 +327,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                     <div>
                                                         <FormLabel className="text-sm font-medium text-gray-900">
                                                             Участие в нескольких проектах
+                                                            <StubBadge />
                                                         </FormLabel>
                                                         <p className="text-xs text-gray-500 mt-0.5">
                                                             Разрешить участникам состоять в
@@ -337,6 +354,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                     <div>
                                                         <FormLabel className="text-sm font-medium text-gray-900">
                                                             Создание нескольких проектов
+                                                            <StubBadge />
                                                         </FormLabel>
                                                         <p className="text-xs text-gray-500 mt-0.5">
                                                             Разрешить участникам создавать несколько
