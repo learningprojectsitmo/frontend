@@ -6,6 +6,31 @@ import {
     type MyProjectListResponse,
 } from "@/types/api";
 
+export type CreateProjectInput = {
+    name: string;
+    description?: string | null;
+    workspace_id?: number | null;
+};
+
+export const createProject = async (data: CreateProjectInput): Promise<ProjectFullResponse> => {
+    return await api.post("/projects/", data);
+};
+
+export const useCreateProject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createProject,
+        onSuccess: (_data, variables) => {
+            if (variables.workspace_id) {
+                queryClient.invalidateQueries({
+                    queryKey: ["projects", "list", String(variables.workspace_id)],
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: ["projects", "recent"] });
+        },
+    });
+};
+
 export const getProject = async ({
     queryKey,
 }: {

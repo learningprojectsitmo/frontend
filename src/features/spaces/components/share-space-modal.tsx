@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group/radio-group";
 import { useInviteLinks, useCreateInviteLink, useRevokeInviteLink } from "@/lib/spaces";
+import { useRoles, ROLE_LABELS, roleLabel } from "@/lib/roles";
 import { Copy, Check, Link2, Trash2 } from "lucide-react";
 import type { InviteLinkResponse } from "@/types/api";
 
@@ -13,30 +14,32 @@ interface ShareSpaceModalProps {
     spaceId: number;
 }
 
-const roleOptions: RadioOption[] = [
-    { value: "2", label: "Участник" },
-    { value: "3", label: "Руководитель проекта" },
-    { value: "1", label: "Администратор" },
-];
-
-const roleLabel = (roleId: number): string =>
-    roleOptions.find((r) => Number(r.value) === roleId)?.label ?? `Роль ${roleId}`;
-
 export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModalProps) => {
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.items ?? [];
+    const roleOptions: RadioOption[] = roles.map((role) => ({
+        value: String(role.id),
+        label: ROLE_LABELS[role.name] ?? role.name,
+    }));
+
     const { data, isLoading: isLinksLoading } = useInviteLinks(spaceId, open);
     const links = data?.links ?? [];
     const createLink = useCreateInviteLink();
     const revokeLink = useRevokeInviteLink();
     const [copiedToken, setCopiedToken] = useState<string | null>(null);
-    const [selectedRole, setSelectedRole] = useState("2");
+    const [selectedRole, setSelectedRole] = useState("");
 
     useEffect(() => {
         if (open) {
             setCopiedToken(null);
+            const memberRole = roles.find((role) => role.name === "member");
+            setSelectedRole(memberRole ? String(memberRole.id) : "");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     const handleGenerate = () => {
+        if (!selectedRole) return;
         createLink.mutate({ id: spaceId, data: { role_id: Number(selectedRole) } });
     };
 
@@ -100,7 +103,7 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
                                 variant="dark"
                                 size="hug36"
                                 onClick={handleGenerate}
-                                disabled={isPending}
+                                disabled={isPending || !selectedRole}
                                 className="flex items-center gap-2"
                             >
                                 <Link2 size={16} />
@@ -126,7 +129,14 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
                                     >
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-xs font-semibold text-gray-700">
-                                                {roleLabel(link.role_id)}
+                                                {(() => {
+                                                    const role = roles.find(
+                                                        (r) => r.id === link.role_id,
+                                                    );
+                                                    return role
+                                                        ? roleLabel(role)
+                                                        : `Роль ${link.role_id}`;
+                                                })()}
                                             </span>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-xs text-gray-400">

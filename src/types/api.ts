@@ -82,6 +82,20 @@ export type ProjectRole = {
     count: number;
 };
 
+export type Role = {
+    id: number;
+    name: string;
+    description: string | null;
+};
+
+export type RoleListResponse = {
+    items: Role[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+};
+
 export interface ProjectSingle extends Project {
     spaceId: number;
     descriptionExtended: string;

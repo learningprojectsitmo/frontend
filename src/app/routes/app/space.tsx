@@ -8,6 +8,7 @@ import { SpaceResumeSection } from "@/features/spaces/components/space-resume-se
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
+import { CreateProjectModal } from "@/features/spaces/components/create-project-modal";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
@@ -179,6 +180,7 @@ const SpaceRoute = () => {
 
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
     const isAuthor = spaceData?.author_id === user?.id;
@@ -246,6 +248,9 @@ const SpaceRoute = () => {
         }));
     }, [participantsData, isAuthor, user?.id]);
 
+    const canCreateProject =
+        participantsData?.items.find((m) => m.user_id === user?.id)?.role === "manager";
+
     // Project options for filter
     const projectOptions = useMemo(() => {
         if (!dataProjects?.items) return [];
@@ -304,8 +309,10 @@ const SpaceRoute = () => {
                 <SpaceHeader
                     spaceData={spaceData}
                     isAuthor={isAuthor}
+                    canCreateProject={canCreateProject}
                     onSettingsOpen={() => setSettingsOpen(true)}
                     onShareOpen={() => setShareOpen(true)}
+                    onCreateProject={() => setCreateProjectOpen(true)}
                 />
 
                 <SpaceProjectList
@@ -480,6 +487,11 @@ const SpaceRoute = () => {
                 space={spaceData}
             />
             <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} spaceId={spaceData.id} />
+            <CreateProjectModal
+                open={createProjectOpen}
+                onOpenChange={setCreateProjectOpen}
+                workspaceId={spaceData.id}
+            />
         </ContentLayout>
     );
 };

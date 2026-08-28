@@ -16,6 +16,7 @@ import {
     useDeleteWorkspace,
     useSpaceSettings,
 } from "@/lib/spaces";
+import { useRoles, ROLE_LABELS } from "@/lib/roles";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import type { Space } from "@/types/api";
 
@@ -56,12 +57,6 @@ const joinPolicyOptions: RadioOption[] = [
     { value: "invitation", label: "Только по приглашению" },
 ];
 
-const defaultRoleOptions: RadioOption[] = [
-    { value: "1", label: "Участник" },
-    { value: "2", label: "Руководитель" },
-    { value: "3", label: "Администратор" },
-];
-
 const StubBadge = () => (
     <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 align-middle">
         Заглушка
@@ -73,6 +68,12 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
     const updateName = useUpdateWorkspaceName();
     const deleteWorkspace = useDeleteWorkspace();
     const { data: settings, isLoading: isSettingsLoading } = useSpaceSettings(space.id, open);
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.items ?? [];
+    const defaultRoleOptions: RadioOption[] = roles.map((role) => ({
+        value: String(role.id),
+        label: ROLE_LABELS[role.name] ?? role.name,
+    }));
 
     const isPending = updateSettings.isPending || updateName.isPending;
 

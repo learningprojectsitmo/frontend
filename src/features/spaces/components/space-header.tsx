@@ -13,15 +13,19 @@ import { type Space } from "@/types/api";
 type SpaceHeaderProps = {
     spaceData: Space;
     isAuthor: boolean;
+    canCreateProject?: boolean;
     onSettingsOpen: () => void;
     onShareOpen: () => void;
+    onCreateProject?: () => void;
 };
 
 export function SpaceHeader({
     spaceData,
     isAuthor,
+    canCreateProject,
     onSettingsOpen,
     onShareOpen,
+    onCreateProject,
 }: SpaceHeaderProps) {
     return (
         <div className="self-stretch inline-flex justify-between items-start">
@@ -90,11 +94,12 @@ export function SpaceHeader({
                 </div>
             </div>
             <div className="flex items-center gap-1">
-                {isAuthor && (
+                {canCreateProject && (
                     <Button
                         variant="dark"
                         size="hug36"
                         icon={<Plus size={18} />}
+                        onClick={onCreateProject}
                         className="font-sans text-[13px] font-semibold gap-2 !h-11 !rounded-[12px] !px-[18px]"
                     >
                         Создать проект
