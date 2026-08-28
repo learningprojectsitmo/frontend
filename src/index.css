@@ -38,6 +38,50 @@
         --spacing-48: 48px;
         --spacing-64: 64px;
 
+        /* ============ DESIGN SYSTEM TOKENS (dark-aware) ============ */
+        --app-background: #f7f7f8;
+        --app-surface: #ffffff;
+        --app-border: #e5e7eb;
+        --app-border-light: #ececf1;
+        --app-text: #111827;
+        --app-muted: #6b7280;
+        --app-primary: #0f172a;
+        --app-blue: #2563eb;
+        /* Surface slightly raised / ghost (chips, hover, subtle bg) */
+        --app-ghost: #f3f4f6;
+        /* Light tinted badge backgrounds (keep readable in dark) */
+        --app-badge-blue-bg: #eef2ff;
+        --app-badge-blue-fg: #4f46e5;
+        --app-badge-amber-bg: #fef3c7;
+        --app-badge-amber-fg: #92400e;
+        --app-badge-pink-bg: #fdf2f8;
+        --app-badge-pink-fg: #db2777;
+
+        /* ============ NEUTRAL GRAY SCALE (light = Tailwind defaults) ============ */
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+        --gray-950: #030712;
+
+        /* ============ STATUS BADGE TINTS (dark-aware) ============ */
+        --status-inprogress-bg: #dbeafe;
+        --status-inprogress-text: #2563eb;
+        --status-review-bg: #fef3c7;
+        --status-review-text: #d97706;
+        --status-planned-bg: #e5e7eb;
+        --status-planned-text: #6b7280;
+        --status-completed-bg: #dcfce7;
+        --status-completed-text: #16a34a;
+        --status-draft-bg: #e5e7eb;
+        --status-draft-text: #6b7280;
+
         /* ============ CUSTOM COLORS FROM DESIGN SYSTEM ============ */
 
         /* ----- Azure ----- */
@@ -192,8 +236,9 @@
         --compound-icon-bg: var(--color-blue-secondary);
     }
 
-    /* Dark theme (empty for now, for future use) */
+    /* Dark theme */
     .dark {
+        color-scheme: dark;
         --background: 0 0% 3.9%;
         --foreground: 0 0% 98%;
         --card: 0 0% 3.9%;
@@ -213,5 +258,114 @@
         --border: 0 0% 14.9%;
         --input: 0 0% 14.9%;
         --ring: 0 0% 83.1%;
+
+        /* ============ DESIGN SYSTEM TOKENS (dark) ============ */
+        --app-background: #0b1226;
+        --app-surface: #111a2e;
+        --app-border: #2a3448;
+        --app-border-light: #1f2840;
+        --app-text: #e5e7eb;
+        --app-muted: #8b93a7;
+        --app-primary: #0f172a;
+        --app-blue: #3b82f6;
+        --app-ghost: #1a2438;
+        --app-badge-blue-bg: #1e2745;
+        --app-badge-blue-fg: #a5b4fc;
+        --app-badge-amber-bg: #3a2f14;
+        --app-badge-amber-fg: #fbbf24;
+        --app-badge-pink-bg: #3a1d2e;
+        --app-badge-pink-fg: #f472b6;
+
+        /* ============ NEUTRAL GRAY SCALE (dark) ============ */
+        --gray-50: #151d31;
+        --gray-100: #1a2438;
+        --gray-200: #232d45;
+        --gray-300: #2f3a55;
+        --gray-400: #47536d;
+        --gray-500: #8b93a7;
+        --gray-600: #9ca3af;
+        --gray-700: #c1c7d0;
+        --gray-800: #d1d6de;
+        --gray-900: #e5e7eb;
+        --gray-950: #f3f4f6;
+
+        /* ============ LEGACY SEMANTIC VAR OVERRIDES (dark) ============ */
+        --solid-white: #111a2e;
+        --color-white: #ffffff;
+        --color-gray-100: #1a2438;
+        --color-gray-200: #232d45;
+        --color-gray-300: #5a6478;
+        --color-gray-400: #8b93a7;
+        --color-gray-500: #9ca3af;
+        --color-gray-900: #e5e7eb;
+        --color-black-10: #ffffff1f;
+        --color-black-20: #ffffff26;
+        --color-black-80: #000000cc;
+
+        --btn-outline-bg: var(--app-surface);
+        --btn-outline-border: var(--app-border);
+        --btn-outline-text: var(--app-text);
+        --btn-outline-hover-bg: var(--app-ghost);
+        --btn-outline-hover-text: var(--app-text);
+        --btn-outline-active-bg: var(--app-ghost);
+        --btn-outline-active-text: var(--app-text);
+        --btn-outline-active-border: var(--app-border);
+
+        --btn-outline-soft-bg: var(--app-surface);
+        --btn-outline-soft-border: var(--app-border);
+        --btn-outline-soft-text: var(--app-text);
+        --btn-outline-soft-hover-bg: var(--app-ghost);
+        --btn-outline-soft-hover-text: var(--app-text);
+        --btn-outline-soft-active-bg: var(--app-ghost);
+        --btn-outline-soft-active-text: var(--app-text);
+        --btn-outline-soft-active-border: var(--app-border);
+
+        --input-bg: var(--app-surface);
+        --input-border: var(--app-border);
+        --input-text: var(--app-text);
+        --input-placeholder: var(--app-muted);
+        --input-placeholder-focus-empty: var(--app-border);
+        --input-icon-default: var(--app-muted);
+        --input-icon-focus: var(--app-text);
+        --input-disabled-bg: var(--app-ghost);
+        --input-disabled-text: var(--app-muted);
+
+        /* ============ STATUS BADGE TINTS (dark) ============ */
+        --status-inprogress-bg: #17254a;
+        --status-inprogress-text: #93c5fd;
+        --status-review-bg: #3a2f14;
+        --status-review-text: #fbbf24;
+        --status-planned-bg: #232d45;
+        --status-planned-text: #9ca3af;
+        --status-completed-bg: #14321f;
+        --status-completed-text: #4ade80;
+        --status-draft-bg: #232d45;
+        --status-draft-text: #9ca3af;
+
+        --helper-text: #c1c7d0;
+
+        /* ============ LEGACY GREY/AZURE/ERROR DESIGN VAR OVERRIDES (dark) ============ */
+        --grey-4: #e5e7eb;
+        --grey-7: #e5e7eb;
+        --grey-27: #c1c7d0;
+        --grey-48: #8b93a7;
+        --grey-56: #9ca3af;
+        --grey-90: #2f3a55;
+        --grey-93: #232d45;
+        --grey-94: #1a2438;
+        --grey-96: #1a2438;
+        --grey-98: #151d31;
+        --azure-24: #17254a;
+        --azure-34: #c1c7d0;
+        --azure-46: #9ca3af;
+        --azure-64: #9ca3af;
+        --error-bg: #3a1a1a;
+        --error-disabled-bg: #3a1a1a;
+        --error-focus-shadow: #3a1a1a;
+        --red-24: #3a1a1a;
+        --red-25: #3a1a1a;
     }
 }
+
+
+

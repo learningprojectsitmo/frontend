@@ -50,7 +50,7 @@ const FeatureCard = ({
     icon,
     index: _index,
 }: (typeof features)[0] & { index: number }) => (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg cursor-default hover:-translate-y-1 transition-all duration-300">
+    <div className="rounded-2xl border border-gray-200 bg-app-surface p-6 hover:shadow-lg cursor-default hover:-translate-y-1 transition-all duration-300">
         <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-900">
             <Icon name={icon} size={20} />
         </div>
@@ -69,7 +69,7 @@ const LandingRoute = () => {
             <Head description="Платформа для поиска команды и создания проектов" title="EduFlow" />
 
             {/* Header */}
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
+            <header className="h-16 bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
                     <Icon name="logo-edu-flow" width={100} height={28} alt="EduFlow" />
                 </div>
@@ -107,7 +107,7 @@ const LandingRoute = () => {
             </header>
 
             {/* Hero Section */}
-            <div className="bg-[#F9FAFB]">
+            <div className="bg-gray-50">
                 <div className="mx-auto max-w-7xl px-6 py-20 sm:py-28 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight animate-fade-in-up">
                         Найди команду и создай
@@ -159,7 +159,7 @@ const LandingRoute = () => {
             </div>
 
             {/* For Whom Section */}
-            <div className="bg-white py-20">
+            <div className="bg-app-surface py-20">
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="text-center mb-14">
                         <h2 className="text-3xl font-bold text-gray-900">
@@ -170,7 +170,7 @@ const LandingRoute = () => {
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="rounded-2xl border border-gray-200 bg-white p-8 animate-fade-in-left">
+                        <div className="rounded-2xl border border-gray-200 bg-app-surface p-8 animate-fade-in-left">
                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-900">
                                 <Icon name="profile" size={24} />
                             </div>
@@ -181,7 +181,7 @@ const LandingRoute = () => {
                                 команду мечты.
                             </p>
                         </div>
-                        <div className="rounded-2xl border border-gray-200 bg-white p-8 animate-fade-in-right">
+                        <div className="rounded-2xl border border-gray-200 bg-app-surface p-8 animate-fade-in-right">
                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-900">
                                 <Icon name="university" size={24} />
                             </div>
@@ -197,7 +197,7 @@ const LandingRoute = () => {
             </div>
 
             {/* Features Section */}
-            <div className="bg-[#F9FAFB] py-16">
+            <div className="bg-gray-50 py-16">
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="text-center mb-14">
                         <h2 className="text-3xl font-bold text-gray-900">
@@ -216,7 +216,7 @@ const LandingRoute = () => {
             </div>
 
             {/* Community Stats */}
-            <div className="bg-white py-16">
+            <div className="bg-app-surface py-16">
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-gray-900">Сообщество растёт</h2>
@@ -250,7 +250,7 @@ const LandingRoute = () => {
                     <div className="mt-8">
                         <Button
                             size="hug56"
-                            className="bg-white text-gray-900 hover:bg-gray-100 text-[15px] font-semibold rounded-xl"
+                            className="bg-app-surface text-gray-900 hover:bg-gray-100 text-[15px] font-semibold rounded-xl"
                             onClick={() =>
                                 navigate(
                                     isLoggedIn
@@ -266,7 +266,7 @@ const LandingRoute = () => {
             </div>
 
             {/* Footer */}
-            <footer className="bg-white border-t border-gray-200 py-8">
+            <footer className="bg-app-surface border-t border-gray-200 py-8">
                 <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <Icon name="logo-edu-flow" width={80} height={22} alt="EduFlow" />

@@ -24,7 +24,7 @@ export const Notification = ({
     return (
         <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
             {/* Изменили rounded-lg на rounded-2xl для более сильного скругления */}
-            <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+            <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl bg-app-surface shadow-xl ring-1 ring-black/5">
                 <div className="p-5" role="alert" aria-label={title}>
                     <div className="flex items-start">
                         <div className="shrink-0">{icons[type]}</div>

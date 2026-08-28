@@ -57,7 +57,7 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                 <div className="space-y-4">
                     {vacancies.length > 0 ? (
                         <div className="space-y-2">
-                            <p className="text-sm font-medium text-[#0A0A0A]">Выберите роль:</p>
+                            <p className="text-sm font-medium text-gray-900">Выберите роль:</p>
                             {vacancies.map((vacancy) => (
                                 <button
                                     key={vacancy.id}
@@ -67,17 +67,17 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                         "w-full text-left p-4 rounded-xl border transition-all",
                                         selectedVacancyId === vacancy.id
                                             ? "border-[#2B7FFF] bg-blue-50 ring-1 ring-[#2B7FFF]"
-                                            : "border-gray-200 bg-white hover:border-gray-300",
+                                            : "border-gray-200 bg-app-surface hover:border-gray-300",
                                     )}
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[15px] font-semibold text-[#0A0A0A]">
+                                                <span className="text-[15px] font-semibold text-gray-900">
                                                     {vacancy.title}
                                                 </span>
                                                 {vacancy.required_count > 0 && (
-                                                    <span className="text-[11px] font-medium text-[#4A5565] bg-gray-100 px-1.5 py-0.5 rounded-md">
+                                                    <span className="text-[11px] font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-md">
                                                         осталось {vacancy.required_count}
                                                     </span>
                                                 )}
@@ -87,9 +87,9 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                                     {vacancy.tasks.map((task, i) => (
                                                         <div
                                                             key={i}
-                                                            className="text-[13px] text-[#4A5565] flex items-center gap-1.5"
+                                                            className="text-[13px] text-gray-600 flex items-center gap-1.5"
                                                         >
-                                                            <span className="w-1 h-1 rounded-full bg-[#4A5565] shrink-0" />
+                                                            <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />
                                                             {task}
                                                         </div>
                                                     ))}
@@ -106,14 +106,14 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                             ))}
                         </div>
                     ) : (
-                        <p className="text-sm text-[#4A5565]">
+                        <p className="text-sm text-gray-600">
                             В проекте нет указанных ролей. Вы можете просто откликнуться.
                         </p>
                     )}
 
                     {resumes.length > 0 && (
                         <div className="space-y-2">
-                            <p className="text-sm font-medium text-[#0A0A0A]">
+                            <p className="text-sm font-medium text-gray-900">
                                 Прикрепить резюме (необязательно):
                             </p>
                             <div className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -130,11 +130,11 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                             "w-full text-left px-3 py-2 rounded-lg border transition-all text-sm",
                                             selectedResumeId === resume.id
                                                 ? "border-[#2B7FFF] bg-blue-50"
-                                                : "border-gray-200 bg-white hover:border-gray-300",
+                                                : "border-gray-200 bg-app-surface hover:border-gray-300",
                                         )}
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="font-medium text-[#0A0A0A]">
+                                            <span className="font-medium text-gray-900">
                                                 {resume.header}
                                             </span>
                                             {selectedResumeId === resume.id && (

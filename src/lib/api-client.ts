@@ -140,8 +140,7 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
 };
 
 export const getApiErrorMessage = (error: unknown, fallback: string): string => {
-    const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data
-        ?.detail;
+    const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
     if (detail && ERROR_TRANSLATIONS[detail]) {
         return ERROR_TRANSLATIONS[detail];
     }

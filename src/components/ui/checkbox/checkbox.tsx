@@ -11,7 +11,7 @@ const Checkbox = React.forwardRef<
         ref={ref}
         className={cn(
             // Размер 18x18px лучше всего подходит под текст 13px
-            "peer h-[18px] w-[18px] shrink-0 rounded-[4px] border border-[#D1D5DB] bg-white transition-all",
+            "peer h-[18px] w-[18px] shrink-0 rounded-[4px] border border-gray-300 bg-app-surface transition-all",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50",
             // Состояние Checked: синий фон и убираем рамку

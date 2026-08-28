@@ -36,7 +36,7 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
 
                 {/* Percentage label */}
                 {showPercentage && (
-                    <div className="text-[#6A7282] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                    <div className="text-gray-500 text-[13px] font-normal font-sans leading-5 tracking-tight">
                         {clampedValue}%
                     </div>
                 )}

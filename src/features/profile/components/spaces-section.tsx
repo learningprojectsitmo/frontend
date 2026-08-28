@@ -11,7 +11,7 @@ export function SpacesSection() {
             <div>
                 <h2 className="text-lg font-semibold text-app-text mb-6">Мои пространства</h2>
                 <div className="flex items-center justify-center py-16">
-                    <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#2563EB] rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -23,7 +23,7 @@ export function SpacesSection() {
         return (
             <div>
                 <h2 className="text-lg font-semibold text-app-text mb-6">Мои пространства</h2>
-                <div className="text-center py-16 text-[14px] text-[#6B7280]">
+                <div className="text-center py-16 text-[14px] text-gray-500">
                     У вас пока нет пространств
                 </div>
             </div>

@@ -30,7 +30,7 @@ export const RoleSelect = ({ roles, selectedRoleId, onRoleChange, className }: R
         <div className={cn("relative w-64", className)} ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-4 py-2 bg-white border border-[--color-black-10] rounded-lg text-[15px] text-[--grey-4] hover:bg-[--grey-96] transition-colors"
+                className="w-full flex items-center justify-between px-4 py-2 bg-app-surface border border-[--color-black-10] rounded-lg text-[15px] text-[--grey-4] hover:bg-[--grey-96] transition-colors"
             >
                 <span>{selectedRole?.name || "Выберите роль"}</span>
                 <Icon
@@ -41,7 +41,7 @@ export const RoleSelect = ({ roles, selectedRoleId, onRoleChange, className }: R
             </button>
 
             {isOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-[--color-black-10] rounded-lg shadow-lg overflow-hidden">
+                <div className="absolute z-10 w-full mt-1 bg-app-surface border border-[--color-black-10] rounded-lg shadow-lg overflow-hidden">
                     {roles.map((role) => (
                         <button
                             key={role.id}

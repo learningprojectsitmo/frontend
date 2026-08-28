@@ -17,7 +17,8 @@ const ru = {
                 response_rejected: "{{actor_name}} отклонил ваш отклик на проект {{project_name}}",
                 invitation_received: "{{actor_name}} приглашает вас в проект {{project_name}}",
                 invitation_accepted: "{{actor_name}} принял приглашение в проект {{project_name}}",
-                invitation_rejected: "{{actor_name}} отклонил приглашение в проект {{project_name}}",
+                invitation_rejected:
+                    "{{actor_name}} отклонил приглашение в проект {{project_name}}",
             },
             time: {
                 justNow: "только что",

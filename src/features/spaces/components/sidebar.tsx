@@ -113,7 +113,7 @@ export const Sidebar = memo(function Sidebar({
             <CreateSpaceModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
             <aside
                 className={cn(
-                    "bg-white border-r border-app-border flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
+                    "theme-flip-chrome-rail bg-app-surface border-r border-app-border flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
                     isCollapsed ? "w-[56px]" : "w-[260px]",
                 )}
             >
@@ -249,7 +249,7 @@ export const Sidebar = memo(function Sidebar({
                                     .filter((category) => category.spaces.length > 0)
                                     .map((category) => (
                                         <div key={category.name}>
-                                            <p className="px-1 mb-2 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-[0.08em]">
+                                            <p className="px-1 mb-2 text-[11px] font-semibold text-gray-400 uppercase tracking-[0.08em]">
                                                 {category.name}
                                             </p>
 
@@ -265,7 +265,7 @@ export const Sidebar = memo(function Sidebar({
                                                                 className={cn(
                                                                     "flex items-center gap-3 w-full h-11 px-3.5 rounded-[12px] transition-all duration-150 group",
                                                                     isActive
-                                                                        ? "bg-[#EEF2FF]"
+                                                                        ? "bg-app-badge-blue"
                                                                         : "hover:bg-gray-50 border border-transparent",
                                                                 )}
                                                             >

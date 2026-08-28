@@ -17,12 +17,24 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/utils/cn";
 import { LineButton } from "@/components/ui/button";
-import { useMyNotifications, useMarkAllNotificationsRead, useMarkNotificationRead } from "@/lib/notifications";
+import {
+    useMyNotifications,
+    useMarkAllNotificationsRead,
+    useMarkNotificationRead,
+} from "@/lib/notifications";
 import { api } from "@/lib/api-client";
 import type { NotificationType } from "@/types/api";
 
-const RESPONSE_TYPES: NotificationType[] = ["response_received", "response_accepted", "response_rejected"];
-const INVITATION_TYPES: NotificationType[] = ["invitation_received", "invitation_accepted", "invitation_rejected"];
+const RESPONSE_TYPES: NotificationType[] = [
+    "response_received",
+    "response_accepted",
+    "response_rejected",
+];
+const INVITATION_TYPES: NotificationType[] = [
+    "invitation_received",
+    "invitation_accepted",
+    "invitation_rejected",
+];
 
 const tabs = [
     { key: "all", labelKey: "notifications.tabs.all" },
@@ -77,8 +89,10 @@ export function NotificationsNav() {
 
     const filteredNotifications = React.useMemo(() => {
         if (activeTab === "all") return notifications;
-        if (activeTab === "responses") return notifications.filter((n) => RESPONSE_TYPES.includes(n.type));
-        if (activeTab === "invitations") return notifications.filter((n) => INVITATION_TYPES.includes(n.type));
+        if (activeTab === "responses")
+            return notifications.filter((n) => RESPONSE_TYPES.includes(n.type));
+        if (activeTab === "invitations")
+            return notifications.filter((n) => INVITATION_TYPES.includes(n.type));
         return [];
     }, [notifications, activeTab]);
 
@@ -154,7 +168,7 @@ export function NotificationsNav() {
                                     className={cn(
                                         "flex items-center gap-1.5 px-3 py-1.5 font-sans text-[13px] font-medium rounded-full transition-colors",
                                         activeTab === tab.key
-                                            ? "bg-white text-gray-900"
+                                            ? "bg-app-surface text-gray-900"
                                             : "text-gray-600 hover:bg-gray-100",
                                     )}
                                 >
@@ -197,7 +211,8 @@ export function NotificationsNav() {
                                 const timeStr = formatRelativeTime(item.created_at, t);
                                 const initials = getInitials(item.data.actor_name);
                                 const hasActions =
-                                    (item.type === "invitation_received" && item.data.invitation_id) ||
+                                    (item.type === "invitation_received" &&
+                                        item.data.invitation_id) ||
                                     (item.type === "response_accepted" && item.data.response_id);
                                 const actionId =
                                     item.type === "invitation_received"

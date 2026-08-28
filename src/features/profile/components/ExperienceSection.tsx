@@ -29,17 +29,17 @@ export const ExperienceSection = ({ experiences }: Props) => {
     };
 
     return (
-        <div className="bg-white rounded-3xl shadow-sm p-6">
+        <div className="bg-app-surface rounded-3xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[#222]">Опыт работы</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Опыт работы</h2>
                 {totalDuration && items.length > 0 && (
-                    <span className="text-sm text-[#8A8A8A]">{totalDuration}</span>
+                    <span className="text-sm text-gray-500">{totalDuration}</span>
                 )}
             </div>
             {items.length === 0 ? (
-                <p className="text-sm text-[#8A8A8A]">Нет опыта работы</p>
+                <p className="text-sm text-gray-500">Нет опыта работы</p>
             ) : (
-                <div className="divide-y divide-[#EAEAEA]">
+                <div className="divide-y divide-gray-200">
                     {items.map((exp) => (
                         <ExperienceItem
                             key={exp.id}

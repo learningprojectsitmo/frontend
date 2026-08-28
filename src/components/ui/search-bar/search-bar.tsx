@@ -17,7 +17,7 @@ const escapeRegExp = (string: string) => {
 };
 
 const HighlightMatch = ({ text, highlight }: { text: string; highlight: string }) => {
-    if (!highlight) return <span className="text-[#0A0A0A] font-medium font-sans">{text}</span>;
+    if (!highlight) return <span className="text-gray-900 font-medium font-sans">{text}</span>;
 
     const parts = text.split(new RegExp(`(${escapeRegExp(highlight)})`, "gi"));
     return (
@@ -28,7 +28,7 @@ const HighlightMatch = ({ text, highlight }: { text: string; highlight: string }
                         {part}
                     </strong>
                 ) : (
-                    <span key={i} className="text-[#0A0A0A] font-normal font-sans">
+                    <span key={i} className="text-gray-900 font-normal font-sans">
                         {part}
                     </span>
                 ),
@@ -162,20 +162,20 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                         disabled
                             ? "bg-[--input-disabled-bg] border-transparent opacity-70"
                             : isFocused
-                              ? "border-[--color-blue-primary] shadow-[0_0_0_3px_var(--color-blue-15)] ring-1 ring-[--color-blue-primary] bg-[#F4F5F8]"
-                              : "bg-[#F4F5F8] border-transparent hover:bg-gray-200/50",
+                              ? "border-[--color-blue-primary] shadow-[0_0_0_3px_var(--color-blue-15)] ring-1 ring-[--color-blue-primary] bg-gray-100"
+                              : "bg-gray-100 border-transparent hover:bg-gray-200/50",
                     )}
                 >
                     <div
                         className={cn(
                             "flex items-center h-9 px-4 shrink-0 transition-colors",
-                            isFocused ? "bg-white" : "bg-transparent",
+                            isFocused ? "bg-app-surface" : "bg-transparent",
                         )}
                     >
                         <Search
                             className={cn(
                                 "shrink-0 transition-colors z-10 text-sans",
-                                isFocused ? "text-[#0A0A0A]" : "text-[--color-gray-400]",
+                                isFocused ? "text-gray-900" : "text-[--color-gray-400]",
                             )}
                             size={18}
                         />
@@ -199,7 +199,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                                 placeholder={placeholder}
                                 disabled={disabled}
                                 className={cn(
-                                    "relative z-10 w-full bg-transparent border-none outline-none font-medium font-sans text-[14px] text-[#0A0A0A]",
+                                    "relative z-10 w-full bg-transparent border-none outline-none font-medium font-sans text-[14px] text-gray-900",
                                     "placeholder:text-[--color-gray-400]",
                                 )}
                                 onKeyDown={handleKeyDown}
@@ -211,7 +211,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="shrink-0 text-[--color-gray-400] hover:text-[#0A0A0A] transition-colors focus:outline-none p-1 ml-1"
+                                className="shrink-0 text-[--color-gray-400] hover:text-gray-900 transition-colors focus:outline-none p-1 ml-1"
                             >
                                 <X size={18} />
                             </button>

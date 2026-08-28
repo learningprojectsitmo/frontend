@@ -14,11 +14,11 @@ export function FilterTrigger({ activeCount, open, onClick }: FilterTriggerProps
             onClick={onClick}
             className={cn(
                 "inline-flex items-center gap-2 h-10 px-[14px] rounded-[10px] text-[13px] font-medium transition-colors",
-                "bg-white border border-[#E5E7EB] text-[#111827]",
-                "hover:bg-[#F9FAFB]",
+                "bg-app-surface border border-gray-200 text-gray-900",
+                "hover:bg-gray-50",
             )}
         >
-            <ListFilter size={16} className="text-[#6B7280]" />
+            <ListFilter size={16} className="text-gray-500" />
             <span>Фильтры</span>
             {activeCount > 0 && (
                 <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-[#2563EB] text-white text-[11px] font-semibold">
@@ -27,7 +27,7 @@ export function FilterTrigger({ activeCount, open, onClick }: FilterTriggerProps
             )}
             <ChevronDown
                 size={16}
-                className={cn("text-[#6B7280] transition-transform", open && "rotate-180")}
+                className={cn("text-gray-500 transition-transform", open && "rotate-180")}
                 style={{ transitionDuration: "160ms" }}
             />
         </button>

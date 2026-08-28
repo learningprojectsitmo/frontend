@@ -13,7 +13,7 @@ export function IdeaCard({ idea, onVoteUp, onVoteDown }: IdeaCardProps) {
     return (
         <Link
             to={`/app/ideas/${idea.id}`}
-            className="block group bg-white border border-[--color-black-10] rounded-[14px] p-5 flex gap-4 transition-shadow duration-200 hover:shadow-md cursor-pointer"
+            className="block group bg-app-surface border border-[--color-black-10] rounded-[14px] p-5 flex gap-4 transition-shadow duration-200 hover:shadow-md cursor-pointer"
         >
             <VotePanel
                 votes={idea.votes}

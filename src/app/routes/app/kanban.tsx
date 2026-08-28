@@ -362,7 +362,7 @@ export const KanbanRoute = () => {
                             {[1, 2, 3].map((i) => (
                                 <div
                                     key={i}
-                                    className="w-64 flex-shrink-0 rounded-lg border border-gray-200 bg-white p-2"
+                                    className="w-64 flex-shrink-0 rounded-lg border border-gray-200 bg-app-surface p-2"
                                 >
                                     <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
                                     <div className="space-y-2">
@@ -406,7 +406,7 @@ export const KanbanRoute = () => {
             </div>
             {/* Область канбан-доски без лишних отступов снизу */}
             {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
-            <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
+            <div className="min-h-full bg-[hsl(216,22%,95%)] dark:bg-[#0b1226] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] dark:bg-[radial-gradient(#2a3448_2px,transparent_1px)] [background-size:16px_16px]">
                 <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
                     <section aria-label="Канбан-доска с задачами">
                         <div className="min-w-min">

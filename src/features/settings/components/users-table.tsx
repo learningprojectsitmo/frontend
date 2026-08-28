@@ -39,7 +39,7 @@ export const UsersTable = ({ users, page, totalPages, onPageChange, loading }: U
 
     return (
         <div>
-            <div className="w-full overflow-hidden rounded-2xl border border-[--color-black-10] bg-white">
+            <div className="w-full overflow-hidden rounded-2xl border border-[--color-black-10] bg-app-surface">
                 <table className="w-full text-left">
                     <thead className="bg-[--grey-98] border-b border-[--color-black-10]">
                         <tr>
@@ -97,14 +97,14 @@ export const UsersTable = ({ users, page, totalPages, onPageChange, loading }: U
                     <button
                         onClick={() => onPageChange(Math.max(1, page - 1))}
                         disabled={page <= 1}
-                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         Назад
                     </button>
 
                     {getPageNumbers().map((p, idx) =>
                         p === "..." ? (
-                            <span key={`ellipsis-${idx}`} className="px-1 text-[#9CA3AF] text-sm">
+                            <span key={`ellipsis-${idx}`} className="px-1 text-gray-400 text-sm">
                                 ...
                             </span>
                         ) : (
@@ -114,7 +114,7 @@ export const UsersTable = ({ users, page, totalPages, onPageChange, loading }: U
                                 className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
                                     p === page
                                         ? "bg-[#2563EB] text-white"
-                                        : "text-[#6B7280] hover:bg-gray-50"
+                                        : "text-gray-500 hover:bg-gray-50"
                                 }`}
                             >
                                 {p}
@@ -125,7 +125,7 @@ export const UsersTable = ({ users, page, totalPages, onPageChange, loading }: U
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
                         disabled={page >= totalPages}
-                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         Вперёд
                     </button>

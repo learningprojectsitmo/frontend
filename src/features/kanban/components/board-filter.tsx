@@ -123,7 +123,7 @@ export const KanbanFilter: React.FC<Props> = ({
     // Бейдж с количеством выбранных в sub-menu
     const badge = (n: number) =>
         n > 0 ? (
-            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700">
+            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                 {n}
             </span>
         ) : null;
@@ -137,7 +137,7 @@ export const KanbanFilter: React.FC<Props> = ({
                         "inline-flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                         "min-w-[160px]",
                         active
-                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60"
                             : "bg-gray-200 text-black hover:bg-gray-300",
                     )}
                     aria-label="Фильтр задач"

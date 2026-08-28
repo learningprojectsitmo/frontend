@@ -15,7 +15,7 @@ const OTPFieldDemo: React.FC<OTPFieldDemoProps> = ({ error, ...props }) => {
                         key={index}
                         index={index}
                         className={cn(
-                            "box-border inline-flex h-20 w-16 appearance-none items-center justify-center rounded-2xl border bg-white text-center text-gray-900 shadow-sm outline-none",
+                            "box-border inline-flex h-20 w-16 appearance-none items-center justify-center rounded-2xl border bg-app-surface text-center text-gray-900 shadow-sm outline-none",
                             error
                                 ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
                                 : "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200",

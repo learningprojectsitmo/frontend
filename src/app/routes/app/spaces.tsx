@@ -46,12 +46,12 @@ const SpacesRoute = () => {
     });
 
     const statusStyles: Record<string, { bg: string; text: string }> = {
-        in_progress: { bg: "#DBEAFE", text: "#2563EB" },
-        review: { bg: "#FEF3C7", text: "#D97706" },
-        planned: { bg: "#E5E7EB", text: "#6B7280" },
-        completed: { bg: "#DCFCE7", text: "#16A34A" },
-        draft: { bg: "#E5E7EB", text: "#6B7280" },
-        archived: { bg: "#E5E7EB", text: "#6B7280" },
+        in_progress: { bg: "var(--status-inprogress-bg)", text: "var(--status-inprogress-text)" },
+        review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
+        planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
+        completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
+        draft: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
+        archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
     };
 
     const statusOptions = useMemo(() => {
@@ -374,13 +374,13 @@ const SpacesRoute = () => {
                                         </FilterSection>
                                     </FilterDropdown>
                                 </div>
-                                <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden shrink-0">
+                                <div className="flex items-center h-10 bg-app-surface border border-gray-200 rounded-[12px] overflow-hidden shrink-0">
                                     <button
                                         onClick={() => setActiveView("grid")}
                                         className={`flex items-center justify-center w-10 h-full transition-colors ${
                                             activeView === "grid"
-                                                ? "bg-[#111827] text-white"
-                                                : "text-[#6B7280] hover:bg-gray-50"
+                                                ? "bg-gray-900 text-white"
+                                                : "text-gray-500 hover:bg-gray-50"
                                         }`}
                                     >
                                         <LayoutGrid size={16} />
@@ -389,8 +389,8 @@ const SpacesRoute = () => {
                                         onClick={() => setActiveView("list")}
                                         className={`flex items-center justify-center w-10 h-full transition-colors ${
                                             activeView === "list"
-                                                ? "bg-[#111827] text-white"
-                                                : "text-[#6B7280] hover:bg-gray-50"
+                                                ? "bg-gray-900 text-white"
+                                                : "text-gray-500 hover:bg-gray-50"
                                         }`}
                                     >
                                         <List size={16} />
@@ -400,7 +400,7 @@ const SpacesRoute = () => {
                         </div>
 
                         {projects.length === 0 ? (
-                            <div className="rounded-xl border border-[#E5E7EB] bg-white p-12 text-center">
+                            <div className="rounded-xl border border-gray-200 bg-app-surface p-12 text-center">
                                 <p className="text-[15px] text-gray-500">
                                     Вы ещё не открыли ни одного проекта.
                                 </p>
@@ -409,9 +409,9 @@ const SpacesRoute = () => {
                                 </p>
                             </div>
                         ) : activeView === "list" ? (
-                            <div className="bg-white rounded-[20px] border border-[#E5E7EB] overflow-hidden">
+                            <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
                                 <table className="w-full border-collapse">
-                                    <thead className="text-app-text border-b border-[#E5E7EB] bg-[#FAFAFA]">
+                                    <thead className="text-app-text border-b border-gray-200 bg-gray-50">
                                         <tr>
                                             <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
                                                 Название
@@ -438,7 +438,7 @@ const SpacesRoute = () => {
                                             return (
                                                 <tr
                                                     key={raw.id}
-                                                    className="group border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB]"
+                                                    className="group border-b border-gray-100 transition-colors hover:bg-gray-50"
                                                 >
                                                     <td className="px-6 py-4">
                                                         <Link
@@ -454,7 +454,7 @@ const SpacesRoute = () => {
                                                             >
                                                                 {label}
                                                             </span>
-                                                            <span className="text-[14px] font-medium text-[#111827] group-hover:text-[#2563EB] transition-colors">
+                                                            <span className="text-[14px] font-medium text-gray-900 group-hover:text-[#2563EB] transition-colors">
                                                                 {raw.title}
                                                             </span>
                                                         </Link>
@@ -465,26 +465,26 @@ const SpacesRoute = () => {
                                                                 raw.roles.map((r, i) => (
                                                                     <span
                                                                         key={i}
-                                                                        className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-[#111827] leading-none"
+                                                                        className="inline-flex items-center h-6 px-2 rounded-[8px] bg-gray-100 text-[12px] font-medium text-gray-900 leading-none"
                                                                     >
                                                                         {r}
                                                                     </span>
                                                                 ))
                                                             ) : (
-                                                                <span className="text-[13px] text-[#9CA3AF]">
+                                                                <span className="text-[13px] text-gray-400">
                                                                     —
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className="text-[13px] text-[#6B7280]">
+                                                        <span className="text-[13px] text-gray-500">
                                                             {raw.members_count}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {raw.start_date ? (
-                                                            <span className="text-[13px] text-[#4B5563]">
+                                                            <span className="text-[13px] text-gray-600">
                                                                 {new Date(
                                                                     raw.start_date,
                                                                 ).toLocaleDateString("ru-RU", {
@@ -494,22 +494,22 @@ const SpacesRoute = () => {
                                                                 })}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-[13px] text-[#9CA3AF]">
+                                                            <span className="text-[13px] text-gray-400">
                                                                 —
                                                             </span>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-[100px] h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                                            <div className="w-[100px] h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                                 <div
-                                                                    className="h-full rounded-full bg-[#111827] transition-all duration-300"
+                                                                    className="h-full rounded-full bg-gray-900 transition-all duration-300"
                                                                     style={{
                                                                         width: `${Math.min(100, Math.max(0, raw.progress))}%`,
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[12px] font-medium text-[#6B7280] w-8 text-right tabular-nums">
+                                                            <span className="text-[12px] font-medium text-gray-500 w-8 text-right tabular-nums">
                                                                 {raw.progress}%
                                                             </span>
                                                         </div>

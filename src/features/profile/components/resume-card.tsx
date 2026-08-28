@@ -31,7 +31,7 @@ export function ResumeCard({ resume, onClick }: ResumeCardProps) {
         <button
             type="button"
             onClick={onClick}
-            className="w-full text-left rounded-[22px] border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow cursor-pointer"
+            className="w-full text-left rounded-[22px] border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow cursor-pointer"
         >
             <div className="flex items-center justify-between">
                 <h3 className="text-[15px] font-bold text-gray-900">{resume.position}</h3>

@@ -43,7 +43,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex justify-center mb-8">
                 <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
             </div>
@@ -91,7 +91,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                                                 }
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 type="button"
-                                                className="text-[#0A0A0A] hover:bg-transparent active:bg-transparent"
+                                                className="text-gray-900 hover:bg-transparent active:bg-transparent"
                                             />
                                         }
                                         {...field}
@@ -165,7 +165,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                     <span className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500 font-normal font-sans text-signature">
+                    <span className="bg-app-surface px-2 text-gray-500 font-normal font-sans text-signature">
                         или войдите с помощью
                     </span>
                 </div>

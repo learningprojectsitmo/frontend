@@ -74,7 +74,7 @@ export const CreateAccForm = () => {
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link
                     to={paths.auth.login.getHref(redirectTo)}
@@ -88,7 +88,7 @@ export const CreateAccForm = () => {
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Создание нового аккаунта
             </h2>
-            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
+            <h4 className="mb-12 text-grey-400 text-gray-600 font-medium font-sans text-body">
                 Введите свой адрес электронной почты и создайте пароль
             </h4>
 

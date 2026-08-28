@@ -113,7 +113,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
         <div>
             <div className="flex items-start gap-3 mb-5">
                 <div className="shrink-0 mt-0.5">
-                    <IconComponent className="w-5 h-5 text-[#666]" strokeWidth={1.5} />
+                    <IconComponent className="w-5 h-5 text-gray-500" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -122,25 +122,25 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
                                 placeholder="Название проекта или компании"
-                                className="w-full text-base font-semibold text-[#222] bg-transparent border-b border-gray-200 px-0 py-0.5 outline-none focus:border-gray-400"
+                                className="w-full text-base font-semibold text-gray-900 bg-transparent border-b border-gray-200 px-0 py-0.5 outline-none focus:border-gray-400"
                             />
                         ) : (
-                            <h3 className="text-base font-semibold text-[#222] truncate">
+                            <h3 className="text-base font-semibold text-gray-900 truncate">
                                 {company || "Новый опыт"}
                             </h3>
                         )}
-                        {!isNew && <Pencil className="w-4 h-4 text-[#8A8A8A] shrink-0" />}
+                        {!isNew && <Pencil className="w-4 h-4 text-gray-500 shrink-0" />}
                     </div>
                 </div>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <label className="text-xs text-[#8A8A8A] mb-1 block">Тип</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Тип</label>
                     <select
                         value={experienceType}
                         onChange={(e) => setExperienceType(e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px] bg-[right_12px_center] bg-no-repeat"
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 bg-app-surface appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px] bg-[right_12px_center] bg-no-repeat"
                     >
                         <option value="project">Проект</option>
                         <option value="internship">Стажировка</option>
@@ -150,7 +150,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                 <div className="relative">
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs text-[#8A8A8A] mb-1 block">Дата начала</label>
+                            <label className="text-xs text-gray-500 mb-1 block">Дата начала</label>
                             <button
                                 type="button"
                                 onClick={() => setActiveField("from")}
@@ -161,7 +161,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                             </button>
                         </div>
                         <div>
-                            <label className="text-xs text-[#8A8A8A] mb-1 block">
+                            <label className="text-xs text-gray-500 mb-1 block">
                                 Дата окончания
                             </label>
                             <button
@@ -202,7 +202,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                 </div>
 
                 <div>
-                    <label className="text-xs text-[#8A8A8A] mb-1 block">Роль</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Роль</label>
                     <input
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
@@ -212,7 +212,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                 </div>
 
                 <div>
-                    <label className="text-xs text-[#8A8A8A] mb-1 block">Описание</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Описание</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}

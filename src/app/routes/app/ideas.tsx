@@ -45,7 +45,7 @@ const IdeasRoute = () => {
                     />
 
                     {ideas.length === 0 ? (
-                        <div className="bg-white border border-[--color-black-10] rounded-[14px] p-12 flex flex-col items-center justify-center text-center">
+                        <div className="bg-app-surface border border-[--color-black-10] rounded-[14px] p-12 flex flex-col items-center justify-center text-center">
                             <div className="w-16 h-16 rounded-full bg-[--azure-60]/10 flex items-center justify-center mb-4">
                                 <Lightbulb size="32" className="text-[--azure-60]" />
                             </div>

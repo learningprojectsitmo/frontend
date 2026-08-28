@@ -36,7 +36,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
         };
 
         const getTextColor = () => {
-            return colorVariant === "dark" ? "text-[--azure-46]" : "text-[--black-50]";
+            return colorVariant === "dark" ? "text-app-muted" : "text-app-muted";
         };
 
         if (variant === "compact") {

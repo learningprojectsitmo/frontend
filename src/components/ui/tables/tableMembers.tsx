@@ -40,10 +40,10 @@ export const TableMembers = ({
     onRowClick,
 }: TableProps) => {
     return (
-        <div className="w-full overflow-hidden rounded-[20px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
+        <div className="w-full overflow-hidden rounded-[20px] border border-gray-200 bg-app-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="text-app-text border-b border-[#E5E7EB] sticky top-0 bg-[#FAFAFA] z-10">
+                    <thead className="text-app-text border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
                         <tr>
                             {headerList.map((header) => (
                                 <th
@@ -61,12 +61,12 @@ export const TableMembers = ({
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-[#E5E7EB] text-[13px] font-sans font-medium">
+                    <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
                         {members.map((member) => (
                             <tr
                                 key={member.id}
                                 className={cn(
-                                    "h-16 hover:bg-[#FAFAFA] transition",
+                                    "h-16 hover:bg-gray-50 transition",
                                     onRowClick && "cursor-pointer",
                                 )}
                                 onClick={() => onRowClick?.(member)}
@@ -84,7 +84,7 @@ export const TableMembers = ({
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E5E7EB] text-sm font-semibold text-app-text">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
                                                 {getInitials(member.name)}
                                             </div>
                                             <span className="text-app-text font-sans">
@@ -108,7 +108,7 @@ export const TableMembers = ({
                                                 ))}
                                             </div>
                                         ) : (
-                                            <span className="text-[#9CA3AF]">—</span>
+                                            <span className="text-gray-400">—</span>
                                         )}
                                     </td>
                                 )}

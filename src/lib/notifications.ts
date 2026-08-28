@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NotificationListResponse } from "@/types/api";
 import { api } from "./api-client";
 
-export const getMyNotifications = async (page = 1, limit = 20): Promise<NotificationListResponse> => {
+export const getMyNotifications = async (
+    page = 1,
+    limit = 20,
+): Promise<NotificationListResponse> => {
     return await api.get("/notifications/my", { params: { page, limit } });
 };
 

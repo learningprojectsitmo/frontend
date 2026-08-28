@@ -40,7 +40,7 @@ export function ProjectsSection() {
                     onChangeView={setViewMode}
                 />
                 <div className="flex items-center justify-center py-16">
-                    <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#2563EB] rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -59,7 +59,7 @@ export function ProjectsSection() {
                     viewMode={viewMode}
                     onChangeView={setViewMode}
                 />
-                <div className="text-center py-16 text-[14px] text-[#6B7280]">
+                <div className="text-center py-16 text-[14px] text-gray-500">
                     У вас пока нет проектов
                 </div>
             </div>
@@ -80,7 +80,7 @@ export function ProjectsSection() {
             />
 
             {filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-[14px] text-[#6B7280]">
+                <div className="text-center py-12 text-[14px] text-gray-500">
                     Проекты не найдены
                 </div>
             ) : viewMode === "grid" ? (
@@ -111,17 +111,15 @@ export function ProjectsSection() {
                     })}
                 </div>
             ) : (
-                <div className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
+                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-hidden">
                     <table className="w-full text-left text-[13px]">
                         <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Название</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Статус</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Прогресс</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Участники</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">
-                                    Дата старта
-                                </th>
+                            <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="py-3 px-4 font-medium text-gray-500">Название</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Статус</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Прогресс</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Участники</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Дата старта</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -131,30 +129,30 @@ export function ProjectsSection() {
                                 return (
                                     <tr
                                         key={project.id}
-                                        className="border-b border-[#F3F4F6] cursor-pointer hover:bg-[#F9FAFB]"
+                                        className="border-b border-gray-100 cursor-pointer hover:bg-gray-50"
                                         onClick={() => {}}
                                     >
-                                        <td className="py-3 px-4 font-medium text-[#111827]">
+                                        <td className="py-3 px-4 font-medium text-gray-900">
                                             {project.title}
                                         </td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium"
                                                 style={{
-                                                    backgroundColor: "#DBEAFE",
-                                                    color: "#2563EB",
+                                                    backgroundColor: "var(--status-inprogress-bg)",
+                                                    color: "var(--status-inprogress-text)",
                                                 }}
                                             >
                                                 {tagInfo.label}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">
+                                        <td className="py-3 px-4 text-gray-500">
                                             {project.progress}%
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">
+                                        <td className="py-3 px-4 text-gray-500">
                                             {project.membersCount}
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">
+                                        <td className="py-3 px-4 text-gray-500">
                                             {project.startDate}
                                         </td>
                                     </tr>

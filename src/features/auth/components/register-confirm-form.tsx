@@ -66,7 +66,7 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link
                     to={paths.auth.createAcc.getHref(redirectTo)}
@@ -80,7 +80,7 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Введите код из письма
             </h2>
-            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
+            <h4 className="mb-12 text-grey-400 text-gray-600 font-medium font-sans text-body">
                 На указанную почту был выслан 6-значный код
             </h4>
 

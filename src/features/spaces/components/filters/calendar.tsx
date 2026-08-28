@@ -76,24 +76,24 @@ export function Calendar({ selected, range, onSelect }: CalendarProps) {
     };
 
     return (
-        <div className="w-[280px] bg-white rounded-[18px] border border-[#E5E7EB] shadow-[0_20px_40px_rgba(0,0,0,0.12)] p-3">
+        <div className="w-[280px] bg-app-surface rounded-[18px] border border-gray-200 shadow-[0_20px_40px_rgba(0,0,0,0.12)] p-3">
             <div className="flex items-center justify-between h-[52px] px-4">
                 <button
                     type="button"
                     onClick={prevMonth}
-                    className="p-1 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                    <ChevronLeft size={16} className="text-[#6B7280]" />
+                    <ChevronLeft size={16} className="text-gray-500" />
                 </button>
-                <span className="text-[14px] font-semibold text-[#111827]">
+                <span className="text-[14px] font-semibold text-gray-900">
                     {MONTHS_RU[viewMonth]} {viewYear}
                 </span>
                 <button
                     type="button"
                     onClick={nextMonth}
-                    className="p-1 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                    <ChevronRight size={16} className="text-[#6B7280]" />
+                    <ChevronRight size={16} className="text-gray-500" />
                 </button>
             </div>
 
@@ -101,7 +101,7 @@ export function Calendar({ selected, range, onSelect }: CalendarProps) {
                 {WEEKDAYS.map((d) => (
                     <div
                         key={d}
-                        className="flex items-center justify-center h-8 text-[11px] font-medium text-[#9CA3AF]"
+                        className="flex items-center justify-center h-8 text-[11px] font-medium text-gray-400"
                     >
                         {d}
                     </div>
@@ -126,8 +126,10 @@ export function Calendar({ selected, range, onSelect }: CalendarProps) {
                             className={cn(
                                 "flex items-center justify-center h-8 w-8 text-[13px] font-medium rounded-[10px] transition-colors",
                                 isSelected && "bg-[#2563EB] text-white",
-                                inRange && !isSelected && "bg-[#DBEAFE] text-[#2563EB]",
-                                !isSelected && !inRange && "hover:bg-[#F3F4F6] text-[#111827]",
+                                inRange &&
+                                    !isSelected &&
+                                    "bg-[#DBEAFE] dark:bg-[#17254a] text-[#2563EB] dark:text-[#93c5fd]",
+                                !isSelected && !inRange && "hover:bg-gray-100 text-gray-900",
                                 isToday && !isSelected && "ring-1 ring-[#2563EB]",
                             )}
                         >

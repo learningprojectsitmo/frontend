@@ -9,6 +9,7 @@ import { Notifications } from "@/components/ui/notifications";
 import { LanguageSync } from "@/lib/language-sync";
 import { queryConfig } from "@/lib/react-query";
 import { Spinner } from "@/components/ui/spinner/spinner";
+import { ThemeProvider } from "@/lib/theme-provider";
 
 import "@/i18n/config";
 
@@ -37,7 +38,7 @@ const AppProvider = ({ children }: AppProviderProps) => {
                     <QueryClientProvider client={queryClient}>
                         {import.meta.env.DEV && <ReactQueryDevtools />}
                         <LanguageSync />
-                        {children}
+                        <ThemeProvider>{children}</ThemeProvider>
                         <Notifications />
                     </QueryClientProvider>
                 </HelmetProvider>

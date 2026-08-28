@@ -1,4 +1,5 @@
 import { IconButton } from "@/components/ui/button/icon-button";
+import type React from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,10 +13,13 @@ import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths.ts";
 import { useNavigate } from "react-router";
 import { useLogout } from "@/lib/auth";
+import { useTheme } from "@/lib/theme-provider";
+import { Moon, Sun } from "lucide-react";
 
 export function UserNav() {
     const navigate = useNavigate();
     const logout = useLogout();
+    const { theme, toggleTheme } = useTheme();
     const handleLogout = () => {
         logout.mutate(undefined, {
             onSuccess: () => {
@@ -26,6 +30,18 @@ export function UserNav() {
 
     return (
         <div className="flex items-center gap-4">
+            <IconButton
+                className="outline-none w-9 h-9 flex items-center justify-center cursor-pointer"
+                icon={theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                variant="ghost"
+                aria-label="Переключить тему"
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    const x = (e.clientX / window.innerWidth) * 100;
+                    const y = (e.clientY / window.innerHeight) * 100;
+                    toggleTheme({ x, y });
+                }}
+            />
+
             {/* Выпадающее меню профиля */}
             <DropdownMenu modal={false}>
                 {/* modal=false чтобы меню не блокировало фокус при открытии */}

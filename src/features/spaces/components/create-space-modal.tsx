@@ -137,7 +137,7 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                                                             "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                                                             field.value === cat.id
                                                                 ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                                : "border-gray-200 bg-white text-gray-600 hover:border-gray-300",
+                                                                : "border-gray-200 bg-app-surface text-gray-600 hover:border-gray-300",
                                                         )}
                                                     >
                                                         {cat.name}

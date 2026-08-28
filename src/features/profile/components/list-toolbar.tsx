@@ -30,14 +30,14 @@ export function ListToolbar({
                 <div className="relative">
                     <Search
                         size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                     />
                     <input
                         type="text"
                         placeholder={searchPlaceholder}
                         value={searchValue}
                         onChange={(e) => onSearch(e.target.value)}
-                        className="w-[240px] h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[14px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"
+                        className="w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                     />
                 </div>
 
@@ -45,7 +45,7 @@ export function ListToolbar({
                 <button
                     type="button"
                     onClick={onOpenFilters}
-                    className="inline-flex items-center gap-2 h-10 px-[14px] rounded-[10px] bg-white border border-[#E5E7EB] text-[13px] font-medium text-[#111827] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-2 h-10 px-[14px] rounded-[10px] bg-app-surface border border-gray-200 text-[13px] font-medium text-gray-900 hover:bg-gray-50 transition-colors"
                 >
                     <svg
                         width="16"
@@ -71,14 +71,14 @@ export function ListToolbar({
                 </button>
 
                 {/* Grid/List toggle */}
-                <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                <div className="flex items-center h-10 bg-app-surface border border-gray-200 rounded-[12px] overflow-hidden">
                     <button
                         type="button"
                         onClick={() => onChangeView("grid")}
                         className={`px-3 h-full flex items-center transition-colors ${
                             viewMode === "grid"
-                                ? "bg-[#111827] text-white"
-                                : "text-[#6B7280] hover:bg-gray-50"
+                                ? "bg-gray-900 text-white"
+                                : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >
                         <Icon name="grid" size={16} />
@@ -88,8 +88,8 @@ export function ListToolbar({
                         onClick={() => onChangeView("list")}
                         className={`px-3 h-full flex items-center transition-colors ${
                             viewMode === "list"
-                                ? "bg-[#111827] text-white"
-                                : "text-[#6B7280] hover:bg-gray-50"
+                                ? "bg-gray-900 text-white"
+                                : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >
                         <List size={16} />

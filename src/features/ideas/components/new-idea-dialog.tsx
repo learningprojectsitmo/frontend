@@ -76,7 +76,7 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-[14px] w-full max-w-lg mx-4 p-6 shadow-xl">
+            <div className="bg-app-surface rounded-[14px] w-full max-w-lg mx-4 p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-5">
                     <h2 className="text-lg font-semibold text-[--grey-4]">Новая идея</h2>
                     <button
@@ -97,7 +97,7 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Кратко опишите вашу идею"
-                            className="w-full h-11 px-4 bg-white border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
+                            className="w-full h-11 px-4 bg-app-surface border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
                             autoFocus
                         />
                     </div>
@@ -110,7 +110,7 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Подробно опишите ваше предложение..."
                             rows={4}
-                            className="w-full px-4 py-3 bg-white border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors resize-none"
+                            className="w-full px-4 py-3 bg-app-surface border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors resize-none"
                         />
                     </div>
                     <div>
@@ -161,12 +161,12 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                                         }
                                     }}
                                     placeholder="Создать свой тег..."
-                                    className="w-full h-9 px-3 bg-white border border-[--color-black-10] rounded-[8px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
+                                    className="w-full h-9 px-3 bg-app-surface border border-[--color-black-10] rounded-[8px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
                                 />
                                 {showSuggestions && suggestedTags.length > 0 && (
                                     <div
                                         ref={suggestionRef}
-                                        className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border border-[--color-black-10] rounded-[10px] shadow-lg overflow-hidden"
+                                        className="absolute left-0 right-0 top-full mt-1 z-10 bg-app-surface border border-[--color-black-10] rounded-[10px] shadow-lg overflow-hidden"
                                     >
                                         {suggestedTags.map((tag) => (
                                             <button
@@ -178,7 +178,7 @@ export function NewIdeaDialog({ open, onClose, onSubmit }: NewIdeaDialogProps) {
                                                     setShowSuggestions(false);
                                                     inputRef.current?.focus();
                                                 }}
-                                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[--grey-4] hover:bg-[#F3F4F6] transition-colors text-left"
+                                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[--grey-4] hover:bg-gray-100 transition-colors text-left"
                                             >
                                                 {tag.name}
                                                 <span className="text-xs text-[--azure-46]">

@@ -18,14 +18,14 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<TagVariant, string> = {
-    default: "bg-[--color-gray-100] text-[--color-black]",
+    default: "bg-[--color-gray-100] text-app-text",
     success: "bg-[#00C950] text-white",
     info: "bg-[--color-blue-primary] text-white",
     warning: "bg-[#F0B100] text-white",
     secondary: "bg-[--color-gray-500] text-white",
     error: "bg-[--color-red-error] text-white",
     disabled: "bg-[--color-gray-300] text-white",
-    type: "bg-white border border-[--color-black-10] text-[--grey-4] rounded-[8px]",
+    type: "bg-app-surface border border-[--color-black-10] text-app-text rounded-[8px]",
 };
 
 export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(

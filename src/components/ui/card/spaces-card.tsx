@@ -47,9 +47,9 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
     ) => {
         const iconSquareClass = archived ? "bg-[--grey-56]" : iconColor;
 
-        const titleClass = archived ? "text-[#00000099]" : "text-[--grey-4]";
+        const titleClass = archived ? "text-app-muted" : "text-[--grey-4]";
 
-        const descriptionClass = archived ? "text-[#00000080]" : "text-[#4A5565]";
+        const descriptionClass = archived ? "text-app-muted" : "text-gray-600";
 
         const metricsClass = "text-[--azure-46]";
 
@@ -57,7 +57,7 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
             <div
                 ref={ref}
                 className={cn(
-                    "min-w-[320px] p-6 border border-[--color-black-10] rounded-[14px] bg-white",
+                    "min-w-[320px] p-6 border border-[--color-black-10] rounded-[14px] bg-app-surface",
                     "flex flex-col gap-4 h-full",
                     "transition-shadow hover:shadow-md",
                     className,

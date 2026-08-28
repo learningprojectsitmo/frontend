@@ -34,7 +34,7 @@ const JoinRoute = () => {
         <>
             <Head title="Присоединение к пространству" />
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+                <div className="w-full max-w-md bg-app-surface rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
                     <div className="mb-6">
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg

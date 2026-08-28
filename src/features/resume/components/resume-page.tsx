@@ -136,8 +136,8 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     ) : data.experiences.length > 0 ? (
                         <ExperienceSection experiences={data.experiences} />
                     ) : !data.resume.has_experience && data.resume.no_experience_description ? (
-                        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
-                            <h3 className="text-lg font-semibold tracking-tight text-[#222] mb-3">
+                        <div className="bg-app-surface rounded-3xl border border-zinc-200 shadow-sm p-6">
+                            <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-3">
                                 Опыт работы
                             </h3>
                             <p className="text-sm text-gray-600">Нет опыта</p>

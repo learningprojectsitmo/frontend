@@ -61,7 +61,7 @@ export function ResponseCard({
     const folderColor = getFolderColor(projectId);
 
     return (
-        <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-5 flex flex-col gap-3">
+        <div className="bg-app-surface border border-gray-200 rounded-[16px] p-5 flex flex-col gap-3">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div
@@ -70,7 +70,7 @@ export function ResponseCard({
                     >
                         <FolderIcon color={folderColor} />
                     </div>
-                    <h3 className="text-[16px] font-bold text-[#111827] leading-tight">
+                    <h3 className="text-[16px] font-bold text-gray-900 leading-tight">
                         {projectName}
                     </h3>
                 </div>
@@ -89,8 +89,8 @@ export function ResponseCard({
                         const variants = {
                             primary: "bg-[#2563EB] text-white hover:bg-[#1D4ED8]",
                             outline:
-                                "bg-white border border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB]",
-                            ghost: "bg-transparent text-[#6B7280] hover:bg-[#F3F4F6]",
+                                "bg-app-surface border border-gray-200 text-gray-900 hover:bg-gray-50",
+                            ghost: "bg-transparent text-gray-500 hover:bg-gray-100",
                         };
                         return (
                             <button
@@ -107,17 +107,17 @@ export function ResponseCard({
             </div>
 
             {description && (
-                <p className="text-[13px] text-[#6B7280] leading-relaxed">{description}</p>
+                <p className="text-[13px] text-gray-500 leading-relaxed">{description}</p>
             )}
 
-            <div className="flex items-stretch border border-[#E5E7EB] rounded-[12px] overflow-hidden text-[13px]">
+            <div className="flex items-stretch border border-gray-200 rounded-[12px] overflow-hidden text-[13px]">
                 <div className="flex-1 px-3.5 py-2.5 flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[#9CA3AF] text-[12px]">Желаемая роль:</span>
-                    <span className="text-[#111827] truncate font-medium">{role}</span>
+                    <span className="text-gray-400 text-[12px]">Желаемая роль:</span>
+                    <span className="text-gray-900 truncate font-medium">{role}</span>
                 </div>
-                <div className="w-px bg-[#E5E7EB]" />
+                <div className="w-px bg-gray-200" />
                 <div className="flex-1 px-3.5 py-2.5 flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[#9CA3AF] text-[12px]">Резюме:</span>
+                    <span className="text-gray-400 text-[12px]">Резюме:</span>
                     {resumeUrl ? (
                         <Link
                             to={resumeUrl}
@@ -126,14 +126,14 @@ export function ResponseCard({
                             {resumeTitle || role}
                         </Link>
                     ) : (
-                        <span className="text-[#111827] truncate font-medium">
+                        <span className="text-gray-900 truncate font-medium">
                             {resumeTitle || role}
                         </span>
                     )}
                 </div>
             </div>
 
-            <div className="text-[12px] text-[#9CA3AF]">
+            <div className="text-[12px] text-gray-400">
                 {dateLabel}: {date}
             </div>
         </div>

@@ -35,9 +35,9 @@ export const TableInvitations = ({
     };
 
     return (
-        <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-app-surface">
             <table className="w-full text-left">
-                <thead className="text-[#0A0A0A] text-black-500 border-b border-gray-200">
+                <thead className="text-gray-900 text-black-500 border-b border-gray-200">
                     <tr>
                         {headerList.map((header) => (
                             <th

@@ -102,14 +102,14 @@ export const ExperienceTimeline = ({
 
     if (isEditing) {
         return (
-            <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm divide-y divide-gray-100">
+            <div className="bg-app-surface rounded-3xl border border-zinc-200 shadow-sm divide-y divide-gray-100">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold tracking-tight text-[#222]">
+                        <h3 className="text-lg font-semibold tracking-tight text-gray-900">
                             Опыт работы
                         </h3>
                         {totalDuration && (
-                            <span className="text-sm text-[#8A8A8A]">{totalDuration}</span>
+                            <span className="text-sm text-gray-500">{totalDuration}</span>
                         )}
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">

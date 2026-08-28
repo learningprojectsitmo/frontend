@@ -85,7 +85,7 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
     return (
         <div ref={ref} className="relative">
             {open && (
-                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
+                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[14px] font-semibold text-app-text">
@@ -113,14 +113,14 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
                     <div className="relative mb-2">
                         <Search
                             size={14}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                         />
                         <input
                             type="text"
                             placeholder="Поиск"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB]"
+                            className="w-full h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB]"
                         />
                     </div>
 
@@ -129,13 +129,13 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
                         {filteredOptions.map((opt) => (
                             <label
                                 key={opt.value}
-                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                             >
                                 <div
                                     className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center transition-colors ${
                                         selected.includes(opt.value)
                                             ? "bg-[#2563EB] border-[#2563EB]"
-                                            : "border-[#D1D5DB]"
+                                            : "border-gray-300"
                                     }`}
                                 >
                                     {selected.includes(opt.value) && (
@@ -435,7 +435,7 @@ const SpaceRoute = () => {
                                             setParticipantPage((p) => Math.max(1, p - 1))
                                         }
                                         disabled={participantPage <= 1}
-                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Назад
                                     </button>
@@ -450,7 +450,7 @@ const SpaceRoute = () => {
                                         .map((p, idx, arr) => (
                                             <span key={p} className="flex items-center">
                                                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                                    <span className="px-1 text-[#9CA3AF] text-sm">
+                                                    <span className="px-1 text-gray-400 text-sm">
                                                         ...
                                                     </span>
                                                 )}
@@ -459,7 +459,7 @@ const SpaceRoute = () => {
                                                     className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
                                                         p === participantPage
                                                             ? "bg-[#2563EB] text-white"
-                                                            : "text-[#6B7280] hover:bg-gray-50"
+                                                            : "text-gray-500 hover:bg-gray-50"
                                                     }`}
                                                 >
                                                     {p}
@@ -472,7 +472,7 @@ const SpaceRoute = () => {
                                             setParticipantPage((p) => Math.min(totalPages, p + 1))
                                         }
                                         disabled={participantPage >= totalPages}
-                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Вперёд
                                     </button>

@@ -161,11 +161,13 @@ const SpaceRoute = () => {
     const { addViewedProject } = useRecentlyViewed();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
 
-    const showApplyButton = !!(user?.id &&
+    const showApplyButton = !!(
+        user?.id &&
         dataProject &&
         dataProject.author_id !== user.id &&
-        !dataProject.members.some(m => m.user_id === user.id) &&
-        !dataProject.has_user_applied);
+        !dataProject.members.some((m) => m.user_id === user.id) &&
+        !dataProject.has_user_applied
+    );
 
     useEffect(() => {
         if (dataProject?.id) {
@@ -778,11 +780,11 @@ const SpaceRoute = () => {
                                     <textarea
                                         value={editDescription}
                                         onChange={(e) => setEditDescription(e.target.value)}
-                                        className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                        className="w-full self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
                                         rows={Math.max(2, Math.ceil(editDescription.length / 80))}
                                     />
                                 ) : (
-                                    <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                                    <div className="justify-center text-gray-600 text-base font-medium font-sans leading-7">
                                         {project.description}
                                     </div>
                                 )}
@@ -811,7 +813,7 @@ const SpaceRoute = () => {
                                 </div>
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
-                                        <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                        <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
                                             Создан: {project.creationDate}
                                         </div>
                                     </div>
@@ -835,7 +837,7 @@ const SpaceRoute = () => {
                                 {dataProject?.author_name && (
                                     <div className="flex justify-start items-center gap-1">
                                         <div className="inline-flex flex-col justify-start items-start">
-                                            <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                            <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
                                                 Автор: {dataProject.author_name}
                                             </div>
                                         </div>
@@ -861,7 +863,7 @@ const SpaceRoute = () => {
                                 )}
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
-                                        <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                        <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
                                             Дедлайн: {project.dateText}
                                         </div>
                                     </div>
@@ -926,7 +928,7 @@ const SpaceRoute = () => {
                     <>
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-2.5">
                             <div className="flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
+                                <div className="justify-center text-gray-900 text-xl font-semibold font-sans leading-7">
                                     Описание проекта
                                 </div>
                             </div>
@@ -936,14 +938,14 @@ const SpaceRoute = () => {
                                         <textarea
                                             value={editDescription}
                                             onChange={(e) => setEditDescription(e.target.value)}
-                                            className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                            className="w-full self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
                                             rows={Math.max(
                                                 2,
                                                 Math.ceil(editDescription.length / 80),
                                             )}
                                         />
                                     ) : (
-                                        <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
+                                        <div className="self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7">
                                             {project.descriptionExtended}
                                         </div>
                                     )}
@@ -953,7 +955,7 @@ const SpaceRoute = () => {
                                         ? editTags.map((tag, index) => (
                                               <div
                                                   key={index}
-                                                  className="h-6 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] inline-flex justify-center items-center gap-1 overflow-hidden"
+                                                  className="h-6 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 inline-flex justify-center items-center gap-1 overflow-hidden"
                                               >
                                                   <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag}
@@ -961,7 +963,7 @@ const SpaceRoute = () => {
                                                   <button
                                                       type="button"
                                                       onClick={() => removeTag(index)}
-                                                      className="text-[#6A7282] hover:text-red-500 leading-none"
+                                                      className="text-gray-500 hover:text-red-500 leading-none"
                                                   >
                                                       ✕
                                                   </button>
@@ -970,7 +972,7 @@ const SpaceRoute = () => {
                                         : project.tags.map((tag, index) => (
                                               <div
                                                   key={index}
-                                                  className="h-5 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] flex justify-center items-center overflow-hidden"
+                                                  className="h-5 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 flex justify-center items-center overflow-hidden"
                                               >
                                                   <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag.text}
@@ -990,7 +992,7 @@ const SpaceRoute = () => {
                                             }}
                                             onBlur={addTag}
                                             placeholder="Добавить тег..."
-                                            className="h-6 px-2 text-[11px] font-semibold font-sans bg-transparent border border-dashed border-[#6A7282] rounded-lg outline-none min-w-[100px]"
+                                            className="h-6 px-2 text-[11px] font-semibold font-sans bg-transparent border border-dashed border-gray-500 rounded-lg outline-none min-w-[100px]"
                                         />
                                     )}
                                 </div>
@@ -999,7 +1001,7 @@ const SpaceRoute = () => {
 
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-6">
                             <div className="flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
+                                <div className="justify-center text-gray-900 text-xl font-semibold font-sans leading-7">
                                     Необходимые участники
                                 </div>
                                 {isEditing && dataProject?.max_participants && (
@@ -1011,28 +1013,28 @@ const SpaceRoute = () => {
                             </div>
                             <div
                                 data-type="Required participants"
-                                className="self-stretch p-2.5 bg-[#FFFFFF] rounded-2xl outline outline-1  outline-[#0000001A] flex flex-col justify-start items-start gap-2.5"
+                                className="self-stretch p-2.5 bg-app-surface rounded-2xl outline outline-1  outline-gray-200 flex flex-col justify-start items-start gap-2.5"
                             >
                                 <div className="self-stretch inline-flex justify-start items-center gap-5">
                                     <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Роль
                                         </div>
                                     </div>
                                     <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Задачи
                                         </div>
                                     </div>
                                     <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Количество участников
                                         </div>
                                     </div>
                                 </div>
                                 {(isEditing ? editRoles : project.roles).map((role, index) => (
                                     <Fragment key={index}>
-                                        <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
+                                        <div className="self-stretch h-0 outline outline-1 outline-[#0000001A] dark:outline-[#ffffff1f]"></div>
                                         {isEditing ? (
                                             <div className="self-stretch inline-flex justify-start items-center gap-5">
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center">
@@ -1046,7 +1048,7 @@ const SpaceRoute = () => {
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="w-full justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                        className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
@@ -1067,7 +1069,7 @@ const SpaceRoute = () => {
                                                                     .filter((t) => t.trim() !== ""),
                                                             )
                                                         }
-                                                        className="w-full justify-center text-[#121212] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                                        className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
                                                         rows={Math.max(
                                                             1,
                                                             (
@@ -1096,12 +1098,12 @@ const SpaceRoute = () => {
                                                                 parseInt(e.target.value) || 1,
                                                             )
                                                         }
-                                                        className="w-16 justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                        className="w-16 justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => removeRole(index)}
-                                                        className="text-[#6A7282] hover:text-red-500 text-[13px] font-medium leading-none"
+                                                        className="text-gray-500 hover:text-red-500 text-[13px] font-medium leading-none"
                                                     >
                                                         ✕
                                                     </button>
@@ -1110,12 +1112,12 @@ const SpaceRoute = () => {
                                         ) : (
                                             <div className="self-stretch inline-flex justify-start items-center gap-5">
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                    <div className="justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.title}
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                                    <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
+                                                    <div className="flex-1 flex flex-col justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.tasks.map((task, i) => (
                                                             <div
                                                                 key={i}
@@ -1128,10 +1130,10 @@ const SpaceRoute = () => {
                                                     </div>
                                                 </div>
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
-                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                    <div className="justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.count}
                                                     </div>
-                                                    <span className="text-[11px] text-[#6A7282] font-sans">
+                                                    <span className="text-[11px] text-gray-500 font-sans">
                                                         осталось
                                                     </span>
                                                 </div>
@@ -1143,7 +1145,7 @@ const SpaceRoute = () => {
                                     <button
                                         type="button"
                                         onClick={addRole}
-                                        className="self-stretch mt-2 py-2 border-2 border-dashed border-[#6A7282] rounded-lg text-[#6A7282] text-[13px] font-semibold font-sans leading-5 hover:border-[#2B7FFF] hover:text-[#2B7FFF] transition-colors"
+                                        className="self-stretch mt-2 py-2 border-2 border-dashed border-gray-500 rounded-lg text-gray-500 text-[13px] font-semibold font-sans leading-5 hover:border-[#2B7FFF] hover:text-[#2B7FFF] transition-colors"
                                     >
                                         + Добавить роль
                                     </button>
@@ -1195,13 +1197,13 @@ const SpaceRoute = () => {
                                             <SelectItem value="date">По дате добавления</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <div className="flex items-center h-9 bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
+                                    <div className="flex items-center h-9 bg-app-surface border border-gray-200 rounded-[10px] overflow-hidden">
                                         <button
                                             onClick={() => setActiveView("grid")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "grid"
-                                                    ? "bg-[#111827] text-white"
-                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                                    ? "bg-gray-900 text-white"
+                                                    : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >
                                             <Icon name="grid" size={16} />
@@ -1210,8 +1212,8 @@ const SpaceRoute = () => {
                                             onClick={() => setActiveView("list")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "list"
-                                                    ? "bg-[#111827] text-white"
-                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                                    ? "bg-gray-900 text-white"
+                                                    : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >
                                             <ListIcon size={16} />
@@ -1269,10 +1271,10 @@ const SpaceRoute = () => {
                                     {filteredMembers.map((member) => (
                                         <div
                                             key={member.id}
-                                            className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
+                                            className="bg-app-surface border border-gray-200 rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
+                                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
                                                     {member.name
                                                         .split(" ")
                                                         .map((n) => n[0])
@@ -1294,7 +1296,7 @@ const SpaceRoute = () => {
                                                     {member.projects.map((p) => (
                                                         <span
                                                             key={p.id}
-                                                            className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
+                                                            className="inline-flex items-center h-6 px-2 rounded-[8px] bg-gray-100 text-[12px] font-medium text-app-text"
                                                         >
                                                             {p.title}
                                                         </span>

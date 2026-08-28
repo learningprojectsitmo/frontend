@@ -80,10 +80,26 @@ export type { TaskFormData };
 // ─────────────────────────────────────────────────────────────
 
 const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string; badgeClass: string }> = [
-    { value: "urgent", label: "Срочный", badgeClass: "bg-red-100 text-red-700" },
-    { value: "high", label: "Высокий", badgeClass: "bg-orange-100 text-orange-700" },
-    { value: "medium", label: "Средний", badgeClass: "bg-yellow-100 text-yellow-700" },
-    { value: "low", label: "Низкий", badgeClass: "bg-green-100 text-green-700" },
+    {
+        value: "urgent",
+        label: "Срочный",
+        badgeClass: "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300",
+    },
+    {
+        value: "high",
+        label: "Высокий",
+        badgeClass: "bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300",
+    },
+    {
+        value: "medium",
+        label: "Средний",
+        badgeClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300",
+    },
+    {
+        value: "low",
+        label: "Низкий",
+        badgeClass: "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300",
+    },
     { value: "default", label: "Обычный", badgeClass: "bg-gray-100 text-gray-600" },
 ];
 const PRIORITY_MAP = Object.fromEntries(
@@ -135,7 +151,7 @@ const PropertyRow = ({
 );
 
 const MemberAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: string }) => (
-    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
         {(firstName?.[0] ?? "").toUpperCase()}
         {(lastName?.[0] ?? "").toUpperCase()}
     </div>
@@ -598,7 +614,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                     aria-describedby={undefined}
                     style={{ width: panelWidth }}
                     className={cn(
-                        "fixed right-0 top-0 z-50 flex h-full flex-col bg-white shadow-2xl",
+                        "fixed right-0 top-0 z-50 flex h-full flex-col bg-app-surface shadow-2xl",
                         "data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
                         "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right",
                         "duration-300",
@@ -827,7 +843,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             {selectedAssignees.map((m) => (
                                                 <div
                                                     key={m.id}
-                                                    className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700"
+                                                    className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
                                                 >
                                                     <MemberAvatar
                                                         firstName={m.firstName}
@@ -933,7 +949,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                                     badgeClass,
                                                                 )}
                                                             >
-                                                                <div className="h-3 w-3 rounded-full bg-white"></div>
+                                                                <div className="h-3 w-3 rounded-full bg-app-surface"></div>
                                                                 {label}
                                                             </span>
                                                         </DropdownMenuItem>
@@ -1091,7 +1107,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     .then(() => handleClose())
                                     .catch(() => {});
                             }}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/50"
                         >
                             Удалить
                         </Button>

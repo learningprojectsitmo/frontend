@@ -7,9 +7,9 @@ interface TableRolesProps {
 
 export const TableRoles = ({ headerList, roles }: TableRolesProps) => {
     return (
-        <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-app-surface">
             <table className="w-full text-left">
-                <thead className="bg-gray-50 text-[#0A0A0A] text-sm text-black-500 border-b border-gray-200">
+                <thead className="bg-gray-50 text-gray-900 text-sm text-black-500 border-b border-gray-200">
                     <tr>
                         {headerList.map((header) => (
                             <th className="px-6 py-4 text-[17px]">{header}</th>

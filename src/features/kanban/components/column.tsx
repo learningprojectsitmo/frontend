@@ -239,7 +239,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                     >
                                         {column.name}
                                     </h3>
-                                    <span className="text-xs text-gray-500 flex-shrink-0 bg-white/50 px-1.5 py-0.5 rounded-full">
+                                    <span className="text-xs text-gray-500 flex-shrink-0 bg-app-surface/50 px-1.5 py-0.5 rounded-full">
                                         {column.tasks?.length || 0}
                                     </span>
                                 </>
@@ -422,7 +422,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 "text-center mx-2 py-8 text-gray-400 text-sm rounded-lg transition-all duration-200",
                                 isDragOver &&
                                     isDraggingTask &&
-                                    "border-2 border-blue-400 border-dashed bg-blue-50 text-blue-500",
+                                    "border-2 border-blue-400 border-dashed bg-blue-50 text-blue-500 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-700",
                             )}
                         >
                             {isDragOver && isDraggingTask
@@ -463,7 +463,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                             variant="outline"
                             size="hug36"
                             onClick={handleDeleteConfirm}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/50"
                         >
                             Удалить
                         </Button>

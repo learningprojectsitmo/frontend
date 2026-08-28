@@ -482,7 +482,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     <div className="ml-2 w-[260px] flex-shrink-0" ref={newColumnContainerRef}>
                         {isAddingColumn ? (
                             <div
-                                className="w-[260px] flex-shrink-0 rounded-2xl flex flex-col border shadow-sm overflow-hidden h-[70vh] bg-white"
+                                className="w-[260px] flex-shrink-0 rounded-2xl flex flex-col border shadow-sm overflow-hidden h-[70vh] bg-app-surface"
                                 onBlur={(e) => {
                                     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                                         handleCancelNewColumn();
@@ -490,7 +490,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                                 }}
                             >
                                 {/* Заголовок */}
-                                <div className="px-3 p-1.5 bg-[hsl(218,45%,94%)]">
+                                <div className="px-3 p-1.5 bg-[hsl(218,45%,94%)] dark:bg-app-ghost">
                                     <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus-within:border-blue-600">
                                         <input
                                             ref={newColumnInputRef}

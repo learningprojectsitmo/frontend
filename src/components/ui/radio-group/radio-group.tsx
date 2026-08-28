@@ -25,7 +25,7 @@ export const RadioGroup = ({ options, value, onValueChange, name, className }: R
                         "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
                         value === option.value
                             ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300",
+                            : "border-gray-200 bg-app-surface hover:border-gray-300",
                     )}
                 >
                     <input

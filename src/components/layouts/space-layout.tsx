@@ -15,7 +15,7 @@ import { NotificationsNav } from "@/features/spaces/components/notifications";
 function SpaceLayoutSkeleton() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -26,7 +26,7 @@ function SpaceLayoutSkeleton() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -64,7 +64,7 @@ function SpaceLayoutSkeleton() {
 function SpaceLayoutError() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -96,7 +96,7 @@ function SpaceLayoutError() {
 function SpaceLayoutNotFound() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -110,7 +110,7 @@ function SpaceLayoutNotFound() {
                             onChange={() => {}}
                             suggestions={[]}
                             value=""
-                            className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                            className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-gray-100 !border-none"
                         />
                     </div>
                 </div>
@@ -126,7 +126,7 @@ function SpaceLayoutNotFound() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -221,7 +221,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     suggestions: string[];
 }) {
     return (
-        <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
             <div className="flex items-center gap-12">
                 <span
                     className="text-[30px] font-bold text-app-text"
@@ -235,7 +235,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
                         onChange={onSearchChange}
                         suggestions={suggestions}
                         value={search}
-                        className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                        className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-gray-100 !border-none"
                     />
                 </div>
             </div>

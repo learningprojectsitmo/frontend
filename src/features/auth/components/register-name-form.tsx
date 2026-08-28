@@ -19,7 +19,10 @@ const nameField = (label: string, requiredMessage: string) =>
         .string()
         .trim()
         .min(1, requiredMessage)
-        .regex(/^[\p{L}'\-.\s]+$/u, `${label} может содержать только буквы, дефис, апостроф и пробел`)
+        .regex(
+            /^[\p{L}'\-.\s]+$/u,
+            `${label} может содержать только буквы, дефис, апостроф и пробел`,
+        )
         .refine((value) => value.split(/\s+/).every((token) => namePartPattern.test(token)), {
             message: `${label} введено некорректно`,
         });
@@ -30,7 +33,10 @@ const registerNameInputSchema = z.object({
     middle_name: z
         .string()
         .trim()
-        .regex(/^[\p{L}'\-.\s]*$/u, "Отчество может содержать только буквы, дефис, апостроф и пробел")
+        .regex(
+            /^[\p{L}'\-.\s]*$/u,
+            "Отчество может содержать только буквы, дефис, апостроф и пробел",
+        )
         .refine((value) => value.split(/\s+/).every((token) => namePartPattern.test(token)), {
             message: "Отчество введено некорректно",
         }),
@@ -70,7 +76,7 @@ export const RegisterNameForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link to="#" className="w-9 h-9 flex items-center">
                     <Icon name="arrow-left" width={20} height={20} />
@@ -81,7 +87,7 @@ export const RegisterNameForm = ({ onSuccess }: { onSuccess: () => void }) => {
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Как вас зовут?
             </h2>
-            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
+            <h4 className="mb-12 text-grey-400 text-gray-600 font-medium font-sans text-body">
                 Введите имя и фамилию. Отчество — по желанию. Можно ввести имя латиницей.
             </h4>
 

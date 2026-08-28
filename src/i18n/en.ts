@@ -13,11 +13,15 @@ const en = {
             },
             types: {
                 response_received: "{{actor_name}} applied to project {{project_name}}",
-                response_accepted: "{{actor_name}} accepted your response to project {{project_name}}",
-                response_rejected: "{{actor_name}} rejected your response to project {{project_name}}",
+                response_accepted:
+                    "{{actor_name}} accepted your response to project {{project_name}}",
+                response_rejected:
+                    "{{actor_name}} rejected your response to project {{project_name}}",
                 invitation_received: "{{actor_name}} invites you to project {{project_name}}",
-                invitation_accepted: "{{actor_name}} accepted invitation to project {{project_name}}",
-                invitation_rejected: "{{actor_name}} rejected invitation to project {{project_name}}",
+                invitation_accepted:
+                    "{{actor_name}} accepted invitation to project {{project_name}}",
+                invitation_rejected:
+                    "{{actor_name}} rejected invitation to project {{project_name}}",
             },
             time: {
                 justNow: "just now",

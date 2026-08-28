@@ -53,14 +53,14 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
             <div className="relative mb-2">
                 <Search
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
                 <input
                     type="text"
                     placeholder="Поиск"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full h-[34px] pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"
+                    className="w-full h-[34px] pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                 />
             </div>
 
@@ -69,7 +69,7 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                 style={{ scrollbarWidth: "thin", scrollbarColor: "#D1D5DB transparent" }}
             >
                 {filteredOptions.length === 0 ? (
-                    <p className="text-[13px] text-[#6B7280] text-center py-4">Не найдено</p>
+                    <p className="text-[13px] text-gray-500 text-center py-4">Не найдено</p>
                 ) : (
                     <div className="flex flex-col">
                         {filteredOptions.map((opt) => (
@@ -77,7 +77,7 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                                 key={opt.value}
                                 className={cn(
                                     "flex items-center gap-2.5 h-9 px-2 rounded-lg cursor-pointer transition-colors",
-                                    "hover:bg-[#F9FAFB]",
+                                    "hover:bg-gray-50",
                                 )}
                             >
                                 <div
@@ -85,7 +85,7 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                                         "w-4 h-4 rounded-[5px] border-2 flex items-center justify-center transition-colors shrink-0",
                                         selected.includes(opt.value)
                                             ? "bg-[#2563EB] border-[#2563EB]"
-                                            : "border-[#D1D5DB] bg-white",
+                                            : "border-gray-300 bg-app-surface",
                                     )}
                                 >
                                     {selected.includes(opt.value) && (
@@ -98,7 +98,7 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                                     onChange={() => toggleOption(opt.value)}
                                     className="sr-only"
                                 />
-                                <span className="text-[13px] font-normal text-[#111827] truncate">
+                                <span className="text-[13px] font-normal text-gray-900 truncate">
                                     {opt.label}
                                 </span>
                             </label>

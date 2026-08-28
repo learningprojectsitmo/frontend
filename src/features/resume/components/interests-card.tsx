@@ -30,7 +30,7 @@ export const InterestsCard = ({ interests, isEditing, resumeId }: Props) => {
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
+        <div className="bg-app-surface rounded-3xl border border-zinc-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-semibold tracking-tight">Интересы</h3>
                 {isEditing && !showForm && (

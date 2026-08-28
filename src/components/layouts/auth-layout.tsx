@@ -14,11 +14,7 @@ type LayoutProps = {
     redirectIfAuthed?: boolean;
 };
 
-export const AuthLayout = ({
-    children,
-    title,
-    redirectIfAuthed = true,
-}: LayoutProps) => {
+export const AuthLayout = ({ children, title, redirectIfAuthed = true }: LayoutProps) => {
     const user = useUser();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
@@ -53,7 +49,7 @@ export const AuthLayout = ({
 
                 {/* 4. Form Container */}
                 {/* <div className="relative z-10 w-full max-w-[440px] px-4">
-          <div className="bg-white rounded-[32px] bg-white p-8 shadow-2xl"> */}
+          <div className="bg-app-surface rounded-[32px] bg-app-surface p-8 shadow-2xl"> */}
                 {children}
                 {/* </div>
         </div> */}

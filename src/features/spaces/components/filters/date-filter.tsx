@@ -87,7 +87,7 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                         className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                             state.datePreset === preset.value
                                 ? "border-[5px] border-[#2563EB]"
-                                : "border-[1.5px] border-[#D1D5DB]"
+                                : "border-[1.5px] border-gray-300"
                         }`}
                     />
                     <input
@@ -98,7 +98,7 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                         onChange={() => handlePreset(preset.value)}
                         className="sr-only"
                     />
-                    <span className="text-[13px] font-normal text-[#111827]">{preset.label}</span>
+                    <span className="text-[13px] font-normal text-gray-900">{preset.label}</span>
                 </label>
             ))}
 
@@ -111,11 +111,11 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                             value={formatDateValue(state.customDate?.from)}
                             onFocus={() => setActiveInput("from")}
                             placeholder="От"
-                            className="w-full h-9 pl-3 pr-8 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
+                            className="w-full h-9 pl-3 pr-8 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
                         />
                         <CalendarIcon
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                         />
                     </div>
                     <div className="relative date-input-wrap">
@@ -125,11 +125,11 @@ export function DateFilter({ state, onChange }: DateFilterProps) {
                             value={formatDateValue(state.customDate?.to)}
                             onFocus={() => setActiveInput("to")}
                             placeholder="До"
-                            className="w-full h-9 pl-3 pr-8 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
+                            className="w-full h-9 pl-3 pr-8 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
                         />
                         <CalendarIcon
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                         />
                     </div>
                 </div>
