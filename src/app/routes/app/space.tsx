@@ -248,8 +248,12 @@ const SpaceRoute = () => {
         }));
     }, [participantsData, isAuthor, user?.id]);
 
-    const canCreateProject =
+    const isManager =
         participantsData?.items.find((m) => m.user_id === user?.id)?.role === "manager";
+
+    const hasCreatedProject = dataProjects?.items.some((p) => p.author_id === user?.id) ?? false;
+
+    const canCreateProject = isManager && !hasCreatedProject;
 
     // Project options for filter
     const projectOptions = useMemo(() => {
@@ -310,6 +314,8 @@ const SpaceRoute = () => {
                     spaceData={spaceData}
                     isAuthor={isAuthor}
                     canCreateProject={canCreateProject}
+                    isManager={isManager}
+                    hasCreatedProject={hasCreatedProject}
                     onSettingsOpen={() => setSettingsOpen(true)}
                     onShareOpen={() => setShareOpen(true)}
                     onCreateProject={() => setCreateProjectOpen(true)}

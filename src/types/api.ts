@@ -182,6 +182,7 @@ export type ProjectListItemResponse = {
     progress: number;
     tags: string[];
     participants_preview: BackendParticipantPreview[];
+    author_id: number;
 };
 
 export type ProjectListResponse = {

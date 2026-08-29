@@ -118,6 +118,22 @@ export const useUpdateProject = () => {
     });
 };
 
+export const deleteProject = async (projectId: number): Promise<{ message: string }> => {
+    return await api.delete(`/projects/${projectId}`);
+};
+
+export const useDeleteProject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteProject,
+        onSuccess: (_data, projectId: number) => {
+            queryClient.invalidateQueries({ queryKey: ["project", String(projectId)] });
+            queryClient.invalidateQueries({ queryKey: ["projects", "recent"] });
+            queryClient.invalidateQueries({ queryKey: ["projects", "list"] });
+        },
+    });
+};
+
 export const removeParticipant = async ({
     projectId,
     userId,

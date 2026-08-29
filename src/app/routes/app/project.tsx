@@ -1,5 +1,5 @@
 import { ContentLayout } from "@/components/layouts";
-import { Dot, Ellipsis, PencilLine, List as ListIcon } from "lucide-react";
+import { Dot, Ellipsis, PencilLine, Trash2, List as ListIcon } from "lucide-react";
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
@@ -10,11 +10,21 @@ import {
     useRemoveParticipant,
     useAcceptResponse,
     useRejectResponse,
+    useDeleteProject,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Plus, GraduationCapIcon } from "lucide-react";
 import {
     Select,
@@ -148,6 +158,14 @@ const SpaceRoute = () => {
         const space = dataSpaces.spaces?.find((s) => s.id === dataProject.workspace_id);
         return space?.author_id === user.id;
     }, [isCreator, dataProject, dataSpaces, user]);
+
+    const canDeleteProject = useMemo(() => {
+        return dataSpaces?.role === "admin";
+    }, [dataSpaces]);
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteConfirmName, setDeleteConfirmName] = useState("");
+    const isDeleteConfirmed = deleteConfirmName === project?.title;
 
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState("");
@@ -289,6 +307,24 @@ const SpaceRoute = () => {
     const removeParticipantMutation = useRemoveParticipant();
     const acceptResponseMutation = useAcceptResponse();
     const rejectResponseMutation = useRejectResponse();
+    const deleteProjectMutation = useDeleteProject();
+    const navigate = useNavigate();
+
+    const handleDeleteProject = useCallback(
+        (projectId: number) => {
+            deleteProjectMutation.mutate(projectId, {
+                onSuccess: () => {
+                    setDeleteConfirmOpen(false);
+                    toast.success("Проект удалён");
+                    navigate("/app");
+                },
+                onError: () => {
+                    toast.error("Не удалось удалить проект");
+                },
+            });
+        },
+        [deleteProjectMutation, navigate],
+    );
 
     // Kanban state
     const projectId = parseInt(urlId || "0", 10);
@@ -907,11 +943,29 @@ const SpaceRoute = () => {
                         ) : (
                             ""
                         )}
-                        <IconButton
-                            variant="ghost"
-                            icon={<Ellipsis size={20} />}
-                            className="text-[--btn-outline-text]"
-                        />
+                        {canDeleteProject && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <IconButton
+                                        variant="ghost"
+                                        icon={<Ellipsis size={20} />}
+                                        className="text-[--btn-outline-text]"
+                                    />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[200px]">
+                                    <DropdownMenuItem
+                                        className="gap-3 text-sm cursor-pointer text-red-600 focus:text-red-600"
+                                        onSelect={() => {
+                                            setDeleteConfirmName("");
+                                            setDeleteConfirmOpen(true);
+                                        }}
+                                    >
+                                        <Trash2 size={16} />
+                                        Удалить проект
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
 
@@ -1330,6 +1384,50 @@ const SpaceRoute = () => {
                     projectId={dataProject?.id ?? 0}
                     vacancies={dataProject?.vacancies ?? []}
                 />
+
+                <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                    <DialogContent aria-describedby={undefined}>
+                        <DialogHeader>
+                            <DialogTitle>Вы уверены?</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-gray-600">
+                            Это действие необратимо. Все данные проекта будут удалены.
+                        </p>
+                        <div className="mt-4 space-y-2">
+                            <Label>
+                                Введите{" "}
+                                <span className="font-semibold text-red-600">{project.title}</span>{" "}
+                                для подтверждения:
+                            </Label>
+                            <Input
+                                value={deleteConfirmName}
+                                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                                placeholder={project.title}
+                                className="border-red-300 focus-visible:border-red-500 focus-visible:ring-red-200"
+                            />
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="hug36"
+                                onClick={() => setDeleteConfirmOpen(false)}
+                            >
+                                Отмена
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="dark"
+                                size="hug36"
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => handleDeleteProject(project.id)}
+                                disabled={!isDeleteConfirmed || deleteProjectMutation.isPending}
+                            >
+                                {deleteProjectMutation.isPending ? "Удаление..." : "Удалить"}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 {activeTab === "kanban" && (
                     <>

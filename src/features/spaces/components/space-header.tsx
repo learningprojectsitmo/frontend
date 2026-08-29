@@ -14,6 +14,8 @@ type SpaceHeaderProps = {
     spaceData: Space;
     isAuthor: boolean;
     canCreateProject?: boolean;
+    isManager?: boolean;
+    hasCreatedProject?: boolean;
     onSettingsOpen: () => void;
     onShareOpen: () => void;
     onCreateProject?: () => void;
@@ -23,6 +25,8 @@ export function SpaceHeader({
     spaceData,
     isAuthor,
     canCreateProject,
+    isManager,
+    hasCreatedProject,
     onSettingsOpen,
     onShareOpen,
     onCreateProject,
@@ -104,6 +108,11 @@ export function SpaceHeader({
                     >
                         Создать проект
                     </Button>
+                )}
+                {!canCreateProject && isManager && hasCreatedProject && (
+                    <div className="text-app-muted text-[13px] font-normal font-sans leading-5">
+                        Проект уже создан
+                    </div>
                 )}
                 {isAuthor && (
                     <DropdownMenu>

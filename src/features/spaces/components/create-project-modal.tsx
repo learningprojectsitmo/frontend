@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input/input";
 import { Textarea } from "@/components/ui/textarea/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useCreateProject } from "@/lib/projects";
+import { getApiErrorMessage } from "@/lib/api-client";
 import { toast } from "sonner";
 
 const createProjectSchema = z.object({
@@ -51,8 +52,11 @@ export const CreateProjectModal = ({
                     onOpenChange(false);
                     toast.success("Проект создан");
                 },
-                onError: () => {
-                    toast.error("Не удалось создать проект");
+                onError: (error: unknown) => {
+                    const detail = (
+                        error as { response?: { data?: { detail?: string } } }
+                    )?.response?.data?.detail;
+                    toast.error(detail ?? "Не удалось создать проект");
                 },
             },
         );
