@@ -1,5 +1,4 @@
 import { ContentLayout } from "@/components/layouts";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SpacesCard } from "@/components/ui/card/spaces-card.tsx";
 import { ProjectCard } from "@/components/ui/card/project-card.tsx";
@@ -274,14 +273,6 @@ const SpacesRoute = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="dark"
-                            size="hug36"
-                            icon={<Plus size={18} />}
-                            className="font-sans text-[13px] font-semibold gap-2"
-                        >
-                            Создать проект
-                        </Button>
                         <Button
                             variant="outline"
                             size="hug36"
