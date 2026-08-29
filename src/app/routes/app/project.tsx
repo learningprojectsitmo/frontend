@@ -97,6 +97,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
         title: p.name,
         tag: statusName,
         tagVariant: (isArchived ? "disabled" : "info") as "disabled" | "info",
+        theme: p.theme || "",
         description: p.description || "",
         progressValue: p.progress,
         dateText: p.deadline ? formatDate(p.deadline) : "",
@@ -167,8 +168,9 @@ const SpaceRoute = () => {
     const [deleteConfirmName, setDeleteConfirmName] = useState("");
     const isDeleteConfirmed = deleteConfirmName === project?.title;
 
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(() => searchParams.get("edit") === "true");
     const [editTitle, setEditTitle] = useState("");
+    const [editTheme, setEditTheme] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editTags, setEditTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState("");
@@ -194,8 +196,22 @@ const SpaceRoute = () => {
     }, [dataProject, addViewedProject]);
 
     useEffect(() => {
+        if (searchParams.get("edit") === "true") {
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete("edit");
+                    return next;
+                },
+                { replace: true },
+            );
+        }
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
         if (dataProject) {
             setEditTitle(dataProject.name);
+            setEditTheme(dataProject.theme || "");
             setEditDescription(dataProject.description || "");
             setEditTags(dataProject.tags);
             setEditRoles(
@@ -223,6 +239,7 @@ const SpaceRoute = () => {
                 id: String(dataProject.id),
                 data: {
                     name: editTitle,
+                    theme: editTheme,
                     description: editDescription,
                     tags: filtered,
                     vacancies: editRoles.map((r) => ({
@@ -265,6 +282,7 @@ const SpaceRoute = () => {
     const handleCancel = () => {
         if (dataProject) {
             setEditTitle(dataProject.name);
+            setEditTheme(dataProject.theme || "");
             setEditDescription(dataProject.description || "");
             setEditTags(dataProject.tags);
             setEditRoles(
@@ -812,16 +830,18 @@ const SpaceRoute = () => {
                                 </div>
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start w-full">
+                                <div className="justify-center text-app-muted text-[13px] font-medium font-sans leading-5 tracking-tight mb-0.5">
+                                    Тема
+                                </div>
                                 {isEditing ? (
                                     <textarea
-                                        value={editDescription}
-                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        value={editTheme}
+                                        onChange={(e) => setEditTheme(e.target.value)}
                                         className="w-full self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                        rows={Math.max(2, Math.ceil(editDescription.length / 80))}
                                     />
                                 ) : (
                                     <div className="justify-center text-gray-600 text-base font-medium font-sans leading-7">
-                                        {project.description}
+                                        {project.theme}
                                     </div>
                                 )}
                             </div>

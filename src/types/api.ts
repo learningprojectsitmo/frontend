@@ -177,6 +177,7 @@ export type ProjectListItemResponse = {
     name: string;
     status: BackendProjectStatus | null;
     deadline: string | null;
+    theme: string | null;
     description: string | null;
     participants_count: number;
     progress: number;
@@ -200,6 +201,7 @@ export type ProjectFullResponse = {
     author_name: string;
     author_email: string | null;
     has_user_applied: boolean;
+    theme: string | null;
     description: string | null;
     max_participants: number | null;
     status_id: number | null;

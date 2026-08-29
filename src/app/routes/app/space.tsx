@@ -1,6 +1,6 @@
 import { ContentLayout } from "@/components/layouts";
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import { SpaceHeader } from "@/features/spaces/components/space-header";
 import { SpaceProjectList } from "@/features/spaces/components/space-project-list";
@@ -8,7 +8,6 @@ import { SpaceResumeSection } from "@/features/spaces/components/space-resume-se
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
-import { CreateProjectModal } from "@/features/spaces/components/create-project-modal";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
@@ -27,7 +26,7 @@ import {
     useRemoveWorkspaceParticipant,
     useSpaceSettings,
 } from "@/lib/spaces";
-import { useProjectsList } from "@/lib/projects";
+import { useProjectsList, useCreateProject } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { toast } from "sonner";
 import {
@@ -180,10 +179,27 @@ const SpaceRoute = () => {
 
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
-    const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
     const isAuthor = spaceData?.author_id === user?.id;
+
+    const createProjectMutation = useCreateProject();
+    const navigate = useNavigate();
+
+    const handleCreateProject = useCallback(() => {
+        if (!spaceData) return;
+        createProjectMutation.mutate(
+            { name: "Новый проект", description: "", workspace_id: spaceData.id },
+            {
+                onSuccess: (data) => {
+                    navigate(`/app/project?id=${data.id}&edit=true`);
+                },
+                onError: () => {
+                    toast.error("Не удалось создать проект");
+                },
+            },
+        );
+    }, [spaceData, createProjectMutation, navigate]);
 
     // Participants state
     const workspaceId = spaceData?.id ?? 0;
@@ -318,7 +334,7 @@ const SpaceRoute = () => {
                     hasCreatedProject={hasCreatedProject}
                     onSettingsOpen={() => setSettingsOpen(true)}
                     onShareOpen={() => setShareOpen(true)}
-                    onCreateProject={() => setCreateProjectOpen(true)}
+                    onCreateProject={handleCreateProject}
                 />
 
                 <SpaceProjectList
@@ -493,11 +509,6 @@ const SpaceRoute = () => {
                 space={spaceData}
             />
             <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} spaceId={spaceData.id} />
-            <CreateProjectModal
-                open={createProjectOpen}
-                onOpenChange={setCreateProjectOpen}
-                workspaceId={spaceData.id}
-            />
         </ContentLayout>
     );
 };

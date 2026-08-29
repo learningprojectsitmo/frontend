@@ -8,6 +8,7 @@ import {
 
 export type CreateProjectInput = {
     name: string;
+    theme?: string | null;
     description?: string | null;
     workspace_id?: number | null;
 };
