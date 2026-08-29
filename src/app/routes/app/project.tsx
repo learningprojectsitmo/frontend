@@ -301,7 +301,7 @@ const SpaceRoute = () => {
         );
     };
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
-    const [activeView, setActiveView] = useState("grid");
+    const [activeView, setActiveView] = useState("list");
     const [sortBy, setSortBy] = useState("default");
 
     const removeParticipantMutation = useRemoveParticipant();
