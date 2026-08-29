@@ -10,6 +10,7 @@ import { ResponsesSection } from "@/features/profile/components/responses-sectio
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
 import { SpacesSection } from "@/features/profile/components/spaces-section";
 import { ProjectsSection } from "@/features/profile/components/projects-section";
+import { ProfileActivity } from "@/features/profile/components/profile-activity";
 
 const mainTabs = [
     { value: "resume", label: "Резюме" },
@@ -52,6 +53,8 @@ const ProfileRoute = () => {
                         profile?.vk_nickname ?? null,
                     )}
                 />
+
+                <ProfileActivity />
 
                 <Tabs
                     tabs={mainTabs}
