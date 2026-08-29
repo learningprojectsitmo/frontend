@@ -10,6 +10,16 @@ const ENTITY_TO_SECTION: Record<string, { id: string; name: string }> = {
     project: { id: "project", name: "Управление проектами" },
     resume: { id: "resume", name: "Резюме и профили" },
     user: { id: "user", name: "Участники команды" },
+    workspace: { id: "workspace", name: "Рабочие пространства" },
+    settings: { id: "settings", name: "Настройки системы" },
+    audit: { id: "audit", name: "Журнал аудита" },
+    ideas: { id: "ideas", name: "Идеи" },
+    kanban: { id: "kanban", name: "Канбан-доска" },
+    notification: { id: "notification", name: "Уведомления" },
+    invitation: { id: "invitation", name: "Приглашения" },
+    session: { id: "session", name: "Сессии и безопасность" },
+    role: { id: "role", name: "Права и роли" },
+    perm: { id: "perm", name: "Управление доступами" },
 };
 
 export function permissionMatrixToPermissions(matrix: PermissionMatrix): Permission[] {
