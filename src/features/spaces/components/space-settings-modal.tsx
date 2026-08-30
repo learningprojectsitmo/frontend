@@ -62,7 +62,7 @@ const joinPolicyOptions: RadioOption[] = [
 ];
 
 const StubBadge = () => (
-    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 align-middle">
+    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 align-middle dark:bg-amber-500/15 dark:text-amber-400">
         Заглушка
     </span>
 );

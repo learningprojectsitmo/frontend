@@ -1276,7 +1276,7 @@ const SpaceRoute = () => {
                                             onClick={() => setActiveView("grid")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "grid"
-                                                    ? "bg-gray-900 text-white"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
                                                     : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >
@@ -1286,7 +1286,7 @@ const SpaceRoute = () => {
                                             onClick={() => setActiveView("list")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "list"
-                                                    ? "bg-gray-900 text-white"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
                                                     : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >

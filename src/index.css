@@ -320,6 +320,28 @@
         --btn-outline-soft-active-text: var(--app-text);
         --btn-outline-soft-active-border: var(--app-border);
 
+        --btn-dark-bg: #155dfc;
+        --btn-dark-text: #ffffff;
+        --btn-dark-hover-bg: #3b82f6;
+        --btn-dark-hover-text: #ffffff;
+        --btn-dark-active-bg: #1e40af;
+        --btn-dark-active-text: #ffffff;
+        --btn-dark-active-border: #ffffff1f;
+
+        --btn-dark-transparent-bg: #155dfc;
+        --btn-dark-transparent-text: #ffffff;
+        --btn-dark-transparent-hover-bg: #3b82f6;
+        --btn-dark-transparent-hover-text: #ffffff;
+        --btn-dark-transparent-active-bg: #1e40af;
+        --btn-dark-transparent-active-text: #ffffff;
+
+        --btn-blue-bg: #155dfc;
+        --btn-blue-text: #ffffff;
+        --btn-blue-hover-bg: #3b82f6;
+        --btn-blue-hover-text: #ffffff;
+        --btn-blue-active-bg: #1e40af;
+        --btn-blue-active-text: #ffffff;
+
         --input-bg: var(--app-surface);
         --input-border: var(--app-border);
         --input-text: var(--app-text);

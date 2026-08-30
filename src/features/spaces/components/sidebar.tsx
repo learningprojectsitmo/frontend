@@ -194,7 +194,7 @@ export const Sidebar = memo(function Sidebar({
                                         cn(
                                             "shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center transition-all duration-150",
                                             isActive
-                                                ? "bg-gray-900 text-white"
+                                                ? "bg-gray-900 text-white dark:bg-gray-100"
                                                 : "text-gray-500 hover:bg-gray-100 hover:text-gray-700",
                                         )
                                     }

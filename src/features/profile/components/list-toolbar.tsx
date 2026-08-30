@@ -77,7 +77,7 @@ export function ListToolbar({
                         onClick={() => onChangeView("grid")}
                         className={`px-3 h-full flex items-center transition-colors ${
                             viewMode === "grid"
-                                ? "bg-gray-900 text-white"
+                                ? "bg-gray-900 text-white dark:bg-gray-100"
                                 : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >
@@ -88,7 +88,7 @@ export function ListToolbar({
                         onClick={() => onChangeView("list")}
                         className={`px-3 h-full flex items-center transition-colors ${
                             viewMode === "list"
-                                ? "bg-gray-900 text-white"
+                                ? "bg-gray-900 text-white dark:bg-gray-100"
                                 : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >

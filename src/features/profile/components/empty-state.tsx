@@ -28,7 +28,7 @@ export function EmptyState({ icon, title, description, actionLabel, onAction }: 
                 <button
                     type="button"
                     onClick={onAction}
-                    className="inline-flex items-center h-10 px-5 rounded-[10px] bg-gray-900 text-white text-[13px] font-semibold hover:bg-gray-800 transition-colors"
+                    className="inline-flex items-center h-10 px-5 rounded-[10px] bg-gray-900 text-white text-[13px] font-semibold hover:bg-gray-800 transition-colors dark:bg-gray-100 dark:hover:bg-gray-200"
                 >
                     {actionLabel}
                 </button>

@@ -136,8 +136,8 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                                                         className={cn(
                                                             "rounded-lg border px-3 py-1.5 text-sm transition-colors",
                                                             field.value === cat.id
-                                                                ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                                : "border-gray-200 bg-app-surface text-gray-600 hover:border-gray-300",
+                                                                ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-500/15 dark:text-blue-400"
+                                                                : "border-gray-200 bg-app-surface text-gray-600 hover:border-gray-300 dark:hover:border-gray-600",
                                                         )}
                                                     >
                                                         {cat.name}

@@ -24,8 +24,8 @@ export const RadioGroup = ({ options, value, onValueChange, name, className }: R
                     className={cn(
                         "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
                         value === option.value
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 bg-app-surface hover:border-gray-300",
+                            ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-500/15"
+                            : "border-gray-200 bg-app-surface hover:border-gray-300 dark:hover:border-gray-600",
                     )}
                 >
                     <input
@@ -34,7 +34,7 @@ export const RadioGroup = ({ options, value, onValueChange, name, className }: R
                         value={option.value}
                         checked={value === option.value}
                         onChange={() => onValueChange(option.value)}
-                        className="mt-0.5 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="mt-0.5 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:text-blue-400 dark:focus:ring-blue-500"
                     />
                     <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-900">{option.label}</span>
