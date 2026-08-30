@@ -391,6 +391,7 @@ export type SpaceSettingsInput = {
     icon_url?: string | null;
     allow_multi_project_participation?: boolean;
     allow_multi_project_creation?: boolean;
+    default_project_deadline?: string | null;
 };
 
 export type SpaceSettingsFull = {
@@ -403,6 +404,7 @@ export type SpaceSettingsFull = {
     icon_url: string | null;
     allow_multi_project_participation: boolean;
     allow_multi_project_creation: boolean;
+    default_project_deadline: string | null;
     created_at: string;
     updated_at: string;
 };

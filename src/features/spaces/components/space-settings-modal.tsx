@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
@@ -9,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea/textarea";
 import { RadioGroup, type RadioOption } from "@/components/ui/radio-group/radio-group";
 import { Switch } from "@/components/ui/switch/switch";
 import { DangerZone } from "@/features/spaces/components/danger-zone";
+import { Calendar } from "@/features/spaces/components/filters/calendar";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import {
     useUpdateSpaceSettings,
@@ -28,6 +31,7 @@ const spaceSettingsSchema = z.object({
     default_role_id: z.number().nullable().optional(),
     allow_multi_project_participation: z.boolean(),
     allow_multi_project_creation: z.boolean(),
+    default_project_deadline: z.string().nullable().optional(),
 });
 
 type SpaceSettingsInput = z.infer<typeof spaceSettingsSchema>;
@@ -63,6 +67,24 @@ const StubBadge = () => (
     </span>
 );
 
+function formatDate(date: Date): string {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    return `${d}.${m}.${date.getFullYear()}`;
+}
+
+function dateFromIso(value: string | null | undefined): Date | null {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isoFromDate(date: Date): string {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    return `${date.getFullYear()}-${m}-${d}`;
+}
+
 export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsModalProps) => {
     const updateSettings = useUpdateSpaceSettings();
     const updateName = useUpdateWorkspaceName();
@@ -77,6 +99,49 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
 
     const isPending = updateSettings.isPending || updateName.isPending;
 
+    const [deadlinePickerOpen, setDeadlinePickerOpen] = useState(false);
+    const deadlineTriggerRef = useRef<HTMLButtonElement>(null);
+    const deadlinePopoverRef = useRef<HTMLDivElement>(null);
+    const dialogContentRef = useRef<HTMLDivElement>(null);
+    const [deadlinePos, setDeadlinePos] = useState<{ top: number; left: number } | null>(null);
+
+    const openDeadlinePicker = () => {
+        const trigger = deadlineTriggerRef.current;
+        const content = dialogContentRef.current;
+        if (trigger && content) {
+            const triggerRect = trigger.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            setDeadlinePos({
+                top: triggerRect.bottom - contentRect.top + 8,
+                left: triggerRect.left - contentRect.left,
+            });
+        }
+        setDeadlinePickerOpen((v) => !v);
+    };
+
+    useEffect(() => {
+        if (!deadlinePickerOpen) return;
+        function handleClickOutside(e: MouseEvent) {
+            const target = e.target as Node;
+            if (
+                deadlineTriggerRef.current?.contains(target) ||
+                deadlinePopoverRef.current?.contains(target)
+            ) {
+                return;
+            }
+            setDeadlinePickerOpen(false);
+        }
+        function handleKeydown(e: KeyboardEvent) {
+            if (e.key === "Escape") setDeadlinePickerOpen(false);
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeydown);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeydown);
+        };
+    }, [deadlinePickerOpen]);
+
     const form = useForm<SpaceSettingsInput>({
         resolver: zodResolver(spaceSettingsSchema),
         defaultValues: {
@@ -87,6 +152,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
             default_role_id: null,
             allow_multi_project_participation: false,
             allow_multi_project_creation: false,
+            default_project_deadline: null,
         },
     });
 
@@ -99,6 +165,9 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
             default_role_id: settings?.default_role_id ?? null,
             allow_multi_project_participation: settings?.allow_multi_project_participation ?? false,
             allow_multi_project_creation: settings?.allow_multi_project_creation ?? false,
+            default_project_deadline: settings?.default_project_deadline
+                ? settings.default_project_deadline.slice(0, 10)
+                : null,
         });
     }, [space, settings, form]);
 
@@ -120,6 +189,11 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                 allow_multi_project_participation:
                                     values.allow_multi_project_participation,
                                 allow_multi_project_creation: values.allow_multi_project_creation,
+                                default_project_deadline: values.default_project_deadline
+                                    ? new Date(
+                                          values.default_project_deadline + "T00:00:00",
+                                      ).toISOString()
+                                    : null,
                             },
                         },
                         { onSuccess: () => onOpenChange(false) },
@@ -139,7 +213,11 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent aria-describedby={undefined} className="max-w-2xl">
+            <DialogContent
+                ref={dialogContentRef}
+                aria-describedby={undefined}
+                className="max-w-2xl"
+            >
                 <DialogHeader>
                     <DialogTitle>Настройки пространства</DialogTitle>
                 </DialogHeader>
@@ -371,6 +449,104 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                 </div>
                                             </FormItem>
                                         )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="default_project_deadline"
+                                        render={({ field }) => {
+                                            const selectedDate = dateFromIso(field.value);
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel className="text-sm font-medium text-gray-900">
+                                                        Дедлайн проектов
+                                                    </FormLabel>
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        Выставляется всем проектам пространства
+                                                        (включая существующие)
+                                                    </p>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <button
+                                                                ref={deadlineTriggerRef}
+                                                                type="button"
+                                                                onClick={openDeadlinePicker}
+                                                                className="w-full h-9 px-3 flex items-center justify-between bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 hover:border-gray-300 outline-none transition-colors"
+                                                            >
+                                                                <span
+                                                                    className={
+                                                                        selectedDate
+                                                                            ? ""
+                                                                            : "text-gray-400"
+                                                                    }
+                                                                >
+                                                                    {selectedDate
+                                                                        ? formatDate(selectedDate)
+                                                                        : "Не указан"}
+                                                                </span>
+                                                                {selectedDate && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <CalendarIcon
+                                                                            size={16}
+                                                                            className="text-gray-400"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                field.onChange(
+                                                                                    null,
+                                                                                );
+                                                                            }}
+                                                                            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                                                            aria-label="Сбросить дедлайн"
+                                                                        >
+                                                                            <X
+                                                                                size={14}
+                                                                                className="h-3.5 w-3.5"
+                                                                            />
+                                                                        </button>
+                                                                    </span>
+                                                                )}
+                                                                {!selectedDate && (
+                                                                    <CalendarIcon
+                                                                        size={16}
+                                                                        className="text-gray-400"
+                                                                    />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </FormControl>
+                                                    {deadlinePickerOpen &&
+                                                        deadlinePos &&
+                                                        dialogContentRef.current &&
+                                                        createPortal(
+                                                            <div
+                                                                ref={deadlinePopoverRef}
+                                                                style={{
+                                                                    position: "absolute",
+                                                                    top: deadlinePos.top,
+                                                                    left: deadlinePos.left,
+                                                                    zIndex: 10,
+                                                                }}
+                                                            >
+                                                                <Calendar
+                                                                    selected={selectedDate}
+                                                                    onSelect={(date) => {
+                                                                        field.onChange(
+                                                                            isoFromDate(date),
+                                                                        );
+                                                                        setDeadlinePickerOpen(
+                                                                            false,
+                                                                        );
+                                                                    }}
+                                                                />
+                                                            </div>,
+                                                            dialogContentRef.current,
+                                                        )}
+                                                </FormItem>
+                                            );
+                                        }}
                                     />
                                 </div>
                             </div>
