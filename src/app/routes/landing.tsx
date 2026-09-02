@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router";
 import { Head } from "@/components/seo";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
 import { useUser } from "@/lib/auth";
+import { useTheme } from "@/lib/theme-provider";
+import { Moon, Sun } from "lucide-react";
 
 const features = [
     {
@@ -63,6 +66,7 @@ const LandingRoute = () => {
     const navigate = useNavigate();
     const { data: user, isLoading } = useUser();
     const isLoggedIn = !isLoading && user;
+    const { theme, toggleTheme } = useTheme();
 
     return (
         <>
@@ -71,9 +75,16 @@ const LandingRoute = () => {
             {/* Header */}
             <header className="h-16 bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                    <Icon name="logo-edu-flow" width={100} height={28} alt="EduFlow" />
+                    <Icon name="logo-edu-flow" width={100} height={28} alt="EduFlow" color="var(--app-text)" />
                 </div>
                 <div className="flex items-center gap-3">
+                    <IconButton
+                        className="outline-none w-9 h-9 flex items-center justify-center cursor-pointer"
+                        icon={theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                        variant="ghost"
+                        aria-label="Переключить тему"
+                        onClick={() => toggleTheme()}
+                    />
                     {isLoggedIn ? (
                         <Button
                             variant="dark"
@@ -240,17 +251,20 @@ const LandingRoute = () => {
             </div>
 
             {/* CTA Section */}
-            <div className="bg-gray-900 py-20">
+            <div className="bg-[var(--app-background)] py-20 border-t border-gray-200">
                 <div className="mx-auto max-w-7xl px-6 text-center">
-                    <h2 className="text-3xl font-bold text-white">Стань частью сообщества</h2>
-                    <p className="mt-3 text-base text-gray-400 max-w-xl mx-auto">
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Стань частью сообщества
+                    </h2>
+                    <p className="mt-3 text-base text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
                         Присоединяйтесь к студентам и преподавателям, которые уже нашли команду и
                         работают над своими проектами.
                     </p>
                     <div className="mt-8">
                         <Button
                             size="hug56"
-                            className="bg-app-surface text-gray-900 hover:bg-gray-100 text-[15px] font-semibold rounded-xl"
+                            variant="dark"
+                            className="text-[15px] font-semibold rounded-xl"
                             onClick={() =>
                                 navigate(
                                     isLoggedIn
@@ -269,7 +283,7 @@ const LandingRoute = () => {
             <footer className="bg-app-surface border-t border-gray-200 py-8">
                 <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <Icon name="logo-edu-flow" width={80} height={22} alt="EduFlow" />
+                        <Icon name="logo-edu-flow" width={80} height={22} alt="EduFlow" color="var(--app-text)" />
                     </div>
                     <p className="text-sm text-gray-400">
                         &copy; {new Date().getFullYear()} EduFlow. Все права защищены.
