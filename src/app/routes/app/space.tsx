@@ -6,7 +6,6 @@ import { SpaceHeader } from "@/features/spaces/components/space-header";
 import { SpaceProjectList } from "@/features/spaces/components/space-project-list";
 import { SpaceResumeSection } from "@/features/spaces/components/space-resume-section";
 import { Spinner } from "@/components/ui/spinner/spinner";
-import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Search, Check, X, Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     useSpacesList,
     useWorkspaceParticipants,
@@ -26,7 +26,7 @@ import {
     useRemoveWorkspaceParticipant,
     useSpaceSettings,
 } from "@/lib/spaces";
-import { useProjectsList, useCreateProject } from "@/lib/projects";
+import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { toast } from "sonner";
 import {
@@ -177,29 +177,39 @@ const SpaceRoute = () => {
     const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
     const { data: user } = useUser();
 
-    const [settingsOpen, setSettingsOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
     const isAuthor = spaceData?.author_id === user?.id;
 
     const createProjectMutation = useCreateProject();
+    const projectTypes = useProjectTypes(spaceData?.id);
     const navigate = useNavigate();
 
-    const handleCreateProject = useCallback(() => {
-        if (!spaceData) return;
-        createProjectMutation.mutate(
-            { name: "Новый проект", description: "", workspace_id: spaceData.id },
-            {
-                onSuccess: (data) => {
-                    navigate(`/app/project?id=${data.id}&edit=true`);
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+    const handleCreateProject = useCallback(
+        (typeId: number | null) => {
+            if (!spaceData) return;
+            createProjectMutation.mutate(
+                {
+                    name: "Новый проект",
+                    description: "",
+                    workspace_id: spaceData.id,
+                    project_type_id: typeId,
                 },
-                onError: () => {
-                    toast.error("Не удалось создать проект");
+                {
+                    onSuccess: (data) => {
+                        navigate(`/app/project?id=${data.id}&edit=true`);
+                    },
+                    onError: () => {
+                        toast.error("Не удалось создать проект");
+                    },
                 },
-            },
-        );
-    }, [spaceData, createProjectMutation, navigate]);
+            );
+        },
+        [spaceData, createProjectMutation, navigate],
+    );
 
     // Participants state
     const workspaceId = spaceData?.id ?? 0;
@@ -332,10 +342,49 @@ const SpaceRoute = () => {
                     canCreateProject={canCreateProject}
                     isManager={isManager}
                     hasCreatedProject={hasCreatedProject}
-                    onSettingsOpen={() => setSettingsOpen(true)}
+                    onSettingsOpen={() => navigate(`/app/space/settings?id=${spaceData.id}`)}
                     onShareOpen={() => setShareOpen(true)}
-                    onCreateProject={handleCreateProject}
+                    onCreateProject={() => setCreateDialogOpen(true)}
                 />
+
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                    <DialogContent className="sm:max-w-[520px]">
+                        <DialogHeader>
+                            <DialogTitle>Новый проект</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Выберите тип проекта. Он определит набор этапов выполнения.
+                        </p>
+                        <div className="space-y-2 mt-3">
+                            <button
+                                type="button"
+                                onClick={() => handleCreateProject(null)}
+                                className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
+                            >
+                                <span className="text-[14px] font-semibold text-gray-900">
+                                    Без типа
+                                </span>
+                            </button>
+                            {projectTypes.data?.map((pt) => (
+                                <button
+                                    key={pt.id}
+                                    type="button"
+                                    onClick={() => handleCreateProject(pt.id)}
+                                    className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
+                                >
+                                    <div className="text-[14px] font-semibold text-gray-900">
+                                        {pt.name}
+                                    </div>
+                                    {pt.stages && pt.stages.length > 0 && (
+                                        <div className="text-[12px] text-gray-500 mt-1">
+                                            Этапы: {pt.stages.map((s) => s.name).join(" → ")}
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 <SpaceProjectList
                     projects={dataProjects?.items || []}
@@ -503,11 +552,6 @@ const SpaceRoute = () => {
                 </section>
             </div>
 
-            <SpaceSettingsModal
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
-                space={spaceData}
-            />
             <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} spaceId={spaceData.id} />
         </ContentLayout>
     );

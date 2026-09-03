@@ -1,6 +1,7 @@
 import { api } from "./api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+    type BackendProjectType,
     type ProjectFullResponse,
     type ProjectListResponse,
     type MyProjectListResponse,
@@ -11,6 +12,7 @@ export type CreateProjectInput = {
     theme?: string | null;
     description?: string | null;
     workspace_id?: number | null;
+    project_type_id?: number | null;
 };
 
 export const createProject = async (data: CreateProjectInput): Promise<ProjectFullResponse> => {
@@ -245,5 +247,167 @@ export const useRejectResponse = () => {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
         },
+    });
+};
+
+// ====== Типы проектов и этапы ======
+
+export const getProjectTypes = async (
+    workspaceId?: number | null,
+): Promise<BackendProjectType[]> => {
+    const query = workspaceId ? `?workspace_id=${workspaceId}` : "";
+    return await api.get(`/project-types/${query}`);
+};
+
+export const useProjectTypes = (workspaceId?: number | null, enabled = true) => {
+    return useQuery({
+        queryKey: ["project-types", workspaceId ?? "system"],
+        queryFn: () => getProjectTypes(workspaceId),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled,
+    });
+};
+
+export const createProjectType = async (data: {
+    name: string;
+    description?: string | null;
+    workspace_id: number | null;
+}): Promise<BackendProjectType> => {
+    return await api.post("/project-types/", data);
+};
+
+export const updateProjectType = async (
+    typeId: number,
+    data: {
+        name?: string;
+        description?: string | null;
+    },
+) => {
+    return await api.put(`/project-types/${typeId}`, data);
+};
+
+export const deleteProjectType = async (typeId: number) => {
+    return await api.delete(`/project-types/${typeId}`);
+};
+
+export const createProjectStage = async (
+    typeId: number,
+    data: { name: string; order: number; requires_approval?: boolean },
+): Promise<BackendProjectType> => {
+    return await api.post(`/project-types/${typeId}/stages`, data);
+};
+
+export const updateProjectStage = async (
+    typeId: number,
+    stageId: number,
+    data: { name?: string; order?: number; requires_approval?: boolean },
+): Promise<BackendProjectType> => {
+    return await api.put(`/project-types/${typeId}/stages/${stageId}`, data);
+};
+
+export const deleteProjectStage = async (typeId: number, stageId: number) => {
+    return await api.delete(`/project-types/${typeId}/stages/${stageId}`);
+};
+
+const afterTypeMutation = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    workspaceId: number | null,
+) => {
+    queryClient.invalidateQueries({ queryKey: ["project-types", workspaceId ?? "system"] });
+};
+
+export const useCreateProjectType = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createProjectType,
+        onSuccess: (_data, variables) => afterTypeMutation(queryClient, variables.workspace_id),
+    });
+};
+
+export const useUpdateProjectType = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateProjectType,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+    });
+};
+
+export const useDeleteProjectType = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteProjectType,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+    });
+};
+
+export const useCreateProjectStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createProjectStage,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+    });
+};
+
+export const useUpdateProjectStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateProjectStage,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+    });
+};
+
+export const useDeleteProjectStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteProjectStage,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+    });
+};
+
+const afterStageMutation = (queryClient: ReturnType<typeof useQueryClient>, projectId: number) => {
+    queryClient.invalidateQueries({ queryKey: ["project", String(projectId)] });
+    queryClient.invalidateQueries({ queryKey: ["stage-history", String(projectId)] });
+};
+
+export const advanceStage = async (projectId: number): Promise<ProjectFullResponse> => {
+    return await api.post(`/projects/stages/${projectId}/advance`);
+};
+
+export const approveStage = async (projectId: number): Promise<ProjectFullResponse> => {
+    return await api.post(`/projects/stages/${projectId}/approve`);
+};
+
+export const rejectStage = async (
+    projectId: number,
+    comment?: string | null,
+): Promise<ProjectFullResponse> => {
+    return await api.post(`/projects/stages/${projectId}/reject`, {
+        comment: comment ?? null,
+    });
+};
+
+export const useAdvanceStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ projectId }: { projectId: number }) => advanceStage(projectId),
+        onSuccess: (_data, { projectId }) => afterStageMutation(queryClient, projectId),
+    });
+};
+
+export const useApproveStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ projectId }: { projectId: number }) => approveStage(projectId),
+        onSuccess: (_data, { projectId }) => afterStageMutation(queryClient, projectId),
+    });
+};
+
+export const useRejectStage = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ projectId, comment }: { projectId: number; comment?: string | null }) =>
+            rejectStage(projectId, comment),
+        onSuccess: (_data, { projectId }) => afterStageMutation(queryClient, projectId),
     });
 };

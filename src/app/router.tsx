@@ -99,6 +99,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
+                    path: paths.app.spaceSettings.path,
+                    lazy: () => import("./routes/app/space-settings").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.project.path,
                     lazy: () => import("./routes/app/project").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />, // Добавить

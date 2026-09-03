@@ -11,6 +11,9 @@ import {
     useAcceptResponse,
     useRejectResponse,
     useDeleteProject,
+    useAdvanceStage,
+    useApproveStage,
+    useRejectStage,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
@@ -54,6 +57,7 @@ import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
+import { StageStepper } from "@/features/project/components/stage-stepper";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -327,6 +331,71 @@ const SpaceRoute = () => {
     const rejectResponseMutation = useRejectResponse();
     const deleteProjectMutation = useDeleteProject();
     const navigate = useNavigate();
+
+    const advanceStageMutation = useAdvanceStage();
+    const approveStageMutation = useApproveStage();
+    const rejectStageMutation = useRejectStage();
+
+    const isTeacherForProject = useMemo(() => {
+        if (!dataSpaces) return false;
+        if (dataSpaces.role === "admin" || dataSpaces.role === "teacher") return true;
+        if (dataProject?.workspace_id) {
+            const space = dataSpaces.spaces?.find((s) => s.id === dataProject.workspace_id);
+            return space?.author_id === user?.id;
+        }
+        return false;
+    }, [dataSpaces, dataProject, user]);
+
+    const handleAdvanceStage = useCallback(
+        (stageProjectId: number) => {
+            advanceStageMutation.mutate(
+                { projectId: stageProjectId },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап обновлён");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось перейти дальше по этапам");
+                    },
+                },
+            );
+        },
+        [advanceStageMutation],
+    );
+
+    const handleApproveStage = useCallback(
+        (stageProjectId: number) => {
+            approveStageMutation.mutate(
+                { projectId: stageProjectId },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап утверждён");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось утвердить этап");
+                    },
+                },
+            );
+        },
+        [approveStageMutation],
+    );
+
+    const handleRejectStage = useCallback(
+        (stageProjectId: number, comment?: string | null) => {
+            rejectStageMutation.mutate(
+                { projectId: stageProjectId, comment },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап отклонён, проект возвращён на предыдущий этап");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось отклонить этап");
+                    },
+                },
+            );
+        },
+        [rejectStageMutation],
+    );
 
     const handleDeleteProject = useCallback(
         (projectId: number) => {
@@ -1072,6 +1141,20 @@ const SpaceRoute = () => {
                                 </div>
                             </div>
                         </section>
+
+                        {dataProject?.stages && dataProject.stages.length > 0 && (
+                            <StageStepper
+                                stages={dataProject.stages}
+                                currentStageId={dataProject.current_stage_id}
+                                pendingApproval={dataProject.stage_pending_approval}
+                                isCurrentUserAuthor={isCreator}
+                                isTeacher={isTeacherForProject}
+                                onAdvance={handleAdvanceStage}
+                                onApprove={handleApproveStage}
+                                onReject={handleRejectStage}
+                                projectId={dataProject.id}
+                            />
+                        )}
 
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-6">
                             <div className="flex flex-col justify-start items-start">

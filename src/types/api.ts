@@ -194,6 +194,21 @@ export type ProjectListResponse = {
     total_pages: number;
 };
 
+export type BackendProjectStage = {
+    id: number;
+    name: string;
+    order: number;
+    requires_approval: boolean;
+    is_current: boolean;
+};
+
+export type BackendProjectType = {
+    id: number;
+    name: string;
+    description: string | null;
+    stages: BackendProjectStage[];
+};
+
 export type ProjectFullResponse = {
     id: number;
     name: string;
@@ -216,6 +231,10 @@ export type ProjectFullResponse = {
     members: BackendMember[];
     replycants: BackendReplycant[];
     vacancies: BackendVacancy[];
+    project_type_id: number | null;
+    current_stage_id: number | null;
+    stage_pending_approval: boolean;
+    stages: BackendProjectStage[];
 };
 
 export type ResumeCreate = {

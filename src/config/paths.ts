@@ -63,6 +63,10 @@ export const paths = {
             path: "/app/space",
             getHref: (id: number) => `/app/space?id=${encodeURIComponent(id)}`,
         },
+        spaceSettings: {
+            path: "/app/space/settings",
+            getHref: (id: number) => `/app/space/settings?id=${encodeURIComponent(id)}`,
+        },
         project: {
             path: "/app/project",
             getHref: (id: number) => `/app/project?id=${encodeURIComponent(id)}`,
