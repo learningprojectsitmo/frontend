@@ -124,10 +124,10 @@ export const RegisterConfirmForm = ({ onSuccess }: { onSuccess: () => void }) =>
                     />
 
                     <Button
+                        variant="dark"
+                        size="fill48"
                         type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={register.isPending || resendCode.isPending}
+                        disabled={register.isPending}
                     >
                         {register.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>

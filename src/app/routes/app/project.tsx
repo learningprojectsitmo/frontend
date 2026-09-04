@@ -1100,7 +1100,7 @@ const SpaceRoute = () => {
                                                   key={index}
                                                   className="h-6 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 inline-flex justify-center items-center gap-1 overflow-hidden"
                                               >
-                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                  <div className="text-center justify-center text-app-text text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag}
                                                   </div>
                                                   <button
@@ -1117,7 +1117,7 @@ const SpaceRoute = () => {
                                                   key={index}
                                                   className="h-5 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 flex justify-center items-center overflow-hidden"
                                               >
-                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                  <div className="text-center justify-center text-app-text text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag.text}
                                                   </div>
                                               </div>

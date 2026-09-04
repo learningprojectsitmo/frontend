@@ -22,21 +22,21 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
                 {/* Bar container */}
                 <div
                     className={cn(
-                        "relative h-1.5 bg-[#03021333] rounded-full overflow-hidden",
+                        "relative h-1.5 bg-app-ghost rounded-full overflow-hidden",
                         width,
                         barClassName,
                     )}
                 >
                     {/* Filled portion */}
                     <div
-                        className="h-full rounded-full bg-[#030213] transition-all duration-300"
+                        className="h-full rounded-full bg-[--app-blue] transition-all duration-300"
                         style={{ width: `${clampedValue}%` }}
                     />
                 </div>
 
                 {/* Percentage label */}
                 {showPercentage && (
-                    <div className="text-gray-500 text-[13px] font-normal font-sans leading-5 tracking-tight">
+                    <div className="text-app-muted text-[13px] font-normal font-sans leading-5 tracking-tight">
                         {clampedValue}%
                     </div>
                 )}

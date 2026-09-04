@@ -143,7 +143,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                         variant="dark"
                         size="fill48"
                         type="submit"
-                        className="w-full h-12 bg-[#030213] text-white"
                         disabled={login.isPending}
                     >
                         {login.isPending ? "Вход..." : "Вход"}

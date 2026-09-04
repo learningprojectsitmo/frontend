@@ -586,6 +586,7 @@ export type WorkspaceMember = {
     avatar_url: string | null;
     projects: { id: number; title: string }[];
     role: string;
+    workspace_role: string;
     contacts: { telegram?: string | null; email?: string | null; linkedin?: string | null };
     resume_url: string;
     created_at: string;

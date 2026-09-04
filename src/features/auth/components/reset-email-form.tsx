@@ -71,9 +71,9 @@ export const ResetEmailForm = () => {
                     />
 
                     <Button
+                        variant="dark"
+                        size="fill48"
                         type="submit"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={resetEmail.isPending || resetEmail.isSuccess}
                     >
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>

@@ -263,6 +263,7 @@ const SpaceRoute = () => {
             id: m.id,
             name: m.name,
             role: m.role,
+            workspaceRole: m.workspace_role,
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.created_at,
@@ -275,7 +276,7 @@ const SpaceRoute = () => {
     }, [participantsData, isAuthor, user?.id]);
 
     const isManager =
-        participantsData?.items.find((m) => m.user_id === user?.id)?.role === "manager";
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "manager";
 
     const hasCreatedProject = dataProjects?.items.some((p) => p.author_id === user?.id) ?? false;
 

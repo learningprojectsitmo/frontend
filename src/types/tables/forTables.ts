@@ -2,6 +2,7 @@ export interface Member {
     id: number;
     name: string;
     role: string;
+    workspaceRole: string;
     contacts:
         | string
         | { telegram?: string | null; email?: string | null; linkedin?: string | null };

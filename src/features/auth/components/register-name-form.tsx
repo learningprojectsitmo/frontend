@@ -146,9 +146,9 @@ export const RegisterNameForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     />
 
                     <Button
+                        variant="dark"
+                        size="fill48"
                         type="submit"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={updateFullName.isPending}
                     >
                         {updateFullName.isPending ? "Сохранить..." : "Продолжить"}
                     </Button>
