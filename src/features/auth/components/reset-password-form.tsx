@@ -35,6 +35,7 @@ type ResetPasswordFormProps = {
 export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
+    const token = searchParams.get("token") ?? "";
 
     const [showPassword, setShowPassword] = useState(false);
     const resetEmail = useResetWithPassword({ onSuccess });
@@ -50,8 +51,8 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
         resetEmail.mutate(
             {
                 password: values.password,
-                special_token: "12345678-1234-1234-1234-123456789012",
-            }, //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
+                special_token: token,
+            },
             {
                 onError: () => {
                     notifyError("Ошибка при сбросе пароля");
