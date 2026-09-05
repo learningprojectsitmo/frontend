@@ -14,12 +14,15 @@ import { paths } from "@/config/paths.ts";
 import { useNavigate } from "react-router";
 import { useLogout } from "@/lib/auth";
 import { useTheme } from "@/lib/theme-provider";
+import { useProfile } from "@/lib/profile";
 import { Moon, Sun } from "lucide-react";
 
 export function UserNav() {
     const navigate = useNavigate();
     const logout = useLogout();
     const { theme, toggleTheme } = useTheme();
+    const { data: profile } = useProfile();
+    const isAdmin = profile?.role === "admin";
     const handleLogout = () => {
         logout.mutate(undefined, {
             onSuccess: () => {
@@ -71,9 +74,21 @@ export function UserNav() {
                             </span>
                         </DropdownMenuItem>
 
+                        {isAdmin && (
+                            <DropdownMenuItem
+                                className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
+                                onClick={() => navigate(paths.app.admin.root.getHref())}
+                            >
+                                <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
+                                <span className="text-[13px] font-sans font-medium text-gray-900">
+                                    Админ-панель
+                                </span>
+                            </DropdownMenuItem>
+                        )}
+
                         <DropdownMenuItem
                             className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
-                            onClick={() => navigate(paths.app.settings.roles.getHref())}
+                            onClick={() => navigate(paths.app.settings.root.getHref())}
                         >
                             <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
                             <span className="text-[13px] font-sans font-medium">Настройки</span>

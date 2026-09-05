@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useApplyForProject } from "@/lib/projects";
@@ -6,6 +7,7 @@ import { useProfile } from "@/lib/profile";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { paths } from "@/config/paths";
 import type { BackendVacancy } from "@/types/api";
 
 type ApplyDialogProps = {
@@ -21,8 +23,13 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
     const applyMutation = useApplyForProject();
     const { data: profile } = useProfile();
     const resumes = profile?.resumes ?? [];
+    const navigate = useNavigate();
 
     const handleSubmit = () => {
+        if (selectedResumeId === null) {
+            toast.error("Выберите резюме для отклика");
+            return;
+        }
         applyMutation.mutate(
             { projectId, vacancyId: selectedVacancyId, resumeId: selectedResumeId },
             {
@@ -111,21 +118,17 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                         </p>
                     )}
 
-                    {resumes.length > 0 && (
+                    {resumes.length > 0 ? (
                         <div className="space-y-2">
                             <p className="text-sm font-medium text-gray-900">
-                                Прикрепить резюме (необязательно):
+                                Прикрепить резюме (обязательно):
                             </p>
                             <div className="space-y-1.5 max-h-40 overflow-y-auto">
                                 {resumes.map((resume) => (
                                     <button
                                         key={resume.id}
                                         type="button"
-                                        onClick={() =>
-                                            setSelectedResumeId(
-                                                selectedResumeId === resume.id ? null : resume.id,
-                                            )
-                                        }
+                                        onClick={() => setSelectedResumeId(resume.id)}
                                         className={cn(
                                             "w-full text-left px-3 py-2 rounded-lg border transition-all text-sm",
                                             selectedResumeId === resume.id
@@ -145,6 +148,24 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                 ))}
                             </div>
                         </div>
+                    ) : (
+                        <div className="rounded-xl border border-gray-200 bg-app-surface p-4">
+                            <p className="text-sm font-medium text-gray-900">
+                                Для отклика нужно резюме
+                            </p>
+                            <p className="mt-1 text-[13px] text-gray-600">
+                                Создайте резюме, чтобы откликнуться на проект.
+                            </p>
+                            <Button
+                                type="button"
+                                variant="dark"
+                                size="hug36"
+                                className="mt-3"
+                                onClick={() => navigate(paths.app.resume.create.getHref())}
+                            >
+                                Создать резюме
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -161,7 +182,11 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                         type="button"
                         variant="dark"
                         size="hug36"
-                        disabled={applyMutation.isPending}
+                        disabled={
+                            applyMutation.isPending ||
+                            resumes.length === 0 ||
+                            selectedResumeId === null
+                        }
                         onClick={handleSubmit}
                     >
                         {applyMutation.isPending ? "Отправка..." : "Отправить отклик"}

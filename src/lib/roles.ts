@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "./api-client";
 import { type Role, type RoleListResponse } from "@/types/api";
+import { queryKeys } from "./query-keys";
 
 export const ROLE_LABELS: Record<string, string> = {
     member: "Участник",
@@ -19,7 +20,7 @@ export const getRoles = async (): Promise<RoleListResponse> => {
 
 export const useRoles = () => {
     return useQuery({
-        queryKey: ["roles"],
+        queryKey: queryKeys.roles(),
         queryFn: getRoles,
         staleTime: 30 * 60 * 1000,
         gcTime: 60 * 60 * 1000,

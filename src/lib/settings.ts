@@ -4,6 +4,7 @@ import type {
     RoleListResponse,
     UserListResponse,
     PermissionMatrix,
+    SessionListResponse,
 } from "@/features/settings/types";
 
 const ENTITY_TO_SECTION: Record<string, { id: string; name: string }> = {
@@ -74,5 +75,15 @@ export const settingsApi = {
 
     getUsers: (page: number, limit: number): Promise<UserListResponse> => {
         return api.get("/users", { params: { page, limit } });
+    },
+
+    getSessions: (): Promise<SessionListResponse> => {
+        return api.get("/sessions");
+    },
+
+    terminateSessions: (
+        sessionIds: string[],
+    ): Promise<{ terminated_sessions: string[]; message: string }> => {
+        return api.post("/sessions/terminate", { session_ids: sessionIds });
     },
 };

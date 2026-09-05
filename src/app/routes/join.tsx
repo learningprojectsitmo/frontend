@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner/spinner";
 import { useUser } from "@/lib/auth";
 import { useJoinByLink } from "@/lib/spaces";
 import { paths } from "@/config/paths";
+import { queryKeys } from "@/lib/query-keys";
 
 const JoinRoute = () => {
     const [searchParams] = useSearchParams();
@@ -19,8 +20,10 @@ const JoinRoute = () => {
         if (!token) return;
         joinMutation.mutate(token, {
             onSuccess: (data) => {
-                queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-                queryClient.invalidateQueries({ queryKey: ["projects"] });
+                queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+                queryClient.invalidateQueries({ queryKey: queryKeys.project.lists() });
+                queryClient.invalidateQueries({ queryKey: queryKeys.profile.spaces() });
+                queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
                 navigate(paths.app.space.getHref(data.workspace_id));
             },
         });

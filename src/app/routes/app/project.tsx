@@ -14,6 +14,7 @@ import {
     useAdvanceStage,
     useApproveStage,
     useRejectStage,
+    invalidateProjectImpact,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
@@ -57,6 +58,7 @@ import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
+import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
@@ -184,6 +186,7 @@ const SpaceRoute = () => {
     const updateProjectMutation = useUpdateProject();
     const { addViewedProject } = useRecentlyViewed();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
     const showApplyButton = !!(
         user?.id &&
@@ -650,7 +653,9 @@ const SpaceRoute = () => {
             try {
                 await api.patch(`/invitations/${invitationId}/accept`);
                 toast.success("Приглашение принято");
-                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
             } catch {
                 toast.error("Не удалось принять приглашение");
             }
@@ -663,7 +668,9 @@ const SpaceRoute = () => {
             try {
                 await api.patch(`/invitations/${invitationId}/reject`);
                 toast.success("Приглашение отклонено");
-                queryClient.invalidateQueries({ queryKey: ["project", project?.id] });
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
             } catch {
                 toast.error("Не удалось отклонить приглашение");
             }
@@ -801,7 +808,11 @@ const SpaceRoute = () => {
     }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
-        let result = (project?.replycants || []).filter((r) => r.responseStatus === "pending");
+        let result = (project?.replycants || []).filter(
+            (r) =>
+                r.responseStatus === "pending" ||
+                (r.type === "response" && r.responseStatus === "accepted"),
+        );
         if (search) {
             result = result.filter(
                 (replycant) =>
@@ -1392,9 +1403,7 @@ const SpaceRoute = () => {
                                             size="hug36"
                                             icon={<Plus size={18} />}
                                             className="font-sans text-[13px] font-semibold gap-2"
-                                            onClick={() =>
-                                                toast.info("Модалка приглашения появится позже")
-                                            }
+                                            onClick={() => setInviteDialogOpen(true)}
                                         >
                                             Пригласить
                                         </Button>
@@ -1486,6 +1495,16 @@ const SpaceRoute = () => {
                     onOpenChange={setApplyDialogOpen}
                     projectId={dataProject?.id ?? 0}
                     vacancies={dataProject?.vacancies ?? []}
+                />
+
+                <InviteDialog
+                    open={inviteDialogOpen}
+                    onOpenChange={setInviteDialogOpen}
+                    projectId={dataProject?.id ?? 0}
+                    workspaceId={project.spaceId}
+                    vacancies={dataProject?.vacancies ?? []}
+                    replycants={project.replycants}
+                    memberUserIds={new Set((dataProject?.members ?? []).map((m) => m.user_id))}
                 />
 
                 <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

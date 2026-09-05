@@ -1,11 +1,35 @@
 import { api } from "./api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import {
     type BackendProjectType,
     type ProjectFullResponse,
     type ProjectListResponse,
     type MyProjectListResponse,
 } from "@/types/api";
+import { queryKeys } from "./query-keys";
+
+export const invalidateProjectImpact = (
+    queryClient: QueryClient,
+    projectId: string | number,
+    workspaceId?: number | null,
+): void => {
+    const keys: readonly unknown[][] = [
+        queryKeys.project.detail(projectId),
+        queryKeys.project.lists(),
+        queryKeys.project.recent(),
+        queryKeys.project.byIds(),
+        queryKeys.profile.responses(),
+        queryKeys.profile.invitations(),
+        queryKeys.profile.projects(),
+        queryKeys.profile.createdProjects(),
+    ];
+    if (workspaceId) {
+        keys.push(queryKeys.workspace.participants(workspaceId));
+        keys.push(queryKeys.workspace.resumes(workspaceId));
+    }
+    keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+};
 
 export type CreateProjectInput = {
     name: string;
@@ -26,10 +50,10 @@ export const useCreateProject = () => {
         onSuccess: (_data, variables) => {
             if (variables.workspace_id) {
                 queryClient.invalidateQueries({
-                    queryKey: ["projects", "list", String(variables.workspace_id)],
+                    queryKey: queryKeys.project.list(variables.workspace_id),
                 });
             }
-            queryClient.invalidateQueries({ queryKey: ["projects", "recent"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.project.recent() });
         },
     });
 };
@@ -45,11 +69,10 @@ export const getProject = async ({
 
 export const useProject = (id: string) => {
     return useQuery({
-        queryKey: ["project", id],
+        queryKey: queryKeys.project.detail(id),
         queryFn: getProject,
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false,
         enabled: !!id,
     });
 };
@@ -60,12 +83,11 @@ export const getProjectsList = async (workspaceId: string): Promise<ProjectListR
 
 export const useProjectsList = (workspaceId: string) => {
     return useQuery({
-        queryKey: ["projects", "list", workspaceId],
+        queryKey: queryKeys.project.list(workspaceId),
         queryFn: () => getProjectsList(workspaceId),
         staleTime: 0,
         gcTime: 5 * 60 * 1000,
         refetchOnMount: "always",
-        refetchOnWindowFocus: false,
         enabled: !!workspaceId,
         retry: 3,
     });
@@ -87,11 +109,10 @@ export const getRecentProjects = async (): Promise<MyProjectListResponse> => {
 
 export const useRecentProjectsList = () => {
     return useQuery({
-        queryKey: ["projects", "recent"],
+        queryKey: queryKeys.project.recent(),
         queryFn: getRecentProjects,
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false,
     });
 };
 
@@ -102,11 +123,10 @@ export const getProjectsByIds = async (ids: number[]): Promise<MyProjectListResp
 
 export const useProjectsByIds = (ids: number[]) => {
     return useQuery({
-        queryKey: ["projects", "by_ids", ids],
+        queryKey: queryKeys.project.byIds(ids),
         queryFn: () => getProjectsByIds(ids),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false,
         enabled: ids.length > 0,
     });
 };
@@ -116,7 +136,11 @@ export const useUpdateProject = () => {
     return useMutation({
         mutationFn: updateProject,
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", variables.id] });
+            invalidateProjectImpact(
+                queryClient,
+                variables.id,
+                variables.data.workspace_id ?? undefined,
+            );
         },
     });
 };
@@ -130,9 +154,7 @@ export const useDeleteProject = () => {
     return useMutation({
         mutationFn: deleteProject,
         onSuccess: (_data, projectId: number) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(projectId)] });
-            queryClient.invalidateQueries({ queryKey: ["projects", "recent"] });
-            queryClient.invalidateQueries({ queryKey: ["projects", "list"] });
+            invalidateProjectImpact(queryClient, projectId);
         },
     });
 };
@@ -147,12 +169,21 @@ export const removeParticipant = async ({
     return await api.delete(`/projects/${projectId}/participants/${userId}`);
 };
 
+type RemoveParticipantParams = {
+    projectId: number;
+    userId: number;
+};
+
+export type RemoveParticipantInput = RemoveParticipantParams & {
+    workspaceId?: number | null;
+};
+
 export const useRemoveParticipant = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: removeParticipant,
+        mutationFn: (variables: RemoveParticipantInput) => removeParticipant(variables),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
         },
     });
 };
@@ -172,12 +203,19 @@ export const applyForProject = async ({
     });
 };
 
+export type ApplyInput = {
+    projectId: number;
+    vacancyId?: number | null;
+    resumeId?: number | null;
+    workspaceId?: number | null;
+};
+
 export const useApplyForProject = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: applyForProject,
+        mutationFn: (variables: ApplyInput) => applyForProject(variables),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
         },
     });
 };
@@ -200,12 +238,20 @@ export const inviteToProject = async ({
     });
 };
 
+export type InviteInput = {
+    projectId: number;
+    userId: number;
+    vacancyId?: number | null;
+    resumeId?: number | null;
+    workspaceId?: number | null;
+};
+
 export const useInviteToProject = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: inviteToProject,
+        mutationFn: (variables: InviteInput) => inviteToProject(variables),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
         },
     });
 };
@@ -220,12 +266,18 @@ export const acceptResponse = async ({
     return await api.put(`/projects/${projectId}/responses/${responseId}/accept`);
 };
 
+export type ResponseActionInput = {
+    projectId: number;
+    responseId: number;
+    workspaceId?: number | null;
+};
+
 export const useAcceptResponse = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: acceptResponse,
+        mutationFn: (variables: ResponseActionInput) => acceptResponse(variables),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
         },
     });
 };
@@ -243,9 +295,9 @@ export const rejectResponse = async ({
 export const useRejectResponse = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: rejectResponse,
+        mutationFn: (variables: ResponseActionInput) => rejectResponse(variables),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["project", String(variables.projectId)] });
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
         },
     });
 };
@@ -261,7 +313,7 @@ export const getProjectTypes = async (
 
 export const useProjectTypes = (workspaceId?: number | null, enabled = true) => {
     return useQuery({
-        queryKey: ["project-types", workspaceId ?? "system"],
+        queryKey: queryKeys.projectTypes.scoped(workspaceId),
         queryFn: () => getProjectTypes(workspaceId),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -314,7 +366,9 @@ const afterTypeMutation = (
     queryClient: ReturnType<typeof useQueryClient>,
     workspaceId: number | null,
 ) => {
-    queryClient.invalidateQueries({ queryKey: ["project-types", workspaceId ?? "system"] });
+    queryClient.invalidateQueries({
+        queryKey: queryKeys.projectTypes.scoped(workspaceId),
+    });
 };
 
 export const useCreateProjectType = () => {
@@ -329,7 +383,7 @@ export const useUpdateProjectType = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: updateProjectType,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
 
@@ -337,7 +391,7 @@ export const useDeleteProjectType = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: deleteProjectType,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
 
@@ -345,7 +399,7 @@ export const useCreateProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: createProjectStage,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
 
@@ -353,7 +407,7 @@ export const useUpdateProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: updateProjectStage,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
 
@@ -361,13 +415,13 @@ export const useDeleteProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: deleteProjectStage,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-types"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
 
 const afterStageMutation = (queryClient: ReturnType<typeof useQueryClient>, projectId: number) => {
-    queryClient.invalidateQueries({ queryKey: ["project", String(projectId)] });
-    queryClient.invalidateQueries({ queryKey: ["stage-history", String(projectId)] });
+    invalidateProjectImpact(queryClient, projectId);
+    queryClient.invalidateQueries({ queryKey: queryKeys.stageHistory.detail(projectId) });
 };
 
 export const advanceStage = async (projectId: number): Promise<ProjectFullResponse> => {

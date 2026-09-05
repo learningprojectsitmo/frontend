@@ -1,4 +1,5 @@
-import { api } from "./api-client";
+import { api, getApiErrorMessage } from "./api-client";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     type ResumeCreate,
@@ -12,6 +13,12 @@ import {
     type ResumeSkill,
     type ResumeUpdate,
 } from "@/types/api";
+import { queryKeys } from "./query-keys";
+
+const onSaveError = (error: unknown) =>
+    toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения"));
+const onDeleteError = (error: unknown) =>
+    toast.error(getApiErrorMessage(error, "Не удалось удалить"));
 
 export const getResumeDetail = async (id: number): Promise<ResumeDetail> => {
     return await api.get(`/resumes/${id}/detail`);
@@ -19,7 +26,7 @@ export const getResumeDetail = async (id: number): Promise<ResumeDetail> => {
 
 export const useResumeDetail = (id: number) => {
     return useQuery({
-        queryKey: ["resume", id, "detail"],
+        queryKey: queryKeys.resume.detail(id),
         queryFn: () => getResumeDetail(id),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -42,8 +49,10 @@ export const useUpdateResume = () => {
     return useMutation({
         mutationFn: updateResume,
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["resume", variables.id, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(variables.id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
         },
+        onError: onSaveError,
     });
 };
 
@@ -56,9 +65,10 @@ export const useCreateResume = () => {
     return useMutation({
         mutationFn: createResume,
         onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ["profile"] });
-            queryClient.invalidateQueries({ queryKey: ["resume", data.id, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(data.id) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -239,8 +249,9 @@ export const useCreateResumeLink = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeLink,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -249,8 +260,9 @@ export const useUpdateResumeLink = (resumeId: number) => {
     return useMutation({
         mutationFn: updateResumeLink,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -259,8 +271,9 @@ export const useDeleteResumeLink = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeLink,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };
 
@@ -269,8 +282,9 @@ export const useCreateResumeEducation = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeEducation,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -279,8 +293,9 @@ export const useUpdateResumeEducation = (resumeId: number) => {
     return useMutation({
         mutationFn: updateResumeEducation,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -289,8 +304,9 @@ export const useDeleteResumeEducation = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeEducation,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };
 
@@ -299,8 +315,9 @@ export const useCreateResumeLanguage = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeLanguage,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -309,8 +326,9 @@ export const useUpdateResumeLanguage = (resumeId: number) => {
     return useMutation({
         mutationFn: updateResumeLanguage,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -321,8 +339,9 @@ export const useCreateResumeExperience = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeExperience,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -331,8 +350,9 @@ export const useUpdateResumeExperience = (resumeId: number) => {
     return useMutation({
         mutationFn: updateResumeExperience,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -341,8 +361,9 @@ export const useDeleteResumeExperience = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeExperience,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };
 
@@ -351,8 +372,9 @@ export const useDeleteResumeLanguage = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeLanguage,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };
 
@@ -363,8 +385,9 @@ export const useCreateResumeSkill = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeSkill,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -373,8 +396,9 @@ export const useDeleteResumeSkill = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeSkill,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };
 
@@ -385,8 +409,9 @@ export const useCreateResumeInterest = (resumeId: number) => {
     return useMutation({
         mutationFn: createResumeInterest,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onSaveError,
     });
 };
 
@@ -395,7 +420,8 @@ export const useDeleteResumeInterest = (resumeId: number) => {
     return useMutation({
         mutationFn: deleteResumeInterest,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["resume", resumeId, "detail"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
+        onError: onDeleteError,
     });
 };

@@ -58,3 +58,30 @@ export interface PermissionMatrixElement {
 export interface PermissionMatrix {
     permissions_matrix: Record<string, PermissionMatrixElement>;
 }
+
+export interface SessionDevice {
+    device_name: string | null;
+    browser_name: string | null;
+    browser_version: string | null;
+    operating_system: string | null;
+    device_type: string | null;
+    ip_address: string | null;
+    country: string | null;
+    city: string | null;
+}
+
+export interface SessionItem extends SessionDevice {
+    id: string;
+    user_id: number;
+    created_at: string;
+    last_activity: string;
+    expires_at: string | null;
+    is_active: boolean;
+    is_current: boolean;
+}
+
+export interface SessionListResponse {
+    sessions: SessionItem[];
+    total: number;
+    current_session_id: string | null;
+}

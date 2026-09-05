@@ -33,6 +33,7 @@ const ResumeRoute = () => {
     const createResumeMutation = useCreateResume();
 
     const [isEditing, setIsEditing] = useState(isCreateMode);
+    const canEditSections = !isCreateMode && isEditing;
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -164,6 +165,7 @@ const ResumeRoute = () => {
                     <ResumePage
                         data={emptyDetail}
                         isEditing={isEditing}
+                        sectionsEditable={canEditSections}
                         onEdit={handleEdit}
                         onSave={handleSave}
                         onCancel={handleCancel}
@@ -272,6 +274,7 @@ const ResumeRoute = () => {
                 <ResumePage
                     data={data}
                     isEditing={isEditing}
+                    sectionsEditable={canEditSections}
                     onEdit={isOwner ? handleEdit : undefined}
                     onSave={isOwner ? handleSave : undefined}
                     onCancel={isOwner ? handleCancel : undefined}

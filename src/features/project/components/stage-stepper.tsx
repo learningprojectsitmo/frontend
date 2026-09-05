@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ApproveStageDialog, RejectStageDialog } from "./stage-dialogs";
 import type { BackendProjectStage } from "@/types/api";
 
+const formatStageDate = (iso: string): string =>
+    new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+
+const STAGE_DEADLINE_SOON_MS = 3 * 24 * 60 * 60 * 1000;
+
 interface StageStepperProps {
     stages: BackendProjectStage[];
     currentStageId: number | null;
@@ -54,12 +59,20 @@ export const StageStepper = ({
                     const isPassed = idx < currentIndex;
                     const isDone = isPassed || isCurrent;
 
-                    const circleClass =
-                        isPassed
-                            ? "bg-green-600 text-white border-green-600"
-                            : isCurrent
-                              ? "bg-[--app-blue] text-white border-[--app-blue] ring-2 ring-[--app-blue]/30"
-                              : "bg-app-ghost text-app-muted border-app-border";
+                    const circleClass = isPassed
+                        ? "bg-green-600 text-white border-green-600"
+                        : isCurrent
+                          ? "bg-[--app-blue] text-white border-[--app-blue] ring-2 ring-[--app-blue]/30"
+                          : "bg-app-ghost text-app-muted border-app-border";
+
+                    const deadlineTime = stage.deadline ? new Date(stage.deadline).getTime() : null;
+                    const hasDeadline = deadlineTime !== null && !Number.isNaN(deadlineTime);
+                    const isOverdue = isCurrent && hasDeadline && deadlineTime < Date.now();
+                    const isSoon =
+                        isCurrent &&
+                        hasDeadline &&
+                        !isOverdue &&
+                        deadlineTime - Date.now() <= STAGE_DEADLINE_SOON_MS;
 
                     return (
                         <React.Fragment key={stage.id}>
@@ -100,6 +113,25 @@ export const StageStepper = ({
                                         </span>
                                     )}
                                 </span>
+                                {hasDeadline && (
+                                    <span
+                                        title="Дедлайн прохождения этапа"
+                                        className={cn(
+                                            "text-[11px] font-medium text-center leading-3",
+                                            isOverdue
+                                                ? "text-[--red-60]"
+                                                : isSoon
+                                                  ? "text-[--app-badge-amber-fg]"
+                                                  : isCurrent
+                                                    ? "text-app-muted"
+                                                    : "text-app-muted/70",
+                                        )}
+                                    >
+                                        {isOverdue && "просрочен · "}
+                                        {isSoon && "скоро · "}
+                                        {formatStageDate(stage.deadline!)}
+                                    </span>
+                                )}
                             </li>
                         </React.Fragment>
                     );

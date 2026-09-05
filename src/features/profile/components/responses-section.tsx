@@ -7,6 +7,8 @@ import { ResponsesFilters } from "./filters/responses-filters";
 import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
 import { api } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateProjectImpact } from "@/lib/projects";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "На рассмотрении", color: "#D97706", bg: "#FEF3C7" },
@@ -100,7 +102,11 @@ export function ResponsesSection() {
         setPendingWithdraw(responseId);
         try {
             await api.patch(`/responses/${responseId}/withdraw`);
-            queryClient.invalidateQueries({ queryKey: ["profile", "responses"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
+            const item = items.find((r) => r.id === responseId);
+            if (item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+            }
         } catch {
             // ignore
         } finally {

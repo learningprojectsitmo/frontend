@@ -1,6 +1,7 @@
 import { configureAuth } from "react-query-auth";
 import {
     useMutation,
+    useQuery,
     useQueryClient,
     type UseMutationResult,
     type UseMutationOptions,
@@ -19,6 +20,7 @@ import {
     isSessionExpired,
     clearSessionExpired,
 } from "./api-client";
+import { queryKeys } from "./query-keys";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -178,6 +180,13 @@ const resetWithPassword = async (data: ResetWithPasswordInput): Promise<unknown>
     });
 };
 
+const getResetEmailByToken = async (token: string): Promise<string> => {
+    const response = (await api.get("/auth/password-reset/validate", {
+        params: { token },
+    })) as { email: string };
+    return response.email;
+};
+
 // ─── Auth Config ──────────────────────────────────────────────────────────────
 
 const authConfig = {
@@ -270,6 +279,15 @@ export const useResetWithPassword = (
     options?: UseMutationOptions<unknown, Error, ResetWithPasswordInput>,
 ): UseMutationResult<unknown, Error, ResetWithPasswordInput> => {
     return useMutation({ mutationFn: resetWithPassword, ...options });
+};
+
+export const useResetEmailByToken = (token: string): string => {
+    const { data } = useQuery({
+        queryKey: queryKeys.authResetEmail(token),
+        queryFn: () => getResetEmailByToken(token),
+        enabled: token.length > 0,
+    });
+    return data ?? "";
 };
 
 // ─── Protected Route ──────────────────────────────────────────────────────────

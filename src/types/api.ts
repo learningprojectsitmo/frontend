@@ -200,6 +200,8 @@ export type BackendProjectStage = {
     order: number;
     requires_approval: boolean;
     is_current: boolean;
+    duration_days: number | null;
+    deadline?: string | null;
 };
 
 export type BackendProjectType = {

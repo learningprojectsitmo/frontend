@@ -7,6 +7,8 @@ import { ResponsesFilters } from "./filters/responses-filters";
 import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
 import { api } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateProjectImpact } from "@/lib/projects";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "Ожидает ответа", color: "#D97706", bg: "#FEF3C7" },
@@ -102,7 +104,12 @@ export function InvitationsSection() {
         setPendingAction({ id: invitationId, type: action });
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
-            queryClient.invalidateQueries({ queryKey: ["profile", "invitations"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.invitations() });
+            const item = items.find((r) => r.id === invitationId);
+            if (action === "accept" && item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+                queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
+            }
         } catch {
             // ignore
         } finally {

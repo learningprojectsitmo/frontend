@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { NotificationListResponse } from "@/types/api";
 import { api } from "./api-client";
+import { queryKeys } from "./query-keys";
 
 export const getMyNotifications = async (
     page = 1,
@@ -12,7 +13,7 @@ export const getMyNotifications = async (
 
 export const useMyNotifications = (page = 1, limit = 20) => {
     return useQuery({
-        queryKey: ["notifications", "my", page, limit],
+        queryKey: queryKeys.notifications.my(page, limit),
         queryFn: () => getMyNotifications(page, limit),
         staleTime: 30 * 1000,
     });
@@ -26,7 +27,7 @@ export const useMarkNotificationRead = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: markNotificationRead,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+        onSuccess: () => queryClient.invalidateQueries(queryKeys.notifications.all()),
     });
 };
 
@@ -38,6 +39,6 @@ export const useMarkAllNotificationsRead = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: markAllNotificationsRead,
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+        onSuccess: () => queryClient.invalidateQueries(queryKeys.notifications.all()),
     });
 };

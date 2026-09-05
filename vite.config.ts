@@ -38,6 +38,9 @@ export default defineConfig({
     preview: {
         port: 3000,
     },
+    test: {
+        passWithNoTests: true,
+    },
     optimizeDeps: { exclude: ["fsevents"] },
     build: {
         chunkSizeWarningLimit: 600,

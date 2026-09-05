@@ -129,9 +129,52 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
-                    path: paths.app.settings.roles.path,
+                    path: paths.app.settings.root.path,
                     lazy: () => import("./routes/app/settings/roles").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
+                },
+                {
+                    path: paths.app.admin.root.path,
+                    lazy: () => import("./routes/app/admin/root").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                    children: [
+                        {
+                            index: true,
+                            lazy: () =>
+                                import("./routes/app/admin/index").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                        {
+                            path: "users",
+                            lazy: () =>
+                                import("./routes/app/admin/users").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                        {
+                            path: "roles",
+                            lazy: () =>
+                                import("./routes/app/admin/roles").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                        {
+                            path: "ideas",
+                            lazy: () =>
+                                import("./routes/app/admin/ideas").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                        {
+                            path: "audit",
+                            lazy: () =>
+                                import("./routes/app/admin/audit").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                        {
+                            path: "sessions",
+                            lazy: () =>
+                                import("./routes/app/admin/sessions").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
+                    ],
                 },
             ],
         },

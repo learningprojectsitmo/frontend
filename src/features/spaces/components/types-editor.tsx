@@ -34,6 +34,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
     const [newTypeDescription, setNewTypeDescription] = useState("");
     const [newStageForType, setNewStageForType] = useState<number | null>(null);
     const [newStageName, setNewStageName] = useState("");
+    const [newStageDuration, setNewStageDuration] = useState("");
 
     const [editingTypeId, setEditingTypeId] = useState<number | null>(null);
     const [editingTypeName, setEditingTypeName] = useState("");
@@ -95,13 +96,27 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
         }
         const type = types?.find((t) => t.id === typeId);
         const nextOrder = type ? type.stages.length : 0;
+        const rawDays = Number(newStageDuration.trim());
+        const durationDays =
+            newStageDuration.trim() !== "" && Number.isFinite(rawDays) && rawDays > 0
+                ? rawDays
+                : null;
         createStage.mutate(
-            { typeId, data: { name, order: nextOrder, requires_approval: false } },
+            {
+                typeId,
+                data: {
+                    name,
+                    order: nextOrder,
+                    requires_approval: false,
+                    duration_days: durationDays,
+                },
+            },
             {
                 onSuccess: () => {
                     toast.success("Этап добавлен");
                     setNewStageForType(null);
                     setNewStageName("");
+                    setNewStageDuration("");
                 },
                 onError: (error) => toast.error(error?.message || "Не удалось добавить этап"),
             },
@@ -136,6 +151,17 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
         deleteStage.mutate(
             { typeId, stageId: stage.id },
             { onError: (error) => toast.error(error?.message || "Не удалось удалить этап") },
+        );
+    };
+
+    const handleDurationChange = (typeId: number, stage: BackendProjectStage, raw: string) => {
+        const trimmed = raw.trim();
+        const days = trimmed === "" ? null : Number(trimmed);
+        const next = days !== null && Number.isFinite(days) && days > 0 ? days : null;
+        if (next === stage.duration_days) return;
+        updateStage.mutate(
+            { typeId, stageId: stage.id, data: { duration_days: next } },
+            { onError: (error) => toast.error(error?.message || "Не удалось обновить срок этапа") },
         );
     };
 
@@ -274,6 +300,18 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                                 утверждение
                                             </span>
                                         </label>
+                                        <Input
+                                            key={`duration-${stage.id}`}
+                                            type="number"
+                                            min={1}
+                                            defaultValue={stage.duration_days ?? ""}
+                                            onBlur={(e) =>
+                                                handleDurationChange(t.id, stage, e.target.value)
+                                            }
+                                            className="w-[72px] shrink-0"
+                                            placeholder="дней"
+                                            aria-label="Срок прохождения этапа в днях"
+                                        />
                                         <Button
                                             variant="ghost"
                                             size="hug36"
@@ -294,6 +332,15 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                     onChange={(e) => setNewStageName(e.target.value)}
                                     placeholder="Название нового этапа"
                                 />
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={newStageDuration}
+                                    onChange={(e) => setNewStageDuration(e.target.value)}
+                                    className="w-[96px]"
+                                    placeholder="срок, дней"
+                                    aria-label="Срок прохождения этапа в днях"
+                                />
                                 <Button
                                     variant="blue"
                                     size="hug36"
@@ -307,6 +354,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                     onClick={() => {
                                         setNewStageForType(null);
                                         setNewStageName("");
+                                        setNewStageDuration("");
                                     }}
                                 >
                                     Отмена
@@ -319,6 +367,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                 onClick={() => {
                                     setNewStageForType(t.id);
                                     setNewStageName("");
+                                    setNewStageDuration("");
                                 }}
                             >
                                 + Добавить этап

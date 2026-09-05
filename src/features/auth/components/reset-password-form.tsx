@@ -8,7 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-import { useResetWithPassword } from "@/lib/auth";
+import { useResetWithPassword, useResetEmailByToken } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
 import { notifyError } from "@/components/ui/notifications";
@@ -39,6 +39,7 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
 
     const [showPassword, setShowPassword] = useState(false);
     const resetEmail = useResetWithPassword({ onSuccess });
+    const email = useResetEmailByToken(token);
     const form = useForm<ResetPasswordFormInput>({
         resolver: zodResolver(resetPasswordFormSchema),
         defaultValues: {
@@ -84,15 +85,14 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                         name="email"
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormItem>
                                 <FormControl>
                                     <Input
                                         placeholder="E-mail"
                                         {...field}
-                                        error={!!fieldState.error}
+                                        value={email}
                                         className="h-12 border-gray-300"
-                                        helperText={fieldState.error?.message}
                                         disabled
                                     />
                                 </FormControl>

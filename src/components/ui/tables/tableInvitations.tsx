@@ -102,27 +102,37 @@ export const TableInvitations = ({
 
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
-                                    {member.type === "response" && canManage && (
-                                        <>
-                                            <button
-                                                onClick={() => addToTeam?.(member.id)}
-                                                className="font-medium text-blue-600 hover:text-blue-700"
-                                            >
-                                                Принять
-                                            </button>
-                                            <button
-                                                onClick={() => onReject?.(member.id)}
-                                                className="font-medium text-red-500 hover:text-red-700"
-                                            >
-                                                Отклонить
-                                            </button>
-                                        </>
-                                    )}
-                                    {member.type === "response" && !canManage && (
-                                        <span className="text-gray-400 text-[12px]">
-                                            Ожидает решения
-                                        </span>
-                                    )}
+                                    {member.type === "response" &&
+                                        member.responseStatus === "accepted" && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                Ожидает подтверждения участника
+                                            </span>
+                                        )}
+                                    {member.type === "response" &&
+                                        member.responseStatus !== "accepted" &&
+                                        canManage && (
+                                            <>
+                                                <button
+                                                    onClick={() => addToTeam?.(member.id)}
+                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                >
+                                                    Принять
+                                                </button>
+                                                <button
+                                                    onClick={() => onReject?.(member.id)}
+                                                    className="font-medium text-red-500 hover:text-red-700"
+                                                >
+                                                    Отклонить
+                                                </button>
+                                            </>
+                                        )}
+                                    {member.type === "response" &&
+                                        member.responseStatus !== "accepted" &&
+                                        !canManage && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                Ожидает решения
+                                            </span>
+                                        )}
                                     {member.type === "invitation" &&
                                         member.userId === currentUserId && (
                                             <>

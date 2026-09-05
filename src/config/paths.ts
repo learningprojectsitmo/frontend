@@ -76,9 +76,31 @@ export const paths = {
                 path: "/app/settings",
                 getHref: () => "/app/settings",
             },
+        },
+        admin: {
+            root: {
+                path: "/app/admin",
+                getHref: () => "/app/admin",
+            },
+            users: {
+                path: "/app/admin/users",
+                getHref: () => "/app/admin/users",
+            },
             roles: {
-                path: "/app/settings/roles",
-                getHref: () => "/app/settings/roles",
+                path: "/app/admin/roles",
+                getHref: () => "/app/admin/roles",
+            },
+            ideas: {
+                path: "/app/admin/ideas",
+                getHref: () => "/app/admin/ideas",
+            },
+            audit: {
+                path: "/app/admin/audit",
+                getHref: () => "/app/admin/audit",
+            },
+            sessions: {
+                path: "/app/admin/sessions",
+                getHref: () => "/app/admin/sessions",
             },
         },
         profile: {

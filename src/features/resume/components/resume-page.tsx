@@ -17,6 +17,7 @@ import { InterestsCard } from "./interests-card";
 type Props = {
     data: ResumeDetail;
     isEditing?: boolean;
+    sectionsEditable?: boolean;
     onEdit?: () => void;
     onSave?: (data: {
         header: string;
@@ -30,7 +31,14 @@ type Props = {
     onCancel?: () => void;
 };
 
-export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props) => {
+export const ResumePage = ({
+    data,
+    isEditing,
+    sectionsEditable = isEditing,
+    onEdit,
+    onSave,
+    onCancel,
+}: Props) => {
     const [editHeader, setEditHeader] = useState("");
     const [editAbout, setEditAbout] = useState("");
     const [editCoverLetter, setEditCoverLetter] = useState("");
@@ -126,7 +134,7 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     {isEditing ? (
                         <ExperienceTimeline
                             experiences={data.experiences}
-                            isEditing
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                             hasExperience={editHasExperience}
                             noExperienceDescription={editNoExpDescription}
@@ -161,35 +169,35 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     {(data.links.length > 0 || isEditing) && (
                         <PortfolioCard
                             links={data.links}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.educations.length > 0 || isEditing) && (
                         <EducationCard
                             educations={data.educations}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.languages.length > 0 || isEditing) && (
                         <LanguagesCard
                             languages={data.languages}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.skills.length > 0 || isEditing) && (
                         <SkillsCard
                             skills={data.skills}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.interests.length > 0 || isEditing) && (
                         <InterestsCard
                             interests={data.interests}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}

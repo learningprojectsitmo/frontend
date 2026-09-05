@@ -118,20 +118,8 @@ const SpaceSettingsPage = () => {
     const [deadlinePickerOpen, setDeadlinePickerOpen] = useState(false);
     const deadlineTriggerRef = useRef<HTMLButtonElement>(null);
     const deadlinePopoverRef = useRef<HTMLDivElement>(null);
-    const pageContentRef = useRef<HTMLDivElement>(null);
-    const [deadlinePos, setDeadlinePos] = useState<{ top: number; left: number } | null>(null);
 
     const openDeadlinePicker = () => {
-        const trigger = deadlineTriggerRef.current;
-        const content = pageContentRef.current;
-        if (trigger && content) {
-            const triggerRect = trigger.getBoundingClientRect();
-            const contentRect = content.getBoundingClientRect();
-            setDeadlinePos({
-                top: triggerRect.bottom - contentRect.top + 8,
-                left: triggerRect.left - contentRect.left,
-            });
-        }
         setDeadlinePickerOpen((v) => !v);
     };
 
@@ -250,7 +238,7 @@ const SpaceSettingsPage = () => {
 
     return (
         <ContentLayout title="Настройки пространства">
-            <div ref={pageContentRef} className="max-w-[860px] mx-auto p-6 space-y-6">
+            <div className="max-w-[860px] mx-auto p-6 space-y-6">
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
@@ -551,33 +539,26 @@ const SpaceSettingsPage = () => {
                                                                     />
                                                                 )}
                                                             </button>
+                                                            {deadlinePickerOpen && (
+                                                                <div
+                                                                    ref={deadlinePopoverRef}
+                                                                    className="absolute top-full left-0 mt-2 z-20"
+                                                                >
+                                                                    <Calendar
+                                                                        selected={selectedDate}
+                                                                        onSelect={(date) => {
+                                                                            field.onChange(
+                                                                                isoFromDate(date),
+                                                                            );
+                                                                            setDeadlinePickerOpen(
+                                                                                false,
+                                                                            );
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </FormControl>
-                                                    {deadlinePickerOpen &&
-                                                        deadlinePos &&
-                                                        pageContentRef.current && (
-                                                            <div
-                                                                ref={deadlinePopoverRef}
-                                                                style={{
-                                                                    position: "absolute",
-                                                                    top: deadlinePos.top,
-                                                                    left: deadlinePos.left,
-                                                                    zIndex: 10,
-                                                                }}
-                                                            >
-                                                                <Calendar
-                                                                    selected={selectedDate}
-                                                                    onSelect={(date) => {
-                                                                        field.onChange(
-                                                                            isoFromDate(date),
-                                                                        );
-                                                                        setDeadlinePickerOpen(
-                                                                            false,
-                                                                        );
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        )}
                                                 </FormItem>
                                             );
                                         }}
