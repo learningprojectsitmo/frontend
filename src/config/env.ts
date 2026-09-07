@@ -10,6 +10,8 @@ const createEnv = () => {
             .optional(),
         APP_URL: z.string().optional().default("http://localhost:3000"),
         APP_MOCK_API_PORT: z.string().optional().default("8080"),
+        SENTRY_DSN: z.string().optional(),
+        SENTRY_ENVIRONMENT: z.string().optional().default("development"),
     });
 
     const envVars = Object.entries(import.meta.env).reduce<Record<string, string>>((acc, curr) => {

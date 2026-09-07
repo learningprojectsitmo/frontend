@@ -26,6 +26,12 @@ export default defineConfig({
     },
     server: {
         port: 3000,
+        proxy: {
+            "/api": {
+                target: "http://localhost:9090",
+                changeOrigin: true,
+            },
+        },
         allowedHosts: [
             "test.1855789-cn23133.twc1.net",
             "fpin-projects.ru",
