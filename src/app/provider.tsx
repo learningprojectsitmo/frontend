@@ -10,6 +10,7 @@ import { LanguageSync } from "@/lib/language-sync";
 import { queryConfig } from "@/lib/react-query";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { ImagePromptProvider } from "@/components/image-prompt";
 
 import "@/i18n/config";
 
@@ -40,6 +41,7 @@ const AppProvider = ({ children }: AppProviderProps) => {
                         <LanguageSync />
                         <ThemeProvider>{children}</ThemeProvider>
                         <Notifications />
+                        <ImagePromptProvider />
                     </QueryClientProvider>
                 </HelmetProvider>
             </ErrorBoundary>

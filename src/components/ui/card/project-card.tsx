@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Calendar, Users } from "lucide-react";
+import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 
 export interface ProjectCardProps extends React.HTMLAttributes<HTMLDivElement> {
     tag: string;
@@ -111,9 +112,11 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                             {title}
                         </h3>
                         {description && (
-                            <p className="text-[14px] leading-[1.6] text-app-muted line-clamp-3">
-                                {description}
-                            </p>
+                            <RichTextViewer
+                                html={description}
+                                className="text-[14px] leading-[1.6] text-app-muted"
+                                clamp={3}
+                            />
                         )}
                     </div>
 

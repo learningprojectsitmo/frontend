@@ -29,6 +29,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 import { Plus, GraduationCapIcon } from "lucide-react";
 import {
     Select,
@@ -1089,19 +1091,15 @@ const SpaceRoute = () => {
                             <div className="self-stretch flex flex-col justify-start items-start gap-5">
                                 <div className="self-stretch flex flex-col justify-start items-start">
                                     {isEditing ? (
-                                        <textarea
+                                        <RichTextEditor
                                             value={editDescription}
-                                            onChange={(e) => setEditDescription(e.target.value)}
-                                            className="w-full self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                            rows={Math.max(
-                                                2,
-                                                Math.ceil(editDescription.length / 80),
-                                            )}
+                                            onChange={setEditDescription}
                                         />
                                     ) : (
-                                        <div className="self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7">
-                                            {project.descriptionExtended}
-                                        </div>
+                                        <RichTextViewer
+                                            html={project.descriptionExtended}
+                                            className="text-base font-medium font-sans"
+                                        />
                                     )}
                                 </div>
                                 <div className="self-stretch inline-flex justify-start items-start gap-1 flex-wrap content-start">
