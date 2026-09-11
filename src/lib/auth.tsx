@@ -25,7 +25,7 @@ import { queryKeys } from "./query-keys";
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 export const loginInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z.string().trim().toLowerCase().min(1, "Обязательное поле").email("Неправильный формат почты"),
     password: z.string().min(5, "Обязательное поле").max(64, "Слишком большой пароль"),
     rememberMe: z.boolean().default(false),
 });
@@ -64,7 +64,7 @@ export const vkSchema = z
     );
 
 export const createAccInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z.string().trim().toLowerCase().min(1, "Обязательное поле").email("Неправильный формат почты"),
     password: z.string().min(5, "Обязательное поле").max(64, "Слишком большой пароль"),
 });
 
@@ -90,7 +90,7 @@ export const addContactsInputSchema = z.object({
 });
 
 export const resetWithEmailInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z.string().trim().toLowerCase().min(1, "Обязательное поле").email("Неправильный формат почты"),
 });
 
 export const resetWithPasswordInputSchema = z.object({
