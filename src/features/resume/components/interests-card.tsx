@@ -30,7 +30,7 @@ export const InterestsCard = ({ interests, isEditing, resumeId }: Props) => {
     };
 
     return (
-        <div className="bg-app-surface rounded-3xl border border-zinc-200 shadow-sm p-6">
+        <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-semibold tracking-tight">Интересы</h3>
                 {isEditing && !showForm && (
@@ -45,7 +45,7 @@ export const InterestsCard = ({ interests, isEditing, resumeId }: Props) => {
             <div className="flex flex-wrap gap-2">
                 {interests.map((item) => (
                     <div key={item.id} className="group relative">
-                        <span className="px-3 py-1 rounded-full bg-zinc-100 text-sm text-gray-700">
+                        <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700">
                             {item.name}
                         </span>
                         {isEditing && (

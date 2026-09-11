@@ -102,7 +102,7 @@ export const ExperienceTimeline = ({
 
     if (isEditing) {
         return (
-            <div className="bg-app-surface rounded-3xl border border-zinc-200 shadow-sm divide-y divide-gray-100">
+            <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm divide-y divide-gray-100">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold tracking-tight text-gray-900">

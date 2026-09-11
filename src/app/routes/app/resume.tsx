@@ -33,7 +33,7 @@ const ResumeRoute = () => {
     const createResumeMutation = useCreateResume();
 
     const [isEditing, setIsEditing] = useState(isCreateMode);
-    const canEditSections = !isCreateMode && isEditing;
+    const canEditSections = isEditing;
 
     const handleEdit = () => {
         setIsEditing(true);
