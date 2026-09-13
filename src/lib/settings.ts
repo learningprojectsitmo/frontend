@@ -86,4 +86,8 @@ export const settingsApi = {
     ): Promise<{ terminated_sessions: string[]; message: string }> => {
         return api.post("/sessions/terminate", { session_ids: sessionIds });
     },
+
+    updateUserLanguage: (userId: number, lang: string): Promise<{ lang: string }> => {
+        return api.put(`/users/${userId}`, { lang });
+    },
 };

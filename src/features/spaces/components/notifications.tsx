@@ -35,11 +35,13 @@ const INVITATION_TYPES: NotificationType[] = [
     "invitation_accepted",
     "invitation_rejected",
 ];
+const APPROVAL_TYPES: NotificationType[] = ["stage_approval_required"];
 
 const tabs = [
     { key: "all", labelKey: "notifications.tabs.all" },
     { key: "responses", labelKey: "notifications.tabs.responses" },
     { key: "invitations", labelKey: "notifications.tabs.invitations" },
+    { key: "approvals", labelKey: "notifications.tabs.approvals" },
     { key: "archive", labelKey: "notifications.tabs.archive" },
 ] as const;
 
@@ -68,7 +70,7 @@ function formatRelativeTime(dateStr: string, t: (key: string, opts?: object) => 
 }
 
 export function NotificationsNav() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = React.useState<TabKey>("all");
@@ -76,7 +78,7 @@ export function NotificationsNav() {
     const markAllRead = useMarkAllNotificationsRead();
     const markRead = useMarkNotificationRead();
 
-    const notifications = data?.items ?? [];
+    const notifications = React.useMemo(() => data?.items ?? [], [data]);
 
     const unreadCount = data?.unread_count ?? 0;
 
@@ -84,7 +86,8 @@ export function NotificationsNav() {
         const all = notifications.length;
         const responses = notifications.filter((n) => RESPONSE_TYPES.includes(n.type)).length;
         const invitations = notifications.filter((n) => INVITATION_TYPES.includes(n.type)).length;
-        return { all, responses, invitations, archive: 0 };
+        const approvals = notifications.filter((n) => APPROVAL_TYPES.includes(n.type)).length;
+        return { all, responses, invitations, approvals, archive: 0 };
     }, [notifications]);
 
     const filteredNotifications = React.useMemo(() => {
@@ -93,6 +96,8 @@ export function NotificationsNav() {
             return notifications.filter((n) => RESPONSE_TYPES.includes(n.type));
         if (activeTab === "invitations")
             return notifications.filter((n) => INVITATION_TYPES.includes(n.type));
+        if (activeTab === "approvals")
+            return notifications.filter((n) => APPROVAL_TYPES.includes(n.type));
         return [];
     }, [notifications, activeTab]);
 
@@ -100,8 +105,12 @@ export function NotificationsNav() {
         markAllRead.mutate();
     };
 
-    const handleNotificationClick = (notificationId: number) => {
-        markRead.mutate(notificationId);
+    const handleNotificationClick = (item: (typeof notifications)[number]) => {
+        markRead.mutate(item.id);
+        if (APPROVAL_TYPES.includes(item.type) && item.data.project_id) {
+            navigate(`/app/project?id=${item.data.project_id}`);
+            return;
+        }
         navigate("/app/profile?tab=responses");
     };
 
@@ -207,6 +216,7 @@ export function NotificationsNav() {
                                 const msg = t(`notifications.types.${item.type}`, {
                                     actor_name: item.data.actor_name,
                                     project_name: item.data.project_name,
+                                    stage_name: item.data.stage_name,
                                 });
                                 const timeStr = formatRelativeTime(item.created_at, t);
                                 const initials = getInitials(item.data.actor_name);
@@ -223,7 +233,7 @@ export function NotificationsNav() {
                                     <React.Fragment key={item.id}>
                                         <DropdownMenuItem
                                             className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 focus:bg-gray-50 rounded-none"
-                                            onClick={() => handleNotificationClick(item.id)}
+                                            onClick={() => handleNotificationClick(item)}
                                         >
                                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-sans text-signature-small font-medium shrink-0 border-white border border-[2px]">
                                                 {initials}

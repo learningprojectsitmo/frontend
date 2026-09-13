@@ -460,7 +460,8 @@ export type NotificationType =
     | "response_rejected"
     | "invitation_received"
     | "invitation_accepted"
-    | "invitation_rejected";
+    | "invitation_rejected"
+    | "stage_approval_required";
 
 export interface NotificationData {
     actor_id: number | null;
@@ -470,6 +471,7 @@ export interface NotificationData {
     vacancy_title: string | null;
     invitation_id?: number;
     response_id?: number;
+    stage_name?: string;
 }
 
 export interface Notification {

@@ -15,7 +15,8 @@ export const useMyNotifications = (page = 1, limit = 20) => {
     return useQuery({
         queryKey: queryKeys.notifications.my(page, limit),
         queryFn: () => getMyNotifications(page, limit),
-        staleTime: 30 * 1000,
+        staleTime: 15_000,
+        refetchInterval: 30_000,
     });
 };
 

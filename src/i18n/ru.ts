@@ -9,6 +9,7 @@ const ru = {
                 all: "Все",
                 responses: "Отклики",
                 invitations: "Приглашения",
+                approvals: "Утверждения",
                 archive: "Архив",
             },
             types: {
@@ -19,6 +20,8 @@ const ru = {
                 invitation_accepted: "{{actor_name}} принял приглашение в проект {{project_name}}",
                 invitation_rejected:
                     "{{actor_name}} отклонил приглашение в проект {{project_name}}",
+                stage_approval_required:
+                    "{{actor_name}} запросил утверждение этапа «{{stage_name}}» в проекте {{project_name}}",
             },
             time: {
                 justNow: "только что",
@@ -26,6 +29,12 @@ const ru = {
                 hoursAgo: "{{hours}} ч. назад",
                 daysAgo: "{{days}} д. назад",
             },
+        },
+        settings: {
+            language: "Язык",
+            languageDescription: "Выберите язык интерфейса",
+            saved: "Язык сохранён",
+            saveError: "Не удалось сохранить язык",
         },
     },
 };

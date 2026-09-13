@@ -9,6 +9,7 @@ const en = {
                 all: "All",
                 responses: "Responses",
                 invitations: "Invitations",
+                approvals: "Approvals",
                 archive: "Archive",
             },
             types: {
@@ -22,6 +23,8 @@ const en = {
                     "{{actor_name}} accepted invitation to project {{project_name}}",
                 invitation_rejected:
                     "{{actor_name}} rejected invitation to project {{project_name}}",
+                stage_approval_required:
+                    "{{actor_name}} requested approval of stage «{{stage_name}}» in project {{project_name}}",
             },
             time: {
                 justNow: "just now",
@@ -29,6 +32,12 @@ const en = {
                 hoursAgo: "{{hours}} h ago",
                 daysAgo: "{{days}} d ago",
             },
+        },
+        settings: {
+            language: "Language",
+            languageDescription: "Choose the interface language",
+            saved: "Language saved",
+            saveError: "Failed to save language",
         },
     },
 };

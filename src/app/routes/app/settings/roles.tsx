@@ -2,6 +2,7 @@ import { ContentLayout } from "@/components/layouts";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState } from "react";
 import { SessionsTab } from "@/features/settings/components/sessions-tab";
+import { LanguageSection } from "@/features/settings/components/language-section";
 
 const SettingsPage = () => {
     const [activeTab, setActiveTab] = useState("general");
@@ -31,8 +32,8 @@ const SettingsPage = () => {
                 {activeTab === "security" && <SessionsTab />}
 
                 {activeTab === "general" && (
-                    <div className="text-center py-16 text-sm text-[--azure-46] border border-[--color-black-10] rounded-2xl">
-                        Раздел в разработке
+                    <div className="space-y-6">
+                        <LanguageSection />
                     </div>
                 )}
 
