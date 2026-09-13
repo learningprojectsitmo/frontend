@@ -14,6 +14,29 @@ import {
     type ResumeUpdate,
 } from "@/types/api";
 import { queryKeys } from "./query-keys";
+import { paths } from "@/config/paths";
+
+export const getResumeShareUrl = (id: number): string => {
+    return `${window.location.origin}${paths.app.resume.getHref(id)}`;
+};
+
+export const copyToClipboard = async (text: string): Promise<void> => {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        const el = document.createElement("textarea");
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+    }
+};
+
+export const shareResume = async (id: number): Promise<void> => {
+    await copyToClipboard(getResumeShareUrl(id));
+    toast.success("Ссылка скопирована");
+};
 
 const onSaveError = (error: unknown) =>
     toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения"));
@@ -69,6 +92,23 @@ export const useCreateResume = () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(data.id) });
         },
         onError: onSaveError,
+    });
+};
+
+export const deleteResume = async (id: number): Promise<void> => {
+    await api.delete(`/resumes/${id}`);
+};
+
+export const useDeleteResume = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteResume,
+        onSuccess: (_data, id) => {
+            queryClient.removeQueries({ queryKey: queryKeys.resume.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            toast.success("Резюме удалено");
+        },
+        onError: onDeleteError,
     });
 };
 

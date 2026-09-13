@@ -2,15 +2,17 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
-import { mapResumeFromApi } from "@/features/profile/components/resume-card";
+import { mapResumeFromApi, type ResumeData } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
+import { useUpdateResume, useDeleteResume, shareResume } from "@/lib/resume";
 import { paths } from "@/config/paths";
 import { ResponsesSection } from "@/features/profile/components/responses-section";
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
 import { SpacesSection } from "@/features/profile/components/spaces-section";
 import { ProjectsSection } from "@/features/profile/components/projects-section";
 import { ProfileActivity } from "@/features/profile/components/profile-activity";
+import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 
 const mainTabs = [
     { value: "resume", label: "Резюме" },
@@ -33,6 +35,31 @@ const ProfileRoute = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "resume");
     const { data: profile } = useProfile();
+    const deleteResumeMutation = useDeleteResume();
+    const updateResumeMutation = useUpdateResume();
+    const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
+
+    const resumes = (profile?.resumes ?? []).map(mapResumeFromApi);
+
+    const handleShare = (id: number) => {
+        void shareResume(id);
+    };
+
+    const handleToggleVisibility = (id: number) => {
+        const r = resumes.find((item) => item.id === id);
+        if (!r) return;
+        updateResumeMutation.mutate({ id, data: { is_visible: !r.isVisible } });
+    };
+
+    const handleDeleteClick = (id: number) => {
+        setDeleteTarget(resumes.find((r) => r.id === id) ?? null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        await deleteResumeMutation.mutateAsync(deleteTarget.id);
+        setDeleteTarget(null);
+    };
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);
@@ -68,9 +95,12 @@ const ProfileRoute = () => {
                     <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-[7] min-w-0">
                             <ResumeList
-                                resumes={(profile?.resumes ?? []).map(mapResumeFromApi)}
+                                resumes={resumes}
                                 onResumeClick={(id) => navigate(paths.app.resume.getHref(id))}
                                 onCreateClick={() => navigate(paths.app.resume.create.getHref())}
+                                onShare={handleShare}
+                                onDelete={handleDeleteClick}
+                                onToggleVisibility={handleToggleVisibility}
                             />
                         </div>
                         <div className="flex-[3] min-w-0">
@@ -97,6 +127,16 @@ const ProfileRoute = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmDeleteResumeDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+                resumeTitle={deleteTarget?.position ?? ""}
+                onDelete={handleConfirmDelete}
+                isPending={deleteResumeMutation.isPending}
+            />
         </ContentLayout>
     );
 };

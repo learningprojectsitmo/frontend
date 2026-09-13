@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { ContentLayout } from "@/components/layouts";
 import { useSearchParams, Link, useNavigate } from "react-router";
-import { useResumeDetail, useUpdateResume, useCreateResume } from "@/lib/resume";
+import {
+    useResumeDetail,
+    useUpdateResume,
+    useCreateResume,
+    useDeleteResume,
+    shareResume,
+} from "@/lib/resume";
 import { useProfile } from "@/lib/profile";
 import { useSpacesList } from "@/lib/spaces";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -14,6 +20,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb/breadcrumb";
 import { ResumePage } from "@/features/resume/components/resume-page";
+import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 import { paths } from "@/config/paths";
 import type { ResumeDetail, ResumeUserInfo } from "@/types/api";
 
@@ -31,8 +38,10 @@ const ResumeRoute = () => {
     const { data: dataSpaces } = useSpacesList();
     const updateResumeMutation = useUpdateResume();
     const createResumeMutation = useCreateResume();
+    const deleteResumeMutation = useDeleteResume();
 
     const [isEditing, setIsEditing] = useState(isCreateMode);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const canEditSections = isEditing;
 
     const handleEdit = () => {
@@ -45,6 +54,20 @@ const ResumeRoute = () => {
         } else {
             setIsEditing(false);
         }
+    };
+
+    const handleShare = () => {
+        void shareResume(id);
+    };
+
+    const handleDelete = () => {
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        await deleteResumeMutation.mutateAsync(id);
+        setIsDeleteDialogOpen(false);
+        navigate("/app/profile");
     };
 
     const handleSave = async (fields: {
@@ -278,7 +301,19 @@ const ResumeRoute = () => {
                     onEdit={isOwner ? handleEdit : undefined}
                     onSave={isOwner ? handleSave : undefined}
                     onCancel={isOwner ? handleCancel : undefined}
+                    onShare={isOwner ? handleShare : undefined}
+                    onDelete={isOwner ? handleDelete : undefined}
                 />
+
+                {isOwner && (
+                    <ConfirmDeleteResumeDialog
+                        open={isDeleteDialogOpen}
+                        onOpenChange={setIsDeleteDialogOpen}
+                        resumeTitle={resumeTitle}
+                        onDelete={handleConfirmDelete}
+                        isPending={deleteResumeMutation.isPending}
+                    />
+                )}
             </div>
         </ContentLayout>
     );

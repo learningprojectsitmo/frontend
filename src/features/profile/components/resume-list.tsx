@@ -7,9 +7,19 @@ type ResumeListProps = {
     resumes: ResumeData[];
     onResumeClick?: (id: number) => void;
     onCreateClick?: () => void;
+    onShare?: (id: number) => void;
+    onDelete?: (id: number) => void;
+    onToggleVisibility?: (id: number) => void;
 };
 
-export function ResumeList({ resumes, onResumeClick, onCreateClick }: ResumeListProps) {
+export function ResumeList({
+    resumes,
+    onResumeClick,
+    onCreateClick,
+    onShare,
+    onDelete,
+    onToggleVisibility,
+}: ResumeListProps) {
     return (
         <section>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -49,6 +59,11 @@ export function ResumeList({ resumes, onResumeClick, onCreateClick }: ResumeList
                             key={resume.id}
                             resume={resume}
                             onClick={() => onResumeClick?.(resume.id)}
+                            onShare={onShare ? () => onShare(resume.id) : undefined}
+                            onDelete={onDelete ? () => onDelete(resume.id) : undefined}
+                            onToggleVisibility={
+                                onToggleVisibility ? () => onToggleVisibility(resume.id) : undefined
+                            }
                         />
                     ))}
                 </div>

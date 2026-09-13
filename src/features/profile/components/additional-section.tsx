@@ -1,5 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icons";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select/select";
 import { type PortfolioFull, type EducationFull, type LanguageFull } from "@/types/api";
 import {
     useCreatePortfolio,
@@ -9,6 +16,22 @@ import {
     useCreateLanguage,
     useDeleteLanguage,
 } from "@/lib/profile";
+
+const FLAG_OPTIONS: { value: string; label: string }[] = [
+    { value: "🇷🇺", label: "Русский" },
+    { value: "🇺🇸", label: "Английский (US)" },
+    { value: "🇬🇧", label: "Английский (UK)" },
+    { value: "🇩🇪", label: "Немецкий" },
+    { value: "🇫🇷", label: "Французский" },
+    { value: "🇪🇸", label: "Испанский" },
+    { value: "🇮🇹", label: "Итальянский" },
+    { value: "🇨🇳", label: "Китайский" },
+    { value: "🇯🇵", label: "Японский" },
+    { value: "🇰🇷", label: "Корейский" },
+    { value: "🇵🇱", label: "Польский" },
+    { value: "🇹🇷", label: "Турецкий" },
+    { value: "🌐", label: "Без флага" },
+];
 
 type AdditionalSectionProps = {
     portfolio: PortfolioFull[];
@@ -315,12 +338,23 @@ function LanguageSection({ items }: { items: LanguageFull[] }) {
                         placeholder="Уровень"
                         className="text-sm px-3 py-2 rounded-lg border border-gray-200"
                     />
-                    <input
-                        value={flag}
-                        onChange={(e) => setFlag(e.target.value)}
-                        placeholder="Флаг (🇷🇺)"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
-                    />
+                    <Select value={flag || "🌐"} onValueChange={setFlag}>
+                        <SelectTrigger className="h-9 text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white">
+                            <SelectValue placeholder="Флаг" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {FLAG_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    <span className="flex items-center gap-2">
+                                        <span className="text-base leading-none">
+                                            {option.value}
+                                        </span>
+                                        {option.label}
+                                    </span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <div className="flex gap-2 justify-end">
                         <button
                             onClick={() => setShowForm(false)}

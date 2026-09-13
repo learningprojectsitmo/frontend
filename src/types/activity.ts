@@ -12,6 +12,9 @@ export type ActivityItem = {
 
 export type ActivityResponse = {
     total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
     summary: ActivityDay[];
     items: ActivityItem[];
 };

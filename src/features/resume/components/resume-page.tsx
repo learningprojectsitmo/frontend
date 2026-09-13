@@ -29,6 +29,8 @@ type Props = {
         is_visible: boolean;
     }) => void;
     onCancel?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
 };
 
 export const ResumePage = ({
@@ -38,6 +40,8 @@ export const ResumePage = ({
     onEdit,
     onSave,
     onCancel,
+    onShare,
+    onDelete,
 }: Props) => {
     const [editHeader, setEditHeader] = useState("");
     const [editAbout, setEditAbout] = useState("");
@@ -118,6 +122,8 @@ export const ResumePage = ({
                 editHeader={editHeader}
                 onHeaderChange={setEditHeader}
                 onEdit={onEdit}
+                onShare={onShare}
+                onDelete={onDelete}
             />
 
             {(data.resume.cover_letter || isEditing) && (

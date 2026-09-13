@@ -1,5 +1,4 @@
 import { Icon } from "@/components/ui/icons";
-import { IconButton } from "@/components/ui/button/icon-button";
 import { Button } from "@/components/ui/button";
 
 type SocialLink = { label: string; value: string };
@@ -13,6 +12,8 @@ type ProfileHeaderProps = {
     socials: SocialLink[];
     showActions?: boolean;
     onEdit?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
 };
 
 export const ProfileHeader = ({
@@ -24,6 +25,8 @@ export const ProfileHeader = ({
     socials,
     showActions = false,
     onEdit,
+    onShare,
+    onDelete,
 }: ProfileHeaderProps) => {
     return (
         <div className="rounded-2xl border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
@@ -51,11 +54,28 @@ export const ProfileHeader = ({
                             >
                                 <span className="hidden sm:inline">Редактировать</span>
                             </Button>
-                            <IconButton
-                                className="h-9 w-9 rounded-xl border border-gray-200 flex items-center justify-center"
-                                icon={<Icon name="kebab" size={16} />}
-                                variant="ghost"
-                            />
+                            {onShare && (
+                                <Button
+                                    variant="outline"
+                                    size="hug36"
+                                    icon={<Icon name="share" size={14} />}
+                                    className="text-[13px] font-semibold gap-1.5 rounded-xl"
+                                    onClick={onShare}
+                                >
+                                    <span className="hidden sm:inline">Поделиться</span>
+                                </Button>
+                            )}
+                            {onDelete && (
+                                <Button
+                                    variant="outline"
+                                    size="hug36"
+                                    icon={<Icon name="trash" size={14} />}
+                                    className="text-[13px] font-semibold gap-1.5 rounded-xl border-red-300 text-red-700 hover:bg-red-100"
+                                    onClick={onDelete}
+                                >
+                                    <span className="hidden sm:inline">Удалить</span>
+                                </Button>
+                            )}
                         </div>
                     )}
                 </div>

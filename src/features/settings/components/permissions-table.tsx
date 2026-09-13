@@ -4,7 +4,7 @@ import type { Permission } from "../types";
 
 // Разделы, чьи permission-ы реально проверяются в коде бэкенда (другие — только
 // отображаются в UI и не влияют на логику прав).
-const USED_SECTIONS = new Set(["project", "user"]);
+const USED_SECTIONS = new Set(["project", "resume", "user"]);
 
 interface PermissionsTableProps {
     permissions: Permission[];
@@ -48,8 +48,13 @@ export const PermissionsTable = ({ permissions, onPermissionChange }: Permission
                     {sortedPermissions.map((permission, index) => {
                         const isUsed = USED_SECTIONS.has(permission.sectionId);
                         return (
-                            <tr key={permission.id} className="hover:bg-[--grey-96] transition-colors">
-                                <td className="px-6 py-4 text-[15px] text-[--grey-4]">{index + 1}</td>
+                            <tr
+                                key={permission.id}
+                                className="hover:bg-[--grey-96] transition-colors"
+                            >
+                                <td className="px-6 py-4 text-[15px] text-[--grey-4]">
+                                    {index + 1}
+                                </td>
                                 <td className="px-6 py-4 text-[15px] text-[--grey-4] font-medium">
                                     <div className="flex items-center gap-2">
                                         <span>{permission.sectionName}</span>

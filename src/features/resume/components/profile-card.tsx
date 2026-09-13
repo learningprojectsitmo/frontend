@@ -9,6 +9,8 @@ type Props = {
     editHeader?: string;
     onHeaderChange?: (value: string) => void;
     onEdit?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
 };
 
 const getInitials = (firstName: string, lastName: string | null) => {
@@ -22,6 +24,8 @@ export const ProfileCard = ({
     editHeader,
     onHeaderChange,
     onEdit,
+    onShare,
+    onDelete,
 }: Props) => {
     const fullName = [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(" ");
 
@@ -110,6 +114,8 @@ export const ProfileCard = ({
             socials={socials}
             showActions={!!onEdit}
             onEdit={onEdit}
+            onShare={onShare}
+            onDelete={onDelete}
         />
     );
 };
