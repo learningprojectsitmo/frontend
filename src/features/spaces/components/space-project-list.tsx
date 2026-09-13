@@ -18,7 +18,7 @@ const statusLabels: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
+    archived: "Архив",
 };
 
 function formatDate(iso: string): string {
@@ -31,13 +31,13 @@ function formatDate(iso: string): string {
 }
 
 function mapProjectListItem(item: ProjectListItemResponse) {
-    const statusName = item.status?.name || "draft";
+    const statusName = item.status?.name || "";
     const isArchived = statusName === "archived";
 
     return {
         id: item.id,
-        tag: isArchived ? "draft" : statusName,
-        tagLabel: statusLabels[statusName] || statusName,
+        tag: statusName,
+        tagLabel: statusLabels[statusName] || "",
         title: item.name,
         description: item.description || "",
         progressValue: item.progress,
@@ -72,7 +72,7 @@ export function SpaceProjectList({
 
         if (filters.statuses.length > 0) {
             result = result.filter((p) => {
-                const statusName = p.status?.name || "draft";
+                const statusName = p.status?.name || "";
                 return filters.statuses.includes(statusName);
             });
         }

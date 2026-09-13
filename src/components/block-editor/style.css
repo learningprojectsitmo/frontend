@@ -15,6 +15,7 @@
 }
 
 .block-editor-content .ProseMirror {
+  width: 100%;
   outline: none;
   min-height: 200px;
   padding: 1rem;
@@ -1081,4 +1082,29 @@
 .block-editor-content > ul[data-type="taskList"] > li[data-checked="true"] > div > p {
   text-decoration: line-through;
   color: var(--app-muted);
+}
+
+/* ── Overflow: keep rich text inside the container ── */
+.block-editor-content > :not(pre, table) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.block-editor-content > table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.block-editor-content .ProseMirror,
+.block-editor-content .ProseMirror :where(p, h1, h2, h3, a, code, li, td, th) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.block-editor-content .ProseMirror pre,
+.block-editor-content .ProseMirror pre code {
+  overflow-wrap: normal;
+  word-break: normal;
 }

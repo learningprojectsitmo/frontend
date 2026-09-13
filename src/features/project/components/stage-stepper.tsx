@@ -2,10 +2,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ApproveStageDialog, RejectStageDialog } from "./stage-dialogs";
-import type { BackendProjectStage } from "@/types/api";
+import type { BackendProjectStage, BackendStageRejection } from "@/types/api";
 
 const formatStageDate = (iso: string): string =>
-    new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+    new Date(iso)
+        .toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
+        .replace(/\.$/, "");
 
 const STAGE_DEADLINE_SOON_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -19,6 +21,7 @@ interface StageStepperProps {
     onApprove: (projectId: number) => void;
     onReject: (projectId: number, comment?: string | null) => void;
     projectId: number;
+    rejection?: BackendStageRejection | null;
 }
 
 export const StageStepper = ({
@@ -31,6 +34,7 @@ export const StageStepper = ({
     onApprove,
     onReject,
     projectId,
+    rejection,
 }: StageStepperProps) => {
     if (!stages || stages.length === 0) {
         return null;
@@ -129,7 +133,7 @@ export const StageStepper = ({
                                     >
                                         {isOverdue && "просрочен · "}
                                         {isSoon && "скоро · "}
-                                        {formatStageDate(stage.deadline!)}
+                                        до {formatStageDate(stage.deadline!)}
                                     </span>
                                 )}
                             </li>
@@ -147,6 +151,19 @@ export const StageStepper = ({
                     }}
                 >
                     Этап ожидает утверждения преподавателем
+                </div>
+            )}
+
+            {isCurrentUserAuthor && rejection?.comment && (
+                <div
+                    className="text-[13px] font-medium leading-5 rounded-lg px-3 py-2"
+                    style={{
+                        color: "var(--red-60)",
+                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    }}
+                >
+                    Этап «{rejection.stage_name}» возвращён. Комментарий преподавателя: «
+                    {rejection.comment}»
                 </div>
             )}
 

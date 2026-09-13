@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
 import { Textarea } from "@/components/ui/textarea/textarea";
 import { Switch } from "@/components/ui/switch/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Calendar } from "@/features/spaces/components/filters/calendar";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
     useProjectTypes,
@@ -19,6 +22,133 @@ import type { BackendProjectStage, BackendProjectType } from "@/types/api";
 interface TypesEditorProps {
     workspaceId: number;
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const startOfToday = (): Date => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+};
+
+const pad2 = (n: number): string => String(n).padStart(2, "0");
+
+const formatDate = (d: Date): string =>
+    `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
+
+const isoFromDate = (d: Date): string =>
+    `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+const parseIso = (value: string | null): Date | null => {
+    if (!value) return null;
+    const d = new Date(`${value}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const durationToIso = (days: number | null): string | null => {
+    if (!days) return null;
+    const d = startOfToday();
+    d.setDate(d.getDate() + Math.max(1, days));
+    return isoFromDate(d);
+};
+
+const isoToDuration = (value: string | null): number | null => {
+    const picked = parseIso(value);
+    if (!picked) return null;
+    const days = Math.round((picked.getTime() - startOfToday().getTime()) / DAY_MS);
+    return Math.max(1, days);
+};
+
+interface StageDatePickerProps {
+    value: string | null;
+    onChange: (iso: string | null) => void;
+    placeholder?: string;
+    className?: string;
+}
+
+const StageDatePicker = ({
+    value,
+    onChange,
+    placeholder = "Не указан",
+    className,
+}: StageDatePickerProps) => {
+    const [open, setOpen] = useState(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const selected = parseIso(value);
+
+    useEffect(() => {
+        if (!open) return;
+        function handleClickOutside(e: MouseEvent) {
+            const target = e.target as Node;
+            if (triggerRef.current?.contains(target) || popoverRef.current?.contains(target)) {
+                return;
+            }
+            setOpen(false);
+        }
+        function handleKeydown(e: KeyboardEvent) {
+            if (e.key === "Escape") setOpen(false);
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeydown);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeydown);
+        };
+    }, [open]);
+
+    return (
+        <div className={cn("relative", className)}>
+            <button
+                ref={triggerRef}
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="w-full h-9 px-3 flex items-center justify-between gap-1 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 hover:border-gray-300 outline-none transition-colors"
+            >
+                <span className={cn("whitespace-nowrap", !selected && "text-gray-400")}>
+                    {selected ? formatDate(selected) : placeholder}
+                </span>
+                {selected ? (
+                    <span className="flex items-center gap-1">
+                        <CalendarIcon size={15} className="text-gray-400 shrink-0" />
+                        <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onChange(null);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onChange(null);
+                                }
+                            }}
+                            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                            aria-label="Сбросить дату"
+                        >
+                            <X size={14} className="h-3.5 w-3.5" />
+                        </span>
+                    </span>
+                ) : (
+                    <CalendarIcon size={15} className="text-gray-400 shrink-0" />
+                )}
+            </button>
+            {open && (
+                <div ref={popoverRef} className="absolute top-full left-0 mt-2 z-30">
+                    <Calendar
+                        selected={selected}
+                        onSelect={(date) => {
+                            onChange(isoFromDate(date));
+                            setOpen(false);
+                        }}
+                    />
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
     const { data: types, isLoading } = useProjectTypes(workspaceId);
@@ -96,11 +226,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
         }
         const type = types?.find((t) => t.id === typeId);
         const nextOrder = type ? type.stages.length : 0;
-        const rawDays = Number(newStageDuration.trim());
-        const durationDays =
-            newStageDuration.trim() !== "" && Number.isFinite(rawDays) && rawDays > 0
-                ? rawDays
-                : null;
+        const durationDays = isoToDuration(newStageDuration || null);
         createStage.mutate(
             {
                 typeId,
@@ -154,10 +280,28 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
         );
     };
 
-    const handleDurationChange = (typeId: number, stage: BackendProjectStage, raw: string) => {
-        const trimmed = raw.trim();
-        const days = trimmed === "" ? null : Number(trimmed);
-        const next = days !== null && Number.isFinite(days) && days > 0 ? days : null;
+    const handleMoveStage = (typeId: number, index: number, delta: -1 | 1) => {
+        const type = types?.find((t) => t.id === typeId);
+        if (!type) return;
+        const stages = sorted(type);
+        const target = index + delta;
+        if (target < 0 || target >= stages.length) return;
+        const a = stages[index];
+        const b = stages[target];
+        const onError = (error: unknown) =>
+            toast.error(
+                error instanceof Error ? error.message : "Не удалось изменить порядок этапов",
+            );
+        updateStage.mutate({ typeId, stageId: a.id, data: { order: b.order } }, { onError });
+        updateStage.mutate({ typeId, stageId: b.id, data: { order: a.order } }, { onError });
+    };
+
+    const handleDurationChange = (
+        typeId: number,
+        stage: BackendProjectStage,
+        iso: string | null,
+    ) => {
+        const next = isoToDuration(iso);
         if (next === stage.duration_days) return;
         updateStage.mutate(
             { typeId, stageId: stage.id, data: { duration_days: next } },
@@ -277,6 +421,26 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                         key={stage.id}
                                         className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
                                     >
+                                        <div className="flex flex-col shrink-0">
+                                            <button
+                                                type="button"
+                                                disabled={idx === 0}
+                                                onClick={() => handleMoveStage(t.id, idx, -1)}
+                                                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
+                                                aria-label="Переместить этап выше"
+                                            >
+                                                <ChevronUp size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={idx === sorted(t).length - 1}
+                                                onClick={() => handleMoveStage(t.id, idx, 1)}
+                                                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
+                                                aria-label="Переместить этап ниже"
+                                            >
+                                                <ChevronDown size={14} />
+                                            </button>
+                                        </div>
                                         <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[12px] font-semibold shrink-0">
                                             {idx + 1}
                                         </span>
@@ -300,17 +464,13 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                                 утверждение
                                             </span>
                                         </label>
-                                        <Input
-                                            key={`duration-${stage.id}`}
-                                            type="number"
-                                            min={1}
-                                            defaultValue={stage.duration_days ?? ""}
-                                            onBlur={(e) =>
-                                                handleDurationChange(t.id, stage, e.target.value)
+                                        <StageDatePicker
+                                            value={durationToIso(stage.duration_days)}
+                                            onChange={(iso) =>
+                                                handleDurationChange(t.id, stage, iso)
                                             }
-                                            className="w-[72px] shrink-0"
-                                            placeholder="дней"
-                                            aria-label="Срок прохождения этапа в днях"
+                                            className="w-[160px] shrink-0"
+                                            placeholder="дата"
                                         />
                                         <Button
                                             variant="ghost"
@@ -332,14 +492,11 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                     onChange={(e) => setNewStageName(e.target.value)}
                                     placeholder="Название нового этапа"
                                 />
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    value={newStageDuration}
-                                    onChange={(e) => setNewStageDuration(e.target.value)}
-                                    className="w-[96px]"
-                                    placeholder="срок, дней"
-                                    aria-label="Срок прохождения этапа в днях"
+                                <StageDatePicker
+                                    value={newStageDuration || null}
+                                    onChange={(iso) => setNewStageDuration(iso ?? "")}
+                                    className="w-[160px]"
+                                    placeholder="дата"
                                 />
                                 <Button
                                     variant="blue"

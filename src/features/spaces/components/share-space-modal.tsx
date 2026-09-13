@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input/input";
@@ -16,7 +16,7 @@ interface ShareSpaceModalProps {
 
 export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModalProps) => {
     const { data: rolesData } = useRoles();
-    const roles = rolesData?.items ?? [];
+    const roles = useMemo(() => rolesData?.items ?? [], [rolesData]);
     const roleOptions: RadioOption[] = roles.map((role) => ({
         value: String(role.id),
         label: ROLE_LABELS[role.name] ?? role.name,
@@ -32,11 +32,17 @@ export const ShareSpaceModal = ({ open, onOpenChange, spaceId }: ShareSpaceModal
     useEffect(() => {
         if (open) {
             setCopiedToken(null);
-            const memberRole = roles.find((role) => role.name === "member");
-            setSelectedRole(memberRole ? String(memberRole.id) : "");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
+
+    useEffect(() => {
+        if (roles.length === 0) return;
+        const memberRole = roles.find((role) => role.name === "member");
+        setSelectedRole((current) => {
+            if (current && roles.some((role) => String(role.id) === current)) return current;
+            return memberRole ? String(memberRole.id) : "";
+        });
+    }, [roles]);
 
     const handleGenerate = () => {
         if (!selectedRole) return;

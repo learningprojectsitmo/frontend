@@ -23,7 +23,7 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
     review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
     planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
     completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
-    draft: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
+    archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
 };
 
 const statusLabels: Record<string, string> = {
@@ -31,7 +31,7 @@ const statusLabels: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
+    archived: "Архив",
 };
 
 const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
@@ -53,9 +53,13 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
         },
         ref,
     ) => {
-        const statusKey = archived ? "draft" : tag;
-        const statusStyle = statusStyles[statusKey] || statusStyles.draft;
-        const label = tagLabel || statusLabels[statusKey] || statusKey;
+        const statusKey = archived ? "archived" : tag;
+        const label = tagLabel || statusLabels[statusKey];
+        const statusStyle =
+            statusStyles[statusKey] ??
+            (label
+                ? { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" }
+                : undefined);
 
         const displayUsers = users.slice(0, 3);
         const remainingCount = users.length - 3;
@@ -76,12 +80,14 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                 <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Card Header: Status badge + kebab */}
                     <div className="flex items-start justify-between">
-                        <span
-                            className="inline-flex items-center h-7 px-2.5 rounded-full text-[13px] font-medium leading-none"
-                            style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
-                        >
-                            {label}
-                        </span>
+                        {label && statusStyle && (
+                            <span
+                                className="inline-flex items-center h-7 px-2.5 rounded-full text-[13px] font-medium leading-none"
+                                style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
+                            >
+                                {label}
+                            </span>
+                        )}
                         {onKebabClick && (
                             <button
                                 type="button"
@@ -114,8 +120,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                         {description && (
                             <RichTextViewer
                                 html={description}
-                                className="text-[14px] leading-[1.6] text-app-muted"
-                                clamp={3}
+                                className="text-[14px] leading-[1.6] text-app-muted line-clamp-3"
                             />
                         )}
                     </div>

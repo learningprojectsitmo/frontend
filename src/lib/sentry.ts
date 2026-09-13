@@ -8,6 +8,9 @@ export function setupSentry() {
     Sentry.init({
         dsn: env.SENTRY_DSN,
         environment: env.SENTRY_ENVIRONMENT,
-        tracesSampleRate: 1.0,
+        sampleRate: env.SENTRY_ERRORS_SAMPLE_RATE,
+        tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
+        autoSessionTracking: false,
+        sendDefaultPii: true,
     });
 }

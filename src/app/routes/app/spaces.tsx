@@ -23,7 +23,6 @@ const STATUS_LABELS: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
     archived: "Архив",
 };
 
@@ -49,7 +48,6 @@ const SpacesRoute = () => {
         review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
         planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
         completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
-        draft: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
         archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
     };
 
@@ -58,6 +56,7 @@ const SpacesRoute = () => {
         return (dataRecentProjects?.items ?? [])
             .map((p) => p.status)
             .filter((s) => {
+                if (!s || s === "draft") return false;
                 if (seen.has(s)) return false;
                 seen.add(s);
                 return true;
@@ -423,9 +422,8 @@ const SpacesRoute = () => {
                                     </thead>
                                     <tbody>
                                         {visibleFilteredRawItems.map((raw) => {
-                                            const style =
-                                                statusStyles[raw.status] || statusStyles.draft;
-                                            const label = STATUS_LABELS[raw.status] || raw.status;
+                                            const style = statusStyles[raw.status];
+                                            const label = STATUS_LABELS[raw.status] || "";
                                             return (
                                                 <tr
                                                     key={raw.id}
@@ -436,15 +434,17 @@ const SpacesRoute = () => {
                                                             to={paths.app.project.getHref(raw.id)}
                                                             className="flex items-center gap-3"
                                                         >
-                                                            <span
-                                                                className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
-                                                                style={{
-                                                                    backgroundColor: style.bg,
-                                                                    color: style.text,
-                                                                }}
-                                                            >
-                                                                {label}
-                                                            </span>
+                                                            {label && style && (
+                                                                <span
+                                                                    className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
+                                                                    style={{
+                                                                        backgroundColor: style.bg,
+                                                                        color: style.text,
+                                                                    }}
+                                                                >
+                                                                    {label}
+                                                                </span>
+                                                            )}
                                                             <span className="text-[14px] font-medium text-gray-900 group-hover:text-[#2563EB] transition-colors">
                                                                 {raw.title}
                                                             </span>

@@ -12,6 +12,8 @@ const createEnv = () => {
         APP_MOCK_API_PORT: z.string().optional().default("8080"),
         SENTRY_DSN: z.string().optional(),
         SENTRY_ENVIRONMENT: z.string().optional().default("development"),
+        SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
+        SENTRY_ERRORS_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
     });
 
     const envVars = Object.entries(import.meta.env).reduce<Record<string, string>>((acc, curr) => {

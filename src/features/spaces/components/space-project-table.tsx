@@ -8,7 +8,6 @@ const statusLabels: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
     archived: "Архив",
 };
 
@@ -17,7 +16,6 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
     review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
     planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
     completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
-    draft: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
     archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
 };
 
@@ -68,9 +66,9 @@ export function SpaceProjectTable({ projects }: SpaceProjectTableProps) {
                 </thead>
                 <tbody>
                     {projects.map((project) => {
-                        const statusName = project.status?.name || "draft";
-                        const style = statusStyles[statusName] || statusStyles.draft;
-                        const label = statusLabels[statusName] || statusName;
+                        const statusName = project.status?.name || "";
+                        const style = statusStyles[statusName];
+                        const label = statusLabels[statusName];
 
                         const displayUsers = project.participants_preview.slice(0, 3);
                         const remainingCount = project.participants_count - 3;
@@ -85,12 +83,17 @@ export function SpaceProjectTable({ projects }: SpaceProjectTableProps) {
                                         to={paths.app.project.getHref(project.id)}
                                         className="flex items-center gap-3"
                                     >
-                                        <span
-                                            className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
-                                            style={{ backgroundColor: style.bg, color: style.text }}
-                                        >
-                                            {label}
-                                        </span>
+                                        {label && style && (
+                                            <span
+                                                className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
+                                                style={{
+                                                    backgroundColor: style.bg,
+                                                    color: style.text,
+                                                }}
+                                            >
+                                                {label}
+                                            </span>
+                                        )}
                                         <span className="text-[14px] font-medium text-gray-900 group-hover:text-[#2563EB] transition-colors">
                                             {project.name}
                                         </span>

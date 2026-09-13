@@ -1,9 +1,17 @@
 import { ContentLayout } from "@/components/layouts";
-import { Dot, Ellipsis, PencilLine, Trash2, List as ListIcon } from "lucide-react";
+import { Dot, Ellipsis, PencilLine, Trash2, List as ListIcon, ChevronDown } from "lucide-react";
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
+import {
+    useState,
+    useMemo,
+    useEffect,
+    Fragment,
+    useCallback,
+    useRef,
+    useLayoutEffect,
+} from "react";
 import {
     useProject,
     useUpdateProject,
@@ -31,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { RichTextViewer } from "@/components/ui/rich-text-viewer";
+import { cn } from "@/lib/utils";
 import { Plus, GraduationCapIcon } from "lucide-react";
 import {
     Select,
@@ -189,6 +198,31 @@ const SpaceRoute = () => {
     const { addViewedProject } = useRecentlyViewed();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+    const [descHasOverflow, setDescHasOverflow] = useState(false);
+    const descRef = useRef<HTMLDivElement>(null);
+    const descHiddenRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const el = descRef.current;
+        const hiddenEl = descHiddenRef.current;
+        if (!el || !hiddenEl) {
+            return;
+        }
+        const measure = () => {
+            setDescHasOverflow(hiddenEl.scrollHeight > el.clientHeight + 1);
+        };
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        ro.observe(hiddenEl);
+        return () => ro.disconnect();
+    }, [isEditing, project?.id, project?.descriptionExtended]);
+
+    useEffect(() => {
+        setDescriptionExpanded(false);
+        setDescHasOverflow(false);
+    }, [project?.id]);
 
     const showApplyButton = !!(
         user?.id &&
@@ -902,14 +936,16 @@ const SpaceRoute = () => {
                                         {project.title}
                                     </div>
                                 )}
-                                <div
-                                    data-status="In Progress"
-                                    className="w-16 px-2 py-0.5 bg-[#2B7FFF] rounded-lg outline outline-1 outline-[#2B7FFF]  inline-flex justify-center items-center overflow-hidden"
-                                >
-                                    <div className="text-center justify-center text-white text-[11px] font-semibold font-sans leading-4 tracking-tight">
-                                        {project.tag}
+                                {project.tag !== "draft" && (
+                                    <div
+                                        data-status="In Progress"
+                                        className="w-16 px-2 py-0.5 bg-[#2B7FFF] rounded-lg outline outline-1 outline-[#2B7FFF]  inline-flex justify-center items-center overflow-hidden"
+                                    >
+                                        <div className="text-center justify-center text-white text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                            {project.tag}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start w-full">
                                 <div className="justify-center text-app-muted text-[13px] font-medium font-sans leading-5 tracking-tight mb-0.5">
@@ -1071,6 +1107,21 @@ const SpaceRoute = () => {
                     </div>
                 </div>
 
+                {dataProject?.stages && dataProject.stages.length > 0 && (
+                    <StageStepper
+                        stages={dataProject.stages}
+                        currentStageId={dataProject.current_stage_id}
+                        pendingApproval={dataProject.stage_pending_approval}
+                        isCurrentUserAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
+                        onAdvance={handleAdvanceStage}
+                        onApprove={handleApproveStage}
+                        onReject={handleRejectStage}
+                        projectId={dataProject.id}
+                        rejection={dataProject.stage_rejection}
+                    />
+                )}
+
                 <section>
                     <Tabs
                         tabs={textTabs}
@@ -1089,17 +1140,57 @@ const SpaceRoute = () => {
                                 </div>
                             </div>
                             <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                                <div className="self-stretch flex flex-col justify-start items-start">
+                                <div className="self-stretch flex flex-col justify-start items-start relative">
                                     {isEditing ? (
                                         <RichTextEditor
                                             value={editDescription}
                                             onChange={setEditDescription}
                                         />
                                     ) : (
-                                        <RichTextViewer
-                                            html={project.descriptionExtended}
-                                            className="text-base font-medium font-sans"
-                                        />
+                                        <>
+                                            <RichTextViewer
+                                                ref={descRef}
+                                                html={project.descriptionExtended}
+                                                className="text-base font-medium font-sans"
+                                                clamp={descriptionExpanded ? undefined : 3}
+                                            />
+                                            <div
+                                                aria-hidden="true"
+                                                className="invisible absolute left-0 top-0 w-full pointer-events-none"
+                                            >
+                                                <RichTextViewer
+                                                    ref={descHiddenRef}
+                                                    html={project.descriptionExtended}
+                                                    className="text-base font-medium font-sans"
+                                                />
+                                            </div>
+                                            {!descriptionExpanded && descHasOverflow && (
+                                                <div
+                                                    aria-hidden="true"
+                                                    className="absolute bottom-0 inset-x-0 h-10 rounded-b-xl pointer-events-none"
+                                                    style={{
+                                                        backgroundImage:
+                                                            "linear-gradient(to top, color-mix(in srgb, var(--app-blue) 14%, transparent), transparent)",
+                                                    }}
+                                                />
+                                            )}
+                                        </>
+                                    )}
+                                    {!isEditing && (descHasOverflow || descriptionExpanded) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDescriptionExpanded((v) => !v)}
+                                            className="inline-flex items-center gap-1 self-center mt-2 text-[13px] font-medium text-app-blue hover:underline"
+                                        >
+                                            {descriptionExpanded ? "Свернуть" : "Развернуть"}
+                                            <ChevronDown
+                                                size={15}
+                                                className={cn(
+                                                    "transition-transform",
+                                                    descriptionExpanded && "rotate-180",
+                                                )}
+                                            />
+                                        </button>
                                     )}
                                 </div>
                                 <div className="self-stretch inline-flex justify-start items-start gap-1 flex-wrap content-start">
@@ -1150,20 +1241,6 @@ const SpaceRoute = () => {
                                 </div>
                             </div>
                         </section>
-
-                        {dataProject?.stages && dataProject.stages.length > 0 && (
-                            <StageStepper
-                                stages={dataProject.stages}
-                                currentStageId={dataProject.current_stage_id}
-                                pendingApproval={dataProject.stage_pending_approval}
-                                isCurrentUserAuthor={isCreator}
-                                isTeacher={isTeacherForProject}
-                                onAdvance={handleAdvanceStage}
-                                onApprove={handleApproveStage}
-                                onReject={handleRejectStage}
-                                projectId={dataProject.id}
-                            />
-                        )}
 
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-6">
                             <div className="flex flex-col justify-start items-start">

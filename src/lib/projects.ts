@@ -345,7 +345,12 @@ export const deleteProjectType = async (typeId: number) => {
 
 export const createProjectStage = async (
     typeId: number,
-    data: { name: string; order: number; requires_approval?: boolean },
+    data: {
+        name: string;
+        order: number;
+        requires_approval?: boolean;
+        duration_days?: number | null;
+    },
 ): Promise<BackendProjectType> => {
     return await api.post(`/project-types/${typeId}/stages`, data);
 };
@@ -353,7 +358,12 @@ export const createProjectStage = async (
 export const updateProjectStage = async (
     typeId: number,
     stageId: number,
-    data: { name?: string; order?: number; requires_approval?: boolean },
+    data: {
+        name?: string;
+        order?: number;
+        requires_approval?: boolean;
+        duration_days?: number | null;
+    },
 ): Promise<BackendProjectType> => {
     return await api.put(`/project-types/${typeId}/stages/${stageId}`, data);
 };
@@ -382,7 +392,13 @@ export const useCreateProjectType = () => {
 export const useUpdateProjectType = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: updateProjectType,
+        mutationFn: ({
+            typeId,
+            data,
+        }: {
+            typeId: number;
+            data: { name?: string; description?: string | null };
+        }) => updateProjectType(typeId, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
@@ -395,10 +411,25 @@ export const useDeleteProjectType = () => {
     });
 };
 
+type ProjectStageCreateInput = {
+    name: string;
+    order: number;
+    requires_approval?: boolean;
+    duration_days?: number | null;
+};
+
+type ProjectStageUpdateInput = {
+    name?: string;
+    order?: number;
+    requires_approval?: boolean;
+    duration_days?: number | null;
+};
+
 export const useCreateProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: createProjectStage,
+        mutationFn: ({ typeId, data }: { typeId: number; data: ProjectStageCreateInput }) =>
+            createProjectStage(typeId, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
@@ -406,7 +437,15 @@ export const useCreateProjectStage = () => {
 export const useUpdateProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: updateProjectStage,
+        mutationFn: ({
+            typeId,
+            stageId,
+            data,
+        }: {
+            typeId: number;
+            stageId: number;
+            data: ProjectStageUpdateInput;
+        }) => updateProjectStage(typeId, stageId, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };
@@ -414,7 +453,8 @@ export const useUpdateProjectStage = () => {
 export const useDeleteProjectStage = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: deleteProjectStage,
+        mutationFn: ({ typeId, stageId }: { typeId: number; stageId: number }) =>
+            deleteProjectStage(typeId, stageId),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectTypes.all() }),
     });
 };

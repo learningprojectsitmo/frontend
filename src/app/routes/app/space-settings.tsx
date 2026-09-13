@@ -514,22 +514,31 @@ const SpaceSettingsPage = () => {
                                                                             size={16}
                                                                             className="text-gray-400"
                                                                         />
-                                                                        <button
-                                                                            type="button"
+                                                                        <span
+                                                                            role="button"
+                                                                            tabIndex={0}
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                field.onChange(
-                                                                                    null,
-                                                                                );
+                                                                                field.onChange(null);
                                                                             }}
-                                                                            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                                                            onKeyDown={(e) => {
+                                                                                if (
+                                                                                    e.key === "Enter" ||
+                                                                                    e.key === " "
+                                                                                ) {
+                                                                                    e.preventDefault();
+                                                                                    e.stopPropagation();
+                                                                                    field.onChange(null);
+                                                                                }
+                                                                            }}
+                                                                            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                                                                             aria-label="Сбросить дедлайн"
                                                                         >
                                                                             <X
                                                                                 size={14}
                                                                                 className="h-3.5 w-3.5"
                                                                             />
-                                                                        </button>
+                                                                        </span>
                                                                     </span>
                                                                 )}
                                                                 {!selectedDate && (

@@ -211,6 +211,13 @@ export type BackendProjectType = {
     stages: BackendProjectStage[];
 };
 
+export type BackendStageRejection = {
+    stage_name: string;
+    comment: string | null;
+    actor_name: string;
+    created_at: string | null;
+};
+
 export type ProjectFullResponse = {
     id: number;
     name: string;
@@ -237,6 +244,7 @@ export type ProjectFullResponse = {
     current_stage_id: number | null;
     stage_pending_approval: boolean;
     stages: BackendProjectStage[];
+    stage_rejection: BackendStageRejection | null;
 };
 
 export type ResumeCreate = {

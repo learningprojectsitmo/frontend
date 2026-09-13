@@ -114,6 +114,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                             // Disabled state
                             "disabled:cursor-not-allowed disabled:bg-[--input-disabled-bg]",
 
+                            // Autofill guard (kill yellow autofill bg)
+                            "[-webkit-autofill]:shadow-[0_0_0_1000px_var(--input-bg)_inset] [-webkit-autofill]:[-webkit-text-fill-color:var(--input-text)] [-webkit-autofill]:transition-colors",
+
                             // Icon padding
                             icon && "pl-9",
                             rightIcon && "pr-11",

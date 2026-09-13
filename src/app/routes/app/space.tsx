@@ -28,6 +28,7 @@ import {
 } from "@/lib/spaces";
 import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
+import { ROLE_LABELS } from "@/lib/roles";
 import { toast } from "sonner";
 import {
     Breadcrumb,
@@ -262,7 +263,7 @@ const SpaceRoute = () => {
         return participantsData.items.map((m: WorkspaceMember) => ({
             id: m.id,
             name: m.name,
-            role: m.role,
+            role: ROLE_LABELS[m.role] ?? m.role,
             workspaceRole: m.workspace_role,
             contacts: m.contacts,
             resumeUrl: m.resume_url,
@@ -276,7 +277,9 @@ const SpaceRoute = () => {
     }, [participantsData, isAuthor, user?.id]);
 
     const isManager =
-        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "manager";
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "manager" ||
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "admin" ||
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "teacher";
 
     const hasCreatedProject = dataProjects?.items.some((p) => p.author_id === user?.id) ?? false;
 
