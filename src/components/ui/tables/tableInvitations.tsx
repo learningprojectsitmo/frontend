@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { Replycant } from "@/types/tables/forTables";
 
 const getInitials = (name: string) => {
@@ -92,12 +93,16 @@ export const TableInvitations = ({
                             <td className="px-6 py-4 text-gray-900">{member.contacts}</td>
 
                             <td className="px-6 py-4">
-                                <a
-                                    href={member.resumeUrl}
-                                    className="font-medium text-blue-600 hover:text-blue-700"
-                                >
-                                    Открыть
-                                </a>
+                                {member.resumeUrl ? (
+                                    <Link
+                                        to={member.resumeUrl}
+                                        className="font-medium text-blue-600 hover:text-blue-700"
+                                    >
+                                        Открыть
+                                    </Link>
+                                ) : (
+                                    <span className="text-gray-400">—</span>
+                                )}
                             </td>
 
                             <td className="px-6 py-4 text-gray-900">{member.responseDate}</td>
