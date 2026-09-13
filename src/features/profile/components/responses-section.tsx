@@ -25,6 +25,7 @@ export function ResponsesSection() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingWithdraw, setPendingWithdraw] = useState<number | null>(null);
+    const [pendingConfirmJoin, setPendingConfirmJoin] = useState<number | null>(null);
 
     const items = useMemo(() => responses ?? [], [responses]);
 
@@ -103,6 +104,7 @@ export function ResponsesSection() {
         try {
             await api.patch(`/responses/${responseId}/withdraw`);
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
             const item = items.find((r) => r.id === responseId);
             if (item) {
                 invalidateProjectImpact(queryClient, item.projectId);
@@ -111,6 +113,24 @@ export function ResponsesSection() {
             // ignore
         } finally {
             setPendingWithdraw(null);
+        }
+    };
+
+    const handleConfirmJoin = async (responseId: number) => {
+        setPendingConfirmJoin(responseId);
+        try {
+            await api.patch(`/responses/${responseId}/confirm-join`);
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            const item = items.find((r) => r.id === responseId);
+            if (item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+            }
+        } catch {
+            // ignore
+        } finally {
+            setPendingConfirmJoin(null);
         }
     };
 
@@ -196,6 +216,14 @@ export function ResponsesSection() {
                                 onClick: () => handleWithdraw(item.id),
                             });
                         }
+                        if (item.status === "accepted") {
+                            actions.push({
+                                label:
+                                    pendingConfirmJoin === item.id ? "..." : "Подтвердить участие",
+                                variant: "primary",
+                                onClick: () => handleConfirmJoin(item.id),
+                            });
+                        }
                         return (
                             <ResponseCard
                                 key={item.id}
@@ -222,6 +250,7 @@ export function ResponsesSection() {
                                 <th className="py-3 px-4 font-medium text-gray-500">Роль</th>
                                 <th className="py-3 px-4 font-medium text-gray-500">Дата</th>
                                 <th className="py-3 px-4 font-medium text-gray-500">Статус</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -244,6 +273,28 @@ export function ResponsesSection() {
                                             >
                                                 {st.text}
                                             </span>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {item.status === "pending" && (
+                                                <button
+                                                    onClick={() => handleWithdraw(item.id)}
+                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                >
+                                                    Отозвать
+                                                </button>
+                                            )}
+                                            {item.status === "accepted" && (
+                                                <button
+                                                    onClick={() => handleConfirmJoin(item.id)}
+                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                >
+                                                    Подтвердить участие
+                                                </button>
+                                            )}
+                                            {(item.status === "rejected" ||
+                                                item.status === "withdrawn") && (
+                                                <span className="text-gray-400 text-[12px]">—</span>
+                                            )}
                                         </td>
                                     </tr>
                                 );

@@ -17,6 +17,7 @@ interface TableInvitationsProps {
     currentUserId?: number;
     onAcceptInvitation?: (id: number) => void;
     onRejectInvitation?: (id: number) => void;
+    onConfirmJoin?: (id: number) => void;
 }
 
 export const TableInvitations = ({
@@ -28,6 +29,7 @@ export const TableInvitations = ({
     currentUserId,
     onAcceptInvitation,
     onRejectInvitation,
+    onConfirmJoin,
 }: TableInvitationsProps) => {
     const typeLabels: Record<string, string> = {
         response: "Отклик",
@@ -104,9 +106,20 @@ export const TableInvitations = ({
                                 <div className="flex items-center gap-2">
                                     {member.type === "response" &&
                                         member.responseStatus === "accepted" && (
-                                            <span className="text-gray-400 text-[12px]">
-                                                Ожидает подтверждения участника
-                                            </span>
+                                            <>
+                                                {member.userId === currentUserId ? (
+                                                    <button
+                                                        onClick={() => onConfirmJoin?.(member.id)}
+                                                        className="font-medium text-blue-600 hover:text-blue-700"
+                                                    >
+                                                        Подтвердить участие
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-gray-400 text-[12px]">
+                                                        Ожидает подтверждения участника
+                                                    </span>
+                                                )}
+                                            </>
                                         )}
                                     {member.type === "response" &&
                                         member.responseStatus !== "accepted" &&

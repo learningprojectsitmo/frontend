@@ -9,12 +9,13 @@ import { useUpdateResume, useDeleteResume, shareResume } from "@/lib/resume";
 import { paths } from "@/config/paths";
 import { ResponsesSection } from "@/features/profile/components/responses-section";
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
+import { useResponses, useInvitations } from "@/features/profile/api/use-profile-data";
 import { SpacesSection } from "@/features/profile/components/spaces-section";
 import { ProjectsSection } from "@/features/profile/components/projects-section";
 import { ProfileActivity } from "@/features/profile/components/profile-activity";
 import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 
-const mainTabs = [
+const baseMainTabs = [
     { value: "resume", label: "Резюме" },
     { value: "responses", label: "Отклики и приглашения" },
     { value: "spaces", label: "Пространства и проекты" },
@@ -35,9 +36,21 @@ const ProfileRoute = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "resume");
     const { data: profile } = useProfile();
+    const { data: responses } = useResponses();
+    const { data: invitations } = useInvitations();
     const deleteResumeMutation = useDeleteResume();
     const updateResumeMutation = useUpdateResume();
     const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
+
+    const pendingCount =
+        (invitations?.filter((i) => i.status === "pending").length ?? 0) +
+        (responses?.filter((r) => r.status === "accepted").length ?? 0);
+
+    const mainTabs = baseMainTabs.map((tab) =>
+        tab.value === "responses" && pendingCount > 0
+            ? { ...tab, label: `${tab.label} (${pendingCount})` }
+            : tab,
+    );
 
     const resumes = (profile?.resumes ?? []).map(mapResumeFromApi);
 

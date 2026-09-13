@@ -714,6 +714,21 @@ const SpaceRoute = () => {
         [project, queryClient],
     );
 
+    const handleConfirmJoin = useCallback(
+        async (responseId: number) => {
+            try {
+                await api.patch(`/responses/${responseId}/confirm-join`);
+                toast.success("Вы присоединились к команде");
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
+            } catch {
+                toast.error("Не удалось подтвердить участие");
+            }
+        },
+        [project, queryClient],
+    );
+
     const handleDeleteColumn = useCallback(
         (columnId: number) => {
             kanbanDeleteColumn.mutate(columnId, {
@@ -844,10 +859,12 @@ const SpaceRoute = () => {
     }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
+        const memberUserIds = new Set((dataProject?.members ?? []).map((m) => m.user_id));
         let result = (project?.replycants || []).filter(
             (r) =>
-                r.responseStatus === "pending" ||
-                (r.type === "response" && r.responseStatus === "accepted"),
+                (r.responseStatus === "pending" ||
+                    (r.type === "response" && r.responseStatus === "accepted")) &&
+                !memberUserIds.has(r.userId),
         );
         if (search) {
             result = result.filter(
@@ -858,7 +875,7 @@ const SpaceRoute = () => {
             );
         }
         return result;
-    }, [project, search]);
+    }, [project, search, dataProject]);
 
     if (isLoading) {
         return (
@@ -1561,6 +1578,7 @@ const SpaceRoute = () => {
                                 currentUserId={user?.id}
                                 onAcceptInvitation={handleAcceptInvitation}
                                 onRejectInvitation={handleRejectInvitation}
+                                onConfirmJoin={handleConfirmJoin}
                             />
                         )}
                     </>

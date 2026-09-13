@@ -29,6 +29,7 @@ const RESPONSE_TYPES: NotificationType[] = [
     "response_received",
     "response_accepted",
     "response_rejected",
+    "response_confirmed",
 ];
 const INVITATION_TYPES: NotificationType[] = [
     "invitation_received",

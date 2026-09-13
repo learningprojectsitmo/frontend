@@ -18,6 +18,8 @@ const en = {
                     "{{actor_name}} accepted your response to project {{project_name}}",
                 response_rejected:
                     "{{actor_name}} rejected your response to project {{project_name}}",
+                response_confirmed:
+                    "{{actor_name}} confirmed participation in project {{project_name}}",
                 invitation_received: "{{actor_name}} invites you to project {{project_name}}",
                 invitation_accepted:
                     "{{actor_name}} accepted invitation to project {{project_name}}",

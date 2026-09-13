@@ -74,8 +74,9 @@ export function useResponses() {
             const data: MyResponseListResponse = await api.get("/responses/my");
             return data.items.map(mapMyResponseItem);
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 15_000,
         gcTime: 10 * 60 * 1000,
+        refetchInterval: 30_000,
     });
 }
 
@@ -86,8 +87,9 @@ export function useInvitations() {
             const data: MyInvitationListResponse = await api.get("/invitations/my");
             return data.items.map(mapMyInvitationItem);
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 15_000,
         gcTime: 10 * 60 * 1000,
+        refetchInterval: 30_000,
     });
 }
 

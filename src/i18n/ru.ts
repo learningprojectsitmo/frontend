@@ -16,6 +16,7 @@ const ru = {
                 response_received: "{{actor_name}} откликнулся на проект {{project_name}}",
                 response_accepted: "{{actor_name}} принял ваш отклик на проект {{project_name}}",
                 response_rejected: "{{actor_name}} отклонил ваш отклик на проект {{project_name}}",
+                response_confirmed: "{{actor_name}} подтвердил участие в проекте {{project_name}}",
                 invitation_received: "{{actor_name}} приглашает вас в проект {{project_name}}",
                 invitation_accepted: "{{actor_name}} принял приглашение в проект {{project_name}}",
                 invitation_rejected:

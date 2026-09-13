@@ -105,6 +105,7 @@ export function InvitationsSection() {
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.invitations() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
             const item = items.find((r) => r.id === invitationId);
             if (action === "accept" && item) {
                 invalidateProjectImpact(queryClient, item.projectId);
@@ -238,6 +239,7 @@ export function InvitationsSection() {
                                 <th className="py-3 px-4 font-medium text-gray-500">Роль</th>
                                 <th className="py-3 px-4 font-medium text-gray-500">Дата</th>
                                 <th className="py-3 px-4 font-medium text-gray-500">Статус</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -263,6 +265,31 @@ export function InvitationsSection() {
                                             >
                                                 {st.text}
                                             </span>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {item.status === "pending" && (
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAction(item.id, "accept")
+                                                        }
+                                                        className="font-medium text-blue-600 hover:text-blue-700"
+                                                    >
+                                                        Принять
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAction(item.id, "reject")
+                                                        }
+                                                        className="font-medium text-red-500 hover:text-red-700"
+                                                    >
+                                                        Отклонить
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {item.status !== "pending" && (
+                                                <span className="text-gray-400 text-[12px]">—</span>
+                                            )}
                                         </td>
                                     </tr>
                                 );
