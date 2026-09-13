@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Folder, Building2, Pencil, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/features/spaces/components/filters/calendar";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select/select";
 
 const MONTHS_RU = [
     "Январь",
@@ -122,7 +131,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
                                 placeholder="Название проекта или компании"
-                                className="w-full text-base font-semibold text-gray-900 bg-transparent border-b border-gray-200 px-0 py-0.5 outline-none focus:border-gray-400"
+                                className="w-full text-base font-semibold text-app-text bg-transparent border-b border-app-border px-0 py-0.5 outline-none focus:border-app-blue"
                             />
                         ) : (
                             <h3 className="text-base font-semibold text-gray-900 truncate">
@@ -137,14 +146,48 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
             <div className="space-y-4">
                 <div>
                     <label className="text-xs text-gray-500 mb-1 block">Тип</label>
-                    <select
-                        value={experienceType}
-                        onChange={(e) => setExperienceType(e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 bg-app-surface appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px] bg-[right_12px_center] bg-no-repeat"
-                    >
-                        <option value="project">Проект</option>
-                        <option value="internship">Стажировка</option>
-                    </select>
+                    <Select value={experienceType} onValueChange={setExperienceType}>
+                        <SelectTrigger className="w-full rounded-lg bg-app-surface">
+                            <SelectValue placeholder="Выберите тип" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[320px] overflow-y-auto">
+                            <SelectGroup>
+                                <SelectLabel>Типы занятости</SelectLabel>
+                                <SelectItem value="project">Проект</SelectItem>
+                                <SelectItem value="internship">Стажировка</SelectItem>
+                                <SelectItem value="work">Работа</SelectItem>
+                                <SelectItem value="freelance">Фриланс</SelectItem>
+                                <SelectItem value="volunteering">Волонтёрство</SelectItem>
+                                <SelectItem value="temporary_contract">
+                                    Временный контракт
+                                </SelectItem>
+                            </SelectGroup>
+                            <SelectGroup>
+                                <SelectLabel>IT-направления</SelectLabel>
+                                <SelectItem value="development">Разработка</SelectItem>
+                                <SelectItem value="ml_data">ML/Data</SelectItem>
+                                <SelectItem value="devops">DevOps</SelectItem>
+                                <SelectItem value="testing">Тестирование</SelectItem>
+                                <SelectItem value="design">Дизайн</SelectItem>
+                                <SelectItem value="analytics">Аналитика</SelectItem>
+                                <SelectItem value="management">Менеджмент</SelectItem>
+                            </SelectGroup>
+                            <SelectGroup>
+                                <SelectLabel>Форматы деятельности</SelectLabel>
+                                <SelectItem value="pet_project">Пет-проект</SelectItem>
+                                <SelectItem value="open_source">Open Source</SelectItem>
+                                <SelectItem value="hackathon">Хакатон</SelectItem>
+                                <SelectItem value="education_course">Курсы/обучение</SelectItem>
+                                <SelectItem value="olympiad">Олимпиада</SelectItem>
+                            </SelectGroup>
+                            <SelectGroup>
+                                <SelectLabel>Академическое</SelectLabel>
+                                <SelectItem value="study_practice">Учебная практика</SelectItem>
+                                <SelectItem value="coursework">Курсовой проект</SelectItem>
+                                <SelectItem value="research">Научная работа</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="relative">
@@ -154,7 +197,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                             <button
                                 type="button"
                                 onClick={() => setActiveField("from")}
-                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-left flex items-center justify-between text-gray-700 outline-none focus:border-gray-400"
+                                className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-left flex items-center justify-between text-app-text outline-none focus:border-app-blue"
                             >
                                 <span>{periodFrom ? formatMonthDisplay(periodFrom) : ""}</span>
                                 <CalendarIcon className="w-4 h-4 text-gray-400 shrink-0" />
@@ -167,7 +210,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                             <button
                                 type="button"
                                 onClick={() => setActiveField("to")}
-                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-left flex items-center justify-between text-gray-700 outline-none focus:border-gray-400"
+                                className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-left flex items-center justify-between text-app-text outline-none focus:border-app-blue"
                             >
                                 <span>{periodTo ? formatMonthDisplay(periodTo) : ""}</span>
                                 <CalendarIcon className="w-4 h-4 text-gray-400 shrink-0" />
@@ -207,7 +250,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
                         placeholder="UX/UI-дизайнер"
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400"
+                        className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue"
                     />
                 </div>
 
@@ -218,7 +261,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="— проведение исследований&#10;— разработка сценариев&#10;— создание пользовательских потоков"
                         rows={5}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 resize-y"
+                        className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue resize-y"
                     />
                 </div>
             </div>

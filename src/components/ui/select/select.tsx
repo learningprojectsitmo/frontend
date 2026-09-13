@@ -64,7 +64,7 @@ const SelectItem = React.forwardRef<
     <SelectPrimitive.Item
         ref={ref}
         className={cn(
-            "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-app-ghost focus:text-app-text data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
             className,
         )}
         {...props}
@@ -79,4 +79,19 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem };
+const SelectLabel = React.forwardRef<
+    React.ElementRef<typeof SelectPrimitive.Label>,
+    React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+>(({ className, ...props }, ref) => (
+    <SelectPrimitive.Label
+        ref={ref}
+        className={cn(
+            "px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500",
+            className,
+        )}
+        {...props}
+    />
+));
+SelectLabel.displayName = SelectPrimitive.Label.displayName;
+
+export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem, SelectLabel };

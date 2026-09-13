@@ -50,7 +50,7 @@ export const ProfileCard = ({
                             value={editHeader ?? ""}
                             onChange={(e) => onHeaderChange?.(e.target.value)}
                             placeholder="Название резюме"
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-gray-500"
+                            className="mt-1 w-full rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-sm text-app-text outline-none focus:border-app-blue"
                         />
                     </div>
 
