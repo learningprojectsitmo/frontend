@@ -14,7 +14,7 @@ import type { InvitationItem } from "@/types/profile";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "Ожидает ответа", color: "#D97706", bg: "#FEF3C7" },
-    accepted: { text: "Принято", color: "#16A34A", bg: "#DCFCE7" },
+    accepted: { text: "В команде", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонено", color: "#EF4444", bg: "#FEE2E2" },
     in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
 };
@@ -211,6 +211,7 @@ export function InvitationsSection() {
                                             ? "..."
                                             : "Отклонить",
                                     variant: "ghost",
+                                    disabled: isPending,
                                     onClick: () => handleAction(item.id, "reject"),
                                 },
                                 {
@@ -219,6 +220,7 @@ export function InvitationsSection() {
                                             ? "..."
                                             : "Принять",
                                     variant: "primary",
+                                    disabled: isPending,
                                     onClick: () => handleAction(item.id, "accept"),
                                 },
                             );
@@ -284,7 +286,8 @@ export function InvitationsSection() {
                                                         onClick={() =>
                                                             handleAction(item.id, "accept")
                                                         }
-                                                        className="font-medium text-blue-600 hover:text-blue-700"
+                                                        disabled={pendingAction?.id === item.id}
+                                                        className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         Принять
                                                     </button>
@@ -292,7 +295,8 @@ export function InvitationsSection() {
                                                         onClick={() =>
                                                             handleAction(item.id, "reject")
                                                         }
-                                                        className="font-medium text-red-500 hover:text-red-700"
+                                                        disabled={pendingAction?.id === item.id}
+                                                        className="font-medium text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         Отклонить
                                                     </button>

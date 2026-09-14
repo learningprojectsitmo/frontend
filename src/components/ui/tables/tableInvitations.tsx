@@ -183,13 +183,27 @@ export const TableInvitations = ({
                                             <span className="text-gray-400 text-[12px]">
                                                 {member.responseStatus === "in_team"
                                                     ? "Уже в команде"
-                                                    : "Приглашение рассмотрено"}
+                                                    : member.responseStatus === "rejected"
+                                                      ? "Отклонено"
+                                                      : "В команде"}
                                             </span>
                                         )}
                                     {member.type === "invitation" &&
-                                        member.userId !== currentUserId && (
+                                        member.userId !== currentUserId &&
+                                        member.responseStatus === "pending" && (
                                             <span className="text-gray-400 text-[12px]">
                                                 Приглашение отправлено
+                                            </span>
+                                        )}
+                                    {member.type === "invitation" &&
+                                        member.userId !== currentUserId &&
+                                        member.responseStatus !== "pending" && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                {member.responseStatus === "in_team"
+                                                    ? "Уже в команде"
+                                                    : member.responseStatus === "rejected"
+                                                      ? "Отклонено"
+                                                      : "В команде"}
                                             </span>
                                         )}
                                 </div>

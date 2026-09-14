@@ -175,7 +175,8 @@ export const ExperienceTimeline = ({
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleAddNew}
-                                    className="text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors"
+                                    disabled={resumeId === 0}
+                                    className="text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-[#4F6BFF]"
                                 >
                                     + Добавить опыт
                                 </button>
@@ -191,6 +192,11 @@ export const ExperienceTimeline = ({
                                     </button>
                                 )}
                             </div>
+                            {resumeId === 0 && (
+                                <p className="text-xs text-gray-400 mt-2">
+                                    Сначала сохраните резюме, затем добавляйте опыт
+                                </p>
+                            )}
                         </div>
                     </>
                 )}

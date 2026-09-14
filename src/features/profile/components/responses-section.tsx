@@ -214,6 +214,7 @@ export function ResponsesSection() {
                             actions.push({
                                 label: pendingWithdraw === item.id ? "..." : "Отозвать",
                                 variant: "outline",
+                                disabled: pendingWithdraw === item.id,
                                 onClick: () => handleWithdraw(item.id),
                             });
                         }
@@ -222,6 +223,7 @@ export function ResponsesSection() {
                                 label:
                                     pendingConfirmJoin === item.id ? "..." : "Подтвердить участие",
                                 variant: "primary",
+                                disabled: pendingConfirmJoin === item.id,
                                 onClick: () => handleConfirmJoin(item.id),
                             });
                         }
@@ -279,7 +281,8 @@ export function ResponsesSection() {
                                             {item.status === "pending" && (
                                                 <button
                                                     onClick={() => handleWithdraw(item.id)}
-                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                    disabled={pendingWithdraw === item.id}
+                                                    className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     Отозвать
                                                 </button>
@@ -287,7 +290,8 @@ export function ResponsesSection() {
                                             {item.status === "accepted" && (
                                                 <button
                                                     onClick={() => handleConfirmJoin(item.id)}
-                                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                                    disabled={pendingConfirmJoin === item.id}
+                                                    className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     Подтвердить участие
                                                 </button>

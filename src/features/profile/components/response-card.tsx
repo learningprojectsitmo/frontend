@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 
 const FOLDER_COLORS = ["#2563EB", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#F97316"];
 
@@ -31,6 +32,7 @@ export type ResponseCardAction = {
     label: string;
     variant: "primary" | "outline" | "ghost";
     onClick: () => void;
+    disabled?: boolean;
 };
 
 type ResponseCardProps = {
@@ -97,7 +99,8 @@ export function ResponseCard({
                                 key={action.label}
                                 type="button"
                                 onClick={action.onClick}
-                                className={`${base} ${variants[action.variant]}`}
+                                disabled={action.disabled}
+                                className={`${base} ${variants[action.variant]} disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none`}
                             >
                                 {action.label}
                             </button>
@@ -106,9 +109,7 @@ export function ResponseCard({
                 </div>
             </div>
 
-            {description && (
-                <p className="text-[13px] text-gray-500 leading-relaxed">{description}</p>
-            )}
+            {description && <RichTextViewer html={description} />}
 
             <div className="flex items-stretch border border-gray-200 rounded-[12px] overflow-hidden text-[13px]">
                 <div className="flex-1 px-3.5 py-2.5 flex flex-col gap-0.5 min-w-0">

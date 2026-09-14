@@ -22,6 +22,7 @@ import {
 import { ResumePage } from "@/features/resume/components/resume-page";
 import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 import { paths } from "@/config/paths";
+import { toast } from "sonner";
 import type { ResumeDetail, ResumeUserInfo } from "@/types/api";
 
 const ResumeRoute = () => {
@@ -32,6 +33,7 @@ const ResumeRoute = () => {
     const isCreateMode = !rawId || id === 0;
     const projectId = searchParams.get("projectId");
     const workspaceIdParam = searchParams.get("workspaceId");
+    const workspaceId = workspaceIdParam ? parseInt(workspaceIdParam, 10) : null;
 
     const { data, isLoading, error } = useResumeDetail(id);
     const { data: profile } = useProfile();
@@ -80,8 +82,12 @@ const ResumeRoute = () => {
         is_visible: boolean;
     }) => {
         if (isCreateMode) {
+            if (!fields.header.trim()) {
+                toast.error("Введите название резюме");
+                return;
+            }
             const resume = await createResumeMutation.mutateAsync({
-                header: fields.header || "Новое резюме",
+                header: fields.header,
                 role: fields.role,
                 about: fields.about,
                 cover_letter: fields.cover_letter,
@@ -91,6 +97,10 @@ const ResumeRoute = () => {
             });
             navigate(paths.app.resume.getHref(resume.id, null, workspaceId));
         } else {
+            if (!fields.header.trim()) {
+                toast.error("Введите название резюме");
+                return;
+            }
             await updateResumeMutation.mutateAsync({ id, data: fields });
             setIsEditing(false);
         }
@@ -112,7 +122,7 @@ const ResumeRoute = () => {
         const emptyDetail: ResumeDetail = {
             resume: {
                 id: 0,
-                header: "Новое резюме",
+                header: "",
                 author_id: profile?.id ?? 0,
                 resume_text: null,
                 role: null,
@@ -224,7 +234,6 @@ const ResumeRoute = () => {
         .join(" ");
     const resumeTitle = data.resume.header || fullName;
 
-    const workspaceId = workspaceIdParam ? parseInt(workspaceIdParam, 10) : null;
     const workspace = workspaceId ? dataSpaces?.spaces.find((s) => s.id === workspaceId) : null;
 
     return (

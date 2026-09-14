@@ -647,10 +647,14 @@ const SpaceRoute = () => {
         [project, removeParticipantMutation],
     );
 
+    const [pendingResponseAction, setPendingResponseAction] = useState<number | null>(null);
+
     const handleAcceptResponse = useCallback(
         (responseId: number) => {
+            if (pendingResponseAction !== null) return;
             const replycant = project?.replycants.find((r) => r.id === responseId);
             if (!replycant) return;
+            setPendingResponseAction(responseId);
             acceptResponseMutation.mutate(
                 { projectId: project?.id || 0, responseId },
                 {
@@ -660,16 +664,19 @@ const SpaceRoute = () => {
                     onError: () => {
                         toast.error("Не удалось принять отклик");
                     },
+                    onSettled: () => setPendingResponseAction(null),
                 },
             );
         },
-        [project, acceptResponseMutation],
+        [project, acceptResponseMutation, pendingResponseAction],
     );
 
     const handleRejectResponse = useCallback(
         (responseId: number) => {
+            if (pendingResponseAction !== null) return;
             const replycant = project?.replycants.find((r) => r.id === responseId);
             if (!replycant) return;
+            setPendingResponseAction(responseId);
             rejectResponseMutation.mutate(
                 { projectId: project?.id || 0, responseId },
                 {
@@ -679,10 +686,11 @@ const SpaceRoute = () => {
                     onError: () => {
                         toast.error("Не удалось отклонить отклик");
                     },
+                    onSettled: () => setPendingResponseAction(null),
                 },
             );
         },
-        [project, rejectResponseMutation],
+        [project, rejectResponseMutation, pendingResponseAction],
     );
 
     const queryClient = useQueryClient();
@@ -876,12 +884,11 @@ const SpaceRoute = () => {
     }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
-        const memberUserIds = new Set((dataProject?.members ?? []).map((m) => m.user_id));
         let result = (project?.replycants || []).filter(
             (r) =>
-                (r.responseStatus === "pending" ||
-                    (r.type === "response" && r.responseStatus === "accepted")) &&
-                !memberUserIds.has(r.userId),
+                r.responseStatus === "pending" ||
+                r.responseStatus === "accepted" ||
+                r.responseStatus === "in_team",
         );
         if (search) {
             result = result.filter(
@@ -892,7 +899,7 @@ const SpaceRoute = () => {
             );
         }
         return result;
-    }, [project, search, dataProject]);
+    }, [project, search]);
 
     if (isLoading) {
         return (
