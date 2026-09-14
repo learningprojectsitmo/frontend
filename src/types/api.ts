@@ -169,7 +169,8 @@ export type BackendReplycant = {
     vacancy_id: number | null;
     role: string;
     type: "response" | "invitation";
-    status: "pending" | "accepted" | "rejected" | "withdrawn";
+    status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
+    allow_multi_project_participation: boolean;
 };
 
 export type ProjectListItemResponse = {
@@ -680,6 +681,7 @@ export type MyInvitationItem = {
     resume_title: string;
     date: string;
     status: string;
+    allow_multi_project_participation: boolean;
 };
 
 export type MyInvitationListResponse = {

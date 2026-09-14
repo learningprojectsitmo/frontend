@@ -15,6 +15,7 @@ const statusLabel: Record<string, { text: string; color: string; bg: string }> =
     accepted: { text: "Принят", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонён", color: "#EF4444", bg: "#FEE2E2" },
     withdrawn: { text: "Отозван", color: "#6B7280", bg: "#F3F4F6" },
+    in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
 };
 
 export function ResponsesSection() {
@@ -292,7 +293,8 @@ export function ResponsesSection() {
                                                 </button>
                                             )}
                                             {(item.status === "rejected" ||
-                                                item.status === "withdrawn") && (
+                                                item.status === "withdrawn" ||
+                                                item.status === "in_team") && (
                                                 <span className="text-gray-400 text-[12px]">—</span>
                                             )}
                                         </td>

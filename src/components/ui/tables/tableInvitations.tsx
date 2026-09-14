@@ -127,7 +127,14 @@ export const TableInvitations = ({
                                             </>
                                         )}
                                     {member.type === "response" &&
+                                        member.responseStatus === "in_team" && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                Уже в команде
+                                            </span>
+                                        )}
+                                    {member.type === "response" &&
                                         member.responseStatus !== "accepted" &&
+                                        member.responseStatus !== "in_team" &&
                                         canManage && (
                                             <>
                                                 <button
@@ -146,13 +153,15 @@ export const TableInvitations = ({
                                         )}
                                     {member.type === "response" &&
                                         member.responseStatus !== "accepted" &&
+                                        member.responseStatus !== "in_team" &&
                                         !canManage && (
                                             <span className="text-gray-400 text-[12px]">
                                                 Ожидает решения
                                             </span>
                                         )}
                                     {member.type === "invitation" &&
-                                        member.userId === currentUserId && (
+                                        member.userId === currentUserId &&
+                                        member.responseStatus === "pending" && (
                                             <>
                                                 <button
                                                     onClick={() => onAcceptInvitation?.(member.id)}
@@ -167,6 +176,15 @@ export const TableInvitations = ({
                                                     Отклонить
                                                 </button>
                                             </>
+                                        )}
+                                    {member.type === "invitation" &&
+                                        member.userId === currentUserId &&
+                                        member.responseStatus !== "pending" && (
+                                            <span className="text-gray-400 text-[12px]">
+                                                {member.responseStatus === "in_team"
+                                                    ? "Уже в команде"
+                                                    : "Приглашение рассмотрено"}
+                                            </span>
                                         )}
                                     {member.type === "invitation" &&
                                         member.userId !== currentUserId && (

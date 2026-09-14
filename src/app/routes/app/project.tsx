@@ -68,8 +68,10 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
+import { type Replycant } from "@/types/tables/forTables";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
+import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
@@ -154,6 +156,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
             responseStatus: r.status || "pending",
             status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
             userId: r.user_id,
+            allowMultiProjectParticipation: r.allow_multi_project_participation,
         })),
     };
 }
@@ -684,6 +687,8 @@ const SpaceRoute = () => {
 
     const queryClient = useQueryClient();
 
+    const [joinWarningProject, setJoinWarningProject] = useState<Replycant | null>(null);
+
     const handleAcceptInvitation = useCallback(
         async (invitationId: number) => {
             try {
@@ -697,6 +702,18 @@ const SpaceRoute = () => {
             }
         },
         [project, queryClient],
+    );
+
+    const handleAcceptInvitationRequest = useCallback(
+        (invitationId: number) => {
+            const replycant = project?.replycants.find((r) => r.id === invitationId);
+            if (replycant && !replycant.allowMultiProjectParticipation) {
+                setJoinWarningProject(replycant);
+                return;
+            }
+            handleAcceptInvitation(invitationId);
+        },
+        [project, handleAcceptInvitation],
     );
 
     const handleRejectInvitation = useCallback(
@@ -1576,7 +1593,7 @@ const SpaceRoute = () => {
                                 onReject={handleRejectResponse}
                                 canManage={isCreator}
                                 currentUserId={user?.id}
-                                onAcceptInvitation={handleAcceptInvitation}
+                                onAcceptInvitation={handleAcceptInvitationRequest}
                                 onRejectInvitation={handleRejectInvitation}
                                 onConfirmJoin={handleConfirmJoin}
                             />
@@ -1598,6 +1615,19 @@ const SpaceRoute = () => {
                     vacancies={dataProject?.vacancies ?? []}
                     replycants={project.replycants}
                     memberUserIds={new Set((dataProject?.members ?? []).map((m) => m.user_id))}
+                />
+
+                <JoinWarningDialog
+                    open={joinWarningProject !== null}
+                    projectName={joinWarningProject?.name ?? ""}
+                    onOpenChange={(open) => {
+                        if (!open) setJoinWarningProject(null);
+                    }}
+                    onConfirm={() => {
+                        const candidate = joinWarningProject;
+                        setJoinWarningProject(null);
+                        if (candidate) handleAcceptInvitation(candidate.id);
+                    }}
                 />
 
                 <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

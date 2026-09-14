@@ -23,9 +23,10 @@ export interface Replycant {
     avatarUrl?: string;
     role: string;
     type: "response" | "invitation";
-    responseStatus: "pending" | "accepted" | "rejected" | "withdrawn";
+    responseStatus: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
     status: "invite" | "invited";
     userId: number;
+    allowMultiProjectParticipation: boolean;
 }
 
 export interface Role {

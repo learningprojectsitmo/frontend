@@ -6,14 +6,17 @@ import { EmptyState } from "./empty-state";
 import { ResponsesFilters } from "./filters/responses-filters";
 import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
+import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateProjectImpact } from "@/lib/projects";
+import type { InvitationItem } from "@/types/profile";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "Ожидает ответа", color: "#D97706", bg: "#FEF3C7" },
     accepted: { text: "Принято", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонено", color: "#EF4444", bg: "#FEE2E2" },
+    in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
 };
 
 export function InvitationsSection() {
@@ -24,6 +27,7 @@ export function InvitationsSection() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingAction, setPendingAction] = useState<{ id: number; type: string } | null>(null);
+    const [joinCandidate, setJoinCandidate] = useState<InvitationItem | null>(null);
 
     const items = useMemo(() => invitations ?? [], [invitations]);
 
@@ -101,6 +105,13 @@ export function InvitationsSection() {
     ].filter(Boolean).length;
 
     const handleAction = async (invitationId: number, action: "accept" | "reject") => {
+        if (action === "accept") {
+            const item = items.find((r) => r.id === invitationId);
+            if (item && !item.allowMultiProjectParticipation) {
+                setJoinCandidate(item);
+                return;
+            }
+        }
         setPendingAction({ id: invitationId, type: action });
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
@@ -298,6 +309,18 @@ export function InvitationsSection() {
                     </table>
                 </div>
             )}
+            <JoinWarningDialog
+                open={joinCandidate !== null}
+                projectName={joinCandidate?.projectName ?? ""}
+                onOpenChange={(open) => {
+                    if (!open) setJoinCandidate(null);
+                }}
+                onConfirm={() => {
+                    const candidate = joinCandidate;
+                    setJoinCandidate(null);
+                    if (candidate) handleAction(candidate.id, "accept");
+                }}
+            />
         </div>
     );
 }

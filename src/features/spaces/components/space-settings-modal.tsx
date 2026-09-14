@@ -406,7 +406,6 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                                     <div>
                                                         <FormLabel className="text-sm font-medium text-gray-900">
                                                             Участие в нескольких проектах
-                                                            <StubBadge />
                                                         </FormLabel>
                                                         <p className="text-xs text-gray-500 mt-0.5">
                                                             Разрешить участникам состоять в

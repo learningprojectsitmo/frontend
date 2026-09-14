@@ -40,6 +40,7 @@ function mapMyInvitationItem(r: MyInvitationListResponse["items"][number]): Invi
         resumeTitle: r.resume_title,
         date: r.date,
         status: r.status as InvitationItem["status"],
+        allowMultiProjectParticipation: r.allow_multi_project_participation,
     };
 }
 
