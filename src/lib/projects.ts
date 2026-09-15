@@ -349,6 +349,7 @@ export const createProjectStage = async (
         name: string;
         order: number;
         requires_approval?: boolean;
+        visible_to_participants?: boolean;
         duration_days?: number | null;
     },
 ): Promise<BackendProjectType> => {
@@ -362,6 +363,7 @@ export const updateProjectStage = async (
         name?: string;
         order?: number;
         requires_approval?: boolean;
+        visible_to_participants?: boolean;
         duration_days?: number | null;
     },
 ): Promise<BackendProjectType> => {
@@ -415,6 +417,7 @@ type ProjectStageCreateInput = {
     name: string;
     order: number;
     requires_approval?: boolean;
+    visible_to_participants?: boolean;
     duration_days?: number | null;
 };
 
@@ -422,6 +425,7 @@ type ProjectStageUpdateInput = {
     name?: string;
     order?: number;
     requires_approval?: boolean;
+    visible_to_participants?: boolean;
     duration_days?: number | null;
 };
 
