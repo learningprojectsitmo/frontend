@@ -42,6 +42,7 @@ function mapProjectListItem(item: ProjectListItemResponse) {
         description: item.description || "",
         progressValue: item.progress,
         dateText: item.deadline ? `Дедлайн: ${formatDate(item.deadline)}` : "",
+        stageText: item.current_stage_name || "",
         tags: item.tags.map((t) => ({ text: t })),
         membersCount: item.participants_count,
         users: item.participants_preview.map((u) => ({ name: u.full_name })),
@@ -228,6 +229,7 @@ export function SpaceProjectList({
                                 description={project.description}
                                 progressValue={project.progressValue}
                                 dateText={project.dateText}
+                                stageText={project.stageText}
                                 tags={project.tags}
                                 membersCount={project.membersCount}
                                 users={project.users}

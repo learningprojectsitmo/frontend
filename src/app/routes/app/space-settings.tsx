@@ -44,6 +44,7 @@ const spaceSettingsSchema = z.object({
     allow_multi_project_participation: z.boolean(),
     allow_multi_project_creation: z.boolean(),
     default_project_deadline: z.string().nullable().optional(),
+    require_project_type_on_create: z.boolean(),
 });
 
 type SpaceSettingsInput = z.infer<typeof spaceSettingsSchema>;
@@ -157,6 +158,7 @@ const SpaceSettingsPage = () => {
             allow_multi_project_participation: false,
             allow_multi_project_creation: false,
             default_project_deadline: null,
+            require_project_type_on_create: true,
         },
     });
 
@@ -173,6 +175,7 @@ const SpaceSettingsPage = () => {
             default_project_deadline: settings.default_project_deadline
                 ? settings.default_project_deadline.slice(0, 10)
                 : null,
+            require_project_type_on_create: settings.require_project_type_on_create !== false,
         });
     }, [space, settings, form]);
 
@@ -198,6 +201,7 @@ const SpaceSettingsPage = () => {
                                       values.default_project_deadline + "T00:00:00",
                                   ).toISOString()
                                 : null,
+                            require_project_type_on_create: values.require_project_type_on_create,
                         },
                     });
                 },
@@ -480,6 +484,31 @@ const SpaceSettingsPage = () => {
                                     />
                                     <FormField
                                         control={form.control}
+                                        name="require_project_type_on_create"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <FormLabel className="text-sm font-medium text-gray-900">
+                                                            Требовать тип проекта
+                                                        </FormLabel>
+                                                        <p className="text-xs text-gray-500 mt-0.5">
+                                                            Запретить создание проектов без
+                                                            выбранного типа
+                                                        </p>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
                                         name="default_project_deadline"
                                         render={({ field }) => {
                                             const selectedDate = dateFromIso(field.value);
@@ -518,16 +547,21 @@ const SpaceSettingsPage = () => {
                                                                             tabIndex={0}
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                field.onChange(null);
+                                                                                field.onChange(
+                                                                                    null,
+                                                                                );
                                                                             }}
                                                                             onKeyDown={(e) => {
                                                                                 if (
-                                                                                    e.key === "Enter" ||
+                                                                                    e.key ===
+                                                                                        "Enter" ||
                                                                                     e.key === " "
                                                                                 ) {
                                                                                     e.preventDefault();
                                                                                     e.stopPropagation();
-                                                                                    field.onChange(null);
+                                                                                    field.onChange(
+                                                                                        null,
+                                                                                    );
                                                                                 }
                                                                             }}
                                                                             className="p-0.5 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"

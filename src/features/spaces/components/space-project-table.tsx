@@ -1,4 +1,4 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Flag } from "lucide-react";
 import { Link } from "react-router";
 import { type ProjectListItemResponse } from "@/types/api";
 import { paths } from "@/config/paths";
@@ -58,6 +58,9 @@ export function SpaceProjectTable({ projects }: SpaceProjectTableProps) {
                         </th>
                         <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
                             Дедлайн
+                        </th>
+                        <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                            Этап
                         </th>
                         <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
                             Прогресс
@@ -157,6 +160,18 @@ export function SpaceProjectTable({ projects }: SpaceProjectTableProps) {
                                             />
                                             <span className="text-[13px] text-gray-600">
                                                 {formatDate(project.deadline)}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-[13px] text-gray-400">—</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {project.current_stage_name ? (
+                                        <div className="flex items-center gap-2">
+                                            <Flag size={14} className="text-gray-400 shrink-0" />
+                                            <span className="text-[13px] text-gray-600">
+                                                {project.current_stage_name}
                                             </span>
                                         </div>
                                     ) : (
