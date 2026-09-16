@@ -274,6 +274,14 @@ const SpaceRoute = () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
         const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
+        if (editRoles.some((r) => !r.title.trim())) {
+            toast.error("Роль не может быть пустой");
+            return;
+        }
+        if (editRoles.some((r) => r.tasks.filter((t) => t.trim() !== "").length === 0)) {
+            toast.error("У каждой роли должны быть указаны задачи");
+            return;
+        }
         if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
             toast.error(
                 `Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`,
@@ -290,7 +298,7 @@ const SpaceRoute = () => {
                     tags: filtered,
                     vacancies: editRoles.map((r) => ({
                         title: r.title,
-                        tasks: r.tasks,
+                        tasks: r.tasks.filter((t) => t.trim() !== ""),
                         required_count: r.count,
                     })),
                 },
@@ -302,7 +310,7 @@ const SpaceRoute = () => {
     };
 
     const addRole = () => {
-        setEditRoles([...editRoles, { title: "", tasks: [], count: 1 }]);
+        setEditRoles([...editRoles, { title: "", tasks: [""], count: 1 }]);
     };
 
     const removeRole = (index: number) => {
@@ -311,6 +319,24 @@ const SpaceRoute = () => {
 
     const updateRole = (index: number, field: string, value: string | number | string[]) => {
         setEditRoles(editRoles.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    };
+
+    const updateTask = (roleIndex: number, taskIndex: number, value: string) => {
+        const tasks = [...editRoles[roleIndex].tasks];
+        if (taskIndex === tasks.length - 1) {
+            tasks[taskIndex] = value;
+            if (value.trim() !== "") {
+                tasks.push("");
+            }
+        } else {
+            tasks[taskIndex] = value;
+        }
+        updateRole(roleIndex, "tasks", tasks);
+    };
+
+    const removeTask = (roleIndex: number, taskIndex: number) => {
+        const tasks = editRoles[roleIndex].tasks.filter((_, i) => i !== taskIndex);
+        updateRole(roleIndex, "tasks", tasks);
     };
 
     const addTag = () => {
@@ -1335,36 +1361,38 @@ const SpaceRoute = () => {
                                                         className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                 </div>
-                                                <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                                    <textarea
-                                                        value={(
-                                                            role as {
-                                                                title: string;
-                                                                tasks: string[];
-                                                                count: number;
-                                                            }
-                                                        ).tasks.join("\n")}
-                                                        onChange={(e) =>
-                                                            updateRole(
-                                                                index,
-                                                                "tasks",
-                                                                e.target.value
-                                                                    .split("\n")
-                                                                    .filter((t) => t.trim() !== ""),
-                                                            )
-                                                        }
-                                                        className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                                        rows={Math.max(
-                                                            1,
-                                                            (
-                                                                role as {
-                                                                    title: string;
-                                                                    tasks: string[];
-                                                                    count: number;
-                                                                }
-                                                            ).tasks.length,
-                                                        )}
-                                                    />
+                                                <div className="flex-1 px-1 py-2 flex flex-col gap-1.5">
+                                                    {(role.tasks.length ? role.tasks : [""]).map(
+                                                        (task, taskIndex) => (
+                                                            <div
+                                                                key={taskIndex}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <Dot className="w-3 h-3 shrink-0 text-gray-500" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={task}
+                                                                    onChange={(e) =>
+                                                                        updateTask(
+                                                                            index,
+                                                                            taskIndex,
+                                                                            e.target.value,
+                                                                        )
+                                                                    }
+                                                                    className="flex-1 justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeTask(index, taskIndex)
+                                                                    }
+                                                                    className="text-gray-400 hover:text-red-500 text-[12px] font-medium leading-none shrink-0"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        ),
+                                                    )}
                                                 </div>
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
                                                     <input
