@@ -137,6 +137,8 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
     "Invalid confirmation code": "Неверный код подтверждения",
     "Confirmation code has expired": "Срок действия кода истёк. Запросите новый код",
     "Signup request not found": "Регистрация не найдена. Начните заново",
+    "Project type is required to create a project in this workspace":
+        "Для создания проекта в пространстве необходимо выбрать тип",
 };
 
 export const getApiErrorMessage = (error: unknown, fallback: string): string => {

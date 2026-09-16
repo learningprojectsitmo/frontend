@@ -185,6 +185,8 @@ export type ProjectListItemResponse = {
     tags: string[];
     participants_preview: BackendParticipantPreview[];
     author_id: number;
+    current_stage_id: number | null;
+    current_stage_name: string | null;
 };
 
 export type ProjectListResponse = {
@@ -200,6 +202,7 @@ export type BackendProjectStage = {
     name: string;
     order: number;
     requires_approval: boolean;
+    visible_to_participants: boolean;
     is_current: boolean;
     duration_days: number | null;
     deadline?: string | null;
@@ -422,6 +425,7 @@ export type SpaceSettingsInput = {
     allow_multi_project_participation?: boolean;
     allow_multi_project_creation?: boolean;
     default_project_deadline?: string | null;
+    require_project_type_on_create?: boolean;
 };
 
 export type SpaceSettingsFull = {
@@ -435,6 +439,7 @@ export type SpaceSettingsFull = {
     allow_multi_project_participation: boolean;
     allow_multi_project_creation: boolean;
     default_project_deadline: string | null;
+    require_project_type_on_create: boolean;
     created_at: string;
     updated_at: string;
 };

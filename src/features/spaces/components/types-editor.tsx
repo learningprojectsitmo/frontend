@@ -234,6 +234,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                     name,
                     order: nextOrder,
                     requires_approval: false,
+                    visible_to_participants: true,
                     duration_days: durationDays,
                 },
             },
@@ -255,6 +256,17 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                 typeId,
                 stageId: stage.id,
                 data: { requires_approval: !stage.requires_approval },
+            },
+            { onError: (error) => toast.error(error?.message || "Не удалось обновить этап") },
+        );
+    };
+
+    const handleToggleVisibility = (typeId: number, stage: BackendProjectStage) => {
+        updateStage.mutate(
+            {
+                typeId,
+                stageId: stage.id,
+                data: { visible_to_participants: !stage.visible_to_participants },
             },
             { onError: (error) => toast.error(error?.message || "Не удалось обновить этап") },
         );
@@ -462,6 +474,17 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                             />
                                             <span className="text-[12px] text-gray-600 whitespace-nowrap">
                                                 утверждение
+                                            </span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <Switch
+                                                checked={stage.visible_to_participants}
+                                                onCheckedChange={() =>
+                                                    handleToggleVisibility(t.id, stage)
+                                                }
+                                            />
+                                            <span className="text-[12px] text-gray-600 whitespace-nowrap">
+                                                виден участникам
                                             </span>
                                         </label>
                                         <StageDatePicker

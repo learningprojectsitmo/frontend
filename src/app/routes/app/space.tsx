@@ -360,15 +360,17 @@ const SpaceRoute = () => {
                             Выберите тип проекта. Он определит набор этапов выполнения.
                         </p>
                         <div className="space-y-2 mt-3">
-                            <button
-                                type="button"
-                                onClick={() => handleCreateProject(null)}
-                                className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
-                            >
-                                <span className="text-[14px] font-semibold text-gray-900">
-                                    Без типа
-                                </span>
-                            </button>
+                            {spaceSettings?.require_project_type_on_create === false && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleCreateProject(null)}
+                                    className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
+                                >
+                                    <span className="text-[14px] font-semibold text-gray-900">
+                                        Без типа
+                                    </span>
+                                </button>
+                            )}
                             {projectTypes.data?.map((pt) => (
                                 <button
                                     key={pt.id}

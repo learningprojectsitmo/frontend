@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Flag } from "lucide-react";
 import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 
 export interface ProjectCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -10,6 +10,7 @@ export interface ProjectCardProps extends React.HTMLAttributes<HTMLDivElement> {
     description: string;
     progressValue: number;
     dateText: string;
+    stageText?: string;
     tags: Array<{ text: string }>;
     membersCount: number;
     users: Array<{ src?: string; name: string }>;
@@ -43,6 +44,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
             description,
             progressValue,
             dateText,
+            stageText = "",
             tags,
             membersCount,
             users,
@@ -135,6 +137,13 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                             />
                         </div>
                     </div>
+
+                    {stageText && (
+                        <div className="flex items-center gap-2">
+                            <Flag size={14} className="text-gray-500 shrink-0" />
+                            <span className="text-[13px] text-gray-600">{stageText}</span>
+                        </div>
+                    )}
 
                     {/* Deadline Row */}
                     {dateText && (
