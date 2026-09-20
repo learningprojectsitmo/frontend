@@ -108,7 +108,7 @@ function formatDate(iso: string): string {
     });
 }
 
-function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
+function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canManage = false) {
     const statusName = p.status?.name || "Неизвестно";
     const isArchived = statusName === "archived";
 
@@ -136,14 +136,15 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
         })),
         members: p.members.map((m) => ({
             id: m.id,
+            userId: m.user_id,
             name: m.name,
             role: m.role,
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.date_added,
-            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId
-                ? "delete"
-                : "default") as "default" | "delete",
+            status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
+                | "default"
+                | "delete",
         })),
         replycants: p.replycants.map((r) => ({
             id: r.id,
@@ -170,8 +171,9 @@ const SpaceRoute = () => {
     const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
     const { data: user } = useUser();
 
-    const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
+    const canManageTeam = isCreator || dataSpaces?.role === "admin";
+    const project = dataProject ? mapBackendProject(dataProject, user?.id, canManageTeam) : null;
     const isTeamMember = useMemo(
         () =>
             !!user &&
@@ -669,9 +671,9 @@ const SpaceRoute = () => {
     const handleRemoveMember = useCallback(
         (memberId: number) => {
             const member = project?.members.find((m) => m.id === memberId);
-            if (!member) return;
+            if (!member || !member.userId) return;
             removeParticipantMutation.mutate(
-                { projectId: project?.id || 0, userId: member.id },
+                { projectId: project?.id || 0, userId: member.userId },
                 {
                     onSuccess: () => {
                         toast.success("Участник удалён из команды");
@@ -1582,6 +1584,7 @@ const SpaceRoute = () => {
                                 <TableMembers
                                     members={filteredMembers}
                                     removeMember={handleRemoveMember}
+                                    removeActionLabel="Удалить из команды"
                                 />
                             ) : (
                                 <div className="grid grid-cols-3 gap-6">

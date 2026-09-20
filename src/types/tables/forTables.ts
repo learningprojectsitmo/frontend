@@ -1,5 +1,6 @@
 export interface Member {
     id: number;
+    userId?: number;
     name: string;
     role: string;
     workspaceRole: string;

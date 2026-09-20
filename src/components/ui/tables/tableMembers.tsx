@@ -45,6 +45,7 @@ const HEADER_CELLS: { label: string; className?: string }[] = [
 interface TableProps {
     members: Member[] | [];
     removeMember?: (id: number) => void;
+    removeActionLabel?: string;
     showProject?: boolean;
     showStatus?: boolean;
     onRowClick?: (member: Member) => void;
@@ -53,6 +54,7 @@ interface TableProps {
 export const TableMembers = ({
     members,
     removeMember,
+    removeActionLabel = "Удалить из пространства",
     showProject = false,
     showStatus = false,
     onRowClick,
@@ -237,7 +239,7 @@ export const TableMembers = ({
                                                     className="text-[#EF4444]"
                                                 >
                                                     <UserMinus className="h-4 w-4 mr-2" />
-                                                    Удалить из пространства
+                                                    {removeActionLabel}
                                                 </DropdownMenuItem>
                                             )}
                                         </DropdownMenuContent>
