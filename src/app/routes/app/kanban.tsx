@@ -24,6 +24,7 @@ import { toast } from "sonner";
 // Todo поменять хук
 import { useUsers } from "@/features/kanban/hooks/useUsers";
 import { useUser } from "@/lib/auth";
+import { useProject } from "@/lib/projects";
 import {
     defaultFilterState,
     filterColumns,
@@ -40,8 +41,22 @@ export const KanbanRoute = () => {
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
-    const { data: projectMembers } = useUsers();
+    const { data: kanbanAllUsers } = useUsers();
     const { data: currentUser } = useUser();
+    const { data: projectData } = useProject(spaceId || "");
+
+    const isTeamMember = useMemo(
+        () =>
+            !!currentUser &&
+            (projectData?.author_id === currentUser.id ||
+                (projectData?.members ?? []).some((m) => m.user_id === currentUser.id)),
+        [currentUser, projectData],
+    );
+
+    const projectMembers = useMemo(() => {
+        const memberUserIds = new Set((projectData?.members ?? []).map((m) => m.user_id));
+        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
+    }, [kanbanAllUsers, projectData]);
 
     // Отфильтрованные колонки
     const filteredColumns = useMemo(
@@ -300,8 +315,9 @@ export const KanbanRoute = () => {
         () => ({
             columns: filteredColumns,
             isLoading,
+            canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
-            onTaskClick: openEditPanel,
+            onTaskClick: isTeamMember ? openEditPanel : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -313,6 +329,7 @@ export const KanbanRoute = () => {
         [
             filteredColumns,
             isLoading,
+            isTeamMember,
             handleTaskMove,
             openEditPanel,
             handleAddTask,

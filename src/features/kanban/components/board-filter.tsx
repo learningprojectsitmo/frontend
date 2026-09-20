@@ -138,7 +138,7 @@ export const KanbanFilter: React.FC<Props> = ({
                         "min-w-[160px]",
                         active
                             ? "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60"
-                            : "bg-gray-200 text-black hover:bg-gray-300",
+                            : "bg-app-ghost text-app-text hover:bg-[--color-black-10]",
                     )}
                     aria-label="Фильтр задач"
                 >

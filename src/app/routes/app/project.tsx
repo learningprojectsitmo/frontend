@@ -172,6 +172,12 @@ const SpaceRoute = () => {
 
     const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
+    const isTeamMember = useMemo(
+        () =>
+            !!user &&
+            (isCreator || (dataProject?.members ?? []).some((m) => m.user_id === user.id)),
+        [user, isCreator, dataProject],
+    );
 
     const canManageProject = useMemo(() => {
         if (isCreator) return true;
@@ -487,7 +493,12 @@ const SpaceRoute = () => {
     const [kanbanFilter, setKanbanFilter] = useState<KanbanFilterState>(defaultFilterState);
     const { isOpen: isTaskPanelOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
     const { data: columns, isLoading: kanbanLoading, refetch } = useBoard(projectId);
-    const { data: projectMembers } = useKanbanUsers();
+    const { data: kanbanAllUsers } = useKanbanUsers();
+
+    const projectMembers = useMemo(() => {
+        const memberUserIds = new Set((dataProject?.members ?? []).map((m) => m.user_id));
+        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
+    }, [kanbanAllUsers, dataProject]);
 
     const filteredColumns = useMemo(
         () => filterColumns(columns || [], kanbanFilter, user?.id),
@@ -840,8 +851,9 @@ const SpaceRoute = () => {
         () => ({
             columns: filteredColumns,
             isLoading: kanbanLoading,
+            canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
-            onTaskClick: openEditPanel,
+            onTaskClick: isTeamMember ? openEditPanel : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -853,6 +865,7 @@ const SpaceRoute = () => {
         [
             filteredColumns,
             kanbanLoading,
+            isTeamMember,
             handleTaskMove,
             openEditPanel,
             handleAddTask,

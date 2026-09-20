@@ -6,6 +6,7 @@ import type { KanbanTaskProps } from "../types";
 export const KanbanTask: React.FC<KanbanTaskProps> = ({
     task,
     isDragging = false,
+    canEdit = false,
     onClick,
     onDragStart,
     onToggleSubtask,
@@ -87,7 +88,8 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                 className={cn(
                     "rounded-lg shadow-sm border border-gray-200",
                     "hover:shadow-md transition-all",
-                    "relative group cursor-pointer",
+                    "relative group",
+                    canEdit ? "cursor-pointer" : "cursor-default",
                     isDragging && "cursor-grabbing",
                     "overflow-hidden",
                 )}
@@ -106,7 +108,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             {/* ID задачи */}
-                            <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-app-surface text-black">
+                            <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-app-surface text-app-text">
                                 {"#" + task.id}
                             </div>
                             {/* Дедлайн */}
@@ -117,7 +119,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                         "px-1 py-0.5 rounded-lg text-xs font-medium",
                                         isOverdue
                                             ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
-                                            : "bg-app-surface text-black",
+                                            : "bg-app-surface text-app-text",
                                     )}
                                 >
                                     <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
@@ -141,9 +143,14 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                         </div>
 
                         {/* Drag Handle */}
-                        <div data-drag-handle="task" className="cursor-grab active:cursor-grabbing">
-                            <GripVertical className="h-4 w-4 text-gray-400" />
-                        </div>
+                        {canEdit && (
+                            <div
+                                data-drag-handle="task"
+                                className="cursor-grab active:cursor-grabbing"
+                            >
+                                <GripVertical className="h-4 w-4 text-gray-400" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Название задачи */}

@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     column,
+    canEdit = false,
     onAddTask,
     onTaskClick,
     onDeleteTask,
@@ -40,6 +41,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     const [editName, setEditName] = useState(column.name);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [quickAddTitle, setQuickAddTitle] = useState("");
+    const [showAddHint, setShowAddHint] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const quickAddRef = useRef<HTMLInputElement>(null);
 
@@ -124,9 +126,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     // Добавление новой задачи
     const handleAddTask = useCallback(() => {
         const title = quickAddTitle.trim();
-        if (!title) return;
+        if (!title) {
+            setShowAddHint(true);
+            quickAddRef.current?.focus();
+            return;
+        }
         onAddTask?.(column.id, title);
         setQuickAddTitle("");
+        setShowAddHint(false);
         // Оставляем фокус на поле для цепочечного добавления
         quickAddRef.current?.focus();
     }, [quickAddTitle, column.id, onAddTask]);
@@ -197,12 +204,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1 flex-1 min-w-0">
                             {/* Drag Handle для перетаскивания колонки */}
-                            <div
-                                data-drag-handle="column"
-                                className="cursor-grab active:cursor-grabbing"
-                            >
-                                <GripVertical className={cn("h-5 w-5", colorStyle.text)} />
-                            </div>
+                            {canEdit && (
+                                <div
+                                    data-drag-handle="column"
+                                    className="cursor-grab active:cursor-grabbing"
+                                >
+                                    <GripVertical className={cn("h-5 w-5", colorStyle.text)} />
+                                </div>
+                            )}
 
                             {isEditing ? (
                                 <div className="flex items-center gap-1 flex-1">
@@ -216,14 +225,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                     />
                                     <button
                                         onClick={handleSaveRename}
-                                        className="p-1 rounded-md hover:bg-black/10 text-green-600"
+                                        className="p-1 rounded-md hover:bg-[--color-black-10] text-green-600"
                                         aria-label="Сохранить"
                                     >
                                         <Check className="h-4 w-4" />
                                     </button>
                                     <button
                                         onClick={handleCancelRename}
-                                        className="p-1 rounded-md hover:bg-black/10 text-red-600"
+                                        className="p-1 rounded-md hover:bg-[--color-black-10] text-red-600"
                                         aria-label="Отменить"
                                     >
                                         <X className="h-4 w-4" />
@@ -246,7 +255,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                             )}
                         </div>
 
-                        {!isEditing && (
+                        {canEdit && !isEditing && (
                             <div className="flex items-center gap-1">
                                 {/* Настройки колонки */}
                                 <DropdownMenu
@@ -338,29 +347,47 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 </div>
 
                 {/* Добавить задачу */}
-                <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
-                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus-within:border-blue-600 hover:shadow-sm">
-                        <input
-                            ref={quickAddRef}
-                            value={quickAddTitle}
-                            onChange={(e) => setQuickAddTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleAddTask();
-                            }}
-                            placeholder="Добавить задачу..."
-                            className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-gray-500 placeholder:text-gray-400"
-                        />
-                        <button
-                            type="button"
-                            onClick={handleAddTask}
-                            disabled={!quickAddTitle.trim()}
-                            className="flex-shrink-0 rounded p-0.5 text-gray-400 transition-colors hover:text-gray-700 disabled:cursor-default"
-                            aria-label="Добавить задачу"
+                {canEdit && (
+                    <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
+                        <div
+                            className={cn(
+                                "flex items-center gap-1 w-full rounded-lg border border-[--input-border] bg-[--input-bg] px-2 text-sm focus-within:border-[--input-focus-border] focus-within:shadow-[0_0_0_2px_var(--input-focus-shadow)]",
+                                showAddHint && "border-[--red-58] ring-1 ring-[--red-58]/20",
+                            )}
+                            style={{ height: "2rem" }}
                         >
-                            <Plus className="h-4 w-4" />
-                        </button>
+                            <input
+                                ref={quickAddRef}
+                                value={quickAddTitle}
+                                onChange={(e) => {
+                                    setQuickAddTitle(e.target.value);
+                                    if (e.target.value.trim()) {
+                                        setShowAddHint(false);
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleAddTask();
+                                }}
+                                aria-invalid={showAddHint}
+                                placeholder="Добавить задачу..."
+                                className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-[--input-text] placeholder:text-[--input-placeholder]"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddTask}
+                                className="flex-shrink-0 rounded p-0.5 text-[--input-icon-default] transition-colors hover:text-[--input-icon-focus]"
+                                aria-label="Добавить задачу"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </button>
+                        </div>
+                        {showAddHint && (
+                            <p className="mt-1.5 text-xs text-[--red-58]">
+                                Введите название задачи
+                            </p>
+                        )}
                     </div>
-                </div>
+                )}
 
                 {/* Список задач */}
                 <div
@@ -405,6 +432,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                         >
                             <KanbanTask
                                 task={task}
+                                canEdit={canEdit}
                                 onClick={onTaskClick}
                                 isDragging={activeTaskId === task.id}
                                 onDragStart={(e: React.DragEvent<HTMLDivElement>) =>
