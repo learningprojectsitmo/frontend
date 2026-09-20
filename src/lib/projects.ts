@@ -23,6 +23,7 @@ export const invalidateProjectImpact = (
         queryKeys.profile.invitations(),
         queryKeys.profile.projects(),
         queryKeys.profile.createdProjects(),
+        queryKeys.specification.detail(projectId),
     ];
     if (workspaceId) {
         keys.push(queryKeys.workspace.participants(workspaceId));

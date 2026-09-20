@@ -73,6 +73,7 @@ import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
+import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -1708,6 +1709,17 @@ const SpaceRoute = () => {
                         </div>
                     </DialogContent>
                 </Dialog>
+
+                {activeTab === "specification" && dataProject && (
+                    <SpecificationTab
+                        projectId={dataProject.id}
+                        isAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
+                        onAdvance={handleAdvanceStage}
+                        onApprove={handleApproveStage}
+                        onReject={handleRejectStage}
+                    />
+                )}
 
                 {activeTab === "kanban" && (
                     <>

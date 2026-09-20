@@ -48,6 +48,13 @@ export const queryKeys = {
         detail: (projectId: string | number) => ["stage-history", String(projectId)] as const,
     },
 
+    specification: {
+        detail: (projectId: string | number) =>
+            ["project", String(projectId), "specification"] as const,
+        comments: (projectId: string | number) =>
+            ["project", String(projectId), "specification", "comments"] as const,
+    },
+
     workspace: {
         list: (params?: SpacesListParams) =>
             params ? (["workspaces", "list", params] as const) : (["workspaces", "list"] as const),

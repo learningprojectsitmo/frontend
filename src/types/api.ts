@@ -206,6 +206,7 @@ export type BackendProjectStage = {
     is_current: boolean;
     duration_days: number | null;
     deadline?: string | null;
+    kind?: string;
 };
 
 export type BackendProjectType = {
@@ -220,6 +221,49 @@ export type BackendStageRejection = {
     comment: string | null;
     actor_name: string;
     created_at: string | null;
+};
+
+export type SpecificationStatus = "draft" | "submitted" | "approved";
+
+export type RequirementGroup = {
+    name: string;
+    requirements: string[];
+};
+
+export type ProjectSpecification = {
+    id: number;
+    project_id: number;
+    goal: string | null;
+    tasks: string[];
+    functional_requirements: RequirementGroup[];
+    non_functional_requirements: RequirementGroup[];
+    acceptance_criteria: string[];
+    status: SpecificationStatus;
+    rejection_comment: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+export type SpecificationUpdate = {
+    goal?: string | null;
+    tasks?: string[] | null;
+    functional_requirements?: RequirementGroup[] | null;
+    non_functional_requirements?: RequirementGroup[] | null;
+    acceptance_criteria?: string[] | null;
+};
+
+export type SpecificationCommentAuthor = {
+    id: number;
+    username: string;
+};
+
+export type SpecificationComment = {
+    id: number;
+    specification_id: number;
+    author: SpecificationCommentAuthor;
+    text: string;
+    created_at: string | null;
+    updated_at: string | null;
 };
 
 export type ProjectFullResponse = {
