@@ -37,6 +37,7 @@ type AdditionalSectionProps = {
     portfolio: PortfolioFull[];
     education: EducationFull[];
     languages: LanguageFull[];
+    readOnly?: boolean;
 };
 
 function SectionMiniEmptyState({ description }: { description: string }) {
@@ -66,7 +67,7 @@ function SectionActions({ onAdd }: { onAdd: () => void }) {
 
 // ─── Portfolio Section ──────────────────────────────────────────────────
 
-function PortfolioSection({ items }: { items: PortfolioFull[] }) {
+function PortfolioSection({ items, readOnly }: { items: PortfolioFull[]; readOnly?: boolean }) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
@@ -93,10 +94,16 @@ function PortfolioSection({ items }: { items: PortfolioFull[] }) {
                 <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
                     Портфолио
                 </h3>
-                {!showForm && <SectionActions onAdd={() => setShowForm(true)} />}
+                {!readOnly && !showForm && <SectionActions onAdd={() => setShowForm(true)} />}
             </div>
             {items.length === 0 && !showForm ? (
-                <SectionMiniEmptyState description="Добавьте ссылки на портфолио, чтобы ваши работы могли видеть другие" />
+                <SectionMiniEmptyState
+                    description={
+                        readOnly
+                            ? "Здесь пока нет ссылок на портфолио"
+                            : "Добавьте ссылки на портфолио, чтобы ваши работы могли видеть другие"
+                    }
+                />
             ) : (
                 <div className="flex flex-col gap-2">
                     {items.map((item) => (
@@ -110,12 +117,14 @@ function PortfolioSection({ items }: { items: PortfolioFull[] }) {
                                 <Icon name="link" size={14} className="text-blue-500 shrink-0" />
                                 <span className="truncate">{item.title}</span>
                             </a>
-                            <button
-                                onClick={() => deleteMutation.mutate(item.id)}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                <Icon name="trash" size={14} />
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={() => deleteMutation.mutate(item.id)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Icon name="trash" size={14} />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -157,7 +166,7 @@ function PortfolioSection({ items }: { items: PortfolioFull[] }) {
 
 // ─── Education Section ─────────────────────────────────────────────────
 
-function EducationSection({ items }: { items: EducationFull[] }) {
+function EducationSection({ items, readOnly }: { items: EducationFull[]; readOnly?: boolean }) {
     const [showForm, setShowForm] = useState(false);
     const [institution, setInstitution] = useState("");
     const [faculty, setFaculty] = useState("");
@@ -193,10 +202,16 @@ function EducationSection({ items }: { items: EducationFull[] }) {
                 <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
                     Образование
                 </h3>
-                {!showForm && <SectionActions onAdd={() => setShowForm(true)} />}
+                {!readOnly && !showForm && <SectionActions onAdd={() => setShowForm(true)} />}
             </div>
             {items.length === 0 && !showForm ? (
-                <SectionMiniEmptyState description="Добавьте информацию о своём образовании" />
+                <SectionMiniEmptyState
+                    description={
+                        readOnly
+                            ? "Здесь пока нет информации об образовании"
+                            : "Добавьте информацию о своём образовании"
+                    }
+                />
             ) : (
                 <div className="flex flex-col gap-4">
                     {items.map((item) => (
@@ -210,12 +225,14 @@ function EducationSection({ items }: { items: EducationFull[] }) {
                                     {item.years} &middot; {item.degree}
                                 </p>
                             </div>
-                            <button
-                                onClick={() => deleteMutation.mutate(item.id)}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity self-start"
-                            >
-                                <Icon name="trash" size={14} />
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={() => deleteMutation.mutate(item.id)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity self-start"
+                                >
+                                    <Icon name="trash" size={14} />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -269,7 +286,7 @@ function EducationSection({ items }: { items: EducationFull[] }) {
 
 // ─── Language Section ──────────────────────────────────────────────────
 
-function LanguageSection({ items }: { items: LanguageFull[] }) {
+function LanguageSection({ items, readOnly }: { items: LanguageFull[]; readOnly?: boolean }) {
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState("");
     const [level, setLevel] = useState("");
@@ -298,10 +315,16 @@ function LanguageSection({ items }: { items: LanguageFull[] }) {
                 <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
                     Языки
                 </h3>
-                {!showForm && <SectionActions onAdd={() => setShowForm(true)} />}
+                {!readOnly && !showForm && <SectionActions onAdd={() => setShowForm(true)} />}
             </div>
             {items.length === 0 && !showForm ? (
-                <SectionMiniEmptyState description="Добавьте информацию о ваших языках, чтобы с вами было легче общаться" />
+                <SectionMiniEmptyState
+                    description={
+                        readOnly
+                            ? "Здесь пока нет языков"
+                            : "Добавьте информацию о ваших языках, чтобы с вами было легче общаться"
+                    }
+                />
             ) : (
                 <div className="flex flex-col gap-2">
                     {items.map((lang) => (
@@ -314,12 +337,14 @@ function LanguageSection({ items }: { items: LanguageFull[] }) {
                                 <span className="text-gray-900 font-medium">{lang.name}</span>
                                 <span className="text-gray-500">({lang.level})</span>
                             </div>
-                            <button
-                                onClick={() => deleteMutation.mutate(lang.id)}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                <Icon name="trash" size={14} />
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={() => deleteMutation.mutate(lang.id)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Icon name="trash" size={14} />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -378,13 +403,18 @@ function LanguageSection({ items }: { items: LanguageFull[] }) {
 
 // ─── Main Component ────────────────────────────────────────────────────
 
-export function AdditionalSection({ portfolio, education, languages }: AdditionalSectionProps) {
+export function AdditionalSection({
+    portfolio,
+    education,
+    languages,
+    readOnly,
+}: AdditionalSectionProps) {
     return (
         <div className="rounded-2xl border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col gap-6">
             <h2 className="text-base font-bold text-gray-900">Дополнительно</h2>
-            <PortfolioSection items={portfolio} />
-            <EducationSection items={education} />
-            <LanguageSection items={languages} />
+            <PortfolioSection items={portfolio} readOnly={readOnly} />
+            <EducationSection items={education} readOnly={readOnly} />
+            <LanguageSection items={languages} readOnly={readOnly} />
         </div>
     );
 }

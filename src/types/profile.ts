@@ -1,3 +1,5 @@
+import type { ProfileResponse } from "@/types/api";
+
 export type ResponseItem = {
     id: number;
     projectId: number;
@@ -42,6 +44,11 @@ export type ProfileProject = {
     startDate: string;
     membersCount: number;
     roles: string[];
+};
+
+export type PublicProfile = ProfileResponse & {
+    spaces: ProfileSpace[];
+    projects: ProfileProject[];
 };
 
 export type ProfileFiltersState = {

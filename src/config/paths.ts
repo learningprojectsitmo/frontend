@@ -105,7 +105,7 @@ export const paths = {
         },
         profile: {
             path: "/app/profile",
-            getHref: () => "/app/profile",
+            getHref: (id?: number) => (id ? `/app/profile?id=${id}` : "/app/profile"),
         },
         ideas: {
             path: "/app/ideas",

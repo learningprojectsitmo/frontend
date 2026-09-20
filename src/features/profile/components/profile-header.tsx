@@ -7,6 +7,7 @@ type ProfileHeaderProps = {
     phone: string;
     email: string;
     socials: { label: string; value: string }[];
+    readOnly?: boolean;
 };
 
 export function ProfileHeader({
@@ -16,6 +17,7 @@ export function ProfileHeader({
     phone,
     email,
     socials,
+    readOnly,
 }: ProfileHeaderProps) {
     return (
         <SharedProfileHeader
@@ -25,7 +27,7 @@ export function ProfileHeader({
             email={email}
             phone={phone}
             socials={socials}
-            showActions
+            showActions={!readOnly}
         />
     );
 }

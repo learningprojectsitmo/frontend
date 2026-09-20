@@ -262,6 +262,7 @@ const SpaceRoute = () => {
         if (!participantsData?.items) return [];
         return participantsData.items.map((m: WorkspaceMember) => ({
             id: m.id,
+            userId: m.user_id,
             name: m.name,
             role: ROLE_LABELS[m.role] ?? m.role,
             workspaceRole: m.workspace_role,

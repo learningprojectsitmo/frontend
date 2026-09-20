@@ -1,12 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type {
     MyResponseListResponse,
     MyInvitationListResponse,
     MyProjectListResponse,
     Space,
 } from "@/types/api";
-import type { ResponseItem, InvitationItem, ProfileSpace, ProfileProject } from "@/types/profile";
+import type {
+    ResponseItem,
+    InvitationItem,
+    ProfileSpace,
+    ProfileProject,
+    PublicProfile,
+} from "@/types/profile";
 import { useProfile } from "@/lib/profile";
 
 function normalizeResumeUrl(url: string): string {
@@ -94,12 +101,13 @@ export function useInvitations() {
     });
 }
 
-export function useProfileSpaces() {
+export function useProfileSpaces(options?: { enabled?: boolean }) {
     const { data: profile } = useProfile();
     const currentUserId = profile?.id ?? 0;
 
     return useQuery({
         queryKey: ["profile", "spaces"],
+        enabled: options?.enabled ?? true,
         queryFn: async () => {
             const data: { spaces: Space[] } = await api.get("/workspaces/menu", {
                 params: { page: 1, limit: 100 },
@@ -111,9 +119,10 @@ export function useProfileSpaces() {
     });
 }
 
-export function useProfileCreatedProjects() {
+export function useProfileCreatedProjects(options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: ["profile", "created-projects"],
+        enabled: options?.enabled ?? true,
         queryFn: async () => {
             const data: MyProjectListResponse = await api.get("/projects/created");
             return data.items.map(mapMyProjectItem);
@@ -129,6 +138,23 @@ export function useProfileProjects() {
         queryFn: async () => {
             const data: MyProjectListResponse = await api.get("/projects/my");
             return data.items.map(mapMyProjectItem);
+        },
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+}
+
+export function usePublicProfile(userId: number, options?: { enabled?: boolean }) {
+    return useQuery<PublicProfile>({
+        queryKey: queryKeys.profile.byId(userId),
+        enabled: options?.enabled ?? true,
+        queryFn: async () => {
+            const data: PublicProfile = await api.get(`/profile/${userId}`);
+            return {
+                ...data,
+                spaces: data.spaces.map((s) => mapSpace(s, userId)),
+                projects: data.projects.map(mapMyProjectItem),
+            };
         },
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,

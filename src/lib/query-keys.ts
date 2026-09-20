@@ -21,6 +21,9 @@ export const queryKeys = {
 
     profile: {
         detail: () => ["profile"] as const,
+        byId: (id: string | number) => ["profile", "public", String(id)] as const,
+        byIdActivity: (id: string | number) =>
+            ["profile", "public", String(id), "activity"] as const,
         responses: () => ["profile", "responses"] as const,
         invitations: () => ["profile", "invitations"] as const,
         spaces: () => ["profile", "spaces"] as const,

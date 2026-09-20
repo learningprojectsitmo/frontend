@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/select/select";
 import { settingsApi } from "@/lib/settings";
 import { api } from "@/lib/api-client";
+import { paths } from "@/config/paths";
 import type { User } from "@/features/settings/types";
 
 const USERS_LIMIT = 10;
@@ -121,9 +123,14 @@ const AdminUsersPage = () => {
                                             {(page - 1) * USERS_LIMIT + index + 1}
                                         </td>
                                         <td className="px-6 py-4 text-[15px] text-[--grey-4] font-medium">
-                                            {[user.last_name, user.first_name, user.middle_name]
-                                                .filter(Boolean)
-                                                .join(" ")}
+                                            <Link
+                                                to={paths.app.profile.getHref(user.id)}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                {[user.last_name, user.first_name, user.middle_name]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                            </Link>
                                         </td>
                                         <td className="px-6 py-4 text-[15px] text-[--grey-4]">
                                             {user.email}

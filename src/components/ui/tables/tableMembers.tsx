@@ -1,5 +1,7 @@
 import { Ellipsis, Mail, Linkedin, ExternalLink, UserMinus } from "lucide-react";
+import { Link } from "react-router";
 import { type Member } from "@/types/tables/forTables";
+import { paths } from "@/config/paths";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -100,7 +102,20 @@ export const TableMembers = ({
                                 onClick={() => onRowClick?.(member)}
                             >
                                 <td className="px-6 py-4">
-                                    {member.avatarUrl ? (
+                                    {member.userId ? (
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
+                                                {getInitials(member.name)}
+                                            </div>
+                                            <Link
+                                                to={paths.app.profile.getHref(member.userId)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-app-text font-sans text-blue-600 hover:underline"
+                                            >
+                                                {member.name}
+                                            </Link>
+                                        </div>
+                                    ) : member.avatarUrl ? (
                                         <div className="flex items-center gap-3">
                                             <img
                                                 src={member.avatarUrl}

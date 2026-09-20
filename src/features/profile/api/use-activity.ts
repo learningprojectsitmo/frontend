@@ -4,11 +4,18 @@ import type { ActivityResponse } from "@/types/activity";
 
 const ACTIVITY_PAGE_SIZE = 10;
 
-export function useActivity(page = 1, limit = ACTIVITY_PAGE_SIZE) {
+export function useActivityFor(
+    userId: number | null | undefined,
+    page = 1,
+    limit = ACTIVITY_PAGE_SIZE,
+) {
+    const path = userId ? `/profile/${userId}/activity` : "/profile/activity";
     return useQuery({
-        queryKey: ["profile", "activity", page, limit],
+        queryKey: userId
+            ? ["profile", "public", String(userId), "activity", page, limit]
+            : ["profile", "activity", page, limit],
         queryFn: async () => {
-            const data: ActivityResponse = await api.get("/profile/activity", {
+            const data: ActivityResponse = await api.get(path, {
                 params: { page, limit },
             });
             return data;

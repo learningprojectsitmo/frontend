@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useUser } from "@/lib/auth";
 import { MessageSquare, PencilLine, Plus, Send, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { paths } from "@/config/paths";
 import type { RequirementGroup, SpecificationComment, SpecificationStatus } from "@/types/api";
 import { toast } from "sonner";
 
@@ -705,9 +707,12 @@ const SpecificationComments = ({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="mb-1 flex items-center gap-2">
-                                        <span className="text-sm font-semibold text-[--grey-4]">
+                                        <Link
+                                            to={paths.app.profile.getHref(comment.author.id)}
+                                            className="text-sm font-semibold text-[--grey-4] hover:text-[--azure-60] transition-colors"
+                                        >
                                             {comment.author.username}
-                                        </span>
+                                        </Link>
                                         <span className="text-xs text-[--azure-46]">
                                             {comment.updated_at &&
                                             comment.updated_at !== comment.created_at

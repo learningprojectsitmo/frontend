@@ -4,6 +4,7 @@ import { ProjectCard } from "@/components/ui/card/project-card";
 import { ListToolbar } from "./list-toolbar";
 import { Link } from "react-router";
 import { paths } from "@/config/paths";
+import type { ProfileProject } from "@/types/profile";
 
 const statusToTag: Record<string, { tag: string; label: string }> = {
     in_progress: { tag: "in_progress", label: "В процессе" },
@@ -12,11 +13,18 @@ const statusToTag: Record<string, { tag: string; label: string }> = {
     not_started: { tag: "not_started", label: "Не завершен" },
 };
 
-export function ProjectsSection() {
-    const { data: projects, isLoading } = useProfileCreatedProjects();
+type ProjectsSectionProps = {
+    projects?: ProfileProject[];
+    readOnly?: boolean;
+};
+
+export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSectionProps) {
+    const { data: hookProjects, isLoading } = useProfileCreatedProjects({
+        enabled: propProjects === undefined,
+    });
     const [search, setSearch] = useState("");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const items = useMemo(() => projects ?? [], [projects]);
+    const items = useMemo(() => propProjects ?? hookProjects ?? [], [propProjects, hookProjects]);
 
     const filteredItems = useMemo(() => {
         if (!search) return items;
@@ -26,11 +34,13 @@ export function ProjectsSection() {
         );
     }, [items, search]);
 
-    if (isLoading) {
+    const title = readOnly ? "Проекты" : "Мои проекты";
+
+    if (isLoading && propProjects === undefined) {
         return (
             <div>
                 <ListToolbar
-                    title="Мои проекты"
+                    title={title}
                     searchPlaceholder="Поиск проектов..."
                     searchValue={search}
                     onSearch={setSearch}
@@ -50,7 +60,7 @@ export function ProjectsSection() {
         return (
             <div>
                 <ListToolbar
-                    title="Мои проекты"
+                    title={title}
                     searchPlaceholder="Поиск проектов..."
                     searchValue={search}
                     onSearch={setSearch}
@@ -60,7 +70,7 @@ export function ProjectsSection() {
                     onChangeView={setViewMode}
                 />
                 <div className="text-center py-16 text-[14px] text-gray-500">
-                    У вас пока нет проектов
+                    {readOnly ? "У пользователя пока нет проектов" : "У вас пока нет проектов"}
                 </div>
             </div>
         );
@@ -69,7 +79,7 @@ export function ProjectsSection() {
     return (
         <div>
             <ListToolbar
-                title="Мои проекты"
+                title={title}
                 searchPlaceholder="Поиск проектов..."
                 searchValue={search}
                 onSearch={setSearch}

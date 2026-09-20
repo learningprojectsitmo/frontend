@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useActivity } from "@/features/profile/api/use-activity";
+import { useActivityFor } from "@/features/profile/api/use-activity";
 import { ContributionGraph } from "./contribution-graph";
 import { ActivityFeed } from "./activity-feed";
 
-export function ProfileActivity() {
+export function ProfileActivity({ userId }: { userId?: number | null }) {
     const [page, setPage] = useState(1);
-    const { data, isLoading } = useActivity(page);
+    const { data, isLoading } = useActivityFor(userId, page);
 
     const totalPages = data?.total_pages ?? 0;
 
