@@ -16,6 +16,34 @@ export const useProfile = () => {
     });
 };
 
+// ─── Own-profile update (ФИО, телефон, соцсети) ───────────────────────
+
+export const updateOwnProfile = async (
+    id: number,
+    data: {
+        first_name?: string;
+        middle_name?: string;
+        last_name?: string;
+        phone?: string;
+        tg_nickname?: string;
+        vk_nickname?: string;
+    },
+): Promise<ProfileResponse> => {
+    return await api.put(`/users/${id}`, data);
+};
+
+export const useUpdateOwnProfile = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateOwnProfile>[1] }) =>
+            updateOwnProfile(id, data),
+        onSuccess: (_, { id }) => {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            void queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+        },
+    });
+};
+
 // ─── Portfolio CRUD ────────────────────────────────────────────────────
 
 export const createPortfolio = async (data: {

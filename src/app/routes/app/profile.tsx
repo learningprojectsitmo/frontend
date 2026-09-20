@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
+import { ProfileEditForm } from "@/features/profile/components/profile-edit-form";
 import { mapResumeFromApi, type ResumeData } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
@@ -18,7 +19,6 @@ import { SpacesSection } from "@/features/profile/components/spaces-section";
 import { ProjectsSection } from "@/features/profile/components/projects-section";
 import { ProfileActivity } from "@/features/profile/components/profile-activity";
 import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
-
 const baseMainTabs = [
     { value: "resume", label: "Резюме" },
     { value: "responses", label: "Отклики и приглашения" },
@@ -51,6 +51,7 @@ const ProfileRoute = () => {
     const { data: invitations } = useInvitations();
     const deleteResumeMutation = useDeleteResume();
     const updateResumeMutation = useUpdateResume();
+    const [editing, setEditing] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
 
     const visibleProfile = isOtherUser ? otherProfile : profile;
@@ -95,18 +96,39 @@ const ProfileRoute = () => {
     return (
         <ContentLayout title="Профиль и Резюме">
             <div className="mx-auto max-w-5xl p-4 sm:p-6 flex flex-col gap-5">
-                <ProfileHeader
-                    firstName={visibleProfile?.first_name ?? ""}
-                    lastName={visibleProfile?.last_name ?? ""}
-                    role={visibleProfile?.role ?? ""}
-                    phone={visibleProfile?.phone ?? ""}
-                    email={visibleProfile?.email ?? ""}
-                    socials={socialsFromProfile(
-                        visibleProfile?.tg_nickname ?? null,
-                        visibleProfile?.vk_nickname ?? null,
-                    )}
-                    readOnly={isOtherUser}
-                />
+                {isOtherUser ? (
+                    <ProfileHeader
+                        firstName={visibleProfile?.first_name ?? ""}
+                        middleName={visibleProfile?.middle_name ?? ""}
+                        lastName={visibleProfile?.last_name ?? ""}
+                        role={visibleProfile?.role ?? ""}
+                        phone={visibleProfile?.phone ?? ""}
+                        email={visibleProfile?.email ?? ""}
+                        socials={socialsFromProfile(
+                            visibleProfile?.tg_nickname ?? null,
+                            visibleProfile?.vk_nickname ?? null,
+                        )}
+                        readOnly
+                        onEdit={undefined}
+                    />
+                ) : editing ? (
+                    <ProfileEditForm onCancel={() => setEditing(false)} />
+                ) : (
+                    <ProfileHeader
+                        firstName={visibleProfile?.first_name ?? ""}
+                        middleName={visibleProfile?.middle_name ?? ""}
+                        lastName={visibleProfile?.last_name ?? ""}
+                        role={visibleProfile?.role ?? ""}
+                        phone={visibleProfile?.phone ?? ""}
+                        email={visibleProfile?.email ?? ""}
+                        socials={socialsFromProfile(
+                            visibleProfile?.tg_nickname ?? null,
+                            visibleProfile?.vk_nickname ?? null,
+                        )}
+                        readOnly={false}
+                        onEdit={() => setEditing(true)}
+                    />
+                )}
 
                 <ProfileActivity userId={otherUserId} />
 

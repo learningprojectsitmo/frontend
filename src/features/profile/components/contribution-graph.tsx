@@ -151,9 +151,9 @@ export function ContributionGraph({
                 <div className="flex gap-[2px] flex-1">
                     {weeks.map((week, wi) => (
                         <div key={wi} className="flex flex-col gap-[2px] flex-1">
-                            {week.map((day) =>
+                            {week.map((day, di) =>
                                 day.isFuture ? (
-                                    <div key={`${wi}-f`} className="flex-1" />
+                                    <div key={`${wi}-f-${di}`} className="flex-1" />
                                 ) : (
                                     <div
                                         key={day.key}

@@ -16,8 +16,9 @@ import type {
 } from "@/types/profile";
 import { useProfile } from "@/lib/profile";
 
-function normalizeResumeUrl(url: string): string {
-    const id = url?.split("/").pop();
+function normalizeResumeUrl(url: string | null | undefined): string {
+    if (!url) return "";
+    const id = url.split("/").pop();
     return id ? `/app/resume?id=${id}` : "";
 }
 
