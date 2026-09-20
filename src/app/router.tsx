@@ -90,6 +90,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
+                    path: paths.app.search.path,
+                    lazy: () => import("./routes/app/search").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.kanban.path,
                     lazy: () => import("./routes/app/kanban").then(convert(queryClient)),
                 },

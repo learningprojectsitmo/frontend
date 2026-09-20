@@ -59,6 +59,11 @@ export const paths = {
             path: "/app",
             getHref: () => "/app",
         },
+        search: {
+            path: "/app/search",
+            getHref: (q?: string) =>
+                q && q.trim() ? `/app/search?q=${encodeURIComponent(q.trim())}` : "/app/search",
+        },
         space: {
             path: "/app/space",
             getHref: (id: number) => `/app/space?id=${encodeURIComponent(id)}`,

@@ -8,7 +8,7 @@ import { useSpacesList } from "@/lib/spaces";
 import { useProjectsByIds } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { Icon } from "@/components/ui/icons";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { paths } from "@/config/paths";
 import { SearchBar } from "@/components/ui/search-bar/search-bar";
 import { FilterTrigger } from "@/features/spaces/components/filters/filter-trigger";
@@ -18,6 +18,8 @@ import { CheckboxGroup } from "@/features/spaces/components/filters/checkbox-gro
 import { DateFilter } from "@/features/spaces/components/filters/date-filter";
 import type { FiltersState } from "@/features/spaces/components/filters/types";
 import { Archive, CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
+import { useSearchResults, MIN_SEARCH_LENGTH } from "@/lib/search";
+import { SearchResultsPanel } from "@/components/search/search-results";
 const STATUS_LABELS: Record<string, string> = {
     in_progress: "В работе",
     review: "На проверке",
@@ -26,8 +28,17 @@ const STATUS_LABELS: Record<string, string> = {
     archived: "Архив",
 };
 
+const statusStyles: Record<string, { bg: string; text: string }> = {
+    in_progress: { bg: "var(--status-inprogress-bg)", text: "var(--status-inprogress-text)" },
+    review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
+    planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
+    completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
+    archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
+};
+
 const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const { data: dataSpaces, isLoading: isLoadingSpaces } = useSpacesList();
     const { getViewedProjectIds } = useRecentlyViewed();
@@ -35,6 +46,7 @@ const SpacesRoute = () => {
     const { data: dataRecentProjects } = useProjectsByIds(viewedIds);
 
     const [search, setSearch] = useState("");
+    const [globalSearch, setGlobalSearch] = useState(searchParams.get("q") ?? "");
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filterState, setFilterState] = useState<FiltersState>({
         statuses: [],
@@ -43,13 +55,13 @@ const SpacesRoute = () => {
         datePreset: "all",
     });
 
-    const statusStyles: Record<string, { bg: string; text: string }> = {
-        in_progress: { bg: "var(--status-inprogress-bg)", text: "var(--status-inprogress-text)" },
-        review: { bg: "var(--status-review-bg)", text: "var(--status-review-text)" },
-        planned: { bg: "var(--status-planned-bg)", text: "var(--status-planned-text)" },
-        completed: { bg: "var(--status-completed-bg)", text: "var(--status-completed-text)" },
-        archived: { bg: "var(--status-draft-bg)", text: "var(--status-draft-text)" },
-    };
+    const { data: searchResults, isFetching: isSearchFetching } = useSearchResults(globalSearch);
+    const isSearchMode = globalSearch.trim().length >= MIN_SEARCH_LENGTH;
+
+    useEffect(() => {
+        const q = globalSearch.trim();
+        setSearchParams(q ? { q } : {}, { replace: true });
+    }, [globalSearch, setSearchParams]);
 
     const statusOptions = useMemo(() => {
         const seen = new Set<string>();
@@ -283,274 +295,305 @@ const SpacesRoute = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-10">
-                    <section>
-                        <h2 className="mb-4 text-lg font-semibold text-gray-800">Пространства</h2>
-                        <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                            {(visibleSpaces || spaces).map((space) => (
-                                <Link
-                                    key={space.id}
-                                    to={paths.app.space.getHref(space.id)}
-                                    className="block h-full"
-                                >
-                                    <SpacesCard
-                                        iconName="discipline"
-                                        iconColor={space.color}
-                                        tag={space.category}
-                                        title={space.title}
-                                        description={space.description}
-                                        firstMetricText={`${space.projectsCount} проектов`}
-                                        secondMetricText={`${space.membersCount} участника`}
-                                    />
-                                </Link>
-                            ))}
-                        </div>
-                        <div className="w-full flex justify-center">
-                            {hasMore && (
-                                <button
-                                    onClick={handleLoadMore}
-                                    className="mt-4 px-4 py-2 font-sans text-[13px] font-semibold text-blue-600 rounded flex align-items gap-1"
-                                >
-                                    <Icon name="arrow-down" width={16} height={16} />
-                                    Загрузить ещё
-                                </button>
-                            )}
-                        </div>
-                    </section>
+                <div className="mb-10">
+                    <SearchBar
+                        value={globalSearch}
+                        onChange={setGlobalSearch}
+                        className="max-w-2xl h-11"
+                    />
+                    <p className="mt-2 text-[13px] text-gray-500">
+                        Глобальный поиск по проектам, пространствам и участникам платформы
+                    </p>
+                </div>
 
-                    <section>
-                        <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-                            <h2 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
-                                Недавние проекты
+                {isSearchMode ? (
+                    <SearchResultsPanel
+                        query={globalSearch}
+                        results={searchResults}
+                        isLoading={isSearchFetching}
+                        moreHref={paths.app.search.getHref(globalSearch)}
+                    />
+                ) : (
+                    <div className="flex flex-col gap-10">
+                        <section>
+                            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+                                Пространства
                             </h2>
-                            <div className="flex items-center gap-3">
-                                <SearchBar
-                                    placeholder="Поиск проектов..."
-                                    value={search}
-                                    onChange={setSearch}
-                                    className="w-[240px]"
-                                />
-                                <div className="relative">
-                                    <FilterTrigger
-                                        activeCount={activeFilterCount}
-                                        open={filtersOpen}
-                                        onClick={() => setFiltersOpen((v) => !v)}
-                                    />
-                                    <FilterDropdown
-                                        open={filtersOpen}
-                                        onClose={() => setFiltersOpen(false)}
-                                        onReset={handleResetFilters}
+                            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                                {(visibleSpaces || spaces).map((space) => (
+                                    <Link
+                                        key={space.id}
+                                        to={paths.app.space.getHref(space.id)}
+                                        className="block h-full"
                                     >
-                                        <FilterSection
-                                            icon={<CircleDot size={16} />}
-                                            label="Статус"
-                                            count={filterState.statuses.length}
-                                        >
-                                            <CheckboxGroup
-                                                options={statusOptions}
-                                                selected={filterState.statuses}
-                                                onChange={(v) =>
-                                                    setFilterState((s) => ({ ...s, statuses: v }))
-                                                }
-                                            />
-                                        </FilterSection>
-                                        <FilterSection icon={<Calendar size={16} />} label="Дата">
-                                            <DateFilter
-                                                state={filterState}
-                                                onChange={(patch) =>
-                                                    setFilterState((s) => ({ ...s, ...patch }))
-                                                }
-                                            />
-                                        </FilterSection>
-                                    </FilterDropdown>
-                                </div>
-                                <div className="flex items-center h-10 bg-app-surface border border-gray-200 rounded-[12px] overflow-hidden shrink-0">
-                                    <button
-                                        onClick={() => setActiveView("grid")}
-                                        className={`flex items-center justify-center w-10 h-full transition-colors ${
-                                            activeView === "grid"
-                                                ? "bg-gray-900 text-white dark:bg-gray-100"
-                                                : "text-gray-500 hover:bg-gray-50"
-                                        }`}
-                                    >
-                                        <LayoutGrid size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveView("list")}
-                                        className={`flex items-center justify-center w-10 h-full transition-colors ${
-                                            activeView === "list"
-                                                ? "bg-gray-900 text-white dark:bg-gray-100"
-                                                : "text-gray-500 hover:bg-gray-50"
-                                        }`}
-                                    >
-                                        <List size={16} />
-                                    </button>
-                                </div>
+                                        <SpacesCard
+                                            iconName="discipline"
+                                            iconColor={space.color}
+                                            tag={space.category}
+                                            title={space.title}
+                                            description={space.description}
+                                            firstMetricText={`${space.projectsCount} проектов`}
+                                            secondMetricText={`${space.membersCount} участника`}
+                                        />
+                                    </Link>
+                                ))}
                             </div>
-                        </div>
+                            <div className="w-full flex justify-center">
+                                {hasMore && (
+                                    <button
+                                        onClick={handleLoadMore}
+                                        className="mt-4 px-4 py-2 font-sans text-[13px] font-semibold text-blue-600 rounded flex align-items gap-1"
+                                    >
+                                        <Icon name="arrow-down" width={16} height={16} />
+                                        Загрузить ещё
+                                    </button>
+                                )}
+                            </div>
+                        </section>
 
-                        {projects.length === 0 ? (
-                            <div className="rounded-xl border border-gray-200 bg-app-surface p-12 text-center">
-                                <p className="text-[15px] text-gray-500">
-                                    Вы ещё не открыли ни одного проекта.
-                                </p>
-                                <p className="mt-1 text-[13px] text-gray-400">
-                                    Создайте или присоединитесь к проекту, и он появится здесь.
-                                </p>
+                        <section>
+                            <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+                                <h2 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
+                                    Недавние проекты
+                                </h2>
+                                <div className="flex items-center gap-3">
+                                    <SearchBar
+                                        placeholder="Поиск проектов..."
+                                        value={search}
+                                        onChange={setSearch}
+                                        className="w-[240px]"
+                                    />
+                                    <div className="relative">
+                                        <FilterTrigger
+                                            activeCount={activeFilterCount}
+                                            open={filtersOpen}
+                                            onClick={() => setFiltersOpen((v) => !v)}
+                                        />
+                                        <FilterDropdown
+                                            open={filtersOpen}
+                                            onClose={() => setFiltersOpen(false)}
+                                            onReset={handleResetFilters}
+                                        >
+                                            <FilterSection
+                                                icon={<CircleDot size={16} />}
+                                                label="Статус"
+                                                count={filterState.statuses.length}
+                                            >
+                                                <CheckboxGroup
+                                                    options={statusOptions}
+                                                    selected={filterState.statuses}
+                                                    onChange={(v) =>
+                                                        setFilterState((s) => ({
+                                                            ...s,
+                                                            statuses: v,
+                                                        }))
+                                                    }
+                                                />
+                                            </FilterSection>
+                                            <FilterSection
+                                                icon={<Calendar size={16} />}
+                                                label="Дата"
+                                            >
+                                                <DateFilter
+                                                    state={filterState}
+                                                    onChange={(patch) =>
+                                                        setFilterState((s) => ({ ...s, ...patch }))
+                                                    }
+                                                />
+                                            </FilterSection>
+                                        </FilterDropdown>
+                                    </div>
+                                    <div className="flex items-center h-10 bg-app-surface border border-gray-200 rounded-[12px] overflow-hidden shrink-0">
+                                        <button
+                                            onClick={() => setActiveView("grid")}
+                                            className={`flex items-center justify-center w-10 h-full transition-colors ${
+                                                activeView === "grid"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <LayoutGrid size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveView("list")}
+                                            className={`flex items-center justify-center w-10 h-full transition-colors ${
+                                                activeView === "list"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            <List size={16} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        ) : activeView === "list" ? (
-                            <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
-                                <table className="w-full border-collapse">
-                                    <thead className="text-app-text border-b border-gray-200 bg-gray-50">
-                                        <tr>
-                                            <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
-                                                Название
-                                            </th>
-                                            <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
-                                                Роли
-                                            </th>
-                                            <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
-                                                Участники
-                                            </th>
-                                            <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
-                                                Дата старта
-                                            </th>
-                                            <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
-                                                Прогресс
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {visibleFilteredRawItems.map((raw) => {
-                                            const style = statusStyles[raw.status];
-                                            const label = STATUS_LABELS[raw.status] || "";
-                                            return (
-                                                <tr
-                                                    key={raw.id}
-                                                    className="group border-b border-gray-100 transition-colors hover:bg-gray-50"
-                                                >
-                                                    <td className="px-6 py-4">
-                                                        <Link
-                                                            to={paths.app.project.getHref(raw.id)}
-                                                            className="flex items-center gap-3"
-                                                        >
-                                                            {label && style && (
-                                                                <span
-                                                                    className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
-                                                                    style={{
-                                                                        backgroundColor: style.bg,
-                                                                        color: style.text,
-                                                                    }}
-                                                                >
-                                                                    {label}
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[14px] font-medium text-gray-900 group-hover:text-[#2563EB] transition-colors">
-                                                                {raw.title}
-                                                            </span>
-                                                        </Link>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {raw.roles.length > 0 ? (
-                                                                raw.roles.map((r, i) => (
+
+                            {projects.length === 0 ? (
+                                <div className="rounded-xl border border-gray-200 bg-app-surface p-12 text-center">
+                                    <p className="text-[15px] text-gray-500">
+                                        Вы ещё не открыли ни одного проекта.
+                                    </p>
+                                    <p className="mt-1 text-[13px] text-gray-400">
+                                        Создайте или присоединитесь к проекту, и он появится здесь.
+                                    </p>
+                                </div>
+                            ) : activeView === "list" ? (
+                                <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
+                                    <table className="w-full border-collapse">
+                                        <thead className="text-app-text border-b border-gray-200 bg-gray-50">
+                                            <tr>
+                                                <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                                                    Название
+                                                </th>
+                                                <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                                                    Роли
+                                                </th>
+                                                <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                                                    Участники
+                                                </th>
+                                                <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                                                    Дата старта
+                                                </th>
+                                                <th className="text-left text-[15px] font-sans font-semibold px-6 h-14 whitespace-nowrap">
+                                                    Прогресс
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {visibleFilteredRawItems.map((raw) => {
+                                                const style = statusStyles[raw.status];
+                                                const label = STATUS_LABELS[raw.status] || "";
+                                                return (
+                                                    <tr
+                                                        key={raw.id}
+                                                        className="group border-b border-gray-100 transition-colors hover:bg-gray-50"
+                                                    >
+                                                        <td className="px-6 py-4">
+                                                            <Link
+                                                                to={paths.app.project.getHref(
+                                                                    raw.id,
+                                                                )}
+                                                                className="flex items-center gap-3"
+                                                            >
+                                                                {label && style && (
                                                                     <span
-                                                                        key={i}
-                                                                        className="inline-flex items-center h-6 px-2 rounded-[8px] bg-gray-100 text-[12px] font-medium text-gray-900 leading-none"
+                                                                        className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none shrink-0"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                style.bg,
+                                                                            color: style.text,
+                                                                        }}
                                                                     >
-                                                                        {r}
+                                                                        {label}
                                                                     </span>
-                                                                ))
+                                                                )}
+                                                                <span className="text-[14px] font-medium text-gray-900 group-hover:text-[#2563EB] transition-colors">
+                                                                    {raw.title}
+                                                                </span>
+                                                            </Link>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {raw.roles.length > 0 ? (
+                                                                    raw.roles.map((r, i) => (
+                                                                        <span
+                                                                            key={i}
+                                                                            className="inline-flex items-center h-6 px-2 rounded-[8px] bg-gray-100 text-[12px] font-medium text-gray-900 leading-none"
+                                                                        >
+                                                                            {r}
+                                                                        </span>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-[13px] text-gray-400">
+                                                                        —
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="text-[13px] text-gray-500">
+                                                                {raw.members_count}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            {raw.start_date ? (
+                                                                <span className="text-[13px] text-gray-600">
+                                                                    {new Date(
+                                                                        raw.start_date,
+                                                                    ).toLocaleDateString("ru-RU", {
+                                                                        day: "numeric",
+                                                                        month: "long",
+                                                                        year: "numeric",
+                                                                    })}
+                                                                </span>
                                                             ) : (
                                                                 <span className="text-[13px] text-gray-400">
                                                                     —
                                                                 </span>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="text-[13px] text-gray-500">
-                                                            {raw.members_count}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {raw.start_date ? (
-                                                            <span className="text-[13px] text-gray-600">
-                                                                {new Date(
-                                                                    raw.start_date,
-                                                                ).toLocaleDateString("ru-RU", {
-                                                                    day: "numeric",
-                                                                    month: "long",
-                                                                    year: "numeric",
-                                                                })}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[13px] text-gray-400">
-                                                                —
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-[100px] h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="h-full rounded-full bg-gray-900 transition-all duration-300"
-                                                                    style={{
-                                                                        width: `${Math.min(100, Math.max(0, raw.progress))}%`,
-                                                                    }}
-                                                                />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-[100px] h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full rounded-full bg-gray-900 transition-all duration-300"
+                                                                        style={{
+                                                                            width: `${Math.min(100, Math.max(0, raw.progress))}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-[12px] font-medium text-gray-500 w-8 text-right tabular-nums">
+                                                                    {raw.progress}%
+                                                                </span>
                                                             </div>
-                                                            <span className="text-[12px] font-medium text-gray-500 w-8 text-right tabular-nums">
-                                                                {raw.progress}%
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                                {visibleProjects.map((project) => (
-                                    <Link
-                                        key={project.id}
-                                        to={paths.app.project.getHref(project.id)}
-                                        className="block"
-                                    >
-                                        <ProjectCard
-                                            tag={project.tag}
-                                            title={project.title}
-                                            description={project.description}
-                                            progressValue={project.progressValue}
-                                            dateText={project.dateText}
-                                            tags={project.tags}
-                                            membersCount={project.membersCount}
-                                            users={project.users}
-                                            archived={project.archived}
-                                            onKebabClick={() =>
-                                                alert(`Menu opened for ${project.title}`)
-                                            }
-                                        />
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                                    {visibleProjects.map((project) => (
+                                        <Link
+                                            key={project.id}
+                                            to={paths.app.project.getHref(project.id)}
+                                            className="block"
+                                        >
+                                            <ProjectCard
+                                                tag={project.tag}
+                                                title={project.title}
+                                                description={project.description}
+                                                progressValue={project.progressValue}
+                                                dateText={project.dateText}
+                                                tags={project.tags}
+                                                membersCount={project.membersCount}
+                                                users={project.users}
+                                                archived={project.archived}
+                                                onKebabClick={() =>
+                                                    alert(`Menu opened for ${project.title}`)
+                                                }
+                                            />
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
 
-                        {projectsHasMore && (
-                            <div className="w-full flex justify-center mt-8">
-                                <button
-                                    onClick={handleProjectsLoadMore}
-                                    className="flex items-center gap-1 px-4 py-2 text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
-                                >
-                                    <Icon name="arrow-down" width={16} height={16} />
-                                    Загрузить ещё
-                                </button>
-                            </div>
-                        )}
-                    </section>
-                </div>
+                            {projectsHasMore && (
+                                <div className="w-full flex justify-center mt-8">
+                                    <button
+                                        onClick={handleProjectsLoadMore}
+                                        className="flex items-center gap-1 px-4 py-2 text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
+                                    >
+                                        <Icon name="arrow-down" width={16} height={16} />
+                                        Загрузить ещё
+                                    </button>
+                                </div>
+                            )}
+                        </section>
+                    </div>
+                )}
             </div>
         </ContentLayout>
     );

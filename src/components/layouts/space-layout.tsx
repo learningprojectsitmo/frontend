@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Outlet, useSearchParams, Link } from "react-router";
+import { Outlet, useSearchParams, Link, useNavigate } from "react-router";
 
 import { paths } from "@/config/paths";
-import { useSpacesList, getSuggestions } from "@/lib/spaces";
+import { useSpacesList } from "@/lib/spaces";
+import { useSearchResults } from "@/lib/search";
 import { cn } from "@/lib/utils";
-import { useDebounce } from "@/utils/debounce";
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import { SearchBar } from "@/components/ui/search-bar";
+import { SearchBar, type SuggestionGroup } from "@/components/ui/search-bar";
 import { Sidebar } from "@/features/spaces/components/sidebar";
 import { UserNav } from "@/features/spaces/components/user-nav";
 import { NotificationsNav } from "@/features/spaces/components/notifications";
@@ -214,10 +214,12 @@ function SpaceLayoutNotFound() {
 const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     search,
     onSearchChange,
+    onSearchSubmit,
     suggestions,
 }: {
     search: string;
     onSearchChange: (v: string) => void;
+    onSearchSubmit: (v: string) => void;
     suggestions: string[];
 }) {
     return (
@@ -233,6 +235,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
                     <SearchBar
                         placeholder="Ищите проекты, пространства или участников..."
                         onChange={onSearchChange}
+                        onSearch={onSearchSubmit}
                         suggestions={suggestions}
                         value={search}
                         className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-gray-100 !border-none"
@@ -300,19 +303,56 @@ function SpaceLayoutContent({
     }, [data]);
 
     const [search, setSearch] = useState("");
-    const debouncedSearch = useDebounce(search);
-    const [suggestions, setSuggestions] = useState<string[]>([
-        "Mobile App",
-        "Mobile App Learning",
-        "Mobile App X",
-        "Web Development",
-        "UI/UX Design",
-    ]);
+    const { data: searchData } = useSearchResults(search);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!debouncedSearch) return;
-        getSuggestions(debouncedSearch).then(setSuggestions);
-    }, [debouncedSearch]);
+    const suggestions = useMemo<SuggestionGroup[]>(() => {
+        if (!searchData) return [];
+        const groups: SuggestionGroup[] = [];
+        if (searchData.projects.length > 0) {
+            groups.push({
+                id: "projects",
+                label: "Проекты",
+                items: searchData.projects.slice(0, 3).map((p) => ({
+                    text: p.name,
+                    href: paths.app.project.getHref(p.id),
+                    meta: p.workspace_name ?? undefined,
+                })),
+            });
+        }
+        if (searchData.spaces.length > 0) {
+            groups.push({
+                id: "spaces",
+                label: "Пространства",
+                items: searchData.spaces.slice(0, 3).map((s) => ({
+                    text: s.title,
+                    href: paths.app.space.getHref(s.id),
+                    meta: s.category ?? undefined,
+                })),
+            });
+        }
+        if (searchData.users.length > 0) {
+            groups.push({
+                id: "users",
+                label: "Участники",
+                items: searchData.users.slice(0, 3).map((u) => ({
+                    text: [u.last_name, u.first_name, u.middle_name].filter(Boolean).join(" "),
+                    href: paths.app.profile.getHref(u.id),
+                    meta: u.role ?? undefined,
+                })),
+            });
+        }
+        return groups;
+    }, [searchData]);
+
+    const handleSearchSubmit = useCallback(
+        (value: string) => {
+            const q = value.trim();
+            if (!q) return;
+            navigate(`${paths.app.root.getHref()}?q=${encodeURIComponent(q)}`);
+        },
+        [navigate],
+    );
 
     const handleToggle = useCallback(() => {
         setIsCollapsed((prev) => {
@@ -327,6 +367,7 @@ function SpaceLayoutContent({
             <SpaceLayoutHeader
                 search={search}
                 onSearchChange={setSearch}
+                onSearchSubmit={handleSearchSubmit}
                 suggestions={suggestions}
             />
             <div className="flex-1 flex flex-row mt-16">

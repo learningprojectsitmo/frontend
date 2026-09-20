@@ -83,4 +83,6 @@ export const queryKeys = {
     roles: () => ["roles"] as const,
 
     authResetEmail: (token: string) => ["auth", "reset-email", token] as const,
+
+    search: (q: string, scope: "default" | "extended" = "default") => ["search", scope, q] as const,
 };

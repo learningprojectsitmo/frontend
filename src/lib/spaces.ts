@@ -17,10 +17,6 @@ import {
 } from "@/types/api";
 import { queryKeys } from "./query-keys";
 
-export const getSuggestions = async (search: string): Promise<string[]> => {
-    return await api.get("/app/suggestions", { params: { search } });
-};
-
 export const getSpacesList = async (params?: SpacesListParams): Promise<SpacesListResponce> => {
     return await api.get("/workspaces/menu", { params });
 };
