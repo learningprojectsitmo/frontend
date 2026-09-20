@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { isAxiosError } from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -23,6 +24,39 @@ const inlineEditSchema = z.object({
 });
 
 type InlineEditProfileInput = z.infer<typeof inlineEditSchema>;
+
+type InlineEditField = keyof InlineEditProfileInput;
+
+const INLINE_EDIT_FIELDS: InlineEditField[] = [
+    "last_name",
+    "first_name",
+    "middle_name",
+    "phone",
+    "tg_nickname",
+    "vk_nickname",
+];
+
+type ServerValidationItem = {
+    loc: (string | number)[];
+    msg: string;
+};
+
+const parseServerFieldErrors = (error: unknown): Partial<Record<InlineEditField, string>> => {
+    if (!isAxiosError(error) || error.response?.status !== 422) return {};
+
+    const detail = (error.response.data as { detail?: ServerValidationItem[] } | undefined)?.detail;
+    if (!Array.isArray(detail)) return {};
+
+    const fieldErrors: Partial<Record<InlineEditField, string>> = {};
+    for (const item of detail) {
+        const field = item.loc[1];
+        if (typeof field !== "string" || !INLINE_EDIT_FIELDS.includes(field as InlineEditField)) continue;
+
+        const message = item.msg.replace(/^Value error,\s*/, "");
+        fieldErrors[field as InlineEditField] = message;
+    }
+    return fieldErrors;
+};
 
 type ProfileEditFormProps = {
     onCancel: () => void;
@@ -63,7 +97,16 @@ export const ProfileEditForm = ({ onCancel }: ProfileEditFormProps) => {
                     toast.success("Профиль сохранён");
                     onCancel();
                 },
-                onError: () => {
+                onError: (error) => {
+                    const fieldErrors = parseServerFieldErrors(error);
+                    const entries = Object.entries(fieldErrors);
+                    if (entries.length > 0) {
+                        for (const [field, message] of entries) {
+                            form.setError(field as keyof InlineEditProfileInput, { message });
+                        }
+                        toast.error("Проверьте правильность заполнения полей");
+                        return;
+                    }
                     toast.error("Ошибка при сохранении профиля");
                 },
             },
