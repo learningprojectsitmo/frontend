@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ContentLayout } from "@/components/layouts";
 import { useSearchParams, Link, useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
     useResumeDetail,
     useUpdateResume,
     useCreateResume,
     useDeleteResume,
     shareResume,
+    invalidateWorkspaceResumes,
 } from "@/lib/resume";
 import { useProfile } from "@/lib/profile";
 import { useSpacesList } from "@/lib/spaces";
 import { Spinner } from "@/components/ui/spinner/spinner";
+import { queryKeys } from "@/lib/query-keys";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -27,6 +30,7 @@ import type { ResumeDetail, ResumeUserInfo } from "@/types/api";
 
 const ResumeRoute = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     const rawId = searchParams.get("id");
     const id = parseInt(rawId || "0", 10);
@@ -45,6 +49,22 @@ const ResumeRoute = () => {
     const [isEditing, setIsEditing] = useState(isCreateMode);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const canEditSections = isEditing;
+
+    // При переходе create → просмотр (после сохранения нового резюме) React Router
+    // переиспользует ту же инстанцию роута: isEditing оставался true, и страница
+    // показывалась в режиме редактирования. Синхронизируем режим с флагом создания.
+    useEffect(() => {
+        setIsEditing(isCreateMode);
+    }, [isCreateMode]);
+
+    // При открытии резюме сбрасываем кеш: деталка резюме, профиль (списки резюме
+    // на странице профиля) и списки резюме в пространствах — чтобы данные были свежими.
+    useEffect(() => {
+        if (isCreateMode) return;
+        void queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(id) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+        invalidateWorkspaceResumes(queryClient);
+    }, [id, isCreateMode, queryClient]);
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -95,6 +115,7 @@ const ResumeRoute = () => {
                 no_experience_description: fields.no_experience_description,
                 is_visible: fields.is_visible,
             });
+            setIsEditing(false);
             navigate(paths.app.resume.getHref(resume.id, null, workspaceId));
         } else {
             if (!fields.header.trim()) {

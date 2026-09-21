@@ -46,7 +46,7 @@ const onDeleteError = (error: unknown) =>
 // Сброс закешированных списков/фильтров резюме в пространствах
 // (["workspaces", id, "resumes", ...]) — пользователь может не переходить
 // к просмотру созданного/изменённого резюме, и список останется устаревшим.
-const invalidateWorkspaceResumes = (queryClient: QueryClient): void => {
+export const invalidateWorkspaceResumes = (queryClient: QueryClient): void => {
     void queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "workspaces" && query.queryKey[2] === "resumes",
     });
