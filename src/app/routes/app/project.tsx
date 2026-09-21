@@ -1222,7 +1222,7 @@ const SpaceRoute = () => {
                                     Описание проекта
                                 </div>
                             </div>
-                            <div className="self-stretch flex flex-col justify-start items-start gap-5">
+                            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
                                 <div className="self-stretch flex flex-col justify-start items-start relative">
                                     {isEditing ? (
                                         <RichTextEditor
@@ -1230,7 +1230,7 @@ const SpaceRoute = () => {
                                             onChange={setEditDescription}
                                         />
                                     ) : (
-                                        <>
+                                        <div className="self-stretch relative bg-app-surface border border-app-border rounded-lg p-4">
                                             <RichTextViewer
                                                 ref={descRef}
                                                 html={project.descriptionExtended}
@@ -1257,7 +1257,7 @@ const SpaceRoute = () => {
                                                     }}
                                                 />
                                             )}
-                                        </>
+                                        </div>
                                     )}
                                     {!isEditing && (descHasOverflow || descriptionExpanded) && (
                                         <button
