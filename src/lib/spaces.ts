@@ -91,9 +91,15 @@ export const useSpaceSettings = (workspaceId: number, enabled?: boolean) => {
     });
 };
 
+export type UpdateWorkspaceInput = {
+    name: string;
+    description?: string;
+    color?: string;
+};
+
 export const updateWorkspaceName = async (
     id: number,
-    data: { name: string; description?: string },
+    data: UpdateWorkspaceInput,
 ): Promise<void> => {
     return await api.put(`/workspaces/${id}`, data);
 };
@@ -101,7 +107,7 @@ export const updateWorkspaceName = async (
 export const useUpdateWorkspaceName = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
+        mutationFn: ({ id, data }: { id: number; data: UpdateWorkspaceInput }) =>
             updateWorkspaceName(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });

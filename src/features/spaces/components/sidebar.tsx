@@ -120,7 +120,7 @@ export const Sidebar = memo(function Sidebar({
                 {/* ── Кнопка «Все пространства» + кнопка сворачивания ── */}
                 <div
                     className={cn(
-                        "flex items-center w-full px-2 py-2",
+                        "flex items-center w-full px-2 py-2 mt-2",
                         isCollapsed ? "justify-center" : "gap-1",
                     )}
                 >

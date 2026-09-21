@@ -13,6 +13,8 @@ import { Switch } from "@/components/ui/switch/switch";
 import { DangerZone } from "@/features/spaces/components/danger-zone";
 import { Calendar } from "@/features/spaces/components/filters/calendar";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
+import { SPACE_COLOR_OPTIONS } from "@/features/spaces/constants/spaces";
+import { cn } from "@/lib/utils";
 import {
     useUpdateSpaceSettings,
     useUpdateWorkspaceName,
@@ -26,6 +28,7 @@ import type { Space } from "@/types/api";
 const spaceSettingsSchema = z.object({
     name: z.string().min(1, "Название обязательно").max(100, "Слишком длинное название"),
     description: z.string().max(500, "Максимум 500 символов").optional().or(z.literal("")),
+    color: z.string().optional(),
     visibility: z.enum(["public", "private"]),
     join_policy: z.enum(["open", "link", "invitation"]),
     default_role_id: z.number().nullable().optional(),
@@ -148,6 +151,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
         defaultValues: {
             name: space.title,
             description: space.description || "",
+            color: space.color ?? "",
             visibility: "public",
             join_policy: "open",
             default_role_id: null,
@@ -162,6 +166,7 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
         form.reset({
             name: space.title,
             description: space.description || "",
+            color: space.color ?? "",
             visibility: settings?.visibility ?? "public",
             join_policy: settings?.join_policy ?? "open",
             default_role_id: settings?.default_role_id ?? null,
@@ -178,7 +183,11 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
         updateName.mutate(
             {
                 id: space.id,
-                data: { name: values.name, description: values.description || undefined },
+                data: {
+                    name: values.name,
+                    description: values.description || undefined,
+                    color: values.color || undefined,
+                },
             },
             {
                 onSuccess: () => {
@@ -241,24 +250,56 @@ export const SpaceSettingsModal = ({ open, onOpenChange, space }: SpaceSettingsM
                                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
                                     Внешний вид
                                 </h3>
-                                <div className="flex items-center gap-4">
-                                    <div
-                                        className={`h-16 w-16 rounded-xl flex items-center justify-center text-white ${space.color}`}
-                                    >
-                                        <span className="text-xl font-bold">
-                                            {space.title.charAt(0).toUpperCase()}
-                                        </span>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className={`h-16 w-16 rounded-xl flex items-center justify-center text-white ${form.watch("color") || space.color}`}
+                                        >
+                                            <span className="text-xl font-bold">
+                                                {space.title.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                Цвет иконки
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                Измените цвет иконки пространства
+                                            </p>
+                                        </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                        onClick={() =>
-                                            alert("Загрузка иконки будет добавлена позже")
-                                        }
-                                    >
-                                        [изменить]
-                                    </button>
-                                    <StubBadge />
+                                    <FormField
+                                        control={form.control}
+                                        name="color"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {SPACE_COLOR_OPTIONS.map((c) => (
+                                                            <button
+                                                                key={c.value}
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    field.onChange(
+                                                                        field.value === c.value
+                                                                            ? undefined
+                                                                            : c.value,
+                                                                    )
+                                                                }
+                                                                title={c.label}
+                                                                className={cn(
+                                                                    "h-9 w-9 rounded-full transition-transform",
+                                                                    c.value,
+                                                                    field.value === c.value &&
+                                                                        "ring-2 ring-blue-500 ring-offset-2 scale-110",
+                                                                )}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </div>
 

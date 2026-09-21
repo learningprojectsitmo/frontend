@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useCreateWorkspace, useSpacesList } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
+import { SPACE_COLOR_OPTIONS } from "@/features/spaces/constants/spaces";
 import { toast } from "sonner";
 
 const createSpaceSchema = z.object({
@@ -19,15 +20,6 @@ const createSpaceSchema = z.object({
 });
 
 type CreateSpaceInput = z.infer<typeof createSpaceSchema>;
-
-const COLOR_OPTIONS = [
-    { value: "bg-blue-500", label: "Синий" },
-    { value: "bg-green-500", label: "Зелёный" },
-    { value: "bg-purple-500", label: "Фиолетовый" },
-    { value: "bg-red-500", label: "Красный" },
-    { value: "bg-yellow-500", label: "Жёлтый" },
-    { value: "bg-pink-500", label: "Розовый" },
-];
 
 type CreateSpaceModalProps = {
     open: boolean;
@@ -158,7 +150,7 @@ export const CreateSpaceModal = ({ open, onOpenChange }: CreateSpaceModalProps) 
                                     <FormLabel>Цвет</FormLabel>
                                     <FormControl>
                                         <div className="flex flex-wrap gap-3">
-                                            {COLOR_OPTIONS.map((c) => (
+                                            {SPACE_COLOR_OPTIONS.map((c) => (
                                                 <button
                                                     key={c.value}
                                                     type="button"
