@@ -130,7 +130,7 @@ const ResumeRoute = () => {
                 cover_letter: null,
                 has_experience: true,
                 no_experience_description: null,
-                is_visible: true,
+                is_visible: false,
                 created_at: "",
                 updated_at: "",
             },

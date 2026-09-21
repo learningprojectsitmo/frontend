@@ -9,6 +9,14 @@ type WorkspaceParticipantsParams = {
     date_to?: string;
 };
 
+type WorkspaceResumeParams = {
+    page?: number;
+    limit?: number;
+    search?: string;
+    skills?: string[];
+    interests?: string[];
+};
+
 /**
  * Централизованные query-ключи TanStack Query.
  *
@@ -67,7 +75,11 @@ export const queryKeys = {
             params
                 ? (["workspaces", id, "participants", params] as const)
                 : (["workspaces", id, "participants"] as const),
-        resumes: (id: number) => ["workspaces", id, "resumes"] as const,
+        resumes: (id: number, params?: WorkspaceResumeParams) =>
+            params
+                ? (["workspaces", id, "resumes", params] as const)
+                : (["workspaces", id, "resumes"] as const),
+        resumeFilters: (id: number) => ["workspaces", id, "resumes", "filters"] as const,
     },
 
     notifications: {

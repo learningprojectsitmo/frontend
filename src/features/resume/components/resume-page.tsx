@@ -48,7 +48,7 @@ export const ResumePage = ({
     const [editCoverLetter, setEditCoverLetter] = useState("");
     const [editHasExperience, setEditHasExperience] = useState(true);
     const [editNoExpDescription, setEditNoExpDescription] = useState("");
-    const [editIsVisible, setEditIsVisible] = useState(true);
+    const [editIsVisible, setEditIsVisible] = useState(false);
 
     useEffect(() => {
         setEditHeader(data.resume.header);

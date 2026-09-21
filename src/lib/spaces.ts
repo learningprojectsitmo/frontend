@@ -10,6 +10,7 @@ import {
     type WorkSpaceFull,
     type WorkspaceParticipantListResponse,
     type WorkspaceResumeListResponse,
+    type WorkspaceResumeFiltersResponse,
     type InviteLinkResponse,
     type InviteLinkListResponse,
     type InviteLinkCreate,
@@ -271,16 +272,40 @@ export const useRemoveWorkspaceParticipant = () => {
 
 // === Workspace resumes ===
 
-export const getWorkspaceResumes = async (
-    workspaceId: number,
-): Promise<WorkspaceResumeListResponse> => {
-    return await api.get(`/workspaces/${workspaceId}/resumes`);
+export type ResumeParams = {
+    page?: number;
+    limit?: number;
+    search?: string;
+    skills?: string[];
+    interests?: string[];
 };
 
-export const useWorkspaceResumes = (workspaceId: number) => {
+export const getWorkspaceResumes = async (
+    workspaceId: number,
+    params?: ResumeParams,
+): Promise<WorkspaceResumeListResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/resumes`, { params });
+};
+
+export const useWorkspaceResumes = (workspaceId: number, params?: ResumeParams) => {
     return useQuery({
-        queryKey: queryKeys.workspace.resumes(workspaceId),
-        queryFn: () => getWorkspaceResumes(workspaceId),
+        queryKey: queryKeys.workspace.resumes(workspaceId, params),
+        queryFn: () => getWorkspaceResumes(workspaceId, params),
+        enabled: !!workspaceId,
+    });
+};
+
+export const getWorkspaceResumeFilters = async (
+    workspaceId: number,
+): Promise<WorkspaceResumeFiltersResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/resumes/filters`);
+};
+
+export const useWorkspaceResumeFilters = (workspaceId: number) => {
+    return useQuery({
+        queryKey: queryKeys.workspace.resumeFilters(workspaceId),
+        queryFn: () => getWorkspaceResumeFilters(workspaceId),
+        staleTime: 5 * 60 * 1000,
         enabled: !!workspaceId,
     });
 };

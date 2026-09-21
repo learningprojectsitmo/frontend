@@ -1,6 +1,6 @@
 import { api, getApiErrorMessage } from "./api-client";
 import { toast } from "sonner";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
     type ResumeCreate,
     type ResumeDetail,
@@ -43,6 +43,15 @@ const onSaveError = (error: unknown) =>
 const onDeleteError = (error: unknown) =>
     toast.error(getApiErrorMessage(error, "Не удалось удалить"));
 
+// Сброс закешированных списков/фильтров резюме в пространствах
+// (["workspaces", id, "resumes", ...]) — пользователь может не переходить
+// к просмотру созданного/изменённого резюме, и список останется устаревшим.
+const invalidateWorkspaceResumes = (queryClient: QueryClient): void => {
+    void queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "workspaces" && query.queryKey[2] === "resumes",
+    });
+};
+
 export const getResumeDetail = async (id: number): Promise<ResumeDetail> => {
     return await api.get(`/resumes/${id}/detail`);
 };
@@ -74,6 +83,7 @@ export const useUpdateResume = () => {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(variables.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            invalidateWorkspaceResumes(queryClient);
         },
         onError: onSaveError,
     });
@@ -90,6 +100,7 @@ export const useCreateResume = () => {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
             queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(data.id) });
+            invalidateWorkspaceResumes(queryClient);
         },
         onError: onSaveError,
     });
@@ -106,6 +117,7 @@ export const useDeleteResume = () => {
         onSuccess: (_data, id) => {
             queryClient.removeQueries({ queryKey: queryKeys.resume.detail(id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            invalidateWorkspaceResumes(queryClient);
             toast.success("Резюме удалено");
         },
         onError: onDeleteError,

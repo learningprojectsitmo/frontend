@@ -675,6 +675,14 @@ export type WorkspaceResumeItem = {
 export type WorkspaceResumeListResponse = {
     items: WorkspaceResumeItem[];
     total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type WorkspaceResumeFiltersResponse = {
+    skills: string[];
+    interests: string[];
 };
 
 export type InviteLinkResponse = {

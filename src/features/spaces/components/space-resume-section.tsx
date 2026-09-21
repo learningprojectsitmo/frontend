@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { Search } from "lucide-react";
 import { paths } from "@/config/paths";
@@ -15,6 +15,19 @@ type SpaceResumeSectionProps = {
     isLoading: boolean;
     workspaceId: number;
     isPrivate?: boolean;
+    search: string;
+    onSearchChange: (value: string) => void;
+    selectedSkills: string[];
+    onSkillsChange: (skills: string[]) => void;
+    selectedInterests: string[];
+    onInterestsChange: (interests: string[]) => void;
+    availableSkills: string[];
+    availableInterests: string[];
+    onResetFilters: () => void;
+    total: number;
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 };
 
 function ResumeCard({
@@ -109,55 +122,81 @@ function ResumeCard({
     );
 }
 
+function Pagination({
+    page,
+    totalPages,
+    onPageChange,
+}: {
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+}) {
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+                onClick={() => onPageChange(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+                Назад
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .map((p, idx, arr) => (
+                    <span key={p} className="flex items-center">
+                        {idx > 0 && arr[idx - 1] !== p - 1 && (
+                            <span className="px-1 text-gray-400 text-sm">...</span>
+                        )}
+                        <button
+                            onClick={() => onPageChange(p)}
+                            className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
+                                p === page
+                                    ? "bg-[#2563EB] text-white"
+                                    : "text-gray-500 hover:bg-gray-50"
+                            }`}
+                        >
+                            {p}
+                        </button>
+                    </span>
+                ))}
+
+            <button
+                onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+                Вперёд
+            </button>
+        </div>
+    );
+}
+
 export function SpaceResumeSection({
     items,
     isLoading,
     workspaceId,
     isPrivate = false,
+    search,
+    onSearchChange,
+    selectedSkills,
+    onSkillsChange,
+    selectedInterests,
+    onInterestsChange,
+    availableSkills,
+    availableInterests,
+    onResetFilters,
+    total,
+    page,
+    totalPages,
+    onPageChange,
 }: SpaceResumeSectionProps) {
-    const [search, setSearch] = useState("");
-    const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [filterOpen, setFilterOpen] = useState(false);
 
-    const allSkills = useMemo(() => {
-        return [...new Set(items.flatMap((r) => r.skills))].sort((a, b) =>
-            a.localeCompare(b, "ru"),
-        );
-    }, [items]);
-
-    const allInterests = useMemo(() => {
-        return [...new Set(items.flatMap((r) => r.interests))].sort((a, b) =>
-            a.localeCompare(b, "ru"),
-        );
-    }, [items]);
-
-    const filteredItems = useMemo(() => {
-        let result = items;
-
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (r) =>
-                    r.participant_name.toLowerCase().includes(q) ||
-                    r.header.toLowerCase().includes(q) ||
-                    r.skills.some((s) => s.toLowerCase().includes(q)) ||
-                    r.interests.some((i) => i.toLowerCase().includes(q)),
-            );
-        }
-
-        if (selectedSkills.length > 0) {
-            result = result.filter((r) => selectedSkills.some((s) => r.skills.includes(s)));
-        }
-
-        if (selectedInterests.length > 0) {
-            result = result.filter((r) => selectedInterests.some((i) => r.interests.includes(i)));
-        }
-
-        return result;
-    }, [items, search, selectedSkills, selectedInterests]);
-
     const activeFilterCount = selectedSkills.length + selectedInterests.length;
+    const hasActiveFilters = Boolean(search) || activeFilterCount > 0;
 
     if (isLoading) {
         return (
@@ -172,16 +211,14 @@ export function SpaceResumeSection({
         );
     }
 
-    if (items.length === 0) {
+    if (total === 0 && !hasActiveFilters) {
         return null;
     }
 
     return (
         <section>
             <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-app-text">
-                    Резюме участников ({filteredItems.length})
-                </h2>
+                <h2 className="text-lg font-semibold text-app-text">Резюме участников ({total})</h2>
 
                 <div className="flex items-center gap-3">
                     <div className="relative">
@@ -193,12 +230,12 @@ export function SpaceResumeSection({
                             type="text"
                             placeholder="Поиск резюме"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => onSearchChange(e.target.value)}
                             className="w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                         />
                     </div>
 
-                    {(allSkills.length > 0 || allInterests.length > 0) && (
+                    {(availableSkills.length > 0 || availableInterests.length > 0) && (
                         <div className="relative">
                             <FilterTrigger
                                 activeCount={activeFilterCount}
@@ -208,40 +245,37 @@ export function SpaceResumeSection({
                             <FilterDropdown
                                 open={filterOpen}
                                 onClose={() => setFilterOpen(false)}
-                                onReset={() => {
-                                    setSelectedSkills([]);
-                                    setSelectedInterests([]);
-                                }}
+                                onReset={onResetFilters}
                             >
-                                {allSkills.length > 0 && (
+                                {availableSkills.length > 0 && (
                                     <FilterSection
                                         icon={<Tag size={16} />}
                                         label="Навыки"
                                         count={selectedSkills.length}
                                     >
                                         <CheckboxGroup
-                                            options={allSkills.map((s) => ({
+                                            options={availableSkills.map((s) => ({
                                                 value: s,
                                                 label: s,
                                             }))}
                                             selected={selectedSkills}
-                                            onChange={setSelectedSkills}
+                                            onChange={onSkillsChange}
                                         />
                                     </FilterSection>
                                 )}
-                                {allInterests.length > 0 && (
+                                {availableInterests.length > 0 && (
                                     <FilterSection
                                         icon={<Tag size={16} />}
                                         label="Интересы"
                                         count={selectedInterests.length}
                                     >
                                         <CheckboxGroup
-                                            options={allInterests.map((i) => ({
+                                            options={availableInterests.map((i) => ({
                                                 value: i,
                                                 label: i,
                                             }))}
                                             selected={selectedInterests}
-                                            onChange={setSelectedInterests}
+                                            onChange={onInterestsChange}
                                         />
                                     </FilterSection>
                                 )}
@@ -251,23 +285,25 @@ export function SpaceResumeSection({
                 </div>
             </div>
 
-            {filteredItems.length === 0 ? (
+            {items.length === 0 ? (
                 <div className="text-center py-16 text-app-muted text-sm">
-                    {search || selectedSkills.length > 0
-                        ? "Резюме не найдены"
-                        : "В этом пространстве пока нет резюме"}
+                    {hasActiveFilters ? "Резюме не найдены" : "В этом пространстве пока нет резюме"}
                 </div>
             ) : (
-                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                    {filteredItems.map((resume) => (
-                        <ResumeCard
-                            key={resume.id}
-                            resume={resume}
-                            workspaceId={workspaceId}
-                            isPrivate={isPrivate}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                        {items.map((resume) => (
+                            <ResumeCard
+                                key={resume.id}
+                                resume={resume}
+                                workspaceId={workspaceId}
+                                isPrivate={isPrivate}
+                            />
+                        ))}
+                    </div>
+
+                    <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
+                </>
             )}
         </section>
     );

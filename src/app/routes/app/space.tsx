@@ -23,11 +23,14 @@ import {
     useSpacesList,
     useWorkspaceParticipants,
     useWorkspaceResumes,
+    useWorkspaceResumeFilters,
     useRemoveWorkspaceParticipant,
     useSpaceSettings,
+    type ResumeParams,
 } from "@/lib/spaces";
 import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { ROLE_LABELS } from "@/lib/roles";
 import { toast } from "sonner";
 import {
@@ -234,7 +237,52 @@ const SpaceRoute = () => {
         project_id: projectIdFilter,
     });
 
-    const { data: resumesData, isLoading: isResumesLoading } = useWorkspaceResumes(workspaceId);
+    // Resume filters state
+    const [resumeSearch, setResumeSearch] = useState("");
+    const debouncedResumeSearch = useDebouncedValue(resumeSearch, 300);
+    const [selectedResumeSkills, setSelectedResumeSkills] = useState<string[]>([]);
+    const [selectedResumeInterests, setSelectedResumeInterests] = useState<string[]>([]);
+    const [resumePage, setResumePage] = useState(1);
+    const resumeLimit = 10;
+
+    const resumeParams: ResumeParams = {
+        page: resumePage,
+        limit: resumeLimit,
+        search: debouncedResumeSearch || undefined,
+        skills: selectedResumeSkills.length > 0 ? selectedResumeSkills : undefined,
+        interests: selectedResumeInterests.length > 0 ? selectedResumeInterests : undefined,
+    };
+
+    const { data: resumesData, isLoading: isResumesLoading } = useWorkspaceResumes(
+        workspaceId,
+        resumeParams,
+    );
+    const { data: resumeFiltersData } = useWorkspaceResumeFilters(workspaceId);
+
+    const handleResumeFiltersReset = useCallback(() => {
+        setSelectedResumeSkills([]);
+        setSelectedResumeInterests([]);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeSearchChange = useCallback((value: string) => {
+        setResumeSearch(value);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeSkillsChange = useCallback((skills: string[]) => {
+        setSelectedResumeSkills(skills);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeInterestsChange = useCallback((interests: string[]) => {
+        setSelectedResumeInterests(interests);
+        setResumePage(1);
+    }, []);
+
+    const handleResumePageChange = useCallback((page: number) => {
+        setResumePage(page);
+    }, []);
 
     const removeParticipantMutation = useRemoveWorkspaceParticipant();
 
@@ -405,6 +453,19 @@ const SpaceRoute = () => {
                     isLoading={isResumesLoading}
                     workspaceId={workspaceId}
                     isPrivate={isPrivate}
+                    search={resumeSearch}
+                    onSearchChange={handleResumeSearchChange}
+                    selectedSkills={selectedResumeSkills}
+                    onSkillsChange={handleResumeSkillsChange}
+                    selectedInterests={selectedResumeInterests}
+                    onInterestsChange={handleResumeInterestsChange}
+                    availableSkills={resumeFiltersData?.skills || []}
+                    availableInterests={resumeFiltersData?.interests || []}
+                    onResetFilters={handleResumeFiltersReset}
+                    total={resumesData?.total ?? 0}
+                    page={resumePage}
+                    totalPages={resumesData?.total_pages ?? 0}
+                    onPageChange={handleResumePageChange}
                 />
 
                 {/* Participants section */}
