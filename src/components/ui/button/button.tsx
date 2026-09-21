@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2Icon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -79,6 +80,7 @@ export interface ButtonProps
     asChild?: boolean;
     icon?: React.ReactNode;
     iconPosition?: "left" | "right";
+    loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -92,6 +94,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             icon,
             iconPosition = "left",
             hasIconAsChild: explicitHasIconAsChild,
+            loading = false,
+            disabled,
             children,
             ...props
         },
@@ -105,7 +109,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         const content = (
             <>
                 {icon && iconPosition === "left" && icon}
-                {children}
+                {loading ? (
+                    <>
+                        <Loader2Icon data-sbx-loading className="animate-spin" />
+                        {children}
+                    </>
+                ) : (
+                    <>{children}</>
+                )}
                 {icon && iconPosition === "right" && icon}
             </>
         );
@@ -123,6 +134,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                     }),
                 )}
                 ref={ref}
+                disabled={disabled || loading}
+                aria-busy={loading || undefined}
                 {...props}
             >
                 {asChild ? children : content}

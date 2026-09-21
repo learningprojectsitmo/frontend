@@ -37,9 +37,9 @@ export const useUpdateOwnProfile = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateOwnProfile>[1] }) =>
             updateOwnProfile(id, data),
-        onSuccess: (_, { id }) => {
+        onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
-            void queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+            void queryClient.invalidateQueries({ queryKey: ["authenticated-user"] });
         },
     });
 };
