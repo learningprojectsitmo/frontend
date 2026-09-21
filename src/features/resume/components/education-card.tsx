@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type ResumeEducation } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeEducation, useDeleteResumeEducation } from "@/lib/resume";
+import { LIMITS } from "@/features/resume/validation";
 
 type Props = {
     educations: ResumeEducation[];
@@ -83,25 +84,29 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}
                         placeholder="Учебное заведение"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.university}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={faculty}
                         onChange={(e) => setFaculty(e.target.value)}
                         placeholder="Факультет"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.university}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={degree}
                         onChange={(e) => setDegree(e.target.value)}
                         placeholder="Степень"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.university}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={years}
                         onChange={(e) => setYears(e.target.value)}
                         placeholder="Год"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.years}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <div className="flex gap-2 justify-end">
                         <button

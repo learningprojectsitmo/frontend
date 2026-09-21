@@ -135,13 +135,13 @@ function PortfolioSection({ items, readOnly }: { items: PortfolioFull[]; readOnl
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Название"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="URL"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <div className="flex gap-2 justify-end">
                         <button
@@ -243,25 +243,25 @@ function EducationSection({ items, readOnly }: { items: EducationFull[]; readOnl
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}
                         placeholder="Учебное заведение"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={faculty}
                         onChange={(e) => setFaculty(e.target.value)}
                         placeholder="Факультет"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={degree}
                         onChange={(e) => setDegree(e.target.value)}
                         placeholder="Степень"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={years}
                         onChange={(e) => setYears(e.target.value)}
                         placeholder="Годы"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <div className="flex gap-2 justify-end">
                         <button
@@ -355,16 +355,16 @@ function LanguageSection({ items, readOnly }: { items: LanguageFull[]; readOnly?
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Язык"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={level}
                         onChange={(e) => setLevel(e.target.value)}
                         placeholder="Уровень"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <Select value={flag || "🌐"} onValueChange={setFlag}>
-                        <SelectTrigger className="h-9 text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white">
+                        <SelectTrigger className="h-9 text-sm px-3 py-2 rounded-lg bg-app-surface">
                             <SelectValue placeholder="Флаг" />
                         </SelectTrigger>
                         <SelectContent>

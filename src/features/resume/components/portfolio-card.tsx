@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type ResumeLink } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeLink, useDeleteResumeLink } from "@/lib/resume";
+import { isValidHttpUrl, LIMITS } from "@/features/resume/validation";
 
 type Props = {
     links: ResumeLink[];
@@ -22,8 +23,13 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
     const createMutation = useCreateResumeLink(resumeId);
     const deleteMutation = useDeleteResumeLink(resumeId);
 
+    const urlError =
+        newUrl.trim() && !isValidHttpUrl(newUrl)
+            ? "Введите корректный URL (например, https://github.com/user)"
+            : null;
+
     const handleAdd = () => {
-        if (!newPlatform.trim() || !newUrl.trim()) return;
+        if (!newPlatform.trim() || !newUrl.trim() || urlError) return;
         createMutation.mutate(
             { resumeId, data: { platform: newPlatform.trim(), url: newUrl.trim() } },
             {
@@ -83,14 +89,17 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                         value={newPlatform}
                         onChange={(e) => setNewPlatform(e.target.value)}
                         placeholder="Название (Behance, GitHub...)"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.platform}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <input
                         value={newUrl}
                         onChange={(e) => setNewUrl(e.target.value)}
                         placeholder="URL"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200"
+                        maxLength={LIMITS.link}
+                        className={`text-sm px-3 py-2 rounded-lg border bg-app-surface text-app-text outline-none focus:border-app-blue ${urlError ? "border-red-400" : "border-app-border"}`}
                     />
+                    {urlError && <p className="text-xs text-red-500">{urlError}</p>}
                     <div className="flex gap-2 justify-end">
                         <button
                             onClick={() => setShowForm(false)}
@@ -101,7 +110,10 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                         <button
                             onClick={handleAdd}
                             disabled={
-                                !newPlatform.trim() || !newUrl.trim() || createMutation.isPending
+                                !newPlatform.trim() ||
+                                !newUrl.trim() ||
+                                !!urlError ||
+                                createMutation.isPending
                             }
                             className="text-xs font-medium text-white bg-blue-500 px-3 py-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50"
                         >

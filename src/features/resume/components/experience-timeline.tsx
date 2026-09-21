@@ -7,6 +7,7 @@ import {
     useDeleteResumeExperience,
 } from "@/lib/resume";
 import { ExperienceEditCard } from "./ExperienceEditCard";
+import { LIMITS } from "@/features/resume/validation";
 
 const INITIAL_VISIBLE = 3;
 
@@ -128,12 +129,19 @@ export const ExperienceTimeline = ({
                         <p className="text-xs text-gray-500 mb-2">
                             Опишите, почему у вас нет опыта (например, вы студент, меняете сферу
                             деятельности и т.д.)
+                            {(noExperienceDescription?.length ?? 0) > 0 && (
+                                <span className="text-gray-300">
+                                    {" "}
+                                    — {noExperienceDescription?.length ?? 0} / {LIMITS.text}
+                                </span>
+                            )}
                         </p>
                         <textarea
                             value={noExperienceDescription ?? ""}
                             onChange={(e) => onNoExperienceDescriptionChange?.(e.target.value)}
                             rows={3}
                             placeholder="Расскажите о вашей ситуации..."
+                            maxLength={LIMITS.text}
                             className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue resize-y"
                         />
                     </div>

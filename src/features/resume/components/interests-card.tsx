@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type ResumeInterest } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeInterest, useDeleteResumeInterest } from "@/lib/resume";
+import { LIMITS } from "@/features/resume/validation";
 
 type Props = {
     interests: ResumeInterest[];
@@ -65,7 +66,8 @@ export const InterestsCard = ({ interests, isEditing, resumeId }: Props) => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Название интереса"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200 outline-none focus:border-gray-400"
+                        maxLength={LIMITS.name}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <div className="flex gap-2 justify-end">
                         <button

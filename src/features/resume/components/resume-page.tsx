@@ -49,6 +49,7 @@ export const ResumePage = ({
     const [editHasExperience, setEditHasExperience] = useState(true);
     const [editNoExpDescription, setEditNoExpDescription] = useState("");
     const [editIsVisible, setEditIsVisible] = useState(false);
+    const [headerError, setHeaderError] = useState(false);
 
     useEffect(() => {
         setEditHeader(data.resume.header);
@@ -65,6 +66,26 @@ export const ResumePage = ({
         data.resume.no_experience_description,
         data.resume.is_visible,
     ]);
+
+    const handleSaveClick = () => {
+        const headerValid = editHeader.trim().length > 0;
+        setHeaderError(!headerValid);
+        if (!headerValid) return;
+        onSave?.({
+            header: editHeader,
+            role: data.resume.role,
+            about: editAbout || null,
+            cover_letter: editCoverLetter || null,
+            has_experience: editHasExperience,
+            no_experience_description: editNoExpDescription || null,
+            is_visible: editIsVisible,
+        });
+    };
+
+    const handleHeaderChange = (value: string) => {
+        setEditHeader(value);
+        if (headerError && value.trim()) setHeaderError(false);
+    };
 
     return (
         <div className="flex flex-col gap-6">
@@ -97,17 +118,7 @@ export const ResumePage = ({
                             size="hug36"
                             icon={<Icon name="check" size={14} />}
                             className="text-[13px] font-semibold gap-1.5 rounded-xl"
-                            onClick={() =>
-                                onSave?.({
-                                    header: editHeader,
-                                    role: data.resume.role,
-                                    about: editAbout || null,
-                                    cover_letter: editCoverLetter || null,
-                                    has_experience: editHasExperience,
-                                    no_experience_description: editNoExpDescription || null,
-                                    is_visible: editIsVisible,
-                                })
-                            }
+                            onClick={handleSaveClick}
                         >
                             Сохранить
                         </Button>
@@ -120,7 +131,8 @@ export const ResumePage = ({
                 role={data.resume.role}
                 isEditing={isEditing}
                 editHeader={editHeader}
-                onHeaderChange={setEditHeader}
+                onHeaderChange={handleHeaderChange}
+                headerError={headerError}
                 onEdit={onEdit}
                 onShare={onShare}
                 onDelete={onDelete}

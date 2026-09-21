@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Folder, Building2, Pencil, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/features/spaces/components/filters/calendar";
+import { isValidPeriod, LIMITS } from "@/features/resume/validation";
 import {
     Select,
     SelectContent,
@@ -92,6 +93,11 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
 
     const IconComponent = experienceType === "internship" ? Building2 : Folder;
 
+    const periodError =
+        periodFrom && periodTo && !isValidPeriod(periodFrom, periodTo)
+            ? "Дата окончания не может быть раньше даты начала"
+            : null;
+
     const handleDateSelect = (date: Date) => {
         const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
         if (activeField === "from") setPeriodFrom(value);
@@ -100,7 +106,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
     };
 
     const handleSave = () => {
-        if (!company.trim() || !position.trim()) return;
+        if (!company.trim() || !position.trim() || periodError) return;
         const responsibilitiesArr = description
             ? description
                   .split("\n")
@@ -131,6 +137,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
                                 placeholder="Название проекта или компании"
+                                maxLength={LIMITS.companyPosition}
                                 className="w-full text-base font-semibold text-app-text bg-transparent border-b border-app-border px-0 py-0.5 outline-none focus:border-app-blue"
                             />
                         ) : (
@@ -244,23 +251,34 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                     )}
                 </div>
 
+                {periodError && <p className="text-xs text-red-500">{periodError}</p>}
+
                 <div>
                     <label className="text-xs text-gray-500 mb-1 block">Роль</label>
                     <input
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
                         placeholder="UX/UI-дизайнер"
+                        maxLength={LIMITS.companyPosition}
                         className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue"
                     />
                 </div>
 
                 <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Описание</label>
+                    <label className="text-xs text-gray-500 mb-1 block">
+                        Описание{" "}
+                        {description.length > 0 && (
+                            <span className="text-gray-300">
+                                {description.length} / {LIMITS.experienceDescription}
+                            </span>
+                        )}
+                    </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="— проведение исследований&#10;— разработка сценариев&#10;— создание пользовательских потоков"
                         rows={5}
+                        maxLength={LIMITS.experienceDescription}
                         className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue resize-y"
                     />
                 </div>
@@ -282,7 +300,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                     </button>
                     <button
                         onClick={handleSave}
-                        disabled={!company.trim() || !position.trim()}
+                        disabled={!company.trim() || !position.trim() || !!periodError}
                         className="px-4 py-2 rounded-lg bg-[#4F6BFF] text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                         Сохранить

@@ -1,6 +1,7 @@
 import { Icon } from "@/components/ui/icons";
 import { ProfileHeader } from "@/components/ui/profile-header";
 import { type ResumeUserInfo } from "@/types/api";
+import { LIMITS } from "@/features/resume/validation";
 
 type Props = {
     user: ResumeUserInfo;
@@ -8,6 +9,7 @@ type Props = {
     isEditing?: boolean;
     editHeader?: string;
     onHeaderChange?: (value: string) => void;
+    headerError?: boolean;
     onEdit?: () => void;
     onShare?: () => void;
     onDelete?: () => void;
@@ -23,6 +25,7 @@ export const ProfileCard = ({
     isEditing,
     editHeader,
     onHeaderChange,
+    headerError,
     onEdit,
     onShare,
     onDelete,
@@ -50,8 +53,12 @@ export const ProfileCard = ({
                             value={editHeader ?? ""}
                             onChange={(e) => onHeaderChange?.(e.target.value)}
                             placeholder="Название резюме"
-                            className="mt-1 w-full rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-sm text-app-text outline-none focus:border-app-blue"
+                            maxLength={LIMITS.header}
+                            className={`mt-1 w-full rounded-lg border bg-app-surface px-3 py-1.5 text-sm text-app-text outline-none ${headerError ? "border-red-400 focus:border-red-400" : "border-app-border focus:border-app-blue"}`}
                         />
+                        {headerError && (
+                            <p className="mt-1 text-xs text-red-500">Введите название резюме</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 mt-6">
