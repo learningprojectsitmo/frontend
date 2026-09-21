@@ -16,7 +16,6 @@ export interface ProjectCardProps extends React.HTMLAttributes<HTMLDivElement> {
     users: Array<{ src?: string; name: string }>;
     archived?: boolean;
     className?: string;
-    onKebabClick?: () => void;
 }
 
 const statusStyles: Record<string, { bg: string; text: string }> = {
@@ -49,7 +48,6 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
             membersCount,
             users,
             archived = false,
-            onKebabClick,
             className,
             ...props
         },
@@ -80,7 +78,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                 {...props}
             >
                 <div className="p-5 flex flex-col gap-4 flex-1">
-                    {/* Card Header: Status badge + kebab */}
+                    {/* Card Header: Status badge */}
                     <div className="flex items-start justify-between">
                         {label && statusStyle && (
                             <span
@@ -89,28 +87,6 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                             >
                                 {label}
                             </span>
-                        )}
-                        {onKebabClick && (
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onKebabClick();
-                                }}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
-                            >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 20 20"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <circle cx="10" cy="5" r="1.5" fill="currentColor" />
-                                    <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                                    <circle cx="10" cy="15" r="1.5" fill="currentColor" />
-                                </svg>
-                            </button>
                         )}
                     </div>
 

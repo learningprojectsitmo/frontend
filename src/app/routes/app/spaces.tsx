@@ -571,9 +571,6 @@ const SpacesRoute = () => {
                                                 membersCount={project.membersCount}
                                                 users={project.users}
                                                 archived={project.archived}
-                                                onKebabClick={() =>
-                                                    alert(`Menu opened for ${project.title}`)
-                                                }
                                             />
                                         </Link>
                                     ))}
