@@ -1,12 +1,17 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useResponses } from "@/features/profile/api/use-profile-data";
 import { ListToolbar } from "./list-toolbar";
 import { EmptyState } from "./empty-state";
 import { ResponsesFilters } from "./filters/responses-filters";
-import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
+import {
+    defaultProfileFilters,
+    type ProfileFiltersState,
+    type ResponseItem,
+} from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
-import { api } from "@/lib/api-client";
+import { api, getApiErrorMessage } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateProjectImpact } from "@/lib/projects";
 
@@ -15,7 +20,7 @@ const statusLabel: Record<string, { text: string; color: string; bg: string }> =
     accepted: { text: "Принят", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонён", color: "#EF4444", bg: "#FEE2E2" },
     withdrawn: { text: "Отозван", color: "#6B7280", bg: "#F3F4F6" },
-    in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
+    in_team: { text: "В команде", color: "#2563EB", bg: "#DBEAFE" },
 };
 
 export function ResponsesSection() {
@@ -121,6 +126,10 @@ export function ResponsesSection() {
         setPendingConfirmJoin(responseId);
         try {
             await api.patch(`/responses/${responseId}/confirm-join`);
+            queryClient.setQueryData<ResponseItem[]>(queryKeys.profile.responses(), (old) =>
+                old?.map((r) => (r.id === responseId ? { ...r, status: "in_team" } : r)),
+            );
+            toast.success("Вы присоединились к команде");
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -128,8 +137,8 @@ export function ResponsesSection() {
             if (item) {
                 invalidateProjectImpact(queryClient, item.projectId);
             }
-        } catch {
-            // ignore
+        } catch (error) {
+            toast.error(getApiErrorMessage(error, "Не удалось подтвердить участие"));
         } finally {
             setPendingConfirmJoin(null);
         }

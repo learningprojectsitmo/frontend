@@ -139,6 +139,8 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
     "Signup request not found": "Регистрация не найдена. Начните заново",
     "Project type is required to create a project in this workspace":
         "Для создания проекта в пространстве необходимо выбрать тип",
+    "Project has reached maximum number of participants":
+        "Проект достиг максимального числа участников",
 };
 
 export const getApiErrorMessage = (error: unknown, fallback: string): string => {
