@@ -198,7 +198,7 @@ export const ExperienceEditCard = ({ experience, isNew, onSave, onDelete, onCanc
                 </div>
 
                 <div className="relative">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="text-xs text-gray-500 mb-1 block">Дата начала</label>
                             <button

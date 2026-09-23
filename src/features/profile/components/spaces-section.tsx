@@ -40,7 +40,7 @@ export function SpacesSection({ spaces: propSpaces, readOnly }: SpacesSectionPro
     return (
         <div>
             <h2 className="text-lg font-semibold text-app-text mb-6">{title}</h2>
-            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                 {items.map((space) => (
                     <Link
                         key={space.id}

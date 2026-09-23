@@ -32,7 +32,7 @@ export function SpaceHeader({
     onCreateProject,
 }: SpaceHeaderProps) {
     return (
-        <div className="self-stretch inline-flex justify-between items-start">
+        <div className="self-stretch flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
             <div className="flex justify-start items-start gap-5">
                 <div className="pt-1 flex justify-start items-center gap-2">
                     <div className="w-16 h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">

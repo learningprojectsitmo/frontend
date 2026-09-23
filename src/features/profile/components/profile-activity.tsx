@@ -15,7 +15,7 @@ export function ProfileActivity({ userId }: { userId?: number | null }) {
                 <h2 className="text-[16px] font-semibold text-gray-900">
                     Вклад за последний год
                     {data && data.total > 0 && (
-                        <span className="ml-2 text-[13px] font-normal text-gray-400">
+                        <span className="ml-2 text-[13px] font-normal text-gray-400 whitespace-nowrap">
                             {data.total} {pluralize(data.total)}
                         </span>
                     )}

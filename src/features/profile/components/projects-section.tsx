@@ -94,7 +94,7 @@ export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSe
                     Проекты не найдены
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                     {filteredItems.map((project) => {
                         const tagInfo = statusToTag[project.status] || statusToTag.not_started;
                         return (
@@ -121,7 +121,7 @@ export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSe
                     })}
                 </div>
             ) : (
-                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-hidden">
+                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-x-auto">
                     <table className="w-full text-left text-[13px]">
                         <thead>
                             <tr className="border-b border-gray-200 bg-gray-50">

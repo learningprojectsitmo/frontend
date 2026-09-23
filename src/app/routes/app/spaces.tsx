@@ -319,7 +319,7 @@ const SpacesRoute = () => {
                             <h2 className="mb-4 text-lg font-semibold text-gray-800">
                                 Пространства
                             </h2>
-                            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                            <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                                 {(visibleSpaces || spaces).map((space) => (
                                     <Link
                                         key={space.id}
@@ -438,7 +438,7 @@ const SpacesRoute = () => {
                                     </p>
                                 </div>
                             ) : activeView === "list" ? (
-                                <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
+                                <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-x-auto">
                                     <table className="w-full border-collapse">
                                         <thead className="text-app-text border-b border-gray-200 bg-gray-50">
                                             <tr>
@@ -554,7 +554,7 @@ const SpacesRoute = () => {
                                     </table>
                                 </div>
                             ) : (
-                                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                                     {visibleProjects.map((project) => (
                                         <Link
                                             key={project.id}

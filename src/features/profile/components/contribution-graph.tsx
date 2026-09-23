@@ -122,14 +122,14 @@ export function ContributionGraph({
     }
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="hidden sm:flex gap-[2px] pl-7">
+        <div className="flex flex-col gap-2 overflow-x-auto">
+            <div className="flex gap-[2px] pl-0 sm:pl-7 w-max sm:w-full">
                 {weeks.map((week, wi) => {
                     const month = months.find((m) => m.col === wi);
                     return (
                         <div
                             key={wi}
-                            className="flex-1 min-w-0 overflow-visible text-[10px] leading-none text-gray-400 whitespace-nowrap"
+                            className="flex-1 min-w-[14px] overflow-visible text-[10px] leading-none text-gray-400 whitespace-nowrap"
                         >
                             {month ? month.label : ""}
                         </div>
@@ -148,9 +148,9 @@ export function ContributionGraph({
                 </div>
 
                 {/* Ячейки */}
-                <div className="flex gap-[2px] flex-1">
+                <div className="flex gap-[2px] w-max sm:w-full">
                     {weeks.map((week, wi) => (
-                        <div key={wi} className="flex flex-col gap-[2px] flex-1">
+                        <div key={wi} className="flex flex-col gap-[2px] flex-1 min-w-[14px]">
                             {week.map((day, di) =>
                                 day.isFuture ? (
                                     <div key={`${wi}-f-${di}`} className="flex-1" />
@@ -173,18 +173,18 @@ export function ContributionGraph({
             </div>
 
             {/* Легенда */}
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 pl-7">
-                <span>Меньше</span>
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-400 pl-0 sm:pl-7">
+                <span className="whitespace-nowrap">Меньше</span>
                 {COLORS.map((c) => (
                     <div
                         key={c}
-                        className="w-2.5 h-2.5 rounded-[2px]"
+                        className="w-2.5 h-2.5 rounded-[2px] shrink-0"
                         style={{ backgroundColor: c }}
                     />
                 ))}
-                <span>Больше</span>
+                <span className="whitespace-nowrap">Больше</span>
                 {summary.length > 0 && (
-                    <span className="ml-2 text-gray-500">
+                    <span className="ml-2 text-gray-500 whitespace-nowrap">
                         Всего действий: {summary.reduce((acc, d) => acc + d.count, 0)}
                     </span>
                 )}

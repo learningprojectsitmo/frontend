@@ -334,7 +334,7 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-gray-600">
                     Типы проектов определяют набор этапов. Системные типы копируются сюда при
                     создании пространства и доступны для изменения.
@@ -431,89 +431,94 @@ export const TypesEditor = ({ workspaceId }: TypesEditorProps) => {
                                 {sorted(t).map((stage, idx) => (
                                     <li
                                         key={stage.id}
-                                        className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
+                                        className="flex flex-wrap items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
                                     >
-                                        <div className="flex flex-col shrink-0">
-                                            <button
-                                                type="button"
-                                                disabled={idx === 0}
-                                                onClick={() => handleMoveStage(t.id, idx, -1)}
-                                                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
-                                                aria-label="Переместить этап выше"
-                                            >
-                                                <ChevronUp size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                disabled={idx === sorted(t).length - 1}
-                                                onClick={() => handleMoveStage(t.id, idx, 1)}
-                                                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
-                                                aria-label="Переместить этап ниже"
-                                            >
-                                                <ChevronDown size={14} />
-                                            </button>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <div className="flex flex-col shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={idx === 0}
+                                                    onClick={() => handleMoveStage(t.id, idx, -1)}
+                                                    className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
+                                                    aria-label="Переместить этап выше"
+                                                >
+                                                    <ChevronUp size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={idx === sorted(t).length - 1}
+                                                    onClick={() => handleMoveStage(t.id, idx, 1)}
+                                                    className="text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5"
+                                                    aria-label="Переместить этап ниже"
+                                                >
+                                                    <ChevronDown size={14} />
+                                                </button>
+                                            </div>
+                                            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[12px] font-semibold shrink-0">
+                                                {idx + 1}
+                                            </span>
                                         </div>
-                                        <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[12px] font-semibold shrink-0">
-                                            {idx + 1}
-                                        </span>
                                         <Input
                                             key={stage.id}
                                             defaultValue={stage.name}
                                             onBlur={(e) =>
                                                 handleRenameStage(t.id, stage, e.target.value)
                                             }
-                                            className="flex-1 min-w-0"
+                                            className="flex-1 basis-[200px] min-w-[160px]"
                                             aria-label="Название этапа"
                                         />
-                                        <label className="flex items-center gap-1.5 cursor-pointer">
-                                            <Switch
-                                                checked={stage.requires_approval}
-                                                onCheckedChange={() =>
-                                                    handleToggleApproval(t.id, stage)
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 basis-full sm:basis-auto">
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <Switch
+                                                    checked={stage.requires_approval}
+                                                    onCheckedChange={() =>
+                                                        handleToggleApproval(t.id, stage)
+                                                    }
+                                                />
+                                                <span className="text-[12px] text-gray-600 whitespace-nowrap">
+                                                    утверждение
+                                                </span>
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <Switch
+                                                    checked={stage.visible_to_participants}
+                                                    onCheckedChange={() =>
+                                                        handleToggleVisibility(t.id, stage)
+                                                    }
+                                                />
+                                                <span className="text-[12px] text-gray-600 whitespace-nowrap">
+                                                    виден участникам
+                                                </span>
+                                            </label>
+                                            <StageDatePicker
+                                                value={durationToIso(stage.duration_days)}
+                                                onChange={(iso) =>
+                                                    handleDurationChange(t.id, stage, iso)
                                                 }
+                                                className="w-[160px]"
+                                                placeholder="дата"
                                             />
-                                            <span className="text-[12px] text-gray-600 whitespace-nowrap">
-                                                утверждение
-                                            </span>
-                                        </label>
-                                        <label className="flex items-center gap-1.5 cursor-pointer">
-                                            <Switch
-                                                checked={stage.visible_to_participants}
-                                                onCheckedChange={() =>
-                                                    handleToggleVisibility(t.id, stage)
-                                                }
-                                            />
-                                            <span className="text-[12px] text-gray-600 whitespace-nowrap">
-                                                виден участникам
-                                            </span>
-                                        </label>
-                                        <StageDatePicker
-                                            value={durationToIso(stage.duration_days)}
-                                            onChange={(iso) =>
-                                                handleDurationChange(t.id, stage, iso)
-                                            }
-                                            className="w-[160px] shrink-0"
-                                            placeholder="дата"
-                                        />
-                                        <Button
-                                            variant="ghost"
-                                            size="hug36"
-                                            className="text-red-600 !px-2"
-                                            onClick={() => handleDeleteStage(t.id, stage)}
-                                        >
-                                            Удалить
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="hug36"
+                                                className="text-red-600 !px-2"
+                                                onClick={() => handleDeleteStage(t.id, stage)}
+                                            >
+                                                Удалить
+                                            </Button>
+                                        </div>
                                     </li>
                                 ))}
                             </ol>
                         )}
 
                         {newStageForType === t.id ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <Input
                                     value={newStageName}
                                     onChange={(e) => setNewStageName(e.target.value)}
                                     placeholder="Название нового этапа"
+                                    className="flex-1 min-w-[180px]"
                                 />
                                 <StageDatePicker
                                     value={newStageDuration || null}

@@ -217,11 +217,11 @@ export function SpaceResumeSection({
 
     return (
         <section>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h2 className="text-lg font-semibold text-app-text">Резюме участников ({total})</h2>
 
-                <div className="flex items-center gap-3">
-                    <div className="relative">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative flex-1 min-w-[180px]">
                         <Search
                             size={16}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -231,7 +231,7 @@ export function SpaceResumeSection({
                             placeholder="Поиск резюме"
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
+                            className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                         />
                     </div>
 
@@ -291,7 +291,7 @@ export function SpaceResumeSection({
                 </div>
             ) : (
                 <>
-                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                         {items.map((resume) => (
                             <ResumeCard
                                 key={resume.id}

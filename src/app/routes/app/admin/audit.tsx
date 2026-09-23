@@ -41,7 +41,7 @@ const AdminAuditPage = () => {
                         Записей пока нет
                     </div>
                 ) : (
-                    <div className="w-full overflow-hidden rounded-2xl border border-[--color-black-10] bg-app-surface">
+                    <div className="w-full overflow-x-auto rounded-2xl border border-[--color-black-10] bg-app-surface">
                         <table className="w-full text-left">
                             <thead className="bg-[--grey-98] border-b border-[--color-black-10]">
                                 <tr>

@@ -57,90 +57,94 @@ export const StageStepper = ({
                 )}
             </div>
 
-            <ol className="flex items-start gap-0 w-full">
-                {stages.map((stage, idx) => {
-                    const isCurrent = stage.id === currentStageId;
-                    const isPassed = idx < currentIndex;
-                    const isDone = isPassed || isCurrent;
+            <div className="w-full overflow-x-auto py-1.5 -mx-1 px-1">
+                <ol className="flex items-start gap-0 w-full min-w-min">
+                    {stages.map((stage, idx) => {
+                        const isCurrent = stage.id === currentStageId;
+                        const isPassed = idx < currentIndex;
+                        const isDone = isPassed || isCurrent;
 
-                    const circleClass = isPassed
-                        ? "bg-green-600 text-white border-green-600"
-                        : isCurrent
-                          ? "bg-[--app-blue] text-white border-[--app-blue] ring-2 ring-[--app-blue]/30"
-                          : "bg-app-ghost text-app-muted border-app-border";
+                        const circleClass = isPassed
+                            ? "bg-green-600 text-white border-green-600"
+                            : isCurrent
+                              ? "bg-[--app-blue] text-white border-[--app-blue] ring-2 ring-[--app-blue]/30"
+                              : "bg-app-ghost text-app-muted border-app-border";
 
-                    const deadlineTime = stage.deadline ? new Date(stage.deadline).getTime() : null;
-                    const hasDeadline = deadlineTime !== null && !Number.isNaN(deadlineTime);
-                    const isOverdue = isCurrent && hasDeadline && deadlineTime < Date.now();
-                    const isSoon =
-                        isCurrent &&
-                        hasDeadline &&
-                        !isOverdue &&
-                        deadlineTime - Date.now() <= STAGE_DEADLINE_SOON_MS;
+                        const deadlineTime = stage.deadline
+                            ? new Date(stage.deadline).getTime()
+                            : null;
+                        const hasDeadline = deadlineTime !== null && !Number.isNaN(deadlineTime);
+                        const isOverdue = isCurrent && hasDeadline && deadlineTime < Date.now();
+                        const isSoon =
+                            isCurrent &&
+                            hasDeadline &&
+                            !isOverdue &&
+                            deadlineTime - Date.now() <= STAGE_DEADLINE_SOON_MS;
 
-                    return (
-                        <React.Fragment key={stage.id}>
-                            {idx > 0 && (
-                                <li
-                                    aria-hidden
-                                    className={cn(
-                                        "flex-1 min-w-4 h-[2px] mt-3.5 rounded-full",
-                                        isDone ? "bg-green-600" : "bg-app-border",
-                                    )}
-                                />
-                            )}
-                            <li className="flex flex-col items-center gap-1.5 px-1">
-                                <span
-                                    className={cn(
-                                        "w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold border",
-                                        circleClass,
-                                    )}
-                                >
-                                    {isPassed ? "✓" : idx + 1}
-                                </span>
-                                <span
-                                    className={cn(
-                                        "text-[13px] font-medium text-center leading-4",
-                                        isCurrent ? "text-[--app-blue]" : "text-app-muted",
-                                    )}
-                                >
-                                    {stage.name}
-                                    {stage.requires_approval && (
-                                        <span
-                                            title="Этап требует утверждения преподавателем"
-                                            className="ml-0.5 text-[11px]"
-                                            style={{
-                                                color: "var(--app-badge-amber-fg)",
-                                            }}
-                                        >
-                                            ⚠
-                                        </span>
-                                    )}
-                                </span>
-                                {hasDeadline && (
-                                    <span
-                                        title="Дедлайн прохождения этапа"
+                        return (
+                            <React.Fragment key={stage.id}>
+                                {idx > 0 && (
+                                    <li
+                                        aria-hidden
                                         className={cn(
-                                            "text-[11px] font-medium text-center leading-3",
-                                            isOverdue
-                                                ? "text-[--red-60]"
-                                                : isSoon
-                                                  ? "text-[--app-badge-amber-fg]"
-                                                  : isCurrent
-                                                    ? "text-app-muted"
-                                                    : "text-app-muted/70",
+                                            "flex-1 min-w-6 h-[2px] mt-3.5 rounded-full",
+                                            isDone ? "bg-green-600" : "bg-app-border",
+                                        )}
+                                    />
+                                )}
+                                <li className="flex flex-col items-center gap-1.5 px-1 min-w-max">
+                                    <span
+                                        className={cn(
+                                            "w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold border",
+                                            circleClass,
                                         )}
                                     >
-                                        {isOverdue && "просрочен · "}
-                                        {isSoon && "скоро · "}
-                                        до {formatStageDate(stage.deadline!)}
+                                        {isPassed ? "✓" : idx + 1}
                                     </span>
-                                )}
-                            </li>
-                        </React.Fragment>
-                    );
-                })}
-            </ol>
+                                    <span
+                                        className={cn(
+                                            "text-[13px] font-medium text-center leading-4",
+                                            isCurrent ? "text-[--app-blue]" : "text-app-muted",
+                                        )}
+                                    >
+                                        {stage.name}
+                                        {stage.requires_approval && (
+                                            <span
+                                                title="Этап требует утверждения преподавателем"
+                                                className="ml-0.5 text-[11px]"
+                                                style={{
+                                                    color: "var(--app-badge-amber-fg)",
+                                                }}
+                                            >
+                                                ⚠
+                                            </span>
+                                        )}
+                                    </span>
+                                    {hasDeadline && (
+                                        <span
+                                            title="Дедлайн прохождения этапа"
+                                            className={cn(
+                                                "text-[11px] font-medium text-center leading-3",
+                                                isOverdue
+                                                    ? "text-[--red-60]"
+                                                    : isSoon
+                                                      ? "text-[--app-badge-amber-fg]"
+                                                      : isCurrent
+                                                        ? "text-app-muted"
+                                                        : "text-app-muted/70",
+                                            )}
+                                        >
+                                            {isOverdue && "просрочен · "}
+                                            {isSoon && "скоро · "}
+                                            до {formatStageDate(stage.deadline!)}
+                                        </span>
+                                    )}
+                                </li>
+                            </React.Fragment>
+                        );
+                    })}
+                </ol>
+            </div>
 
             {pendingApproval && (
                 <div

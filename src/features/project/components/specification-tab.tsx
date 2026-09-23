@@ -151,7 +151,7 @@ export const SpecificationTab = ({
     return (
         <section className="flex flex-col gap-6">
             <div className="flex flex-col gap-6 rounded-[14px] border border-[--color-black-10] bg-app-surface p-6 sm:p-8">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <span
                             className={cn(

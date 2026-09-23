@@ -198,7 +198,7 @@ export function InvitationsSection() {
                     Приглашения не найдены
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
                     {filteredItems.map((item) => {
                         const st = statusLabel[item.status] ?? statusLabel.pending;
                         const isPending = pendingAction?.id === item.id;
@@ -243,7 +243,7 @@ export function InvitationsSection() {
                     })}
                 </div>
             ) : (
-                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-hidden">
+                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-x-auto">
                     <table className="w-full text-left text-[13px]">
                         <thead>
                             <tr className="border-b border-gray-200 bg-gray-50">

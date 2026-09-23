@@ -601,7 +601,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
                 <DialogPrimitive.Content
                     aria-describedby={undefined}
-                    style={{ width: panelWidth }}
+                    style={{ width: panelWidth, maxWidth: "100vw" }}
                     className={cn(
                         "fixed right-0 top-0 z-50 flex h-full flex-col bg-app-surface shadow-2xl",
                         "data-[state=open]:animate-in data-[state=open]:slide-in-from-right",

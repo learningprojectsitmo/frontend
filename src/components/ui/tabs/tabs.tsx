@@ -28,7 +28,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                 ref={ref}
                 className={cn(
                     "inline-flex p-1 bg-[--color-gray-100] rounded-[10px]",
-                    "w-full",
+                    "w-full flex-wrap",
                     className,
                 )}
                 {...props}
@@ -64,7 +64,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                             onClick={() => !isDisabled && onValueChange(tab.value)}
                             disabled={isDisabled}
                             className={cn(
-                                "flex-1 h-8 rounded-[10px] text-[13px] font-medium transition-all",
+                                "flex-auto h-8 rounded-[10px] text-[13px] font-medium transition-all whitespace-nowrap",
                                 "flex items-center justify-center",
                                 "px-1",
                                 isActive && "bg-app-surface shadow-sm text-gray-900",

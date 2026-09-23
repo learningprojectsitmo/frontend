@@ -89,7 +89,7 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
     return (
         <div ref={ref} className="relative">
             {open && (
-                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
+                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] max-w-[calc(100vw-1rem)] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[14px] font-semibold text-app-text">

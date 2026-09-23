@@ -7,7 +7,7 @@ type IdeasHeaderProps = {
 
 export function IdeasHeader({ onNewIdea }: IdeasHeaderProps) {
     return (
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-[--azure-60]/10 flex items-center justify-center shrink-0">
                     <Lightbulb size={24} className="text-[--azure-60]" />

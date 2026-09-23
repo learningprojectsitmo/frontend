@@ -57,7 +57,7 @@ const SpacesCard = React.forwardRef<HTMLDivElement, SpacesCardProps>(
             <div
                 ref={ref}
                 className={cn(
-                    "min-w-[320px] p-6 border border-[--color-black-10] rounded-[14px] bg-app-surface",
+                    "min-w-0 w-full p-6 border border-[--color-black-10] rounded-[14px] bg-app-surface",
                     "flex flex-col gap-4 h-full",
                     "transition-shadow hover:shadow-md",
                     className,

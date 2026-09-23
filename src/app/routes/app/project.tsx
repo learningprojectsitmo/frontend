@@ -1020,7 +1020,7 @@ const SpaceRoute = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                <div className="self-stretch flex items-start gap-10">
+                <div className="self-stretch flex flex-col xl:flex-row xl:items-start xl:gap-10 gap-6">
                     <div className="flex-1 flex justify-start items-start gap-5">
                         <div className="pt-1 flex justify-start items-center gap-2 shrink-0">
                             <div className="w-16 h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">
@@ -1073,7 +1073,7 @@ const SpaceRoute = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="inline-flex justify-start items-center gap-3">
+                            <div className="flex flex-wrap justify-start items-center gap-3">
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
                                         <ProgressBar value={project.progressValue} />
@@ -1155,7 +1155,7 @@ const SpaceRoute = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         {isCreator && !isEditing ? (
                             <Button
                                 variant="dark"
@@ -1366,7 +1366,7 @@ const SpaceRoute = () => {
                             </div>
                             <div
                                 data-type="Required participants"
-                                className="self-stretch p-2.5 bg-app-surface rounded-2xl outline outline-1  outline-gray-200 flex flex-col justify-start items-start gap-2.5"
+                                className="self-stretch p-2.5 bg-app-surface rounded-2xl outline outline-1  outline-gray-200 flex flex-col justify-start items-start gap-2.5 overflow-x-auto"
                             >
                                 <div className="self-stretch inline-flex justify-start items-center gap-5">
                                     <div className="w-48 px-1 py-2 flex justify-start items-center">
@@ -1519,7 +1519,7 @@ const SpaceRoute = () => {
                         </section>
 
                         <section className="pt-4">
-                            <div className="mb-4 flex items-center justify-between">
+                            <div className="mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                                 <h2 className="text-lg font-semibold text-gray-800">
                                     {activeApplicantTab === "team"
                                         ? "Команда"
@@ -1530,7 +1530,7 @@ const SpaceRoute = () => {
                                 </h2>
                                 {/* сделать */}
 
-                                <div className="flex flex-row items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
                                     <SearchBar
                                         placeholder="Поиск..."
                                         onChange={setSearch}
@@ -1540,10 +1540,10 @@ const SpaceRoute = () => {
                                                 : replycantSuggestions
                                         }
                                         value={search}
-                                        className="w-[300px]"
+                                        className="w-full sm:w-[300px]"
                                     />
                                     <Select value={sortBy} onValueChange={setSortBy}>
-                                        <SelectTrigger className="w-[160px] h-9 text-[13px] font-sans">
+                                        <SelectTrigger className="w-full sm:w-[160px] h-9 text-[13px] font-sans">
                                             <SelectValue placeholder="По умолчанию" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1614,7 +1614,7 @@ const SpaceRoute = () => {
                                     removeActionLabel="Удалить из команды"
                                 />
                             ) : (
-                                <div className="grid grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                     {filteredMembers.map((member) => (
                                         <div
                                             key={member.id}
@@ -1720,9 +1720,7 @@ const SpaceRoute = () => {
                         <div className="mt-4 space-y-2">
                             <Label className="inline-flex items-center gap-1.5">
                                 Введите{" "}
-                                <span className="font-semibold text-red-600">
-                                    {project.title}
-                                </span>{" "}
+                                <span className="font-semibold text-red-600">{project.title}</span>{" "}
                                 <button
                                     type="button"
                                     onClick={handleCopyProjectName}

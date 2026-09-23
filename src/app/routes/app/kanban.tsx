@@ -412,7 +412,7 @@ export const KanbanRoute = () => {
         <ContentLayout title={spaceName}>
             {/* Header Section */}
             <div className="mx-auto max-w-7xl p-6">
-                <header className="flex items-center justify-between gap-4">
+                <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
                         <p className="text-sm text-gray-500">

@@ -22,12 +22,14 @@ export function ListToolbar({
     onChangeView,
 }: ListToolbarProps) {
     return (
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {title && <h2 className="text-lg font-semibold text-app-text">{title}</h2>}
 
-            <div className={`flex items-center gap-3 ${title ? "" : "w-full justify-between"}`}>
+            <div
+                className={`flex flex-wrap items-center gap-3 ${title ? "" : "w-full justify-between"}`}
+            >
                 {/* Search */}
-                <div className="relative">
+                <div className="relative flex-1 min-w-[180px]">
                     <Search
                         size={16}
                         className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -37,7 +39,7 @@ export function ListToolbar({
                         placeholder={searchPlaceholder}
                         value={searchValue}
                         onChange={(e) => onSearch(e.target.value)}
-                        className="w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
+                        className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                     />
                 </div>
 

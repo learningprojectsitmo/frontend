@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Outlet, useSearchParams, Link, useNavigate } from "react-router";
+import { Outlet, useSearchParams, Link, NavLink, useNavigate } from "react-router";
 
 import { paths } from "@/config/paths";
 import { useSpacesList } from "@/lib/spaces";
@@ -12,11 +12,54 @@ import { Sidebar } from "@/features/spaces/components/sidebar";
 import { UserNav } from "@/features/spaces/components/user-nav";
 import { NotificationsNav } from "@/features/spaces/components/notifications";
 
+// ── Мобильная нижняя навигация ──
+const mobileNavItems = [
+    { to: "/app", end: true, icon: "home", label: "Пространства" },
+    { to: "/app/search", end: false, icon: "magnifier", label: "Поиск" },
+    { to: "/app/ideas", end: false, icon: "lightbulb", label: "Идеи" },
+    { to: "/app/profile", end: false, icon: "profile", label: "Профиль" },
+] as const;
+
+function MobileNav() {
+    return (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-app-surface border-t border-gray-200">
+            <div className="flex items-stretch justify-around h-14 px-2">
+                {mobileNavItems.map((item) => (
+                    <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        className={({ isActive }) =>
+                            cn(
+                                "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 rounded-[8px] my-1",
+                                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700",
+                            )
+                        }
+                    >
+                        {({ isActive }) => (
+                            <>
+                                <Icon
+                                    name={item.icon}
+                                    size={20}
+                                    className={isActive ? "text-blue-600" : "text-gray-500"}
+                                />
+                                <span className="text-[11px] font-medium leading-none">
+                                    {item.label}
+                                </span>
+                            </>
+                        )}
+                    </NavLink>
+                ))}
+            </div>
+        </nav>
+    );
+}
+
 function SpaceLayoutSkeleton() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
             <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-4 sm:gap-12">
+                <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                     <span
                         className="text-[30px] font-bold text-app-text"
                         style={{ fontFamily: "Inter, sans-serif" }}
@@ -26,7 +69,7 @@ function SpaceLayoutSkeleton() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="hidden md:block w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -49,7 +92,7 @@ function SpaceLayoutSkeleton() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-0 md:ml-[56px] flex items-center justify-center p-8">
                     <div className="w-full max-w-4xl space-y-6">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
@@ -99,12 +142,12 @@ function SpaceLayoutNotFound() {
             <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
-                        className="text-[30px] font-bold text-app-text"
+                        className="text-[30px] font-bold text-app-text shrink-0"
                         style={{ fontFamily: "Inter, sans-serif" }}
                     >
                         EduFlow
                     </span>
-                    <div className="relative">
+                    <div className="relative hidden sm:block">
                         <SearchBar
                             placeholder="Ищите проекты, пространства или участников..."
                             onChange={() => {}}
@@ -149,7 +192,7 @@ function SpaceLayoutNotFound() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-0 md:ml-[56px] flex items-center justify-center p-8">
                     <div className="text-center max-w-md">
                         <div className="flex justify-center mb-6">
                             <div className="relative">
@@ -224,14 +267,14 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
 }) {
     return (
         <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-            <div className="flex items-center gap-12">
+            <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                 <span
-                    className="text-[30px] font-bold text-app-text"
+                    className="text-[30px] font-bold text-app-text shrink-0"
                     style={{ fontFamily: "Inter, sans-serif" }}
                 >
                     EduFlow
                 </span>
-                <div className="relative">
+                <div className="relative hidden sm:block">
                     <SearchBar
                         placeholder="Ищите проекты, пространства или участников..."
                         onChange={onSearchChange}
@@ -260,8 +303,8 @@ function SpaceLayoutMain({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <main
             className={cn(
-                "flex-1 overflow-y-auto transition-all duration-200",
-                isCollapsed ? "ml-[56px]" : "ml-[260px]",
+                "flex-1 overflow-y-auto transition-all duration-200 pb-16 lg:pb-0",
+                isCollapsed ? "ml-0 lg:ml-[56px]" : "ml-0 lg:ml-[260px]",
             )}
         >
             <Outlet />
@@ -380,6 +423,7 @@ function SpaceLayoutContent({
                 />
                 <SpaceLayoutMain isCollapsed={isCollapsed} />
             </div>
+            <MobileNav />
         </div>
     );
 }

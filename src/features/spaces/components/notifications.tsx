@@ -167,7 +167,7 @@ export function NotificationsNav() {
 
             <DropdownMenuPortal>
                 <DropdownMenuContent
-                    className="w-[481px] h-[472px] rounded-[16px]"
+                    className="w-[481px] max-w-[calc(100vw-1rem)] h-[472px] rounded-[16px]"
                     align="end"
                     sideOffset={4}
                 >
@@ -183,7 +183,7 @@ export function NotificationsNav() {
                         </LineButton>
                     </div>
 
-                    <div className="flex gap-1 px-3 py-2">
+                    <div className="flex flex-wrap gap-1 px-3 py-2">
                         {tabs.map((tab) => {
                             const count = counts[tab.key as keyof typeof counts];
                             return (
