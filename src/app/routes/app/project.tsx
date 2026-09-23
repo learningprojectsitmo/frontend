@@ -40,7 +40,7 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 import { cn } from "@/lib/utils";
-import { Plus, GraduationCapIcon } from "lucide-react";
+import { Plus, GraduationCapIcon, Copy, Check } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -196,7 +196,24 @@ const SpaceRoute = () => {
 
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [deleteConfirmName, setDeleteConfirmName] = useState("");
+    const [nameCopied, setNameCopied] = useState(false);
     const isDeleteConfirmed = deleteConfirmName === project?.title;
+
+    const handleCopyProjectName = async () => {
+        if (!project) return;
+        try {
+            await navigator.clipboard.writeText(project.title);
+        } catch {
+            const el = document.createElement("textarea");
+            el.value = project.title;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+        }
+        setNameCopied(true);
+        setTimeout(() => setNameCopied(false), 1500);
+    };
 
     const [isEditing, setIsEditing] = useState(() => searchParams.get("edit") === "true");
     const [editTitle, setEditTitle] = useState("");
@@ -1701,9 +1718,20 @@ const SpaceRoute = () => {
                             Это действие необратимо. Все данные проекта будут удалены.
                         </p>
                         <div className="mt-4 space-y-2">
-                            <Label>
+                            <Label className="inline-flex items-center gap-1.5">
                                 Введите{" "}
-                                <span className="font-semibold text-red-600">{project.title}</span>{" "}
+                                <span className="font-semibold text-red-600">
+                                    {project.title}
+                                </span>{" "}
+                                <button
+                                    type="button"
+                                    onClick={handleCopyProjectName}
+                                    className="inline-flex items-center text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                                    title="Скопировать название"
+                                    aria-label="Скопировать название"
+                                >
+                                    {nameCopied ? <Check size={14} /> : <Copy size={14} />}
+                                </button>
                                 для подтверждения:
                             </Label>
                             <Input
