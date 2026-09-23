@@ -90,6 +90,7 @@ import {
     useCreateSubtask,
     useUpdateSubtask,
     useDeleteSubtask,
+    useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
@@ -527,6 +528,7 @@ const SpaceRoute = () => {
     const kanbanCreateSubtask = useCreateSubtask();
     const kanbanUpdateSubtask = useUpdateSubtask();
     const kanbanDeleteSubtask = useDeleteSubtask();
+    const kanbanToggleSubtask = useToggleSubtask();
 
     const handleTaskAutoSave = useCallback(
         async (taskId: number, patch: TaskPatch) => {
@@ -856,6 +858,13 @@ const SpaceRoute = () => {
             canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
             onTaskClick: isTeamMember ? openEditPanel : undefined,
+            onToggleSubtask: isTeamMember
+                ? (subtaskId: number) => {
+                      kanbanToggleSubtask.mutate(subtaskId, {
+                          onError: () => toast.error("Ошибка при изменении подзадачи"),
+                      });
+                  }
+                : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -870,6 +879,7 @@ const SpaceRoute = () => {
             isTeamMember,
             handleTaskMove,
             openEditPanel,
+            kanbanToggleSubtask,
             handleAddTask,
             handleDeleteTask,
             handleRenameColumn,

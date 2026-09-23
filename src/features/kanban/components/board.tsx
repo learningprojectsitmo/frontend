@@ -22,6 +22,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     columns,
     onTaskMove,
     onTaskClick,
+    onToggleSubtask,
     onDeleteTask,
     onAddTask,
     onRenameColumn,
@@ -471,6 +472,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                             canEdit={canEdit}
                             onAddTask={onAddTask}
                             onTaskClick={onTaskClick}
+                            onToggleSubtask={onToggleSubtask}
                             onDeleteTask={onDeleteTask}
                             onTaskDragStart={handleTaskDragStart}
                             onTaskDragOver={handleTaskDragOver}

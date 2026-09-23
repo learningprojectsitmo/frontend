@@ -16,6 +16,7 @@ import {
     useCreateSubtask,
     useUpdateSubtask,
     useDeleteSubtask,
+    useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ export const KanbanRoute = () => {
     const createSubtask = useCreateSubtask();
     const updateSubtask = useUpdateSubtask();
     const deleteSubtask = useDeleteSubtask();
+    const toggleSubtask = useToggleSubtask();
 
     // Автосейв задачи
     const handleTaskAutoSave = useCallback(
@@ -318,6 +320,13 @@ export const KanbanRoute = () => {
             canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
             onTaskClick: isTeamMember ? openEditPanel : undefined,
+            onToggleSubtask: isTeamMember
+                ? (subtaskId: number) => {
+                      toggleSubtask.mutate(subtaskId, {
+                          onError: () => toast.error("Ошибка при изменении подзадачи"),
+                      });
+                  }
+                : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -332,6 +341,7 @@ export const KanbanRoute = () => {
             isTeamMember,
             handleTaskMove,
             openEditPanel,
+            toggleSubtask,
             handleAddTask,
             handleDeleteTask,
             handleRenameColumn,

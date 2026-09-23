@@ -20,6 +20,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     canEdit = false,
     onAddTask,
     onTaskClick,
+    onToggleSubtask,
     onDeleteTask,
     onTaskDragStart,
     onTaskDragOver,
@@ -434,6 +435,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 task={task}
                                 canEdit={canEdit}
                                 onClick={onTaskClick}
+                                onToggleSubtask={onToggleSubtask}
                                 isDragging={activeTaskId === task.id}
                                 onDragStart={(e: React.DragEvent<HTMLDivElement>) =>
                                     onTaskDragStart?.(e, task.id, task.title)

@@ -182,10 +182,11 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                     <input
                                         type="checkbox"
                                         checked={subtask.isCompleted}
-                                        onChange={(e) => {
+                                        onClick={(e) => {
                                             e.stopPropagation();
                                             onToggleSubtask?.(subtask.id);
                                         }}
+                                        readOnly
                                         className="w-4 h-4 rounded border-gray-200 flex-shrink-0"
                                     />
                                     <span

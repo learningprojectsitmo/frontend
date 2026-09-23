@@ -6,6 +6,7 @@ export interface KanbanBoardProps {
     canEdit?: boolean;
     onAddTask?: (columnId: number, title: string) => void;
     onTaskClick?: (task: Task) => void;
+    onToggleSubtask?: (subtaskId: number) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskMove?: (taskId: number, targetColumnId: number, targetPosition: number) => void;
     onReorderColumns?: (columnOrders: { id: number; position: number }[]) => void; // Добавляем для переупорядочивания колонок
@@ -20,6 +21,7 @@ export interface KanbanColumnProps {
     column: ColumnWithTasks;
     canEdit?: boolean;
     onTaskClick?: (task: Task) => void;
+    onToggleSubtask?: (subtaskId: number) => void;
     onAddTask?: (columnId: number, title: string) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskDragStart?: (
