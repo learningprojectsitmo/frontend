@@ -37,12 +37,22 @@ const INVITATION_TYPES: NotificationType[] = [
     "invitation_rejected",
 ];
 const APPROVAL_TYPES: NotificationType[] = ["stage_approval_required"];
+const TASKS_TYPES: NotificationType[] = [
+    "task_created",
+    "task_updated",
+    "task_moved",
+    "task_deleted",
+    "subtask_created",
+    "subtask_updated",
+    "subtask_deleted",
+];
 
 const tabs = [
     { key: "all", labelKey: "notifications.tabs.all" },
     { key: "responses", labelKey: "notifications.tabs.responses" },
     { key: "invitations", labelKey: "notifications.tabs.invitations" },
     { key: "approvals", labelKey: "notifications.tabs.approvals" },
+    { key: "tasks", labelKey: "notifications.tabs.tasks" },
     { key: "archive", labelKey: "notifications.tabs.archive" },
 ] as const;
 
@@ -88,7 +98,8 @@ export function NotificationsNav() {
         const responses = notifications.filter((n) => RESPONSE_TYPES.includes(n.type)).length;
         const invitations = notifications.filter((n) => INVITATION_TYPES.includes(n.type)).length;
         const approvals = notifications.filter((n) => APPROVAL_TYPES.includes(n.type)).length;
-        return { all, responses, invitations, approvals, archive: 0 };
+        const tasks = notifications.filter((n) => TASKS_TYPES.includes(n.type)).length;
+        return { all, responses, invitations, approvals, tasks, archive: 0 };
     }, [notifications]);
 
     const filteredNotifications = React.useMemo(() => {
@@ -99,6 +110,7 @@ export function NotificationsNav() {
             return notifications.filter((n) => INVITATION_TYPES.includes(n.type));
         if (activeTab === "approvals")
             return notifications.filter((n) => APPROVAL_TYPES.includes(n.type));
+        if (activeTab === "tasks") return notifications.filter((n) => TASKS_TYPES.includes(n.type));
         return [];
     }, [notifications, activeTab]);
 
@@ -108,7 +120,10 @@ export function NotificationsNav() {
 
     const handleNotificationClick = (item: (typeof notifications)[number]) => {
         markRead.mutate(item.id);
-        if (APPROVAL_TYPES.includes(item.type) && item.data.project_id) {
+        if (
+            (APPROVAL_TYPES.includes(item.type) || TASKS_TYPES.includes(item.type)) &&
+            item.data.project_id
+        ) {
             navigate(`/app/project?id=${item.data.project_id}`);
             return;
         }
@@ -218,6 +233,9 @@ export function NotificationsNav() {
                                     actor_name: item.data.actor_name,
                                     project_name: item.data.project_name,
                                     stage_name: item.data.stage_name,
+                                    task_title: item.data.task_title,
+                                    column_name: item.data.column_name,
+                                    subtask_title: item.data.subtask_title,
                                 });
                                 const timeStr = formatRelativeTime(item.created_at, t);
                                 const initials = getInitials(item.data.actor_name);

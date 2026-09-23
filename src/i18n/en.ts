@@ -10,6 +10,7 @@ const en = {
                 responses: "Responses",
                 invitations: "Invitations",
                 approvals: "Approvals",
+                tasks: "Tasks",
                 archive: "Archive",
             },
             types: {
@@ -27,6 +28,20 @@ const en = {
                     "{{actor_name}} rejected invitation to project {{project_name}}",
                 stage_approval_required:
                     "{{actor_name}} requested approval of stage «{{stage_name}}» in project {{project_name}}",
+                task_created:
+                    "{{actor_name}} created task «{{task_title}}» in project {{project_name}}",
+                task_updated:
+                    "{{actor_name}} updated task «{{task_title}}» in project {{project_name}}",
+                task_moved:
+                    "{{actor_name}} moved task «{{task_title}}» to column «{{column_name}}» in project {{project_name}}",
+                task_deleted:
+                    "{{actor_name}} deleted task «{{task_title}}» from project {{project_name}}",
+                subtask_created:
+                    "{{actor_name}} added subtask «{{subtask_title}}» to task «{{task_title}}» in project {{project_name}}",
+                subtask_updated:
+                    "{{actor_name}} updated subtask «{{subtask_title}}» of task «{{task_title}}» in project {{project_name}}",
+                subtask_deleted:
+                    "{{actor_name}} deleted subtask «{{subtask_title}}» from task «{{task_title}}» in project {{project_name}}",
             },
             time: {
                 justNow: "just now",

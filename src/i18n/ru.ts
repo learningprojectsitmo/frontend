@@ -10,6 +10,7 @@ const ru = {
                 responses: "Отклики",
                 invitations: "Приглашения",
                 approvals: "Утверждения",
+                tasks: "Задачи",
                 archive: "Архив",
             },
             types: {
@@ -23,6 +24,20 @@ const ru = {
                     "{{actor_name}} отклонил приглашение в проект {{project_name}}",
                 stage_approval_required:
                     "{{actor_name}} запросил утверждение этапа «{{stage_name}}» в проекте {{project_name}}",
+                task_created:
+                    "{{actor_name}} создал задачу «{{task_title}}» в проекте {{project_name}}",
+                task_updated:
+                    "{{actor_name}} обновил задачу «{{task_title}}» в проекте {{project_name}}",
+                task_moved:
+                    "{{actor_name}} переместил задачу «{{task_title}}» в колонку «{{column_name}}» проекта {{project_name}}",
+                task_deleted:
+                    "{{actor_name}} удалил задачу «{{task_title}}» из проекта {{project_name}}",
+                subtask_created:
+                    "{{actor_name}} добавил подзадачу «{{subtask_title}}» в задачу «{{task_title}}» проекта {{project_name}}",
+                subtask_updated:
+                    "{{actor_name}} обновил подзадачу «{{subtask_title}}» задачи «{{task_title}}» проекта {{project_name}}",
+                subtask_deleted:
+                    "{{actor_name}} удалил подзадачу «{{subtask_title}}» из задачи «{{task_title}}» проекта {{project_name}}",
             },
             time: {
                 justNow: "только что",

@@ -511,7 +511,14 @@ export type NotificationType =
     | "invitation_received"
     | "invitation_accepted"
     | "invitation_rejected"
-    | "stage_approval_required";
+    | "stage_approval_required"
+    | "task_created"
+    | "task_updated"
+    | "task_moved"
+    | "task_deleted"
+    | "subtask_created"
+    | "subtask_updated"
+    | "subtask_deleted";
 
 export interface NotificationData {
     actor_id: number | null;
@@ -522,6 +529,9 @@ export interface NotificationData {
     invitation_id?: number;
     response_id?: number;
     stage_name?: string;
+    task_title?: string;
+    column_name?: string;
+    subtask_title?: string;
 }
 
 export interface Notification {
