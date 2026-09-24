@@ -367,8 +367,8 @@ const SpaceRoute = () => {
 
     return (
         <ContentLayout title={spaceData.title}>
-            <div className="mx-auto max-w-7xl p-8 flex flex-col gap-8">
-                <Breadcrumb className="h-[34px] flex align-center">
+            <div className="mx-auto max-w-7xl p-4 sm:p-8 flex flex-col gap-6 sm:gap-8">
+                <Breadcrumb className="min-h-[34px] flex flex-wrap gap-y-1.5 items-center">
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>

@@ -991,7 +991,7 @@ const SpaceRoute = () => {
     return (
         <ContentLayout title={project.title}>
             <div className="mx-auto max-w-7xl p-6 flex flex-col gap-6">
-                <Breadcrumb className="h-[34px] flex align-center">
+                <Breadcrumb className="min-h-[34px] flex flex-wrap gap-y-1.5 items-center">
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
@@ -1039,10 +1039,10 @@ const SpaceRoute = () => {
                                         type="text"
                                         value={editTitle}
                                         onChange={(e) => setEditTitle(e.target.value)}
-                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-[26px] sm:text-3xl font-semibold font-sans leading-8 sm:leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                     />
                                 ) : (
-                                    <div className="justify-center text-color-grey-4 text-3xl font-semibold font-sans leading-9">
+                                    <div className="justify-center text-color-grey-4 text-[26px] sm:text-3xl font-semibold font-sans leading-8 sm:leading-9">
                                         {project.title}
                                     </div>
                                 )}

@@ -413,7 +413,7 @@ function SpaceLayoutContent({
                 onSearchSubmit={handleSearchSubmit}
                 suggestions={suggestions}
             />
-            <div className="flex-1 flex flex-row mt-16">
+            <div className="flex-1 flex flex-row mt-[72px]">
                 <Sidebar
                     isCollapsed={isCollapsed}
                     onToggle={handleToggle}

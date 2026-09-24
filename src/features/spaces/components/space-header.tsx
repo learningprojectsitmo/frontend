@@ -33,19 +33,20 @@ export function SpaceHeader({
 }: SpaceHeaderProps) {
     return (
         <div className="self-stretch flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
-            <div className="flex justify-start items-start gap-5">
+            <div className="flex justify-start items-start gap-3 sm:gap-5">
                 <div className="pt-1 flex justify-start items-center gap-2">
-                    <div className="w-16 h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">
                         <div
-                            className={`${spaceData.color} rounded-lg text-white h-16 w-16 flex items-center justify-center`}
+                            className={`${spaceData.color} rounded-lg text-white h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center`}
                         >
-                            <GraduationCapIcon size={32} />
+                            <GraduationCapIcon size={24} className="sm:hidden" />
+                            <GraduationCapIcon size={32} className="hidden sm:block" />
                         </div>
                     </div>
                 </div>
                 <div className="inline-flex flex-col justify-start items-start gap-0.5">
                     <div className="self-stretch inline-flex justify-start items-center gap-3">
-                        <div className="justify-center text-app-text text-[40px] font-bold font-sans leading-[1.1]">
+                        <div className="flex-1 min-w-0 break-words text-app-text text-[26px] sm:text-[40px] font-bold font-sans leading-[1.2]">
                             {spaceData.title}
                         </div>
                         {isAuthor && (
@@ -57,7 +58,7 @@ export function SpaceHeader({
                                 data-size="Default"
                                 data-state="Default"
                                 data-type="Main"
-                                className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                                className="w-9 min-w-9 min-h-9 p-2 rounded-lg flex justify-center items-center shrink-0 hover:bg-gray-100 transition-colors"
                             >
                                 <Icon name="settings" size={20} className="h-5 w-5" />
                             </button>
