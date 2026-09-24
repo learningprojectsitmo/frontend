@@ -6,6 +6,7 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuPortal,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
@@ -56,70 +57,76 @@ export function UserNav() {
                     />
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="w-[194px] rounded-[12px] p-0" align="end">
-                    <DropdownMenuLabel className="font-semibold font-sans text-[13px] px-4 py-3 h-[40px]">
-                        Мой аккаунт
-                    </DropdownMenuLabel>
+                <DropdownMenuPortal>
+                    <DropdownMenuContent className="w-[194px] rounded-[12px] p-0" align="end">
+                        <DropdownMenuLabel className="font-semibold font-sans text-[13px] px-4 py-3 h-[40px]">
+                            Мой аккаунт
+                        </DropdownMenuLabel>
 
-                    <DropdownMenuSeparator className="bg-gray-200 my-0" />
+                        <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
-                    <DropdownMenuGroup className="p-[6px] gap-1 flex flex-col">
-                        <DropdownMenuItem
-                            className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
-                            onClick={() => navigate(paths.app.profile.getHref())}
-                        >
-                            <Icon name="profile" size={16} className="h-5 w-5 text-gray-500" />
-                            <span className="text-[13px] font-sans font-medium text-gray-900">
-                                Профиль и Резюме
-                            </span>
-                        </DropdownMenuItem>
-
-                        {isAdmin && (
+                        <DropdownMenuGroup className="p-[6px] gap-1 flex flex-col">
                             <DropdownMenuItem
                                 className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
-                                onClick={() => navigate(paths.app.admin.root.getHref())}
+                                onClick={() => navigate(paths.app.profile.getHref())}
                             >
-                                <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
+                                <Icon name="profile" size={16} className="h-5 w-5 text-gray-500" />
                                 <span className="text-[13px] font-sans font-medium text-gray-900">
-                                    Админ-панель
+                                    Профиль и Резюме
                                 </span>
                             </DropdownMenuItem>
-                        )}
 
-                        <DropdownMenuItem
-                            className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
-                            onClick={() => navigate(paths.app.settings.root.getHref())}
-                        >
-                            <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
-                            <span className="text-[13px] font-sans font-medium">Настройки</span>
-                        </DropdownMenuItem>
+                            {isAdmin && (
+                                <DropdownMenuItem
+                                    className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
+                                    onClick={() => navigate(paths.app.admin.root.getHref())}
+                                >
+                                    <Icon
+                                        name="settings"
+                                        size={16}
+                                        className="h-5 w-5 text-gray-500"
+                                    />
+                                    <span className="text-[13px] font-sans font-medium text-gray-900">
+                                        Админ-панель
+                                    </span>
+                                </DropdownMenuItem>
+                            )}
 
-                        <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-1.5">
-                            <Icon name="help" size={16} className=" h-5 w-5 text-gray-500" />
-                            <span className="text-[13px] font-sans font-medium">
-                                Помощь и поддержка
-                            </span>
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-
-                    <DropdownMenuSeparator className="bg-gray-200 my-0" />
-
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                            <button
-                                className="cursor-pointer px-2 py-1 text-gray-900 focus:bg-gray-50 focus:text-gray-900 gap-2 h-[40px]"
-                                onClick={handleLogout}
+                            <DropdownMenuItem
+                                className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-2"
+                                onClick={() => navigate(paths.app.settings.root.getHref())}
                             >
-                                <Icon
-                                    name="sign-out"
-                                    size={16}
-                                    className="h-5 ml-1 w-5 text-gray-500"
-                                />
-                                <span className="text-[13px] font-sans font-medium">Выйти</span>
-                            </button>
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                </DropdownMenuContent>
+                                <Icon name="settings" size={16} className="h-5 w-5 text-gray-500" />
+                                <span className="text-[13px] font-sans font-medium">Настройки</span>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem className="cursor-pointer px-2 py-1 focus:bg-gray-50 rounded-[8px] gap-1.5">
+                                <Icon name="help" size={16} className=" h-5 w-5 text-gray-500" />
+                                <span className="text-[13px] font-sans font-medium">
+                                    Помощь и поддержка
+                                </span>
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+
+                        <DropdownMenuSeparator className="bg-gray-200 my-0" />
+
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                                <button
+                                    className="cursor-pointer px-2 py-1 text-gray-900 focus:bg-gray-50 focus:text-gray-900 gap-2 h-[40px]"
+                                    onClick={handleLogout}
+                                >
+                                    <Icon
+                                        name="sign-out"
+                                        size={16}
+                                        className="h-5 ml-1 w-5 text-gray-500"
+                                    />
+                                    <span className="text-[13px] font-sans font-medium">Выйти</span>
+                                </button>
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                </DropdownMenuPortal>
             </DropdownMenu>
         </div>
     );

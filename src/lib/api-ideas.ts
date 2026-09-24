@@ -21,7 +21,7 @@ export const useIdeasList = (params?: {
     return useQuery({
         queryKey: ideasKeys.list(params),
         queryFn: async () => {
-            const data = await (api.get("/ideas", { params }) as Promise<{ items: Idea[] }>);
+            const data = await (api.get("/ideas/", { params }) as Promise<{ items: Idea[] }>);
             return data.items;
         },
     });
@@ -79,7 +79,7 @@ export const useCreateIdea = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: { title: string; description: string; tags: string[] }) =>
-            api.post("/ideas", data) as Promise<Idea>,
+            api.post("/ideas/", data) as Promise<Idea>,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ideasKeys.lists() });
             queryClient.invalidateQueries({ queryKey: ideasKeys.tags() });

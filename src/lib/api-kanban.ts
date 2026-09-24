@@ -102,7 +102,7 @@ interface ReorderPayload {
 export const kanbanApi = {
     // Todo нужны участники команды, а не все пользователи
     getAllUsers: (): Promise<UsersResponse> => {
-        return api.get("/users");
+        return api.get("/users/");
     },
 
     // ========== ДОСКА ==========
