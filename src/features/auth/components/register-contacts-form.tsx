@@ -59,7 +59,13 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
     return (
         <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex justify-center mb-8">
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" color="var(--app-text)" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Поделитесь своими контактами
@@ -158,11 +164,7 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                         </p>
                     ) : null}
 
-                    <Button
-                        variant="dark"
-                        size="fill48"
-                        type="submit"
-                    >
+                    <Button variant="dark" size="fill48" type="submit">
                         {updateContacts.isPending ? "Сохранить..." : "Сохранить"}
                     </Button>
 

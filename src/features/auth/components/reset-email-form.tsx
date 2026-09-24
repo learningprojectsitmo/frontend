@@ -40,7 +40,13 @@ export const ResetEmailForm = () => {
                 >
                     <Icon name="arrow-left" width={20} height={20} />
                 </Link>
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" color="var(--app-text)" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
                 <div className="w-9 h-9"></div>
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
@@ -70,11 +76,7 @@ export const ResetEmailForm = () => {
                         )}
                     />
 
-                    <Button
-                        variant="dark"
-                        size="fill48"
-                        type="submit"
-                    >
+                    <Button variant="dark" size="fill48" type="submit">
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>
                 </form>

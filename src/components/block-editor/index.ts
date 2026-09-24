@@ -1,11 +1,7 @@
 export { BlockEditor } from "./block-editor";
 export { useBlockEditorContext } from "./context";
 export { BubbleMenu } from "./bubble-menu/index";
-export {
-  SlashCommand,
-  getSlashCommandSuggestion,
-  defaultSlashCommandItems,
-} from "./extensions";
+export { SlashCommand, getSlashCommandSuggestion, defaultSlashCommandItems } from "./extensions";
 export { CodeBlock } from "./extensions/code-block";
 export type { SlashCommandSuggestionItem, OnCommandSelect } from "./extensions";
 export type { BlockEditorProps, BlockEditorLabels } from "./types";

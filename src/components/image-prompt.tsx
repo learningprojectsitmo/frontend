@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog/dialog";
 import { Button } from "@/components/ui/button/button";
 
 interface ImagePromptProps {
@@ -13,11 +8,7 @@ interface ImagePromptProps {
     onSubmit: (url: string) => void;
 }
 
-export const ImagePrompt = ({
-    open,
-    onOpenChange,
-    onSubmit,
-}: ImagePromptProps) => {
+export const ImagePrompt = ({ open, onOpenChange, onSubmit }: ImagePromptProps) => {
     const [url, setUrl] = useState("");
 
     const handleSubmit = (e: React.FormEvent) => {

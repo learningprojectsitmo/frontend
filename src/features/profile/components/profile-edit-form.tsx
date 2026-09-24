@@ -50,7 +50,8 @@ const parseServerFieldErrors = (error: unknown): Partial<Record<InlineEditField,
     const fieldErrors: Partial<Record<InlineEditField, string>> = {};
     for (const item of detail) {
         const field = item.loc[1];
-        if (typeof field !== "string" || !INLINE_EDIT_FIELDS.includes(field as InlineEditField)) continue;
+        if (typeof field !== "string" || !INLINE_EDIT_FIELDS.includes(field as InlineEditField))
+            continue;
 
         const message = item.msg.replace(/^Value error,\s*/, "");
         fieldErrors[field as InlineEditField] = message;

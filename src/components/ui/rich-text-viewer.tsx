@@ -22,11 +22,7 @@ const RichTextViewer = forwardRef<HTMLDivElement, RichTextViewerProps>(
         return (
             <div
                 ref={ref}
-                className={cn(
-                    "block-editor-content",
-                    clamp && clampClasses[clamp],
-                    className,
-                )}
+                className={cn("block-editor-content", clamp && clampClasses[clamp], className)}
                 dangerouslySetInnerHTML={{ __html: html }}
             />
         );

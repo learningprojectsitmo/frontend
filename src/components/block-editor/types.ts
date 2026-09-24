@@ -4,26 +4,26 @@ import type { ReactNode } from "react";
 import type { BlockEditorIcons } from "./icons";
 
 export interface BlockEditorLabels {
-  paragraphLabel?: string;
-  headingLabel?: string;
-  bulletListLabel?: string;
-  orderedListLabel?: string;
-  taskListLabel?: string;
-  blockquoteLabel?: string;
-  codeBlockLabel?: string;
-  dividerLabel?: string;
+    paragraphLabel?: string;
+    headingLabel?: string;
+    bulletListLabel?: string;
+    orderedListLabel?: string;
+    taskListLabel?: string;
+    blockquoteLabel?: string;
+    codeBlockLabel?: string;
+    dividerLabel?: string;
 }
 
 export interface BlockEditorProps {
-  editor: Editor | null;
-  children?: ReactNode;
-  className?: string;
-  labels?: Partial<BlockEditorLabels>;
-  icons?: Partial<BlockEditorIcons>;
+    editor: Editor | null;
+    children?: ReactNode;
+    className?: string;
+    labels?: Partial<BlockEditorLabels>;
+    icons?: Partial<BlockEditorIcons>;
 }
 
 export interface BlockEditorContextValue {
-  editor: Editor | null;
-  labels: BlockEditorLabels;
-  icons: BlockEditorIcons;
+    editor: Editor | null;
+    labels: BlockEditorLabels;
+    icons: BlockEditorIcons;
 }

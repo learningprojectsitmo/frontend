@@ -75,7 +75,13 @@ const LandingRoute = () => {
             {/* Header */}
             <header className="h-16 bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                    <Icon name="logo-edu-flow" width={100} height={28} alt="EduFlow" color="var(--app-text)" />
+                    <Icon
+                        name="logo-edu-flow"
+                        width={100}
+                        height={28}
+                        alt="EduFlow"
+                        color="var(--app-text)"
+                    />
                 </div>
                 <div className="flex items-center gap-3">
                     <IconButton
@@ -283,7 +289,13 @@ const LandingRoute = () => {
             <footer className="bg-app-surface border-t border-gray-200 py-8">
                 <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <Icon name="logo-edu-flow" width={80} height={22} alt="EduFlow" color="var(--app-text)" />
+                        <Icon
+                            name="logo-edu-flow"
+                            width={80}
+                            height={22}
+                            alt="EduFlow"
+                            color="var(--app-text)"
+                        />
                     </div>
                     <p className="text-sm text-gray-400">
                         &copy; {new Date().getFullYear()} EduFlow. Все права защищены.

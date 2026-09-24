@@ -10,38 +10,38 @@ import type { BlockEditorContextValue, BlockEditorLabels } from "./types";
 const BlockEditorContext = createContext<BlockEditorContextValue | null>(null);
 
 export const useBlockEditorContext = () => {
-  const ctx = useContext(BlockEditorContext);
-  if (!ctx) {
-    throw new Error("BlockEditor components must be used within <BlockEditor>");
-  }
-  return ctx;
+    const ctx = useContext(BlockEditorContext);
+    if (!ctx) {
+        throw new Error("BlockEditor components must be used within <BlockEditor>");
+    }
+    return ctx;
 };
 
 export interface BlockEditorProviderProps {
-  editor: Editor | null;
-  children: ReactNode;
-  labels?: Partial<BlockEditorLabels>;
-  icons?: Partial<BlockEditorIcons>;
+    editor: Editor | null;
+    children: ReactNode;
+    labels?: Partial<BlockEditorLabels>;
+    icons?: Partial<BlockEditorIcons>;
 }
 
 export const BlockEditorProvider = ({
-  editor,
-  children,
-  labels,
-  icons,
+    editor,
+    children,
+    labels,
+    icons,
 }: BlockEditorProviderProps) => {
-  const mergedLabels = { ...DEFAULT_BLOCK_EDITOR_LABELS, ...labels };
-  const mergedIcons = { ...DEFAULT_ICONS, ...icons };
+    const mergedLabels = { ...DEFAULT_BLOCK_EDITOR_LABELS, ...labels };
+    const mergedIcons = { ...DEFAULT_ICONS, ...icons };
 
-  return (
-    <BlockEditorContext.Provider
-      value={{
-        editor,
-        icons: mergedIcons,
-        labels: mergedLabels,
-      }}
-    >
-      {children}
-    </BlockEditorContext.Provider>
-  );
+    return (
+        <BlockEditorContext.Provider
+            value={{
+                editor,
+                icons: mergedIcons,
+                labels: mergedLabels,
+            }}
+        >
+            {children}
+        </BlockEditorContext.Provider>
+    );
 };

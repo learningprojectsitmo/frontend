@@ -4,6 +4,6 @@ import { common, createLowlight } from "lowlight";
 const lowlight = createLowlight(common);
 
 export const CodeBlock = LowlightCodeBlock.configure({
-  defaultLanguage: "javascript",
-  lowlight,
+    defaultLanguage: "javascript",
+    lowlight,
 });
