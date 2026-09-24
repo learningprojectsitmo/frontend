@@ -59,7 +59,7 @@ export function permissionsToPermissionMatrix(permissions: Permission[]): Permis
 
 export const settingsApi = {
     getRoles: (): Promise<RoleListResponse> => {
-        return api.get("/roles");
+        return api.get("/roles/");
     },
 
     getRolePermissions: (roleId: number): Promise<PermissionMatrix> => {
@@ -74,7 +74,7 @@ export const settingsApi = {
     },
 
     getUsers: (page: number, limit: number): Promise<UserListResponse> => {
-        return api.get("/users", { params: { page, limit } });
+        return api.get("/users/", { params: { page, limit } });
     },
 
     getSessions: (): Promise<SessionListResponse> => {

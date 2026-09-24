@@ -4,7 +4,7 @@ import { api } from "./api-client";
 import { queryKeys } from "./query-keys";
 
 export const getProfile = async (): Promise<ProfileResponse> => {
-    return await api.get("/profile");
+    return await api.get("/profile/");
 };
 
 export const useProfile = () => {
