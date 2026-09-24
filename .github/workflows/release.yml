@@ -58,6 +58,13 @@ jobs:
               with:
                   context: .
                   file: Dockerfile.prod
+                  build-args: |
+                      VITE_APP_API_URL=${{ vars.VITE_APP_API_URL || '/v1' }}
+                      VITE_APP_ENABLE_API_MOCKING=${{ vars.VITE_APP_ENABLE_API_MOCKING || 'false' }}
+                      VITE_APP_SENTRY_DSN=${{ vars.VITE_APP_SENTRY_DSN }}
+                      VITE_APP_SENTRY_ENVIRONMENT=${{ vars.VITE_APP_SENTRY_ENVIRONMENT || 'production' }}
+                      VITE_APP_SENTRY_TRACES_SAMPLE_RATE=${{ vars.VITE_APP_SENTRY_TRACES_SAMPLE_RATE || '0.01' }}
+                      VITE_APP_SENTRY_ERRORS_SAMPLE_RATE=${{ vars.VITE_APP_SENTRY_ERRORS_SAMPLE_RATE || '0.5' }}
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
@@ -71,5 +78,5 @@ jobs:
               with:
                   token: ${{ env.RELEASE_TOKEN }}
                   repository: learningprojectsitmo/deploy
-                  event-type: app-update
-                  client-payload: '{"service":"frontend","image":"ghcr.io/learningprojectsitmo/frontend:main"}'
+                  event-type: frontend-updated
+                  client-payload: '{"services":"frontend","image":"ghcr.io/learningprojectsitmo/frontend:main"}'
