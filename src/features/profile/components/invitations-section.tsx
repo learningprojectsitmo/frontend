@@ -6,12 +6,17 @@ import { EmptyState } from "./empty-state";
 import { ResponsesFilters } from "./filters/responses-filters";
 import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
+import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { api } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateProjectImpact } from "@/lib/projects";
+import type { InvitationItem } from "@/types/profile";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "Ожидает ответа", color: "#D97706", bg: "#FEF3C7" },
-    accepted: { text: "Принято", color: "#16A34A", bg: "#DCFCE7" },
+    accepted: { text: "В команде", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонено", color: "#EF4444", bg: "#FEE2E2" },
+    in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
 };
 
 export function InvitationsSection() {
@@ -22,6 +27,7 @@ export function InvitationsSection() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingAction, setPendingAction] = useState<{ id: number; type: string } | null>(null);
+    const [joinCandidate, setJoinCandidate] = useState<InvitationItem | null>(null);
 
     const items = useMemo(() => invitations ?? [], [invitations]);
 
@@ -99,10 +105,23 @@ export function InvitationsSection() {
     ].filter(Boolean).length;
 
     const handleAction = async (invitationId: number, action: "accept" | "reject") => {
+        if (action === "accept") {
+            const item = items.find((r) => r.id === invitationId);
+            if (item && !item.allowMultiProjectParticipation) {
+                setJoinCandidate(item);
+                return;
+            }
+        }
         setPendingAction({ id: invitationId, type: action });
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
-            queryClient.invalidateQueries({ queryKey: ["profile", "invitations"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.invitations() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            const item = items.find((r) => r.id === invitationId);
+            if (action === "accept" && item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+                queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
+            }
         } catch {
             // ignore
         } finally {
@@ -123,7 +142,7 @@ export function InvitationsSection() {
                     onChangeView={setViewMode}
                 />
                 <div className="flex items-center justify-center py-16">
-                    <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#2563EB] rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -175,11 +194,11 @@ export function InvitationsSection() {
             </div>
 
             {filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-[14px] text-[#6B7280]">
+                <div className="text-center py-12 text-[14px] text-gray-500">
                     Приглашения не найдены
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
                     {filteredItems.map((item) => {
                         const st = statusLabel[item.status] ?? statusLabel.pending;
                         const isPending = pendingAction?.id === item.id;
@@ -192,6 +211,7 @@ export function InvitationsSection() {
                                             ? "..."
                                             : "Отклонить",
                                     variant: "ghost",
+                                    disabled: isPending,
                                     onClick: () => handleAction(item.id, "reject"),
                                 },
                                 {
@@ -200,6 +220,7 @@ export function InvitationsSection() {
                                             ? "..."
                                             : "Принять",
                                     variant: "primary",
+                                    disabled: isPending,
                                     onClick: () => handleAction(item.id, "accept"),
                                 },
                             );
@@ -222,30 +243,31 @@ export function InvitationsSection() {
                     })}
                 </div>
             ) : (
-                <div className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
+                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-x-auto">
                     <table className="w-full text-left text-[13px]">
                         <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Проект</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Пригласил</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Роль</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Дата</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Статус</th>
+                            <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="py-3 px-4 font-medium text-gray-500">Проект</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Пригласил</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Роль</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Дата</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Статус</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredItems.map((item) => {
                                 const st = statusLabel[item.status] ?? statusLabel.pending;
                                 return (
-                                    <tr key={item.id} className="border-b border-[#F3F4F6]">
-                                        <td className="py-3 px-4 font-medium text-[#111827]">
+                                    <tr key={item.id} className="border-b border-gray-100">
+                                        <td className="py-3 px-4 font-medium text-gray-900">
                                             {item.projectName}
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">
+                                        <td className="py-3 px-4 text-gray-500">
                                             {item.inviterName}
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">{item.role}</td>
-                                        <td className="py-3 px-4 text-[#6B7280]">{item.date}</td>
+                                        <td className="py-3 px-4 text-gray-500">{item.role}</td>
+                                        <td className="py-3 px-4 text-gray-500">{item.date}</td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium"
@@ -257,6 +279,33 @@ export function InvitationsSection() {
                                                 {st.text}
                                             </span>
                                         </td>
+                                        <td className="py-3 px-4">
+                                            {item.status === "pending" && (
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAction(item.id, "accept")
+                                                        }
+                                                        disabled={pendingAction?.id === item.id}
+                                                        className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Принять
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAction(item.id, "reject")
+                                                        }
+                                                        disabled={pendingAction?.id === item.id}
+                                                        className="font-medium text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Отклонить
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {item.status !== "pending" && (
+                                                <span className="text-gray-400 text-[12px]">—</span>
+                                            )}
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -264,6 +313,18 @@ export function InvitationsSection() {
                     </table>
                 </div>
             )}
+            <JoinWarningDialog
+                open={joinCandidate !== null}
+                projectName={joinCandidate?.projectName ?? ""}
+                onOpenChange={(open) => {
+                    if (!open) setJoinCandidate(null);
+                }}
+                onConfirm={() => {
+                    const candidate = joinCandidate;
+                    setJoinCandidate(null);
+                    if (candidate) handleAction(candidate.id, "accept");
+                }}
+            />
         </div>
     );
 }

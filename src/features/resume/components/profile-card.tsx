@@ -1,6 +1,7 @@
 import { Icon } from "@/components/ui/icons";
 import { ProfileHeader } from "@/components/ui/profile-header";
 import { type ResumeUserInfo } from "@/types/api";
+import { LIMITS } from "@/features/resume/validation";
 
 type Props = {
     user: ResumeUserInfo;
@@ -8,7 +9,10 @@ type Props = {
     isEditing?: boolean;
     editHeader?: string;
     onHeaderChange?: (value: string) => void;
+    headerError?: boolean;
     onEdit?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
 };
 
 const getInitials = (firstName: string, lastName: string | null) => {
@@ -21,7 +25,10 @@ export const ProfileCard = ({
     isEditing,
     editHeader,
     onHeaderChange,
+    headerError,
     onEdit,
+    onShare,
+    onDelete,
 }: Props) => {
     const fullName = [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(" ");
 
@@ -31,7 +38,7 @@ export const ProfileCard = ({
 
     if (isEditing) {
         return (
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
+            <div className="rounded-2xl border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
                 <div className="h-[80px] w-[80px] sm:h-[120px] sm:w-[120px] rounded-[20px] bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold shrink-0">
                     {getInitials(user.first_name, user.last_name)}
                 </div>
@@ -46,8 +53,12 @@ export const ProfileCard = ({
                             value={editHeader ?? ""}
                             onChange={(e) => onHeaderChange?.(e.target.value)}
                             placeholder="Название резюме"
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-gray-500"
+                            maxLength={LIMITS.header}
+                            className={`mt-1 w-full rounded-lg border bg-app-surface px-3 py-1.5 text-sm text-app-text outline-none ${headerError ? "border-red-400 focus:border-red-400" : "border-app-border focus:border-app-blue"}`}
                         />
+                        {headerError && (
+                            <p className="mt-1 text-xs text-red-500">Введите название резюме</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 mt-6">
@@ -108,8 +119,10 @@ export const ProfileCard = ({
             email={user.email}
             phone={user.phone}
             socials={socials}
-            showActions
+            showActions={!!onEdit}
             onEdit={onEdit}
+            onShare={onShare}
+            onDelete={onDelete}
         />
     );
 };

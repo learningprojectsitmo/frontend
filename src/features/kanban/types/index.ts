@@ -3,8 +3,10 @@ import type { ColumnWithTasksAndSubtasks, ColumnWithTasks, Task } from "@/types/
 export interface KanbanBoardProps {
     columns: ColumnWithTasksAndSubtasks[];
     isLoading?: boolean;
+    canEdit?: boolean;
     onAddTask?: (columnId: number, title: string) => void;
     onTaskClick?: (task: Task) => void;
+    onToggleSubtask?: (subtaskId: number) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskMove?: (taskId: number, targetColumnId: number, targetPosition: number) => void;
     onReorderColumns?: (columnOrders: { id: number; position: number }[]) => void; // Добавляем для переупорядочивания колонок
@@ -17,7 +19,9 @@ export interface KanbanBoardProps {
 
 export interface KanbanColumnProps {
     column: ColumnWithTasks;
+    canEdit?: boolean;
     onTaskClick?: (task: Task) => void;
+    onToggleSubtask?: (subtaskId: number) => void;
     onAddTask?: (columnId: number, title: string) => void;
     onDeleteTask?: (taskId: number) => void;
     onTaskDragStart?: (
@@ -47,6 +51,7 @@ export interface KanbanColumnProps {
 export interface KanbanTaskProps {
     task: Task;
     isDragging?: boolean;
+    canEdit?: boolean;
     onClick?: (task: Task) => void;
     onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
     onEdit?: (task: Task) => void;

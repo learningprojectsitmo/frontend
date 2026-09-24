@@ -17,6 +17,7 @@ import { InterestsCard } from "./interests-card";
 type Props = {
     data: ResumeDetail;
     isEditing?: boolean;
+    sectionsEditable?: boolean;
     onEdit?: () => void;
     onSave?: (data: {
         header: string;
@@ -28,15 +29,27 @@ type Props = {
         is_visible: boolean;
     }) => void;
     onCancel?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
 };
 
-export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props) => {
+export const ResumePage = ({
+    data,
+    isEditing,
+    sectionsEditable = isEditing,
+    onEdit,
+    onSave,
+    onCancel,
+    onShare,
+    onDelete,
+}: Props) => {
     const [editHeader, setEditHeader] = useState("");
     const [editAbout, setEditAbout] = useState("");
     const [editCoverLetter, setEditCoverLetter] = useState("");
     const [editHasExperience, setEditHasExperience] = useState(true);
     const [editNoExpDescription, setEditNoExpDescription] = useState("");
-    const [editIsVisible, setEditIsVisible] = useState(true);
+    const [editIsVisible, setEditIsVisible] = useState(false);
+    const [headerError, setHeaderError] = useState(false);
 
     useEffect(() => {
         setEditHeader(data.resume.header);
@@ -53,6 +66,26 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
         data.resume.no_experience_description,
         data.resume.is_visible,
     ]);
+
+    const handleSaveClick = () => {
+        const headerValid = editHeader.trim().length > 0;
+        setHeaderError(!headerValid);
+        if (!headerValid) return;
+        onSave?.({
+            header: editHeader,
+            role: data.resume.role,
+            about: editAbout || null,
+            cover_letter: editCoverLetter || null,
+            has_experience: editHasExperience,
+            no_experience_description: editNoExpDescription || null,
+            is_visible: editIsVisible,
+        });
+    };
+
+    const handleHeaderChange = (value: string) => {
+        setEditHeader(value);
+        if (headerError && value.trim()) setHeaderError(false);
+    };
 
     return (
         <div className="flex flex-col gap-6">
@@ -85,17 +118,7 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                             size="hug36"
                             icon={<Icon name="check" size={14} />}
                             className="text-[13px] font-semibold gap-1.5 rounded-xl"
-                            onClick={() =>
-                                onSave?.({
-                                    header: editHeader,
-                                    role: data.resume.role,
-                                    about: editAbout || null,
-                                    cover_letter: editCoverLetter || null,
-                                    has_experience: editHasExperience,
-                                    no_experience_description: editNoExpDescription || null,
-                                    is_visible: editIsVisible,
-                                })
-                            }
+                            onClick={handleSaveClick}
                         >
                             Сохранить
                         </Button>
@@ -108,8 +131,11 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                 role={data.resume.role}
                 isEditing={isEditing}
                 editHeader={editHeader}
-                onHeaderChange={setEditHeader}
+                onHeaderChange={handleHeaderChange}
+                headerError={headerError}
                 onEdit={onEdit}
+                onShare={onShare}
+                onDelete={onDelete}
             />
 
             {(data.resume.cover_letter || isEditing) && (
@@ -126,7 +152,7 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     {isEditing ? (
                         <ExperienceTimeline
                             experiences={data.experiences}
-                            isEditing
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                             hasExperience={editHasExperience}
                             noExperienceDescription={editNoExpDescription}
@@ -136,8 +162,8 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     ) : data.experiences.length > 0 ? (
                         <ExperienceSection experiences={data.experiences} />
                     ) : !data.resume.has_experience && data.resume.no_experience_description ? (
-                        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
-                            <h3 className="text-lg font-semibold tracking-tight text-[#222] mb-3">
+                        <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
+                            <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-3">
                                 Опыт работы
                             </h3>
                             <p className="text-sm text-gray-600">Нет опыта</p>
@@ -145,7 +171,14 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                                 {data.resume.no_experience_description}
                             </p>
                         </div>
-                    ) : null}
+                    ) : (
+                        <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
+                            <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-3">
+                                Опыт работы
+                            </h3>
+                            <p className="text-sm text-gray-600">Нет опыта</p>
+                        </div>
+                    )}
                     {data.resume.about && !isEditing && <AboutCard content={data.resume.about} />}
                     {isEditing && (
                         <AboutCard
@@ -161,35 +194,35 @@ export const ResumePage = ({ data, isEditing, onEdit, onSave, onCancel }: Props)
                     {(data.links.length > 0 || isEditing) && (
                         <PortfolioCard
                             links={data.links}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.educations.length > 0 || isEditing) && (
                         <EducationCard
                             educations={data.educations}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.languages.length > 0 || isEditing) && (
                         <LanguagesCard
                             languages={data.languages}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.skills.length > 0 || isEditing) && (
                         <SkillsCard
                             skills={data.skills}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}
                     {(data.interests.length > 0 || isEditing) && (
                         <InterestsCard
                             interests={data.interests}
-                            isEditing={isEditing}
+                            isEditing={sectionsEditable}
                             resumeId={data.resume.id}
                         />
                     )}

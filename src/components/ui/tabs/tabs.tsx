@@ -28,7 +28,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                 ref={ref}
                 className={cn(
                     "inline-flex p-1 bg-[--color-gray-100] rounded-[10px]",
-                    "w-full",
+                    "w-full flex-wrap",
                     className,
                 )}
                 {...props}
@@ -48,7 +48,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                                     "flex items-center justify-center",
                                     "text-[--grey-4]",
                                     "px-[6.5px]", // горизонтальные отступы 6.5px
-                                    isActive && "bg-white shadow-sm",
+                                    isActive && "bg-app-surface shadow-sm",
                                     isDisabled && "opacity-50 cursor-not-allowed",
                                     tabClassName,
                                 )}
@@ -64,10 +64,10 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                             onClick={() => !isDisabled && onValueChange(tab.value)}
                             disabled={isDisabled}
                             className={cn(
-                                "flex-1 h-8 rounded-[10px] text-[13px] font-medium transition-all",
+                                "flex-auto h-8 rounded-[10px] text-[13px] font-medium transition-all whitespace-nowrap",
                                 "flex items-center justify-center",
                                 "px-1",
-                                isActive && "bg-white shadow-sm text-gray-900",
+                                isActive && "bg-app-surface shadow-sm text-gray-900",
                                 "text-gray-500 hover:text-gray-700",
                                 isDisabled && "opacity-50 cursor-not-allowed",
                                 tabClassName,

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Copy, Check } from "lucide-react";
 
 interface DangerZoneProps {
     title?: string;
@@ -30,6 +31,22 @@ export const DangerZone = ({
 }: DangerZoneProps) => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [typedName, setTypedName] = useState("");
+    const [nameCopied, setNameCopied] = useState(false);
+
+    const handleCopyName = async () => {
+        try {
+            await navigator.clipboard.writeText(confirmationName);
+        } catch {
+            const el = document.createElement("textarea");
+            el.value = confirmationName;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+        }
+        setNameCopied(true);
+        setTimeout(() => setNameCopied(false), 1500);
+    };
 
     const handleOpenChange = (open: boolean) => {
         setConfirmOpen(open);
@@ -61,9 +78,18 @@ export const DangerZone = ({
                     </DialogHeader>
                     <p className="text-sm text-gray-600">{confirmDescription}</p>
                     <div className="mt-4 space-y-2">
-                        <Label>
+                        <Label className="inline-flex items-center gap-1.5">
                             Введите{" "}
                             <span className="font-semibold text-red-600">{confirmationName}</span>{" "}
+                            <button
+                                type="button"
+                                onClick={handleCopyName}
+                                className="inline-flex items-center text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                                title="Скопировать название"
+                                aria-label="Скопировать название"
+                            >
+                                {nameCopied ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
                             для подтверждения:
                         </Label>
                         <Input

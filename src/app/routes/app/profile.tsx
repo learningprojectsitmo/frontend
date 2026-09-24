@@ -1,21 +1,31 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
-import { mapResumeFromApi } from "@/features/profile/components/resume-card";
+import { ProfileEditForm } from "@/features/profile/components/profile-edit-form";
+import { mapResumeFromApi, type ResumeData } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
+import { useUpdateResume, useDeleteResume, shareResume } from "@/lib/resume";
 import { paths } from "@/config/paths";
 import { ResponsesSection } from "@/features/profile/components/responses-section";
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
+import {
+    useResponses,
+    useInvitations,
+    usePublicProfile,
+} from "@/features/profile/api/use-profile-data";
 import { SpacesSection } from "@/features/profile/components/spaces-section";
 import { ProjectsSection } from "@/features/profile/components/projects-section";
-
-const mainTabs = [
+import { ProfileActivity } from "@/features/profile/components/profile-activity";
+import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
+const baseMainTabs = [
     { value: "resume", label: "Резюме" },
     { value: "responses", label: "Отклики и приглашения" },
     { value: "spaces", label: "Пространства и проекты" },
 ];
+
+const otherUserTabs = baseMainTabs.filter((tab) => tab.value !== "responses");
 
 const socialsFromProfile = (
     tg: string | null,
@@ -29,28 +39,103 @@ const socialsFromProfile = (
 
 const ProfileRoute = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState("resume");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "resume");
     const { data: profile } = useProfile();
+    const profileIdParam = searchParams.get("id");
+    const isOtherUser =
+        !!profileIdParam && profile != null && Number(profileIdParam) !== profile.id;
+    const otherUserId = isOtherUser ? Number(profileIdParam) : null;
+    const { data: otherProfile } = usePublicProfile(otherUserId ?? 0, { enabled: isOtherUser });
+    const { data: responses } = useResponses();
+    const { data: invitations } = useInvitations();
+    const deleteResumeMutation = useDeleteResume();
+    const updateResumeMutation = useUpdateResume();
+    const [editing, setEditing] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
+
+    const visibleProfile = isOtherUser ? otherProfile : profile;
+
+    const pendingCount =
+        (invitations?.filter((i) => i.status === "pending").length ?? 0) +
+        (responses?.filter((r) => r.status === "accepted").length ?? 0);
+
+    const mainTabs = (isOtherUser ? otherUserTabs : baseMainTabs).map((tab) =>
+        !isOtherUser && tab.value === "responses" && pendingCount > 0
+            ? { ...tab, label: `${tab.label} (${pendingCount})` }
+            : tab,
+    );
+
+    const resumes = (visibleProfile?.resumes ?? []).map(mapResumeFromApi);
+
+    const handleShare = (id: number) => {
+        void shareResume(id);
+    };
+
+    const handleToggleVisibility = (id: number) => {
+        const r = resumes.find((item) => item.id === id);
+        if (!r) return;
+        updateResumeMutation.mutate({ id, data: { is_visible: !r.isVisible } });
+    };
+
+    const handleDeleteClick = (id: number) => {
+        setDeleteTarget(resumes.find((r) => r.id === id) ?? null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        await deleteResumeMutation.mutateAsync(deleteTarget.id);
+        setDeleteTarget(null);
+    };
+
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        setSearchParams(value === "resume" ? {} : { tab: value }, { replace: true });
+    };
 
     return (
         <ContentLayout title="Профиль и Резюме">
             <div className="mx-auto max-w-5xl p-4 sm:p-6 flex flex-col gap-5">
-                <ProfileHeader
-                    firstName={profile?.first_name ?? ""}
-                    lastName={profile?.last_name ?? ""}
-                    role={profile?.role ?? ""}
-                    phone={profile?.phone ?? ""}
-                    email={profile?.email ?? ""}
-                    socials={socialsFromProfile(
-                        profile?.tg_nickname ?? null,
-                        profile?.vk_nickname ?? null,
-                    )}
-                />
+                {isOtherUser ? (
+                    <ProfileHeader
+                        firstName={visibleProfile?.first_name ?? ""}
+                        middleName={visibleProfile?.middle_name ?? ""}
+                        lastName={visibleProfile?.last_name ?? ""}
+                        role={visibleProfile?.role ?? ""}
+                        phone={visibleProfile?.phone ?? ""}
+                        email={visibleProfile?.email ?? ""}
+                        socials={socialsFromProfile(
+                            visibleProfile?.tg_nickname ?? null,
+                            visibleProfile?.vk_nickname ?? null,
+                        )}
+                        readOnly
+                        onEdit={undefined}
+                    />
+                ) : editing ? (
+                    <ProfileEditForm onCancel={() => setEditing(false)} />
+                ) : (
+                    <ProfileHeader
+                        firstName={visibleProfile?.first_name ?? ""}
+                        middleName={visibleProfile?.middle_name ?? ""}
+                        lastName={visibleProfile?.last_name ?? ""}
+                        role={visibleProfile?.role ?? ""}
+                        phone={visibleProfile?.phone ?? ""}
+                        email={visibleProfile?.email ?? ""}
+                        socials={socialsFromProfile(
+                            visibleProfile?.tg_nickname ?? null,
+                            visibleProfile?.vk_nickname ?? null,
+                        )}
+                        readOnly={false}
+                        onEdit={() => setEditing(true)}
+                    />
+                )}
+
+                <ProfileActivity userId={otherUserId} />
 
                 <Tabs
                     tabs={mainTabs}
                     value={activeTab}
-                    onValueChange={setActiveTab}
+                    onValueChange={handleTabChange}
                     variant="text"
                     className="mb-6"
                 />
@@ -59,22 +144,33 @@ const ProfileRoute = () => {
                     <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-[7] min-w-0">
                             <ResumeList
-                                resumes={(profile?.resumes ?? []).map(mapResumeFromApi)}
+                                resumes={resumes}
+                                readOnly={isOtherUser}
                                 onResumeClick={(id) => navigate(paths.app.resume.getHref(id))}
-                                onCreateClick={() => navigate(paths.app.resume.create.getHref())}
+                                onCreateClick={
+                                    isOtherUser
+                                        ? undefined
+                                        : () => navigate(paths.app.resume.create.getHref())
+                                }
+                                onShare={isOtherUser ? undefined : handleShare}
+                                onDelete={isOtherUser ? undefined : handleDeleteClick}
+                                onToggleVisibility={
+                                    isOtherUser ? undefined : handleToggleVisibility
+                                }
                             />
                         </div>
                         <div className="flex-[3] min-w-0">
                             <AdditionalSection
-                                portfolio={profile?.portfolio ?? []}
-                                education={profile?.education ?? []}
-                                languages={profile?.languages ?? []}
+                                portfolio={visibleProfile?.portfolio ?? []}
+                                education={visibleProfile?.education ?? []}
+                                languages={visibleProfile?.languages ?? []}
+                                readOnly={isOtherUser}
                             />
                         </div>
                     </div>
                 )}
 
-                {activeTab === "responses" && (
+                {!isOtherUser && activeTab === "responses" && (
                     <div className="flex flex-col gap-10">
                         <ResponsesSection />
                         <InvitationsSection />
@@ -83,11 +179,29 @@ const ProfileRoute = () => {
 
                 {activeTab === "spaces" && (
                     <div className="flex flex-col gap-10">
-                        <SpacesSection />
-                        <ProjectsSection />
+                        <SpacesSection
+                            spaces={isOtherUser ? otherProfile?.spaces : undefined}
+                            readOnly={isOtherUser}
+                        />
+                        <ProjectsSection
+                            projects={isOtherUser ? otherProfile?.projects : undefined}
+                            readOnly={isOtherUser}
+                        />
                     </div>
                 )}
             </div>
+
+            {!isOtherUser && (
+                <ConfirmDeleteResumeDialog
+                    open={!!deleteTarget}
+                    onOpenChange={(open) => {
+                        if (!open) setDeleteTarget(null);
+                    }}
+                    resumeTitle={deleteTarget?.position ?? ""}
+                    onDelete={handleConfirmDelete}
+                    isPending={deleteResumeMutation.isPending}
+                />
+            )}
         </ContentLayout>
     );
 };

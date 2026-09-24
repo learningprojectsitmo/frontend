@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DatePicker, DatePickerClearButton } from "@/components/ui/date-picker";
 import { columnColors, baseColor } from "@/features/kanban/utils/column-styles";
 
 const allColumnColors: Record<string, { header: string }> = {
@@ -80,10 +81,26 @@ export type { TaskFormData };
 // ─────────────────────────────────────────────────────────────
 
 const PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string; badgeClass: string }> = [
-    { value: "urgent", label: "Срочный", badgeClass: "bg-red-100 text-red-700" },
-    { value: "high", label: "Высокий", badgeClass: "bg-orange-100 text-orange-700" },
-    { value: "medium", label: "Средний", badgeClass: "bg-yellow-100 text-yellow-700" },
-    { value: "low", label: "Низкий", badgeClass: "bg-green-100 text-green-700" },
+    {
+        value: "urgent",
+        label: "Срочный",
+        badgeClass: "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300",
+    },
+    {
+        value: "high",
+        label: "Высокий",
+        badgeClass: "bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300",
+    },
+    {
+        value: "medium",
+        label: "Средний",
+        badgeClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300",
+    },
+    {
+        value: "low",
+        label: "Низкий",
+        badgeClass: "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300",
+    },
     { value: "default", label: "Обычный", badgeClass: "bg-gray-100 text-gray-600" },
 ];
 const PRIORITY_MAP = Object.fromEntries(
@@ -135,7 +152,7 @@ const PropertyRow = ({
 );
 
 const MemberAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: string }) => (
-    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
         {(firstName?.[0] ?? "").toUpperCase()}
         {(lastName?.[0] ?? "").toUpperCase()}
     </div>
@@ -194,8 +211,6 @@ const fmtDateTime = (s?: string) => {
     return `${fmtDatePart(d)}  ${time}`;
 };
 
-const fmtDate = (s?: string) => (s ? fmtDatePart(new Date(s)) : null);
-
 // ─────────────────────────────────────────────────────────────
 // Утилиты
 // ─────────────────────────────────────────────────────────────
@@ -234,7 +249,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const titleRef = React.useRef<HTMLTextAreaElement | null>(null);
     const descriptionRef = React.useRef<HTMLTextAreaElement | null>(null);
-    const dueDateRef = React.useRef<HTMLInputElement | null>(null);
 
     // ── Ресайз панели ──
     const MIN_WIDTH = 560;
@@ -528,15 +542,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
         }
     };
 
-    // Открытие нативного date picker
-    const openDatePicker = () => {
-        try {
-            dueDateRef.current?.showPicker();
-        } catch {
-            dueDateRef.current?.click();
-        }
-    };
-    const { ref: registerDueDateRef, ...registerDueDateRest } = register("dueDate");
     const { ref: titleRegRef, ...titleRegRest } = register("title");
 
     // Текущая колонка
@@ -596,9 +601,9 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
                 <DialogPrimitive.Content
                     aria-describedby={undefined}
-                    style={{ width: panelWidth }}
+                    style={{ width: panelWidth, maxWidth: "100vw" }}
                     className={cn(
-                        "fixed right-0 top-0 z-50 flex h-full flex-col bg-white shadow-2xl",
+                        "fixed right-0 top-0 z-50 flex h-full flex-col bg-app-surface shadow-2xl",
                         "data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
                         "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right",
                         "duration-300",
@@ -607,12 +612,12 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                     {/* ── Ручка ресайза ── */}
                     <div
                         onMouseDown={handleResizeMouseDown}
-                        className="group absolute left-0 top-0 z-10 flex h-full w-2.5 cursor-ew-resize bg-gray-200 items-center justify-center transition-colors hover:bg-gray-300"
+                        className="group absolute left-0 top-0 z-10 flex h-full w-2.5 cursor-ew-resize items-center justify-center bg-[--app-border] transition-colors hover:bg-[--color-black-10]"
                         aria-hidden
                     >
                         <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-[2px]">
-                            <div className="h-5 w-[2px] rounded-full bg-gray-500 group-hover:bg-black transition-colors" />
-                            <div className="h-5 w-[2px] rounded-full bg-gray-500 group-hover:bg-black transition-colors" />
+                            <div className="h-5 w-[2px] rounded-full bg-[--app-muted] transition-colors group-hover:bg-[--app-text]" />
+                            <div className="h-5 w-[2px] rounded-full bg-[--app-muted] transition-colors group-hover:bg-[--app-text]" />
                         </div>
                     </div>
 
@@ -620,10 +625,10 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                         {/* ── Хедер ── */}
                         <div className="flex flex-shrink-0 items-center justify-between border-b px-6 py-3">
                             <div className="flex items-center gap-3 text-sm text-gray-500">
-                                <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-gray-100 text-black">
+                                <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-app-ghost text-app-text">
                                     <span>#{task.id}</span>
                                 </div>
-                                <div className="w-px h-6 bg-gray-300" />
+                                <div className="w-px h-6 bg-app-border" />
                                 <span>{projectName}</span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -632,7 +637,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     <DropdownMenuTrigger asChild>
                                         <button
                                             type="button"
-                                            className="rounded-md p-1 text-black transition-colors hover:bg-gray-100 focus:outline-none"
+                                            className="rounded-md p-1 text-app-text transition-colors hover:bg-app-ghost focus:outline-none"
                                             aria-label="Действия с задачей"
                                         >
                                             <MoreVertical className="h-5 w-5" />
@@ -653,7 +658,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                 </DropdownMenu>
                                 <DialogPrimitive.Close
                                     onClick={handleClose}
-                                    className="rounded-md p-1 text-black transition-colors hover:bg-gray-100 focus:outline-none"
+                                    className="rounded-md p-1 text-app-text transition-colors hover:bg-app-ghost focus:outline-none"
                                     aria-label="Закрыть"
                                 >
                                     <X className="h-5 w-5" />
@@ -691,7 +696,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                         titleRegRest.onChange?.(e);
                                         onTitleChange(e);
                                     }}
-                                    className="w-full resize-none overflow-hidden bg-transparent text-2xl font-semibold leading-snug text-gray-900 outline-none placeholder:text-gray-300 truncate focus:whitespace-normal"
+                                    className="w-full resize-none overflow-hidden bg-transparent text-2xl font-semibold leading-snug text-app-text outline-none placeholder:text-app-muted truncate focus:whitespace-normal"
                                 />
 
                                 {/* Дата создания */}
@@ -762,40 +767,25 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                         label="Дедлайн"
                                     >
                                         <div className="flex items-center gap-2 -mx-2">
-                                            <button
-                                                type="button"
-                                                onClick={openDatePicker}
-                                                className="flex-1 text-left rounded-md px-2 hover:bg-gray-100"
-                                            >
-                                                {watchDueDate ? (
-                                                    <span>{fmtDate(watchDueDate)}</span>
-                                                ) : (
-                                                    <span className="text-gray-400">Не указан</span>
-                                                )}
-                                            </button>
-                                            {watchDueDate && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setDueDate("")}
-                                                    className="flex-shrink-0 rounded p-0.5 text-gray-400 hover:text-red-500 transition-colors"
-                                                    aria-label="Сбросить дедлайн"
-                                                >
-                                                    <X className="h-3.5 w-3.5" />
-                                                </button>
-                                            )}
-                                            <input
-                                                type="date"
-                                                {...registerDueDateRest}
-                                                ref={(el) => {
-                                                    registerDueDateRef(el);
-                                                    dueDateRef.current = el;
-                                                }}
-                                                onChange={(e) => {
-                                                    registerDueDateRest.onChange?.(e);
-                                                    setDueDate(e.target.value);
-                                                }}
-                                                className="sr-only"
+                                            <DatePicker
+                                                value={watchDueDate ? new Date(watchDueDate) : null}
+                                                onChange={(d) =>
+                                                    setDueDate(
+                                                        `${d.getFullYear()}-${String(
+                                                            d.getMonth() + 1,
+                                                        ).padStart(2, "0")}-${String(
+                                                            d.getDate(),
+                                                        ).padStart(2, "0")}`,
+                                                    )
+                                                }
+                                                placeholder="Не указан"
+                                                className="flex-1 justify-between rounded-lg px-2 hover:bg-app-ghost"
                                             />
+                                            {watchDueDate && (
+                                                <DatePickerClearButton
+                                                    onClick={() => setDueDate("")}
+                                                />
+                                            )}
                                         </div>
                                     </PropertyRow>
 
@@ -827,7 +817,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                             {selectedAssignees.map((m) => (
                                                 <div
                                                     key={m.id}
-                                                    className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700"
+                                                    className="group flex items-center gap-1.5 rounded-full bg-blue-50 py-0.5 pl-1 pr-2 text-xs text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
                                                 >
                                                     <MemberAvatar
                                                         firstName={m.firstName}
@@ -933,7 +923,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                                     badgeClass,
                                                                 )}
                                                             >
-                                                                <div className="h-3 w-3 rounded-full bg-white"></div>
+                                                                <div className="h-3 w-3 rounded-full bg-app-surface"></div>
                                                                 {label}
                                                             </span>
                                                         </DropdownMenuItem>
@@ -978,7 +968,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                 placeholder={
                                                     tagsArray.length === 0 ? "Добавить тег..." : ""
                                                 }
-                                                className="min-w-[80px] flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
+                                                className="min-w-[80px] flex-1 bg-transparent text-sm text-app-text outline-none placeholder:text-app-muted"
                                             />
                                         </div>
                                     </PropertyRow>
@@ -1011,7 +1001,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                         onBlur={onDescriptionBlur}
                                         placeholder="Напишите описание задачи..."
                                         rows={4}
-                                        className="w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed text-gray-700 outline-none placeholder:text-gray-400"
+                                        className="w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed text-app-text outline-none placeholder:text-app-muted"
                                         onInput={(e) => {
                                             const el = e.currentTarget;
                                             el.style.height = "auto";
@@ -1091,7 +1081,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                     .then(() => handleClose())
                                     .catch(() => {});
                             }}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/50"
                         >
                             Удалить
                         </Button>

@@ -8,10 +8,10 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
-import { useResetWithPassword } from "@/lib/auth";
+import { useResetWithPassword, useResetEmailByToken } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
-import { toast } from "sonner";
+import { notifyError } from "@/components/ui/notifications";
 
 const resetPasswordFormSchema = z
     .object({
@@ -35,9 +35,11 @@ type ResetPasswordFormProps = {
 export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
+    const token = searchParams.get("token") ?? "";
 
     const [showPassword, setShowPassword] = useState(false);
     const resetEmail = useResetWithPassword({ onSuccess });
+    const email = useResetEmailByToken(token);
     const form = useForm<ResetPasswordFormInput>({
         resolver: zodResolver(resetPasswordFormSchema),
         defaultValues: {
@@ -50,18 +52,18 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
         resetEmail.mutate(
             {
                 password: values.password,
-                special_token: "12345678-1234-1234-1234-123456789012",
-            }, //вместо статического токена должен быть реальный токен из ссылки на почту, который можно получить через useSearchParams
+                special_token: token,
+            },
             {
                 onError: () => {
-                    toast.error("Ошибка при сбросе пароля");
+                    notifyError("Ошибка при сбросе пароля");
                 },
             },
         );
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link
                     to={paths.auth.resetEmail.getHref(redirectTo)}
@@ -69,13 +71,19 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
                 >
                     <Icon name="arrow-left" width={20} height={20} />
                 </Link>
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
                 <div className="w-9 h-9"></div>
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Создание нового пароля
             </h2>
-            <h4 className="mb-12 text-body font-medium font-sans text-[#4A5565]">
+            <h4 className="mb-12 text-body font-medium font-sans text-gray-600">
                 Создайте новый пароль для своей учетной записи
             </h4>
 
@@ -83,15 +91,14 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                         name="email"
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormItem>
                                 <FormControl>
                                     <Input
                                         placeholder="E-mail"
                                         {...field}
-                                        error={!!fieldState.error}
+                                        value={email}
                                         className="h-12 border-gray-300"
-                                        helperText={fieldState.error?.message}
                                         disabled
                                     />
                                 </FormControl>
@@ -162,12 +169,7 @@ export const ResetPasswordForm = ({ onSuccess }: ResetPasswordFormProps) => {
                         )}
                     />
 
-                    <Button
-                        type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={resetEmail.isPending || resetEmail.isSuccess}
-                    >
+                    <Button variant="dark" size="fill48" type="submit">
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>
                 </form>

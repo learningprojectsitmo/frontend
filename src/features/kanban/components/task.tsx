@@ -6,6 +6,7 @@ import type { KanbanTaskProps } from "../types";
 export const KanbanTask: React.FC<KanbanTaskProps> = ({
     task,
     isDragging = false,
+    canEdit = false,
     onClick,
     onDragStart,
     onToggleSubtask,
@@ -87,18 +88,19 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                 className={cn(
                     "rounded-lg shadow-sm border border-gray-200",
                     "hover:shadow-md transition-all",
-                    "relative group cursor-pointer",
+                    "relative group",
+                    canEdit ? "cursor-pointer" : "cursor-default",
                     isDragging && "cursor-grabbing",
                     "overflow-hidden",
                 )}
             >
                 <div
                     className={cn(
-                        task.priority === "urgent" && "bg-red-50",
-                        task.priority === "high" && "bg-orange-50",
-                        task.priority === "medium" && "bg-yellow-50",
-                        task.priority === "low" && "bg-green-50",
-                        task.priority === "default" && "bg-[hsl(218,45%,94%)]",
+                        task.priority === "urgent" && "bg-red-50 dark:bg-red-950/40",
+                        task.priority === "high" && "bg-orange-50 dark:bg-orange-950/40",
+                        task.priority === "medium" && "bg-yellow-50 dark:bg-yellow-950/40",
+                        task.priority === "low" && "bg-green-50 dark:bg-green-950/40",
+                        task.priority === "default" && "bg-[hsl(218,45%,94%)] dark:bg-app-ghost",
                         "p-3",
                     )}
                 >
@@ -106,7 +108,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             {/* ID задачи */}
-                            <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-white text-black">
+                            <div className="px-1 py-0.5 rounded-lg text-xs font-medium bg-app-surface text-app-text">
                                 {"#" + task.id}
                             </div>
                             {/* Дедлайн */}
@@ -116,8 +118,8 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                         "flex items-center",
                                         "px-1 py-0.5 rounded-lg text-xs font-medium",
                                         isOverdue
-                                            ? "bg-red-100 text-red-700"
-                                            : "bg-white text-black",
+                                            ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                                            : "bg-app-surface text-app-text",
                                     )}
                                 >
                                     <AlarmClockCheck className="mr-1 h-3.5 w-3.5" />
@@ -131,8 +133,8 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                                         isOverdue
                                             ? "bg-red-600 text-white"
                                             : daysLeft! <= 3
-                                              ? "bg-red-200 text-orange-900"
-                                              : "bg-orange-200 text-orange-900",
+                                              ? "bg-red-200 text-orange-900 dark:bg-red-950/60 dark:text-red-300"
+                                              : "bg-orange-200 text-orange-900 dark:bg-orange-950/60 dark:text-orange-300",
                                     )}
                                 >
                                     {dueLabel}
@@ -141,9 +143,14 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
                         </div>
 
                         {/* Drag Handle */}
-                        <div data-drag-handle="task" className="cursor-grab active:cursor-grabbing">
-                            <GripVertical className="h-4 w-4 text-gray-400" />
-                        </div>
+                        {canEdit && (
+                            <div
+                                data-drag-handle="task"
+                                className="cursor-grab active:cursor-grabbing"
+                            >
+                                <GripVertical className="h-4 w-4 text-gray-400" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Название задачи */}
@@ -168,17 +175,18 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Подзадачи */}
                 {task.subtasks && task.subtasks.length > 0 && (
-                    <div className="p-3 bg-white border-t border-gray-200">
+                    <div className="p-3 bg-app-surface border-t border-gray-200">
                         <div className="space-y-2">
                             {task.subtasks.slice(0, 3).map((subtask) => (
                                 <div key={subtask.id} className="flex items-center gap-2 min-w-0">
                                     <input
                                         type="checkbox"
                                         checked={subtask.isCompleted}
-                                        onChange={(e) => {
+                                        onClick={(e) => {
                                             e.stopPropagation();
                                             onToggleSubtask?.(subtask.id);
                                         }}
+                                        readOnly
                                         className="w-4 h-4 rounded border-gray-200 flex-shrink-0"
                                     />
                                     <span
@@ -202,7 +210,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
 
                 {/* Теги (нижняя часть) - показываем только если есть теги */}
                 {tagsArray.length > 0 && (
-                    <div className="px-3 py-2 bg-[hsl(218,45%,94%)] border-t border-gray-200">
+                    <div className="px-3 py-2 bg-[hsl(218,45%,94%)] dark:bg-app-ghost border-t border-gray-200">
                         <div className="flex flex-wrap gap-2">
                             {tagsArray.slice(0, 3).map((tag, idx) => (
                                 <span

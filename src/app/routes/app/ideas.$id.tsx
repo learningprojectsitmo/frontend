@@ -90,7 +90,7 @@ const IdeasDetailRoute = () => {
                     Назад к идеям
                 </Link>
 
-                <div className="bg-white border border-[--color-black-10] rounded-[14px] p-8">
+                <div className="bg-app-surface border border-[--color-black-10] rounded-[14px] p-8">
                     <div className="flex items-start gap-6">
                         <VotePanel
                             votes={idea.votes}
@@ -155,7 +155,7 @@ const IdeasDetailRoute = () => {
                     </div>
                 </div>
 
-                <div className="mt-6 bg-white border border-[--color-black-10] rounded-[14px] p-6">
+                <div className="mt-6 bg-app-surface border border-[--color-black-10] rounded-[14px] p-6">
                     <h2 className="text-lg font-semibold text-[--grey-4] mb-5 flex items-center gap-2">
                         <MessageSquare size={18} />
                         Комментарии
@@ -212,7 +212,7 @@ const IdeasDetailRoute = () => {
                                 }
                             }}
                             placeholder="Напишите комментарий..."
-                            className="flex-1 h-11 px-4 bg-white border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
+                            className="flex-1 h-11 px-4 bg-app-surface border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
                         />
                         <Button
                             variant="dark"

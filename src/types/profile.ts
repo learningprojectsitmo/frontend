@@ -1,3 +1,5 @@
+import type { ProfileResponse } from "@/types/api";
+
 export type ResponseItem = {
     id: number;
     projectId: number;
@@ -7,7 +9,7 @@ export type ResponseItem = {
     resumeUrl: string;
     resumeTitle: string;
     date: string;
-    status: "pending" | "accepted" | "rejected" | "withdrawn";
+    status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
 };
 
 export type InvitationItem = {
@@ -20,7 +22,8 @@ export type InvitationItem = {
     resumeUrl: string;
     resumeTitle: string;
     date: string;
-    status: "pending" | "accepted" | "rejected";
+    status: "pending" | "accepted" | "rejected" | "in_team";
+    allowMultiProjectParticipation: boolean;
 };
 
 export type ProfileSpace = {
@@ -41,6 +44,11 @@ export type ProfileProject = {
     startDate: string;
     membersCount: number;
     roles: string[];
+};
+
+export type PublicProfile = ProfileResponse & {
+    spaces: ProfileSpace[];
+    projects: ProfileProject[];
 };
 
 export type ProfileFiltersState = {

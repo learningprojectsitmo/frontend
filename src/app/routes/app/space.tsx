@@ -1,11 +1,11 @@
 import { ContentLayout } from "@/components/layouts";
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import { SpaceHeader } from "@/features/spaces/components/space-header";
 import { SpaceProjectList } from "@/features/spaces/components/space-project-list";
+import { SpaceResumeSection } from "@/features/spaces/components/space-resume-section";
 import { Spinner } from "@/components/ui/spinner/spinner";
-import { SpaceSettingsModal } from "@/features/spaces/components/space-settings-modal";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
@@ -14,16 +14,24 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuShortcut,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Search, Check, X, Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     useSpacesList,
     useWorkspaceParticipants,
+    useWorkspaceResumes,
+    useWorkspaceResumeFilters,
     useRemoveWorkspaceParticipant,
+    useSpaceSettings,
+    type ResumeParams,
 } from "@/lib/spaces";
-import { useProjectsList } from "@/lib/projects";
+import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { ROLE_LABELS } from "@/lib/roles";
 import { toast } from "sonner";
 import {
     Breadcrumb,
@@ -81,7 +89,7 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
     return (
         <div ref={ref} className="relative">
             {open && (
-                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
+                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] max-w-[calc(100vw-1rem)] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[14px] font-semibold text-app-text">
@@ -109,14 +117,14 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
                     <div className="relative mb-2">
                         <Search
                             size={14}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                         />
                         <input
                             type="text"
                             placeholder="Поиск"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB]"
+                            className="w-full h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB]"
                         />
                     </div>
 
@@ -125,13 +133,13 @@ function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdown
                         {filteredOptions.map((opt) => (
                             <label
                                 key={opt.value}
-                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                             >
                                 <div
                                     className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center transition-colors ${
                                         selected.includes(opt.value)
                                             ? "bg-[#2563EB] border-[#2563EB]"
-                                            : "border-[#D1D5DB]"
+                                            : "border-gray-300"
                                     }`}
                                 >
                                     {selected.includes(opt.value) && (
@@ -173,14 +181,44 @@ const SpaceRoute = () => {
     const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
     const { data: user } = useUser();
 
-    const [settingsOpen, setSettingsOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
     const isAuthor = spaceData?.author_id === user?.id;
 
+    const createProjectMutation = useCreateProject();
+    const projectTypes = useProjectTypes(spaceData?.id);
+    const navigate = useNavigate();
+
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+    const handleCreateProject = useCallback(
+        (typeId: number | null) => {
+            if (!spaceData) return;
+            createProjectMutation.mutate(
+                {
+                    name: "Новый проект",
+                    description: "",
+                    workspace_id: spaceData.id,
+                    project_type_id: typeId,
+                },
+                {
+                    onSuccess: (data) => {
+                        navigate(`/app/project?id=${data.id}&edit=true`);
+                    },
+                    onError: () => {
+                        toast.error("Не удалось создать проект");
+                    },
+                },
+            );
+        },
+        [spaceData, createProjectMutation, navigate],
+    );
+
     // Participants state
     const workspaceId = spaceData?.id ?? 0;
+    const { data: spaceSettings } = useSpaceSettings(workspaceId, !!spaceData);
+    const isPrivate = spaceSettings?.visibility === "private";
     const [participantSearch, setParticipantSearch] = useState("");
     const [participantPage, setParticipantPage] = useState(1);
     const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -198,6 +236,53 @@ const SpaceRoute = () => {
         search: participantSearch || undefined,
         project_id: projectIdFilter,
     });
+
+    // Resume filters state
+    const [resumeSearch, setResumeSearch] = useState("");
+    const debouncedResumeSearch = useDebouncedValue(resumeSearch, 300);
+    const [selectedResumeSkills, setSelectedResumeSkills] = useState<string[]>([]);
+    const [selectedResumeInterests, setSelectedResumeInterests] = useState<string[]>([]);
+    const [resumePage, setResumePage] = useState(1);
+    const resumeLimit = 10;
+
+    const resumeParams: ResumeParams = {
+        page: resumePage,
+        limit: resumeLimit,
+        search: debouncedResumeSearch || undefined,
+        skills: selectedResumeSkills.length > 0 ? selectedResumeSkills : undefined,
+        interests: selectedResumeInterests.length > 0 ? selectedResumeInterests : undefined,
+    };
+
+    const { data: resumesData, isLoading: isResumesLoading } = useWorkspaceResumes(
+        workspaceId,
+        resumeParams,
+    );
+    const { data: resumeFiltersData } = useWorkspaceResumeFilters(workspaceId);
+
+    const handleResumeFiltersReset = useCallback(() => {
+        setSelectedResumeSkills([]);
+        setSelectedResumeInterests([]);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeSearchChange = useCallback((value: string) => {
+        setResumeSearch(value);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeSkillsChange = useCallback((skills: string[]) => {
+        setSelectedResumeSkills(skills);
+        setResumePage(1);
+    }, []);
+
+    const handleResumeInterestsChange = useCallback((interests: string[]) => {
+        setSelectedResumeInterests(interests);
+        setResumePage(1);
+    }, []);
+
+    const handleResumePageChange = useCallback((page: number) => {
+        setResumePage(page);
+    }, []);
 
     const removeParticipantMutation = useRemoveWorkspaceParticipant();
 
@@ -225,8 +310,10 @@ const SpaceRoute = () => {
         if (!participantsData?.items) return [];
         return participantsData.items.map((m: WorkspaceMember) => ({
             id: m.id,
+            userId: m.user_id,
             name: m.name,
-            role: m.role,
+            role: ROLE_LABELS[m.role] ?? m.role,
+            workspaceRole: m.workspace_role,
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.created_at,
@@ -238,6 +325,15 @@ const SpaceRoute = () => {
         }));
     }, [participantsData, isAuthor, user?.id]);
 
+    const isManager =
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "manager" ||
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "admin" ||
+        participantsData?.items.find((m) => m.user_id === user?.id)?.workspace_role === "teacher";
+
+    const hasCreatedProject = dataProjects?.items.some((p) => p.author_id === user?.id) ?? false;
+
+    const canCreateProject = isManager && !hasCreatedProject;
+
     // Project options for filter
     const projectOptions = useMemo(() => {
         if (!dataProjects?.items) return [];
@@ -246,14 +342,6 @@ const SpaceRoute = () => {
 
     const totalParticipants = participantsData?.total ?? 0;
     const totalPages = participantsData?.total_pages ?? 0;
-
-    const headerList = useMemo(() => {
-        const base = ["Имя", "Роль", "Контакты", "Резюме", "Дата добавления"];
-        if (projectOptions.length > 0) {
-            base.splice(1, 0, "Проекты");
-        }
-        return base;
-    }, [projectOptions]);
 
     const handleFilterReset = useCallback(() => {
         setSelectedProjects([]);
@@ -304,9 +392,54 @@ const SpaceRoute = () => {
                 <SpaceHeader
                     spaceData={spaceData}
                     isAuthor={isAuthor}
-                    onSettingsOpen={() => setSettingsOpen(true)}
+                    canCreateProject={canCreateProject}
+                    isManager={isManager}
+                    hasCreatedProject={hasCreatedProject}
+                    onSettingsOpen={() => navigate(`/app/space/settings?id=${spaceData.id}`)}
                     onShareOpen={() => setShareOpen(true)}
+                    onCreateProject={() => setCreateDialogOpen(true)}
                 />
+
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                    <DialogContent className="sm:max-w-[520px]">
+                        <DialogHeader>
+                            <DialogTitle>Новый проект</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Выберите тип проекта. Он определит набор этапов выполнения.
+                        </p>
+                        <div className="space-y-2 mt-3">
+                            {spaceSettings?.require_project_type_on_create === false && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleCreateProject(null)}
+                                    className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
+                                >
+                                    <span className="text-[14px] font-semibold text-gray-900">
+                                        Без типа
+                                    </span>
+                                </button>
+                            )}
+                            {projectTypes.data?.map((pt) => (
+                                <button
+                                    key={pt.id}
+                                    type="button"
+                                    onClick={() => handleCreateProject(pt.id)}
+                                    className="w-full text-left p-3 rounded-xl border border-gray-200 bg-app-surface hover:border-gray-300"
+                                >
+                                    <div className="text-[14px] font-semibold text-gray-900">
+                                        {pt.name}
+                                    </div>
+                                    {pt.stages && pt.stages.length > 0 && (
+                                        <div className="text-[12px] text-gray-500 mt-1">
+                                            Этапы: {pt.stages.map((s) => s.name).join(" → ")}
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 <SpaceProjectList
                     projects={dataProjects?.items || []}
@@ -315,60 +448,97 @@ const SpaceRoute = () => {
                     isError={isError}
                 />
 
+                <SpaceResumeSection
+                    items={resumesData?.items || []}
+                    isLoading={isResumesLoading}
+                    workspaceId={workspaceId}
+                    isPrivate={isPrivate}
+                    search={resumeSearch}
+                    onSearchChange={handleResumeSearchChange}
+                    selectedSkills={selectedResumeSkills}
+                    onSkillsChange={handleResumeSkillsChange}
+                    selectedInterests={selectedResumeInterests}
+                    onInterestsChange={handleResumeInterestsChange}
+                    availableSkills={resumeFiltersData?.skills || []}
+                    availableInterests={resumeFiltersData?.interests || []}
+                    onResetFilters={handleResumeFiltersReset}
+                    total={resumesData?.total ?? 0}
+                    page={resumePage}
+                    totalPages={resumesData?.total_pages ?? 0}
+                    onPageChange={handleResumePageChange}
+                />
+
                 {/* Participants section */}
                 <section className="mt-14">
-                    <div className="mb-6 flex flex-col gap-5">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-[32px] font-bold text-app-text leading-tight">
+                    <div className="mb-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-[32px] font-bold text-app-text leading-tight shrink-0">
                                 Список участников ({totalParticipants})
                             </h2>
 
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="dark"
-                                    size="hug36"
-                                    className="font-sans text-[13px] font-semibold"
-                                    onClick={() => setShareOpen(true)}
-                                >
-                                    Пригласить
-                                </Button>
-
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="hug36" className="px-2">
-                                            <Ellipsis className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>Экспорт списка</DropdownMenuItem>
-                                        <DropdownMenuItem>Импорт участников</DropdownMenuItem>
-                                        <DropdownMenuItem>Массовое удаление</DropdownMenuItem>
-                                        <DropdownMenuItem>Настройки ролей</DropdownMenuItem>
-                                        <DropdownMenuItem>Управление доступами</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3">
-                            <SearchBar
-                                placeholder="Поиск участников"
-                                onChange={setParticipantSearch}
-                                value={participantSearch}
-                                className="w-[280px]"
-                            />
-
-                            {projectOptions.length > 0 && (
-                                <FilterDropdown
-                                    options={projectOptions}
-                                    selected={selectedProjects}
-                                    onChange={(v) => {
-                                        setSelectedProjects(v);
-                                        setParticipantPage(1);
-                                    }}
-                                    onReset={handleFilterReset}
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <SearchBar
+                                    placeholder="Поиск участников"
+                                    onChange={setParticipantSearch}
+                                    value={participantSearch}
+                                    className="w-[200px]"
                                 />
-                            )}
+
+                                {projectOptions.length > 0 && (
+                                    <FilterDropdown
+                                        options={projectOptions}
+                                        selected={selectedProjects}
+                                        onChange={(v) => {
+                                            setSelectedProjects(v);
+                                            setParticipantPage(1);
+                                        }}
+                                        onReset={handleFilterReset}
+                                    />
+                                )}
+
+                                {isAuthor && (
+                                    <Button
+                                        variant="dark"
+                                        size="hug36"
+                                        className="font-sans text-[13px] font-semibold"
+                                        onClick={() => setShareOpen(true)}
+                                    >
+                                        Пригласить
+                                    </Button>
+                                )}
+
+                                {isAuthor && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="hug36" className="px-2">
+                                                <Ellipsis className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-[220px]">
+                                            <DropdownMenuItem disabled>
+                                                Экспорт списка
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Импорт участников
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Массовое удаление
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Настройки ролей
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem disabled>
+                                                Управление доступами
+                                                <DropdownMenuShortcut>Скоро</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -389,7 +559,6 @@ const SpaceRoute = () => {
                     ) : (
                         <>
                             <TableMembers
-                                headerList={headerList}
                                 members={mappedMembers}
                                 removeMember={handleRemoveParticipant}
                                 showProject
@@ -403,7 +572,7 @@ const SpaceRoute = () => {
                                             setParticipantPage((p) => Math.max(1, p - 1))
                                         }
                                         disabled={participantPage <= 1}
-                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Назад
                                     </button>
@@ -418,7 +587,7 @@ const SpaceRoute = () => {
                                         .map((p, idx, arr) => (
                                             <span key={p} className="flex items-center">
                                                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                                    <span className="px-1 text-[#9CA3AF] text-sm">
+                                                    <span className="px-1 text-gray-400 text-sm">
                                                         ...
                                                     </span>
                                                 )}
@@ -427,7 +596,7 @@ const SpaceRoute = () => {
                                                     className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
                                                         p === participantPage
                                                             ? "bg-[#2563EB] text-white"
-                                                            : "text-[#6B7280] hover:bg-gray-50"
+                                                            : "text-gray-500 hover:bg-gray-50"
                                                     }`}
                                                 >
                                                     {p}
@@ -440,7 +609,7 @@ const SpaceRoute = () => {
                                             setParticipantPage((p) => Math.min(totalPages, p + 1))
                                         }
                                         disabled={participantPage >= totalPages}
-                                        className="px-3 py-1.5 text-sm font-medium text-[#6B7280] rounded-[8px] border border-[#E5E7EB] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Вперёд
                                     </button>
@@ -451,11 +620,6 @@ const SpaceRoute = () => {
                 </section>
             </div>
 
-            <SpaceSettingsModal
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
-                space={spaceData}
-            />
             <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} spaceId={spaceData.id} />
         </ContentLayout>
     );

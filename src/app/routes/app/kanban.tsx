@@ -16,6 +16,7 @@ import {
     useCreateSubtask,
     useUpdateSubtask,
     useDeleteSubtask,
+    useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 // Todo поменять хук
 import { useUsers } from "@/features/kanban/hooks/useUsers";
 import { useUser } from "@/lib/auth";
+import { useProject } from "@/lib/projects";
 import {
     defaultFilterState,
     filterColumns,
@@ -40,8 +42,22 @@ export const KanbanRoute = () => {
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
-    const { data: projectMembers } = useUsers();
+    const { data: kanbanAllUsers } = useUsers();
     const { data: currentUser } = useUser();
+    const { data: projectData } = useProject(spaceId || "");
+
+    const isTeamMember = useMemo(
+        () =>
+            !!currentUser &&
+            (projectData?.author_id === currentUser.id ||
+                (projectData?.members ?? []).some((m) => m.user_id === currentUser.id)),
+        [currentUser, projectData],
+    );
+
+    const projectMembers = useMemo(() => {
+        const memberUserIds = new Set((projectData?.members ?? []).map((m) => m.user_id));
+        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
+    }, [kanbanAllUsers, projectData]);
 
     // Отфильтрованные колонки
     const filteredColumns = useMemo(
@@ -71,6 +87,7 @@ export const KanbanRoute = () => {
     const createSubtask = useCreateSubtask();
     const updateSubtask = useUpdateSubtask();
     const deleteSubtask = useDeleteSubtask();
+    const toggleSubtask = useToggleSubtask();
 
     // Автосейв задачи
     const handleTaskAutoSave = useCallback(
@@ -300,8 +317,16 @@ export const KanbanRoute = () => {
         () => ({
             columns: filteredColumns,
             isLoading,
+            canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
-            onTaskClick: openEditPanel,
+            onTaskClick: isTeamMember ? openEditPanel : undefined,
+            onToggleSubtask: isTeamMember
+                ? (subtaskId: number) => {
+                      toggleSubtask.mutate(subtaskId, {
+                          onError: () => toast.error("Ошибка при изменении подзадачи"),
+                      });
+                  }
+                : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -313,8 +338,10 @@ export const KanbanRoute = () => {
         [
             filteredColumns,
             isLoading,
+            isTeamMember,
             handleTaskMove,
             openEditPanel,
+            toggleSubtask,
             handleAddTask,
             handleDeleteTask,
             handleRenameColumn,
@@ -362,7 +389,7 @@ export const KanbanRoute = () => {
                             {[1, 2, 3].map((i) => (
                                 <div
                                     key={i}
-                                    className="w-64 flex-shrink-0 rounded-lg border border-gray-200 bg-white p-2"
+                                    className="w-64 flex-shrink-0 rounded-lg border border-gray-200 bg-app-surface p-2"
                                 >
                                     <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
                                     <div className="space-y-2">
@@ -385,7 +412,7 @@ export const KanbanRoute = () => {
         <ContentLayout title={spaceName}>
             {/* Header Section */}
             <div className="mx-auto max-w-7xl p-6">
-                <header className="flex items-center justify-between gap-4">
+                <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{spaceName}</h1>
                         <p className="text-sm text-gray-500">
@@ -406,7 +433,7 @@ export const KanbanRoute = () => {
             </div>
             {/* Область канбан-доски без лишних отступов снизу */}
             {/* TODO: заменить pb-20 на нормальное значение, чтобы фон занимал все оставщееся пространство*/}
-            <div className="min-h-full bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px]">
+            <div className="min-h-full bg-[hsl(216,22%,95%)] dark:bg-[#0b1226] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] dark:bg-[radial-gradient(#2a3448_2px,transparent_1px)] [background-size:16px_16px]">
                 <div className="mx-auto max-w-7xl p-6 pb-20 overflow-x-auto">
                     <section aria-label="Канбан-доска с задачами">
                         <div className="min-w-min">

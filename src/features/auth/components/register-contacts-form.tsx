@@ -2,60 +2,75 @@ import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { Checkbox } from "@/components/ui/checkbox/checkbox";
-import { useAddContacts, telegramSchema, vkSchema } from "@/lib/auth";
+import { useUpdateContacts, useUser, telegramSchema, vkSchema } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
-import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner/spinner";
+import { notifyError } from "@/components/ui/notifications";
 
 const registerContactsInputSchema = z.object({
     telegram: telegramSchema,
     vk: vkSchema,
-    showMyContacts: z.boolean().default(false),
+    showMyContacts: z.boolean().default(true),
 });
 
 type RegisterContactsFormInput = z.infer<typeof registerContactsInputSchema>;
 
 export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void }) => {
-    const addContacts = useAddContacts({ onSuccess });
+    const { data: user, isLoading } = useUser();
+    const updateContacts = useUpdateContacts(user?.id ?? 0);
+    const [showPublicityText, setShowPublicityText] = useState(true);
 
     const form = useForm<RegisterContactsFormInput>({
         resolver: zodResolver(registerContactsInputSchema),
         defaultValues: {
             telegram: "",
             vk: "",
-            showMyContacts: false,
+            showMyContacts: true,
         },
     });
 
-    const onSubmit = (values: RegisterContactsFormInput) => {
-        addContacts.mutate(
-            {
-                email: JSON.parse(sessionStorage.getItem("register") || "{}").email,
-                telegram: values.telegram,
-                vk: values.vk,
-                showMyContacts: values.showMyContacts,
-            },
-            {
-                onError: () => {
-                    toast.error("Ошибка при сохранении контактов");
-                },
-            },
-        );
+    const onSubmit = async (values: RegisterContactsFormInput) => {
+        try {
+            await updateContacts.mutateAsync(values);
+            onSuccess();
+        } catch {
+            notifyError("Ошибка при сохранении контактов");
+        }
     };
 
+    const handleSkip = () => {
+        onSuccess();
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-[300px]">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
+
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex justify-center mb-8">
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Поделитесь своими контактами
             </h2>
-            <h4 className="mb-12 text-body font-medium font-sans text-[#4A5565]">
+            <h4 className="mb-12 text-body font-medium font-sans text-gray-600">
                 Введите свой никнейм. По умолчанию ваши контакты видны другим пользователям
             </h4>
 
@@ -123,7 +138,10 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                                         <FormControl>
                                             <Checkbox
                                                 checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={(v) => {
+                                                    setShowPublicityText(Boolean(v));
+                                                    field.onChange(v);
+                                                }}
                                                 id="showMyContacts"
                                             />
                                         </FormControl>
@@ -139,23 +157,25 @@ export const RegistrationContactsForm = ({ onSuccess }: { onSuccess: () => void 
                         </div>
                     </div>
 
-                    <Button
-                        type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={addContacts.isPending}
-                    >
-                        {addContacts.isPending ? "Сохранить..." : "Сохранить"}
+                    {showPublicityText ? (
+                        <p className="text-sm text-blue-600 font-sans">
+                            Отметив эту галочку, вы разрешите другим пользователям связаться с вами.
+                            Ваши профили в Telegram и VK будут видны всем участникам.
+                        </p>
+                    ) : null}
+
+                    <Button variant="dark" size="fill48" type="submit">
+                        {updateContacts.isPending ? "Сохранить..." : "Сохранить"}
                     </Button>
 
                     <Button
-                        type="submit"
+                        type="button"
                         variant="outline"
                         className="w-full h-12 border-gray-200"
-                        asChild
-                        disabled={addContacts.isPending}
+                        onClick={handleSkip}
+                        disabled={updateContacts.isPending}
                     >
-                        {addContacts.isPending ? "Пропустить..." : "Пропустить"}
+                        Пропустить
                     </Button>
                 </form>
             </Form>

@@ -56,6 +56,22 @@ npm run lint
 
 -**Axios** — HTTP client
 
+src/
+├── app/ # Точка входа и маршруты
+│ ├── index.tsx # App компонент с провайдерами
+│ └── routes/ # Роуты приложения
+├── components/
+│ ├── layouts/ # Layout компоненты
+│ ├── ui/ # UI-kit (shadcn/ui)
+│ └── errors/ # Error boundaries
+├── config/ # Конфигурация (paths, env)
+├── lib/ # Библиотеки и утилиты
+├── hooks/ # Кастомные хуки
+├── types/ # TypeScript типы
+├── utils/ # Утилитарные функции
+└── assets/ # Статические ресурсы
+
+```
 - Interceptors for auth and error handling
 - File: `src/lib/api-client.ts`
 
@@ -84,20 +100,23 @@ For more information, see the file **[package.json](https://github.com/learningp
 ```
 
 src/
-├── app/                    # Entry point and routes
-│   ├── index.tsx          # App component with providers
-│   └── routes/            # Application routes
+├── app/ # Entry point and routes
+│ ├── index.tsx # App component with providers
+│ └── routes/ # Application routes
 ├── components/
-│   ├── layouts/           # Layout components
-│   ├── ui/                # UI-kit (shadcn/ui)
-│   └── errors/            # Error boundaries
-├── config/                # Configuration (paths, env)
-├── lib/                   # Libraries and utilities
-├── hooks/                 # Custom hooks
-├── types/                 # TypeScript types
-├── utils/                 # Utility functions
-└── assets/                # Static assets
+│ ├── layouts/ # Layout components
+│ ├── ui/ # UI-kit (shadcn/ui)
+│ └── errors/ # Error boundaries
+├── config/ # Configuration (paths, env)
+├── lib/ # Libraries and utilities
+├── hooks/ # Custom hooks
+├── types/ # TypeScript types
+├── utils/ # Utility functions
+└── assets/ # Static assets
 
+```
+
+npm run lint
 ```
 
 ## 📚 Documentation

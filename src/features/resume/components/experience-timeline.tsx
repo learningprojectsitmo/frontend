@@ -7,6 +7,7 @@ import {
     useDeleteResumeExperience,
 } from "@/lib/resume";
 import { ExperienceEditCard } from "./ExperienceEditCard";
+import { LIMITS } from "@/features/resume/validation";
 
 const INITIAL_VISIBLE = 3;
 
@@ -102,14 +103,14 @@ export const ExperienceTimeline = ({
 
     if (isEditing) {
         return (
-            <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm divide-y divide-gray-100">
+            <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm divide-y divide-gray-100">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold tracking-tight text-[#222]">
+                        <h3 className="text-lg font-semibold tracking-tight text-gray-900">
                             Опыт работы
                         </h3>
                         {totalDuration && (
-                            <span className="text-sm text-[#8A8A8A]">{totalDuration}</span>
+                            <span className="text-sm text-gray-500">{totalDuration}</span>
                         )}
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -128,13 +129,20 @@ export const ExperienceTimeline = ({
                         <p className="text-xs text-gray-500 mb-2">
                             Опишите, почему у вас нет опыта (например, вы студент, меняете сферу
                             деятельности и т.д.)
+                            {(noExperienceDescription?.length ?? 0) > 0 && (
+                                <span className="text-gray-300">
+                                    {" "}
+                                    — {noExperienceDescription?.length ?? 0} / {LIMITS.text}
+                                </span>
+                            )}
                         </p>
                         <textarea
                             value={noExperienceDescription ?? ""}
                             onChange={(e) => onNoExperienceDescriptionChange?.(e.target.value)}
                             rows={3}
                             placeholder="Расскажите о вашей ситуации..."
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-500 resize-y"
+                            maxLength={LIMITS.text}
+                            className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-blue resize-y"
                         />
                     </div>
                 ) : (
@@ -175,7 +183,8 @@ export const ExperienceTimeline = ({
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleAddNew}
-                                    className="text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors"
+                                    disabled={resumeId === 0}
+                                    className="text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-[#4F6BFF]"
                                 >
                                     + Добавить опыт
                                 </button>
@@ -191,6 +200,11 @@ export const ExperienceTimeline = ({
                                     </button>
                                 )}
                             </div>
+                            {resumeId === 0 && (
+                                <p className="text-xs text-gray-400 mt-2">
+                                    Сначала сохраните резюме, затем добавляйте опыт
+                                </p>
+                            )}
                         </div>
                     </>
                 )}

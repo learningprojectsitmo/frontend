@@ -32,14 +32,14 @@ export function IdeasSearch({ search, sort, onSearchChange, onSortChange }: Idea
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Поиск по идеям"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
+                    className="w-full h-11 pl-10 pr-4 bg-app-surface border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] placeholder:text-[--azure-46] outline-none focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
                 />
             </div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
-                        className="flex items-center gap-2 h-11 px-4 bg-white border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] outline-none hover:border-[--azure-60] focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
+                        className="flex items-center gap-2 h-11 px-4 bg-app-surface border border-[--color-black-10] rounded-[12px] text-sm text-[--grey-4] outline-none hover:border-[--azure-60] focus:border-[--azure-60] focus:ring-1 focus:ring-[--azure-60]/20 transition-colors"
                     >
                         <ArrowUpDown size={16} className="text-[--azure-46]" />
                         {sortLabels[sort]}

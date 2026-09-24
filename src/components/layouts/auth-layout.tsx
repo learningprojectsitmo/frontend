@@ -11,21 +11,25 @@ import backgroundImage from "@/assets/back-ground.svg";
 type LayoutProps = {
     children: React.ReactNode;
     title: string;
+    redirectIfAuthed?: boolean;
 };
 
-export const AuthLayout = ({ children, title }: LayoutProps) => {
+export const AuthLayout = ({ children, title, redirectIfAuthed = true }: LayoutProps) => {
     const user = useUser();
     const [searchParams] = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user.data) {
+        // На шагах регистрации (код → ФИО → контакты) пользователь уже
+        // авторизован (verify возвращает токен), но цепочка ещё не завершена —
+        // редирект в /app отключаем.
+        if (redirectIfAuthed && user.data) {
             navigate(redirectTo ? redirectTo : paths.app.spaces.getHref(), {
                 replace: true,
             });
         }
-    }, [user.data, navigate, redirectTo]);
+    }, [user.data, navigate, redirectTo, redirectIfAuthed]);
 
     return (
         <>
@@ -45,7 +49,7 @@ export const AuthLayout = ({ children, title }: LayoutProps) => {
 
                 {/* 4. Form Container */}
                 {/* <div className="relative z-10 w-full max-w-[440px] px-4">
-          <div className="bg-white rounded-[32px] bg-white p-8 shadow-2xl"> */}
+          <div className="bg-app-surface rounded-[32px] bg-app-surface p-8 shadow-2xl"> */}
                 {children}
                 {/* </div>
         </div> */}

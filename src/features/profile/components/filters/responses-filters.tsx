@@ -74,7 +74,7 @@ function DateFilterContent({
                         className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                             datePreset === preset.value
                                 ? "border-[5px] border-[#2563EB]"
-                                : "border-[1.5px] border-[#D1D5DB]"
+                                : "border-[1.5px] border-gray-300"
                         }`}
                     />
                     <input
@@ -88,7 +88,7 @@ function DateFilterContent({
                         }}
                         className="sr-only"
                     />
-                    <span className="text-[13px] font-normal text-[#111827]">{preset.label}</span>
+                    <span className="text-[13px] font-normal text-gray-900">{preset.label}</span>
                 </label>
             ))}
 
@@ -101,11 +101,11 @@ function DateFilterContent({
                             value={customDate?.from ? formatDate(customDate.from) : ""}
                             onFocus={() => setActiveInput("from")}
                             placeholder="От"
-                            className="w-full h-9 pl-3 pr-8 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
+                            className="w-full h-9 pl-3 pr-8 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
                         />
                         <CalendarIcon
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                         />
                     </div>
                     <div className="relative date-input-wrap">
@@ -115,11 +115,11 @@ function DateFilterContent({
                             value={customDate?.to ? formatDate(customDate.to) : ""}
                             onFocus={() => setActiveInput("to")}
                             placeholder="До"
-                            className="w-full h-9 pl-3 pr-8 bg-white border border-[#E5E7EB] rounded-[10px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
+                            className="w-full h-9 pl-3 pr-8 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors cursor-pointer"
                         />
                         <CalendarIcon
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                         />
                     </div>
                 </div>
@@ -200,7 +200,7 @@ export function ResponsesFilters({
     return (
         <div
             ref={ref}
-            className="absolute top-full mt-2 right-0 z-[110] w-[320px] bg-white border border-[#E5E7EB] rounded-[18px] shadow-[0_10px_15px_rgba(0,0,0,0.05),0_25px_50px_rgba(0,0,0,0.12)] p-2"
+            className="absolute top-full mt-2 right-0 z-[110] w-[320px] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_10px_15px_rgba(0,0,0,0.05),0_25px_50px_rgba(0,0,0,0.12)] p-2"
         >
             <div className="flex flex-col gap-1">
                 <FilterSection
@@ -315,7 +315,7 @@ export function ResponsesFilters({
                     onReset();
                     onClose();
                 }}
-                className="flex items-center justify-center gap-1.5 w-full mt-1 py-2.5 text-[13px] font-medium text-[#EF4444] hover:text-[#DC2626] transition-colors rounded-[10px] hover:bg-[#FEF2F2]"
+                className="flex items-center justify-center gap-1.5 w-full mt-1 py-2.5 text-[13px] font-medium text-[#EF4444] hover:text-[#DC2626] transition-colors rounded-[10px] hover:bg-[#FEF2F2] dark:hover:bg-[#3a1a1a]"
             >
                 <RotateCcw size={14} />
                 Сбросить фильтры

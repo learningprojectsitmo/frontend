@@ -22,7 +22,7 @@ export function StatusMenu({
     onMineToggle,
 }: StatusMenuProps) {
     return (
-        <div className="bg-white border border-[--color-black-10] rounded-[14px] p-2">
+        <div className="bg-app-surface border border-[--color-black-10] rounded-[14px] p-2">
             <div className="space-y-0.5">
                 <button
                     type="button"
@@ -30,7 +30,7 @@ export function StatusMenu({
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                         current === "all" && !showOnlyMine
                             ? "bg-[--azure-60]/10 text-[--azure-60] border-l-[3px] border-[--azure-60] rounded-l-none"
-                            : "text-[--azure-46] hover:bg-[#F3F4F6] hover:text-[--grey-4]"
+                            : "text-[--azure-46] hover:bg-gray-100 hover:text-[--grey-4]"
                     }`}
                 >
                     <List size={18} />
@@ -44,7 +44,7 @@ export function StatusMenu({
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                             current === item.key
                                 ? "bg-[--azure-60]/10 text-[--azure-60] border-l-[3px] border-[--azure-60] rounded-l-none"
-                                : "text-[--azure-46] hover:bg-[#F3F4F6] hover:text-[--grey-4]"
+                                : "text-[--azure-46] hover:bg-gray-100 hover:text-[--grey-4]"
                         }`}
                     >
                         <item.icon size={18} />
@@ -59,7 +59,7 @@ export function StatusMenu({
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                         showOnlyMine
                             ? "bg-[--azure-60]/10 text-[--azure-60] border-l-[3px] border-[--azure-60] rounded-l-none"
-                            : "text-[--azure-46] hover:bg-[#F3F4F6] hover:text-[--grey-4]"
+                            : "text-[--azure-46] hover:bg-gray-100 hover:text-[--grey-4]"
                     }`}
                 >
                     <User size={18} />

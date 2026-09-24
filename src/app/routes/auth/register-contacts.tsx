@@ -9,7 +9,7 @@ const RegisterContactsRoute = () => {
     const redirectTo = searchParams.get("redirectTo");
 
     return (
-        <AuthLayout title="Создание нового аккаунта">
+        <AuthLayout title="Создание нового аккаунта" redirectIfAuthed={false}>
             <RegistrationContactsForm
                 onSuccess={() => {
                     navigate(`${redirectTo ? `${redirectTo}` : paths.app.spaces.getHref()}`, {

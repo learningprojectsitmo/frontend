@@ -1,15 +1,46 @@
 import { ContentLayout } from "@/components/layouts";
-import { Dot, Ellipsis, PencilLine, List as ListIcon } from "lucide-react";
+import { Dot, Ellipsis, PencilLine, Trash2, List as ListIcon, ChevronDown } from "lucide-react";
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
-import { useState, useMemo, useEffect, Fragment, useCallback } from "react";
-import { useProject, useUpdateProject, useRemoveParticipant } from "@/lib/projects";
+import {
+    useState,
+    useMemo,
+    useEffect,
+    Fragment,
+    useCallback,
+    useRef,
+    useLayoutEffect,
+} from "react";
+import {
+    useProject,
+    useUpdateProject,
+    useRemoveParticipant,
+    useAcceptResponse,
+    useRejectResponse,
+    useDeleteProject,
+    useAdvanceStage,
+    useApproveStage,
+    useRejectStage,
+    invalidateProjectImpact,
+} from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { useUser } from "@/lib/auth";
 import { useSpacesList } from "@/lib/spaces";
-import { useSearchParams } from "react-router";
-import { Plus, GraduationCapIcon } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { RichTextViewer } from "@/components/ui/rich-text-viewer";
+import { cn } from "@/lib/utils";
+import { Plus, GraduationCapIcon, Copy, Check } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -19,6 +50,8 @@ import {
 } from "@/components/ui/select/select";
 import { SearchBar } from "@/components/ui/search-bar";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -35,6 +68,12 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
+import { type Replycant } from "@/types/tables/forTables";
+import { ApplyDialog } from "@/features/project/components/apply-dialog";
+import { InviteDialog } from "@/features/project/components/invite-dialog";
+import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
+import { StageStepper } from "@/features/project/components/stage-stepper";
+import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -51,6 +90,7 @@ import {
     useCreateSubtask,
     useUpdateSubtask,
     useDeleteSubtask,
+    useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
@@ -69,7 +109,7 @@ function formatDate(iso: string): string {
     });
 }
 
-function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
+function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canManage = false) {
     const statusName = p.status?.name || "Неизвестно";
     const isArchived = statusName === "archived";
 
@@ -78,6 +118,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
         title: p.name,
         tag: statusName,
         tagVariant: (isArchived ? "disabled" : "info") as "disabled" | "info",
+        theme: p.theme || "",
         description: p.description || "",
         progressValue: p.progress,
         dateText: p.deadline ? formatDate(p.deadline) : "",
@@ -96,14 +137,15 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
         })),
         members: p.members.map((m) => ({
             id: m.id,
+            userId: m.user_id,
             name: m.name,
             role: m.role,
             contacts: m.contacts,
             resumeUrl: m.resume_url,
             dateAdded: m.date_added,
-            status: (currentUserId && p.author_id === currentUserId && m.user_id !== currentUserId
-                ? "delete"
-                : "default") as "default" | "delete",
+            status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
+                | "default"
+                | "delete",
         })),
         replycants: p.replycants.map((r) => ({
             id: r.id,
@@ -112,7 +154,12 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number) {
             contacts: r.contacts,
             resumeUrl: r.resume_url,
             responseDate: r.response_date,
-            status: "invite" as const,
+            role: r.role || "",
+            type: r.type || "response",
+            responseStatus: r.status || "pending",
+            status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
+            userId: r.user_id,
+            allowMultiProjectParticipation: r.allow_multi_project_participation,
         })),
     };
 }
@@ -125,11 +172,52 @@ const SpaceRoute = () => {
     const { data: dataSpaces } = useSpacesList({ page: 1, limit: 10 });
     const { data: user } = useUser();
 
-    const project = dataProject ? mapBackendProject(dataProject, user?.id) : null;
     const isCreator = dataProject ? dataProject.author_id === user?.id : false;
+    const canManageTeam = isCreator || dataSpaces?.role === "admin";
+    const project = dataProject ? mapBackendProject(dataProject, user?.id, canManageTeam) : null;
+    const isTeamMember = useMemo(
+        () =>
+            !!user &&
+            (isCreator || (dataProject?.members ?? []).some((m) => m.user_id === user.id)),
+        [user, isCreator, dataProject],
+    );
 
-    const [isEditing, setIsEditing] = useState(false);
+    const canManageProject = useMemo(() => {
+        if (isCreator) return true;
+        if (!dataProject?.workspace_id || !dataSpaces || !user) return false;
+        if (dataSpaces.role === "admin" || dataSpaces.role === "teacher") return true;
+        const space = dataSpaces.spaces?.find((s) => s.id === dataProject.workspace_id);
+        return space?.author_id === user.id;
+    }, [isCreator, dataProject, dataSpaces, user]);
+
+    const canDeleteProject = useMemo(() => {
+        return dataSpaces?.role === "admin";
+    }, [dataSpaces]);
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteConfirmName, setDeleteConfirmName] = useState("");
+    const [nameCopied, setNameCopied] = useState(false);
+    const isDeleteConfirmed = deleteConfirmName === project?.title;
+
+    const handleCopyProjectName = async () => {
+        if (!project) return;
+        try {
+            await navigator.clipboard.writeText(project.title);
+        } catch {
+            const el = document.createElement("textarea");
+            el.value = project.title;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+        }
+        setNameCopied(true);
+        setTimeout(() => setNameCopied(false), 1500);
+    };
+
+    const [isEditing, setIsEditing] = useState(() => searchParams.get("edit") === "true");
     const [editTitle, setEditTitle] = useState("");
+    const [editTheme, setEditTheme] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editTags, setEditTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState("");
@@ -138,6 +226,41 @@ const SpaceRoute = () => {
     );
     const updateProjectMutation = useUpdateProject();
     const { addViewedProject } = useRecentlyViewed();
+    const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+    const [descHasOverflow, setDescHasOverflow] = useState(false);
+    const descRef = useRef<HTMLDivElement>(null);
+    const descHiddenRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const el = descRef.current;
+        const hiddenEl = descHiddenRef.current;
+        if (!el || !hiddenEl) {
+            return;
+        }
+        const measure = () => {
+            setDescHasOverflow(hiddenEl.scrollHeight > el.clientHeight + 1);
+        };
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        ro.observe(hiddenEl);
+        return () => ro.disconnect();
+    }, [isEditing, project?.id, project?.descriptionExtended]);
+
+    useEffect(() => {
+        setDescriptionExpanded(false);
+        setDescHasOverflow(false);
+    }, [project?.id]);
+
+    const showApplyButton = !!(
+        user?.id &&
+        dataProject &&
+        dataProject.author_id !== user.id &&
+        !dataProject.members.some((m) => m.user_id === user.id) &&
+        !dataProject.has_user_applied
+    );
 
     useEffect(() => {
         if (dataProject?.id) {
@@ -146,8 +269,22 @@ const SpaceRoute = () => {
     }, [dataProject, addViewedProject]);
 
     useEffect(() => {
+        if (searchParams.get("edit") === "true") {
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete("edit");
+                    return next;
+                },
+                { replace: true },
+            );
+        }
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
         if (dataProject) {
             setEditTitle(dataProject.name);
+            setEditTheme(dataProject.theme || "");
             setEditDescription(dataProject.description || "");
             setEditTags(dataProject.tags);
             setEditRoles(
@@ -164,6 +301,14 @@ const SpaceRoute = () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
         const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
+        if (editRoles.some((r) => !r.title.trim())) {
+            toast.error("Роль не может быть пустой");
+            return;
+        }
+        if (editRoles.some((r) => r.tasks.filter((t) => t.trim() !== "").length === 0)) {
+            toast.error("У каждой роли должны быть указаны задачи");
+            return;
+        }
         if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
             toast.error(
                 `Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`,
@@ -175,11 +320,12 @@ const SpaceRoute = () => {
                 id: String(dataProject.id),
                 data: {
                     name: editTitle,
+                    theme: editTheme,
                     description: editDescription,
                     tags: filtered,
                     vacancies: editRoles.map((r) => ({
                         title: r.title,
-                        tasks: r.tasks,
+                        tasks: r.tasks.filter((t) => t.trim() !== ""),
                         required_count: r.count,
                     })),
                 },
@@ -191,7 +337,7 @@ const SpaceRoute = () => {
     };
 
     const addRole = () => {
-        setEditRoles([...editRoles, { title: "", tasks: [], count: 1 }]);
+        setEditRoles([...editRoles, { title: "", tasks: [""], count: 1 }]);
     };
 
     const removeRole = (index: number) => {
@@ -200,6 +346,24 @@ const SpaceRoute = () => {
 
     const updateRole = (index: number, field: string, value: string | number | string[]) => {
         setEditRoles(editRoles.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    };
+
+    const updateTask = (roleIndex: number, taskIndex: number, value: string) => {
+        const tasks = [...editRoles[roleIndex].tasks];
+        if (taskIndex === tasks.length - 1) {
+            tasks[taskIndex] = value;
+            if (value.trim() !== "") {
+                tasks.push("");
+            }
+        } else {
+            tasks[taskIndex] = value;
+        }
+        updateRole(roleIndex, "tasks", tasks);
+    };
+
+    const removeTask = (roleIndex: number, taskIndex: number) => {
+        const tasks = editRoles[roleIndex].tasks.filter((_, i) => i !== taskIndex);
+        updateRole(roleIndex, "tasks", tasks);
     };
 
     const addTag = () => {
@@ -217,6 +381,7 @@ const SpaceRoute = () => {
     const handleCancel = () => {
         if (dataProject) {
             setEditTitle(dataProject.name);
+            setEditTheme(dataProject.theme || "");
             setEditDescription(dataProject.description || "");
             setEditTags(dataProject.tags);
             setEditRoles(
@@ -253,17 +418,107 @@ const SpaceRoute = () => {
         );
     };
     const [activeApplicantTab, setActiveApplicantTab] = useState("team");
-    const [activeView, setActiveView] = useState("grid");
+    const [activeView, setActiveView] = useState("list");
     const [sortBy, setSortBy] = useState("default");
 
     const removeParticipantMutation = useRemoveParticipant();
+    const acceptResponseMutation = useAcceptResponse();
+    const rejectResponseMutation = useRejectResponse();
+    const deleteProjectMutation = useDeleteProject();
+    const navigate = useNavigate();
+
+    const advanceStageMutation = useAdvanceStage();
+    const approveStageMutation = useApproveStage();
+    const rejectStageMutation = useRejectStage();
+
+    const isTeacherForProject = useMemo(() => {
+        if (!dataSpaces) return false;
+        if (dataSpaces.role === "admin" || dataSpaces.role === "teacher") return true;
+        if (dataProject?.workspace_id) {
+            const space = dataSpaces.spaces?.find((s) => s.id === dataProject.workspace_id);
+            return space?.author_id === user?.id;
+        }
+        return false;
+    }, [dataSpaces, dataProject, user]);
+
+    const handleAdvanceStage = useCallback(
+        (stageProjectId: number) => {
+            advanceStageMutation.mutate(
+                { projectId: stageProjectId },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап обновлён");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось перейти дальше по этапам");
+                    },
+                },
+            );
+        },
+        [advanceStageMutation],
+    );
+
+    const handleApproveStage = useCallback(
+        (stageProjectId: number) => {
+            approveStageMutation.mutate(
+                { projectId: stageProjectId },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап утверждён");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось утвердить этап");
+                    },
+                },
+            );
+        },
+        [approveStageMutation],
+    );
+
+    const handleRejectStage = useCallback(
+        (stageProjectId: number, comment?: string | null) => {
+            rejectStageMutation.mutate(
+                { projectId: stageProjectId, comment },
+                {
+                    onSuccess: () => {
+                        toast.success("Этап отклонён, проект возвращён на предыдущий этап");
+                    },
+                    onError: (error) => {
+                        toast.error(error?.message || "Не удалось отклонить этап");
+                    },
+                },
+            );
+        },
+        [rejectStageMutation],
+    );
+
+    const handleDeleteProject = useCallback(
+        (projectId: number) => {
+            deleteProjectMutation.mutate(projectId, {
+                onSuccess: () => {
+                    setDeleteConfirmOpen(false);
+                    toast.success("Проект удалён");
+                    navigate("/app");
+                },
+                onError: () => {
+                    toast.error("Не удалось удалить проект");
+                },
+            });
+        },
+        [deleteProjectMutation, navigate],
+    );
 
     // Kanban state
     const projectId = parseInt(urlId || "0", 10);
     const [kanbanFilter, setKanbanFilter] = useState<KanbanFilterState>(defaultFilterState);
     const { isOpen: isTaskPanelOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
     const { data: columns, isLoading: kanbanLoading, refetch } = useBoard(projectId);
-    const { data: projectMembers } = useKanbanUsers();
+    const { data: kanbanAllUsers } = useKanbanUsers();
+
+    const projectMembers = useMemo(() => {
+        const memberUserIds = new Set((dataProject?.members ?? []).map((m) => m.user_id));
+        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
+    }, [kanbanAllUsers, dataProject]);
 
     const filteredColumns = useMemo(
         () => filterColumns(columns || [], kanbanFilter, user?.id),
@@ -290,6 +545,7 @@ const SpaceRoute = () => {
     const kanbanCreateSubtask = useCreateSubtask();
     const kanbanUpdateSubtask = useUpdateSubtask();
     const kanbanDeleteSubtask = useDeleteSubtask();
+    const kanbanToggleSubtask = useToggleSubtask();
 
     const handleTaskAutoSave = useCallback(
         async (taskId: number, patch: TaskPatch) => {
@@ -434,9 +690,9 @@ const SpaceRoute = () => {
     const handleRemoveMember = useCallback(
         (memberId: number) => {
             const member = project?.members.find((m) => m.id === memberId);
-            if (!member) return;
+            if (!member || !member.userId) return;
             removeParticipantMutation.mutate(
-                { projectId: project?.id || 0, userId: member.id },
+                { projectId: project?.id || 0, userId: member.userId },
                 {
                     onSuccess: () => {
                         toast.success("Участник удалён из команды");
@@ -448,6 +704,113 @@ const SpaceRoute = () => {
             );
         },
         [project, removeParticipantMutation],
+    );
+
+    const [pendingResponseAction, setPendingResponseAction] = useState<number | null>(null);
+
+    const handleAcceptResponse = useCallback(
+        (responseId: number) => {
+            if (pendingResponseAction !== null) return;
+            const replycant = project?.replycants.find((r) => r.id === responseId);
+            if (!replycant) return;
+            setPendingResponseAction(responseId);
+            acceptResponseMutation.mutate(
+                { projectId: project?.id || 0, responseId },
+                {
+                    onSuccess: () => {
+                        toast.success("Отклик принят");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось принять отклик");
+                    },
+                    onSettled: () => setPendingResponseAction(null),
+                },
+            );
+        },
+        [project, acceptResponseMutation, pendingResponseAction],
+    );
+
+    const handleRejectResponse = useCallback(
+        (responseId: number) => {
+            if (pendingResponseAction !== null) return;
+            const replycant = project?.replycants.find((r) => r.id === responseId);
+            if (!replycant) return;
+            setPendingResponseAction(responseId);
+            rejectResponseMutation.mutate(
+                { projectId: project?.id || 0, responseId },
+                {
+                    onSuccess: () => {
+                        toast.success("Отклик отклонён");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось отклонить отклик");
+                    },
+                    onSettled: () => setPendingResponseAction(null),
+                },
+            );
+        },
+        [project, rejectResponseMutation, pendingResponseAction],
+    );
+
+    const queryClient = useQueryClient();
+
+    const [joinWarningProject, setJoinWarningProject] = useState<Replycant | null>(null);
+
+    const handleAcceptInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/accept`);
+                toast.success("Приглашение принято");
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
+            } catch {
+                toast.error("Не удалось принять приглашение");
+            }
+        },
+        [project, queryClient],
+    );
+
+    const handleAcceptInvitationRequest = useCallback(
+        (invitationId: number) => {
+            const replycant = project?.replycants.find((r) => r.id === invitationId);
+            if (replycant && !replycant.allowMultiProjectParticipation) {
+                setJoinWarningProject(replycant);
+                return;
+            }
+            handleAcceptInvitation(invitationId);
+        },
+        [project, handleAcceptInvitation],
+    );
+
+    const handleRejectInvitation = useCallback(
+        async (invitationId: number) => {
+            try {
+                await api.patch(`/invitations/${invitationId}/reject`);
+                toast.success("Приглашение отклонено");
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
+            } catch {
+                toast.error("Не удалось отклонить приглашение");
+            }
+        },
+        [project, queryClient],
+    );
+
+    const handleConfirmJoin = useCallback(
+        async (responseId: number) => {
+            try {
+                await api.patch(`/responses/${responseId}/confirm-join`);
+                toast.success("Вы присоединились к команде");
+                if (project) {
+                    invalidateProjectImpact(queryClient, project.id, project.spaceId);
+                }
+            } catch {
+                toast.error("Не удалось подтвердить участие");
+            }
+        },
+        [project, queryClient],
     );
 
     const handleDeleteColumn = useCallback(
@@ -509,8 +872,16 @@ const SpaceRoute = () => {
         () => ({
             columns: filteredColumns,
             isLoading: kanbanLoading,
+            canEdit: isTeamMember,
             onTaskMove: handleTaskMove,
-            onTaskClick: openEditPanel,
+            onTaskClick: isTeamMember ? openEditPanel : undefined,
+            onToggleSubtask: isTeamMember
+                ? (subtaskId: number) => {
+                      kanbanToggleSubtask.mutate(subtaskId, {
+                          onError: () => toast.error("Ошибка при изменении подзадачи"),
+                      });
+                  }
+                : undefined,
             onAddTask: handleAddTask,
             onDeleteTask: handleDeleteTask,
             onRenameColumn: handleRenameColumn,
@@ -522,8 +893,10 @@ const SpaceRoute = () => {
         [
             filteredColumns,
             kanbanLoading,
+            isTeamMember,
             handleTaskMove,
             openEditPanel,
+            kanbanToggleSubtask,
             handleAddTask,
             handleDeleteTask,
             handleRenameColumn,
@@ -580,12 +953,21 @@ const SpaceRoute = () => {
     }, [project, search, sortBy]);
 
     const filteredReplycants = useMemo(() => {
-        if (!search) return project?.replycants || [];
-        return (project?.replycants || []).filter(
-            (replycant) =>
-                replycant.name.toLowerCase().includes(search.toLowerCase()) ||
-                replycant.contacts.toLowerCase().includes(search.toLowerCase()),
+        let result = (project?.replycants || []).filter(
+            (r) =>
+                r.responseStatus === "pending" ||
+                r.responseStatus === "accepted" ||
+                r.responseStatus === "in_team",
         );
+        if (search) {
+            result = result.filter(
+                (replycant) =>
+                    replycant.name.toLowerCase().includes(search.toLowerCase()) ||
+                    replycant.contacts.toLowerCase().includes(search.toLowerCase()) ||
+                    replycant.role.toLowerCase().includes(search.toLowerCase()),
+            );
+        }
+        return result;
     }, [project, search]);
 
     if (isLoading) {
@@ -638,7 +1020,7 @@ const SpaceRoute = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                <div className="self-stretch flex items-start gap-10">
+                <div className="self-stretch flex flex-col xl:flex-row xl:items-start xl:gap-10 gap-6">
                     <div className="flex-1 flex justify-start items-start gap-5">
                         <div className="pt-1 flex justify-start items-center gap-2 shrink-0">
                             <div className="w-16 h-16 bg-color-azure-60 rounded-2xl flex justify-center items-center">
@@ -664,30 +1046,34 @@ const SpaceRoute = () => {
                                         {project.title}
                                     </div>
                                 )}
-                                <div
-                                    data-status="In Progress"
-                                    className="w-16 px-2 py-0.5 bg-[#2B7FFF] rounded-lg outline outline-1 outline-[#2B7FFF]  inline-flex justify-center items-center overflow-hidden"
-                                >
-                                    <div className="text-center justify-center text-white text-[11px] font-semibold font-sans leading-4 tracking-tight">
-                                        {project.tag}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="self-stretch flex flex-col justify-start items-start w-full">
-                                {isEditing ? (
-                                    <textarea
-                                        value={editDescription}
-                                        onChange={(e) => setEditDescription(e.target.value)}
-                                        className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                        rows={Math.max(2, Math.ceil(editDescription.length / 80))}
-                                    />
-                                ) : (
-                                    <div className="justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
-                                        {project.description}
+                                {project.tag !== "draft" && (
+                                    <div
+                                        data-status="In Progress"
+                                        className="w-16 px-2 py-0.5 bg-[#2B7FFF] rounded-lg outline outline-1 outline-[#2B7FFF]  inline-flex justify-center items-center overflow-hidden"
+                                    >
+                                        <div className="text-center justify-center text-white text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                            {project.tag}
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            <div className="inline-flex justify-start items-center gap-3">
+                            <div className="self-stretch flex flex-col justify-start items-start w-full">
+                                <div className="justify-center text-app-muted text-[13px] font-medium font-sans leading-5 tracking-tight mb-0.5">
+                                    Тема
+                                </div>
+                                {isEditing ? (
+                                    <textarea
+                                        value={editTheme}
+                                        onChange={(e) => setEditTheme(e.target.value)}
+                                        className="w-full self-stretch justify-center text-gray-600 text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
+                                    />
+                                ) : (
+                                    <div className="justify-center text-gray-600 text-base font-medium font-sans leading-7">
+                                        {project.theme}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex flex-wrap justify-start items-center gap-3">
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
                                         <ProgressBar value={project.progressValue} />
@@ -711,7 +1097,7 @@ const SpaceRoute = () => {
                                 </div>
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
-                                        <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                        <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
                                             Создан: {project.creationDate}
                                         </div>
                                     </div>
@@ -732,9 +1118,36 @@ const SpaceRoute = () => {
                                         />
                                     </svg>
                                 </div>
+                                {dataProject?.author_name && (
+                                    <div className="flex justify-start items-center gap-1">
+                                        <div className="inline-flex flex-col justify-start items-start">
+                                            <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                                Автор: {dataProject.author_name}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {dataProject?.author_name && (
+                                    <div data-svg-wrapper className="relative">
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 16 16"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <circle
+                                                cx="8"
+                                                cy="8"
+                                                r="1.5"
+                                                fill="var(--color-azure-46, #6A7282)"
+                                            />
+                                        </svg>
+                                    </div>
+                                )}
                                 <div className="flex justify-start items-center gap-1">
                                     <div className="inline-flex flex-col justify-start items-start">
-                                        <div className="justify-center text-[#4A5565] text-[13px] font-normal font-sans leading-5 tracking-tight">
+                                        <div className="justify-center text-gray-600 text-[13px] font-normal font-sans leading-5 tracking-tight">
                                             Дедлайн: {project.dateText}
                                         </div>
                                     </div>
@@ -742,7 +1155,7 @@ const SpaceRoute = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         {isCreator && !isEditing ? (
                             <Button
                                 variant="dark"
@@ -778,13 +1191,46 @@ const SpaceRoute = () => {
                         ) : (
                             ""
                         )}
-                        <IconButton
-                            variant="ghost"
-                            icon={<Ellipsis size={20} />}
-                            className="text-[--btn-outline-text]"
-                        />
+                        {canDeleteProject && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <IconButton
+                                        variant="ghost"
+                                        icon={<Ellipsis size={20} />}
+                                        className="text-[--btn-outline-text]"
+                                    />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[200px]">
+                                    <DropdownMenuItem
+                                        className="gap-3 text-sm cursor-pointer text-red-600 focus:text-red-600"
+                                        onSelect={() => {
+                                            setDeleteConfirmName("");
+                                            setDeleteConfirmOpen(true);
+                                        }}
+                                    >
+                                        <Trash2 size={16} />
+                                        Удалить проект
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
+
+                {dataProject?.stages && dataProject.stages.length > 0 && (
+                    <StageStepper
+                        stages={dataProject.stages}
+                        currentStageId={dataProject.current_stage_id}
+                        pendingApproval={dataProject.stage_pending_approval}
+                        isCurrentUserAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
+                        onAdvance={handleAdvanceStage}
+                        onApprove={handleApproveStage}
+                        onReject={handleRejectStage}
+                        projectId={dataProject.id}
+                        rejection={dataProject.stage_rejection}
+                    />
+                )}
 
                 <section>
                     <Tabs
@@ -799,26 +1245,62 @@ const SpaceRoute = () => {
                     <>
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-2.5">
                             <div className="flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
+                                <div className="justify-center text-gray-900 text-xl font-semibold font-sans leading-7">
                                     Описание проекта
                                 </div>
                             </div>
-                            <div className="self-stretch flex flex-col justify-start items-start gap-5">
-                                <div className="self-stretch flex flex-col justify-start items-start">
+                            <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
+                                <div className="self-stretch flex flex-col justify-start items-start relative">
                                     {isEditing ? (
-                                        <textarea
+                                        <RichTextEditor
                                             value={editDescription}
-                                            onChange={(e) => setEditDescription(e.target.value)}
-                                            className="w-full self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                            rows={Math.max(
-                                                2,
-                                                Math.ceil(editDescription.length / 80),
-                                            )}
+                                            onChange={setEditDescription}
                                         />
                                     ) : (
-                                        <div className="self-stretch justify-center text-[#4A5565] text-base font-medium font-sans leading-7">
-                                            {project.descriptionExtended}
+                                        <div className="self-stretch relative bg-app-surface border border-app-border rounded-lg p-4">
+                                            <RichTextViewer
+                                                ref={descRef}
+                                                html={project.descriptionExtended}
+                                                className="text-base font-medium font-sans"
+                                                clamp={descriptionExpanded ? undefined : 3}
+                                            />
+                                            <div
+                                                aria-hidden="true"
+                                                className="invisible absolute left-0 top-0 w-full pointer-events-none"
+                                            >
+                                                <RichTextViewer
+                                                    ref={descHiddenRef}
+                                                    html={project.descriptionExtended}
+                                                    className="text-base font-medium font-sans"
+                                                />
+                                            </div>
+                                            {!descriptionExpanded && descHasOverflow && (
+                                                <div
+                                                    aria-hidden="true"
+                                                    className="absolute bottom-0 inset-x-0 h-10 rounded-b-xl pointer-events-none"
+                                                    style={{
+                                                        backgroundImage:
+                                                            "linear-gradient(to top, color-mix(in srgb, var(--app-blue) 14%, transparent), transparent)",
+                                                    }}
+                                                />
+                                            )}
                                         </div>
+                                    )}
+                                    {!isEditing && (descHasOverflow || descriptionExpanded) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDescriptionExpanded((v) => !v)}
+                                            className="inline-flex items-center gap-1 self-center mt-2 text-[13px] font-medium text-app-blue hover:underline"
+                                        >
+                                            {descriptionExpanded ? "Свернуть" : "Развернуть"}
+                                            <ChevronDown
+                                                size={15}
+                                                className={cn(
+                                                    "transition-transform",
+                                                    descriptionExpanded && "rotate-180",
+                                                )}
+                                            />
+                                        </button>
                                     )}
                                 </div>
                                 <div className="self-stretch inline-flex justify-start items-start gap-1 flex-wrap content-start">
@@ -826,15 +1308,15 @@ const SpaceRoute = () => {
                                         ? editTags.map((tag, index) => (
                                               <div
                                                   key={index}
-                                                  className="h-6 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] inline-flex justify-center items-center gap-1 overflow-hidden"
+                                                  className="h-6 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 inline-flex justify-center items-center gap-1 overflow-hidden"
                                               >
-                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                  <div className="text-center justify-center text-app-text text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag}
                                                   </div>
                                                   <button
                                                       type="button"
                                                       onClick={() => removeTag(index)}
-                                                      className="text-[#6A7282] hover:text-red-500 leading-none"
+                                                      className="text-gray-500 hover:text-red-500 leading-none"
                                                   >
                                                       ✕
                                                   </button>
@@ -843,9 +1325,9 @@ const SpaceRoute = () => {
                                         : project.tags.map((tag, index) => (
                                               <div
                                                   key={index}
-                                                  className="h-5 px-2 py-0.5 bg-[#ECEEF2] rounded-lg outline outline-1 outline-[#ECEEF2] flex justify-center items-center overflow-hidden"
+                                                  className="h-5 px-2 py-0.5 bg-gray-200 rounded-lg outline outline-1 outline-gray-200 flex justify-center items-center overflow-hidden"
                                               >
-                                                  <div className="text-center justify-center text-[#030213] text-[11px] font-semibold font-sans leading-4 tracking-tight">
+                                                  <div className="text-center justify-center text-app-text text-[11px] font-semibold font-sans leading-4 tracking-tight">
                                                       {tag.text}
                                                   </div>
                                               </div>
@@ -863,7 +1345,7 @@ const SpaceRoute = () => {
                                             }}
                                             onBlur={addTag}
                                             placeholder="Добавить тег..."
-                                            className="h-6 px-2 text-[11px] font-semibold font-sans bg-transparent border border-dashed border-[#6A7282] rounded-lg outline-none min-w-[100px]"
+                                            className="h-6 px-2 text-[11px] font-semibold font-sans bg-transparent border border-dashed border-gray-500 rounded-lg outline-none min-w-[100px]"
                                         />
                                     )}
                                 </div>
@@ -872,7 +1354,7 @@ const SpaceRoute = () => {
 
                         <section className="self-stretch inline-flex flex-col justify-start items-start gap-6">
                             <div className="flex flex-col justify-start items-start">
-                                <div className="justify-center text-[#0A0A0A] text-xl font-semibold font-sans leading-7">
+                                <div className="justify-center text-gray-900 text-xl font-semibold font-sans leading-7">
                                     Необходимые участники
                                 </div>
                                 {isEditing && dataProject?.max_participants && (
@@ -884,28 +1366,28 @@ const SpaceRoute = () => {
                             </div>
                             <div
                                 data-type="Required participants"
-                                className="self-stretch p-2.5 bg-[#FFFFFF] rounded-2xl outline outline-1  outline-[#0000001A] flex flex-col justify-start items-start gap-2.5"
+                                className="self-stretch p-2.5 bg-app-surface rounded-2xl outline outline-1  outline-gray-200 flex flex-col justify-start items-start gap-2.5 overflow-x-auto"
                             >
                                 <div className="self-stretch inline-flex justify-start items-center gap-5">
                                     <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Роль
                                         </div>
                                     </div>
                                     <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Задачи
                                         </div>
                                     </div>
                                     <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
-                                        <div className="justify-center text-[#0A0A0A] text-[15px] font-semibold font-sans leading-5">
+                                        <div className="justify-center text-gray-900 text-[15px] font-semibold font-sans leading-5">
                                             Количество участников
                                         </div>
                                     </div>
                                 </div>
                                 {(isEditing ? editRoles : project.roles).map((role, index) => (
                                     <Fragment key={index}>
-                                        <div className="self-stretch h-0 outline outline-1 outline-[#0000001A]"></div>
+                                        <div className="self-stretch h-0 outline outline-1 outline-[#0000001A] dark:outline-[#ffffff1f]"></div>
                                         {isEditing ? (
                                             <div className="self-stretch inline-flex justify-start items-center gap-5">
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center">
@@ -919,39 +1401,41 @@ const SpaceRoute = () => {
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="w-full justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                        className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                 </div>
-                                                <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                                    <textarea
-                                                        value={(
-                                                            role as {
-                                                                title: string;
-                                                                tasks: string[];
-                                                                count: number;
-                                                            }
-                                                        ).tasks.join("\n")}
-                                                        onChange={(e) =>
-                                                            updateRole(
-                                                                index,
-                                                                "tasks",
-                                                                e.target.value
-                                                                    .split("\n")
-                                                                    .filter((t) => t.trim() !== ""),
-                                                            )
-                                                        }
-                                                        className="w-full justify-center text-[#121212] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0 resize-none field-sizing-content"
-                                                        rows={Math.max(
-                                                            1,
-                                                            (
-                                                                role as {
-                                                                    title: string;
-                                                                    tasks: string[];
-                                                                    count: number;
-                                                                }
-                                                            ).tasks.length,
-                                                        )}
-                                                    />
+                                                <div className="flex-1 px-1 py-2 flex flex-col gap-1.5">
+                                                    {(role.tasks.length ? role.tasks : [""]).map(
+                                                        (task, taskIndex) => (
+                                                            <div
+                                                                key={taskIndex}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <Dot className="w-3 h-3 shrink-0 text-gray-500" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={task}
+                                                                    onChange={(e) =>
+                                                                        updateTask(
+                                                                            index,
+                                                                            taskIndex,
+                                                                            e.target.value,
+                                                                        )
+                                                                    }
+                                                                    className="flex-1 justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeTask(index, taskIndex)
+                                                                    }
+                                                                    className="text-gray-400 hover:text-red-500 text-[12px] font-medium leading-none shrink-0"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        ),
+                                                    )}
                                                 </div>
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
                                                     <input
@@ -969,12 +1453,12 @@ const SpaceRoute = () => {
                                                                 parseInt(e.target.value) || 1,
                                                             )
                                                         }
-                                                        className="w-16 justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                        className="w-16 justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => removeRole(index)}
-                                                        className="text-[#6A7282] hover:text-red-500 text-[13px] font-medium leading-none"
+                                                        className="text-gray-500 hover:text-red-500 text-[13px] font-medium leading-none"
                                                     >
                                                         ✕
                                                     </button>
@@ -983,12 +1467,12 @@ const SpaceRoute = () => {
                                         ) : (
                                             <div className="self-stretch inline-flex justify-start items-center gap-5">
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                    <div className="justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.title}
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex justify-start items-center">
-                                                    <div className="flex-1 flex flex-col justify-center text-[#121212] text-[13px] font-medium font-sans leading-5">
+                                                    <div className="flex-1 flex flex-col justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.tasks.map((task, i) => (
                                                             <div
                                                                 key={i}
@@ -1000,10 +1484,13 @@ const SpaceRoute = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
-                                                    <div className="justify-center text-[#0A0A0A] text-[13px] font-medium font-sans leading-5">
+                                                <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
+                                                    <div className="justify-center text-gray-900 text-[13px] font-medium font-sans leading-5">
                                                         {role.count}
                                                     </div>
+                                                    <span className="text-[11px] text-gray-500 font-sans">
+                                                        осталось
+                                                    </span>
                                                 </div>
                                             </div>
                                         )}
@@ -1013,7 +1500,7 @@ const SpaceRoute = () => {
                                     <button
                                         type="button"
                                         onClick={addRole}
-                                        className="self-stretch mt-2 py-2 border-2 border-dashed border-[#6A7282] rounded-lg text-[#6A7282] text-[13px] font-semibold font-sans leading-5 hover:border-[#2B7FFF] hover:text-[#2B7FFF] transition-colors"
+                                        className="self-stretch mt-2 py-2 border-2 border-dashed border-gray-500 rounded-lg text-gray-500 text-[13px] font-semibold font-sans leading-5 hover:border-[#2B7FFF] hover:text-[#2B7FFF] transition-colors"
                                     >
                                         + Добавить роль
                                     </button>
@@ -1032,16 +1519,18 @@ const SpaceRoute = () => {
                         </section>
 
                         <section className="pt-4">
-                            <div className="mb-4 flex items-center justify-between">
+                            <div className="mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                                 <h2 className="text-lg font-semibold text-gray-800">
-                                    Список участников{" "}
+                                    {activeApplicantTab === "team"
+                                        ? "Команда"
+                                        : "Заявки и приглашения"}{" "}
                                     {activeApplicantTab === "team"
                                         ? `(${project.members?.length || 0}${dataProject?.max_participants ? `/${dataProject.max_participants}` : ""})`
-                                        : `(${project.replycants?.length || 0})`}
+                                        : `(${filteredReplycants.length})`}
                                 </h2>
                                 {/* сделать */}
 
-                                <div className="flex flex-row items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
                                     <SearchBar
                                         placeholder="Поиск..."
                                         onChange={setSearch}
@@ -1051,10 +1540,10 @@ const SpaceRoute = () => {
                                                 : replycantSuggestions
                                         }
                                         value={search}
-                                        className="w-[300px]"
+                                        className="w-full sm:w-[300px]"
                                     />
                                     <Select value={sortBy} onValueChange={setSortBy}>
-                                        <SelectTrigger className="w-[160px] h-9 text-[13px] font-sans">
+                                        <SelectTrigger className="w-full sm:w-[160px] h-9 text-[13px] font-sans">
                                             <SelectValue placeholder="По умолчанию" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1063,13 +1552,13 @@ const SpaceRoute = () => {
                                             <SelectItem value="date">По дате добавления</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <div className="flex items-center h-9 bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
+                                    <div className="flex items-center h-9 bg-app-surface border border-gray-200 rounded-[10px] overflow-hidden">
                                         <button
                                             onClick={() => setActiveView("grid")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "grid"
-                                                    ? "bg-[#111827] text-white"
-                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >
                                             <Icon name="grid" size={16} />
@@ -1078,21 +1567,30 @@ const SpaceRoute = () => {
                                             onClick={() => setActiveView("list")}
                                             className={`px-2.5 h-full flex items-center transition-colors ${
                                                 activeView === "list"
-                                                    ? "bg-[#111827] text-white"
-                                                    : "text-[#6B7280] hover:bg-gray-50"
+                                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
                                             }`}
                                         >
                                             <ListIcon size={16} />
                                         </button>
                                     </div>
-                                    {isCreator ||
-                                    dataSpaces?.role === "admin" ||
-                                    dataSpaces?.role === "teacher" ? (
+                                    {showApplyButton && (
+                                        <Button
+                                            variant="dark"
+                                            size="hug36"
+                                            className="font-sans text-[13px] font-semibold gap-2"
+                                            onClick={() => setApplyDialogOpen(true)}
+                                        >
+                                            Откликнуться
+                                        </Button>
+                                    )}
+                                    {canManageProject ? (
                                         <Button
                                             variant="dark"
                                             size="hug36"
                                             icon={<Plus size={18} />}
                                             className="font-sans text-[13px] font-semibold gap-2"
+                                            onClick={() => setInviteDialogOpen(true)}
                                         >
                                             Пригласить
                                         </Button>
@@ -1108,86 +1606,173 @@ const SpaceRoute = () => {
                             />
                         </section>
 
-                        {
-                            activeApplicantTab === "team" ? (
-                                activeView === "list" ? (
-                                    <TableMembers
-                                        headerList={[
-                                            "Имя",
-                                            "Роль",
-                                            "Контакты",
-                                            "Резюме",
-                                            "Дата добавления",
-                                        ]}
-                                        members={filteredMembers}
-                                        removeMember={handleRemoveMember}
-                                    />
-                                ) : (
-                                    <div className="grid grid-cols-3 gap-6">
-                                        {filteredMembers.map((member) => (
-                                            <div
-                                                key={member.id}
-                                                className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
-                                                        {member.name
-                                                            .split(" ")
-                                                            .map((n) => n[0])
-                                                            .join("")
-                                                            .toUpperCase()
-                                                            .slice(0, 2)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[15px] font-semibold text-app-text truncate">
-                                                            {member.name}
-                                                        </p>
-                                                        <p className="text-[13px] text-app-muted">
-                                                            {member.role}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {member.projects && member.projects.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {member.projects.map((p) => (
-                                                            <span
-                                                                key={p.id}
-                                                                className="inline-flex items-center h-6 px-2 rounded-[8px] bg-[#F3F4F6] text-[12px] font-medium text-app-text"
-                                                            >
-                                                                {p.title}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                {member.resumeUrl && (
-                                                    <a
-                                                        href={member.resumeUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
-                                                    >
-                                                        Открыть резюме
-                                                    </a>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            ) : (
-                                <TableInvitations
-                                    headerList={[
-                                        "Имя",
-                                        "Приоритет",
-                                        "Контакты",
-                                        "Резюме",
-                                        "Дата отклика",
-                                    ]}
-                                    members={filteredReplycants}
+                        {activeApplicantTab === "team" ? (
+                            activeView === "list" ? (
+                                <TableMembers
+                                    members={filteredMembers}
+                                    removeMember={handleRemoveMember}
+                                    removeActionLabel="Удалить из команды"
                                 />
-                            ) //addToTeam={addToTeam}
-                        }
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {filteredMembers.map((member) => (
+                                        <div
+                                            key={member.id}
+                                            className="bg-app-surface border border-gray-200 rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
+                                                    {member.name
+                                                        .split(" ")
+                                                        .map((n) => n[0])
+                                                        .join("")
+                                                        .toUpperCase()
+                                                        .slice(0, 2)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[15px] font-semibold text-app-text truncate">
+                                                        {member.name}
+                                                    </p>
+                                                    <p className="text-[13px] text-app-muted">
+                                                        {member.role}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {member.projects && member.projects.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {member.projects.map((p) => (
+                                                        <span
+                                                            key={p.id}
+                                                            className="inline-flex items-center h-6 px-2 rounded-[8px] bg-gray-100 text-[12px] font-medium text-app-text"
+                                                        >
+                                                            {p.title}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {member.resumeUrl && (
+                                                <a
+                                                    href={member.resumeUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
+                                                >
+                                                    Открыть резюме
+                                                </a>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        ) : (
+                            <TableInvitations
+                                headerList={["Имя", "Роль", "Тип", "Контакты", "Резюме", "Дата"]}
+                                members={filteredReplycants}
+                                addToTeam={handleAcceptResponse}
+                                onReject={handleRejectResponse}
+                                canManage={isCreator}
+                                currentUserId={user?.id}
+                                onAcceptInvitation={handleAcceptInvitationRequest}
+                                onRejectInvitation={handleRejectInvitation}
+                                onConfirmJoin={handleConfirmJoin}
+                            />
+                        )}
                     </>
                 )}
+                <ApplyDialog
+                    open={applyDialogOpen}
+                    onOpenChange={setApplyDialogOpen}
+                    projectId={dataProject?.id ?? 0}
+                    vacancies={dataProject?.vacancies ?? []}
+                />
+
+                <InviteDialog
+                    open={inviteDialogOpen}
+                    onOpenChange={setInviteDialogOpen}
+                    projectId={dataProject?.id ?? 0}
+                    workspaceId={project.spaceId}
+                    vacancies={dataProject?.vacancies ?? []}
+                    replycants={project.replycants}
+                    memberUserIds={new Set((dataProject?.members ?? []).map((m) => m.user_id))}
+                />
+
+                <JoinWarningDialog
+                    open={joinWarningProject !== null}
+                    projectName={joinWarningProject?.name ?? ""}
+                    onOpenChange={(open) => {
+                        if (!open) setJoinWarningProject(null);
+                    }}
+                    onConfirm={() => {
+                        const candidate = joinWarningProject;
+                        setJoinWarningProject(null);
+                        if (candidate) handleAcceptInvitation(candidate.id);
+                    }}
+                />
+
+                <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                    <DialogContent aria-describedby={undefined}>
+                        <DialogHeader>
+                            <DialogTitle>Вы уверены?</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-gray-600">
+                            Это действие необратимо. Все данные проекта будут удалены.
+                        </p>
+                        <div className="mt-4 space-y-2">
+                            <Label className="inline-flex items-center gap-1.5">
+                                Введите{" "}
+                                <span className="font-semibold text-red-600">{project.title}</span>{" "}
+                                <button
+                                    type="button"
+                                    onClick={handleCopyProjectName}
+                                    className="inline-flex items-center text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                                    title="Скопировать название"
+                                    aria-label="Скопировать название"
+                                >
+                                    {nameCopied ? <Check size={14} /> : <Copy size={14} />}
+                                </button>
+                                для подтверждения:
+                            </Label>
+                            <Input
+                                value={deleteConfirmName}
+                                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                                placeholder={project.title}
+                                className="border-red-300 focus-visible:border-red-500 focus-visible:ring-red-200"
+                            />
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="hug36"
+                                onClick={() => setDeleteConfirmOpen(false)}
+                            >
+                                Отмена
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="dark"
+                                size="hug36"
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => handleDeleteProject(project.id)}
+                                disabled={!isDeleteConfirmed || deleteProjectMutation.isPending}
+                            >
+                                {deleteProjectMutation.isPending ? "Удаление..." : "Удалить"}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {activeTab === "specification" && dataProject && (
+                    <SpecificationTab
+                        projectId={dataProject.id}
+                        isAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
+                        onAdvance={handleAdvanceStage}
+                        onApprove={handleApproveStage}
+                        onReject={handleRejectStage}
+                    />
+                )}
+
                 {activeTab === "kanban" && (
                     <>
                         <section>

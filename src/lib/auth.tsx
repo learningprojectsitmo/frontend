@@ -1,6 +1,8 @@
 import { configureAuth } from "react-query-auth";
 import {
     useMutation,
+    useQuery,
+    useQueryClient,
     type UseMutationResult,
     type UseMutationOptions,
 } from "@tanstack/react-query";
@@ -10,7 +12,7 @@ import { z } from "zod";
 import { paths } from "@/config/paths";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { useNotifications } from "@/components/ui/notifications";
-import type { User, AuthTokenResponse } from "@/types/api";
+import type { User, AuthTokenResponse, NewUserResponse } from "@/types/api";
 import {
     api,
     setAccessToken,
@@ -18,11 +20,17 @@ import {
     isSessionExpired,
     clearSessionExpired,
 } from "./api-client";
+import { queryKeys } from "./query-keys";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 export const loginInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(1, "Обязательное поле")
+        .email("Неправильный формат почты"),
     password: z.string().min(5, "Обязательное поле").max(64, "Слишком большой пароль"),
     rememberMe: z.boolean().default(false),
 });
@@ -61,28 +69,43 @@ export const vkSchema = z
     );
 
 export const createAccInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(1, "Обязательное поле")
+        .email("Неправильный формат почты"),
     password: z.string().min(5, "Обязательное поле").max(64, "Слишком большой пароль"),
 });
 
 export const registerConfirmInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
-    confirmationCode: z.string().min(6, "Обязательное поле"),
+    newuser_id: z.number(),
+    code: z.string().min(6, "Обязательное поле"),
 });
 
 export const resendCodeInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    newuser_id: z.number(),
+});
+
+export const registerNameInputSchema = z.object({
+    first_name: z.string().min(1, "Обязательное поле"),
+    middle_name: z.string().min(1, "Обязательное поле"),
+    last_name: z.string().optional(),
 });
 
 export const addContactsInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
     telegram: telegramSchema,
     vk: vkSchema,
-    showMyContacts: z.boolean().default(false),
+    showMyContacts: z.boolean().default(true),
 });
 
 export const resetWithEmailInputSchema = z.object({
-    email: z.string().min(1, "Обязательное поле").email("Неправильный формат почты"),
+    email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(1, "Обязательное поле")
+        .email("Неправильный формат почты"),
 });
 
 export const resetWithPasswordInputSchema = z.object({
@@ -96,6 +119,7 @@ export type LoginInput = z.infer<typeof loginInputSchema>;
 export type CreateAccInput = z.infer<typeof createAccInputSchema>;
 export type RegisterConfirmInput = z.infer<typeof registerConfirmInputSchema>;
 export type ResendCodeInput = z.infer<typeof resendCodeInputSchema>;
+export type RegisterNameInput = z.infer<typeof registerNameInputSchema>;
 export type AddContactsInput = z.infer<typeof addContactsInputSchema>;
 export type ResetWithEmailInput = z.infer<typeof resetWithEmailInputSchema>;
 export type ResetWithPasswordInput = z.infer<typeof resetWithPasswordInputSchema>;
@@ -132,42 +156,50 @@ const loginWithEmailAndPassword = async (data: LoginInput): Promise<AuthTokenRes
     })) as unknown as AuthTokenResponse;
 };
 
-const createAcc = async (data: CreateAccInput): Promise<unknown> => {
-    return await api.post("/auth/createacc", data);
+const createAcc = async (data: CreateAccInput): Promise<NewUserResponse> => {
+    return (await api.post<NewUserResponse>("/signup/request", data)) as NewUserResponse;
 };
 
 const registerWithEmailAndPassword = async (
     data: RegisterConfirmInput,
 ): Promise<AuthTokenResponse> => {
-    return (await api.post<AuthTokenResponse>(
-        "/auth/register",
-        data,
-    )) as unknown as AuthTokenResponse;
+    return (await api.post<AuthTokenResponse>(`/signup/${data.newuser_id}/verify`, null, {
+        params: { code: data.code },
+    })) as unknown as AuthTokenResponse;
 };
 
 const resendCode = async (data: ResendCodeInput): Promise<unknown> => {
-    return await api.post("/auth/resendcode", data);
+    return await api.post(`/signup/${data.newuser_id}/resend-code`);
 };
 
-const addContacts = async (data: AddContactsInput): Promise<AuthTokenResponse> => {
-    const response = (await api.post<AuthTokenResponse>(
-        "/auth/addcontacts",
-        data,
-    )) as unknown as AuthTokenResponse;
+const updateFullName = async (userId: number, data: RegisterNameInput): Promise<User> => {
+    return (await api.put<User>(`/users/${userId}`, data)) as unknown as User;
+};
 
-    if (response.access_token) {
-        setAccessToken(response.access_token);
-    }
-
-    return response;
+const updateContacts = async (userId: number, data: AddContactsInput): Promise<User> => {
+    return (await api.put<User>(`/users/${userId}`, {
+        tg_nickname: data.telegram,
+        vk_nickname: data.vk,
+        show_my_contacts: data.showMyContacts,
+    })) as unknown as User;
 };
 
 const resetWithEmail = async (data: ResetWithEmailInput): Promise<unknown> => {
-    return await api.post("/auth/resetemail", data);
+    return await api.post("/auth/password-reset/request", data);
 };
 
 const resetWithPassword = async (data: ResetWithPasswordInput): Promise<unknown> => {
-    return await api.post("/auth/resetpassword", data);
+    return await api.post("/auth/password-reset/confirm", {
+        token: data.special_token,
+        new_password: data.password,
+    });
+};
+
+const getResetEmailByToken = async (token: string): Promise<string> => {
+    const response = (await api.get("/auth/password-reset/validate", {
+        params: { token },
+    })) as { email: string };
+    return response.email;
 };
 
 // ─── Auth Config ──────────────────────────────────────────────────────────────
@@ -202,13 +234,27 @@ const authConfig = {
     },
 };
 
-export const { useUser, useLogin, useLogout, useRegister, AuthLoader } = configureAuth(authConfig);
+const { useLogout: useLogoutBase, ...auth } = configureAuth(authConfig);
+
+export const useLogout = (options?: Parameters<typeof useLogoutBase>[0]) => {
+    const queryClient = useQueryClient();
+    return useLogoutBase({
+        ...options,
+        onSuccess: (...args) => {
+            queryClient.clear();
+            localStorage.removeItem("recently_viewed_project_ids");
+            options?.onSuccess?.(...args);
+        },
+    });
+};
+
+export const { useUser, useLogin, useRegister, AuthLoader } = auth;
 
 // ─── Custom Mutation Hooks ────────────────────────────────────────────────────
 
 export const useCreateAcc = (
-    options?: UseMutationOptions<unknown, Error, CreateAccInput>,
-): UseMutationResult<unknown, Error, CreateAccInput> => {
+    options?: UseMutationOptions<NewUserResponse, Error, CreateAccInput>,
+): UseMutationResult<NewUserResponse, Error, CreateAccInput> => {
     return useMutation({ mutationFn: createAcc, ...options });
 };
 
@@ -218,10 +264,24 @@ export const useResendCode = (
     return useMutation({ mutationFn: resendCode, ...options });
 };
 
-export const useAddContacts = (
-    options?: UseMutationOptions<AuthTokenResponse, Error, AddContactsInput>,
-): UseMutationResult<AuthTokenResponse, Error, AddContactsInput> => {
-    return useMutation({ mutationFn: addContacts, ...options });
+export const useUpdateFullName = (
+    userId: number,
+    options?: UseMutationOptions<User, Error, RegisterNameInput>,
+): UseMutationResult<User, Error, RegisterNameInput> => {
+    return useMutation({
+        mutationFn: (data: RegisterNameInput) => updateFullName(userId, data),
+        ...options,
+    });
+};
+
+export const useUpdateContacts = (
+    userId: number,
+    options?: UseMutationOptions<User, Error, AddContactsInput>,
+): UseMutationResult<User, Error, AddContactsInput> => {
+    return useMutation({
+        mutationFn: (data: AddContactsInput) => updateContacts(userId, data),
+        ...options,
+    });
 };
 
 export const useResetWithEmail = (
@@ -234,6 +294,15 @@ export const useResetWithPassword = (
     options?: UseMutationOptions<unknown, Error, ResetWithPasswordInput>,
 ): UseMutationResult<unknown, Error, ResetWithPasswordInput> => {
     return useMutation({ mutationFn: resetWithPassword, ...options });
+};
+
+export const useResetEmailByToken = (token: string): string => {
+    const { data } = useQuery({
+        queryKey: queryKeys.authResetEmail(token),
+        queryFn: () => getResetEmailByToken(token),
+        enabled: token.length > 0,
+    });
+    return data ?? "";
 };
 
 // ─── Protected Route ──────────────────────────────────────────────────────────

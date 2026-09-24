@@ -22,6 +22,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     columns,
     onTaskMove,
     onTaskClick,
+    onToggleSubtask,
     onDeleteTask,
     onAddTask,
     onRenameColumn,
@@ -30,6 +31,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     onReorderColumns,
     onCreateColumn,
     isLoading,
+    canEdit = false,
     className,
 }) => {
     const [activeTaskId, setActiveTaskId] = useState<number | undefined>(undefined);
@@ -42,6 +44,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const [draggableColumnId, setDraggableColumnId] = useState<number | null>(null);
     const [isAddingColumn, setIsAddingColumn] = useState(false);
     const [newColumnName, setNewColumnName] = useState("");
+    const [showColumnHint, setShowColumnHint] = useState(false);
     const { announce, announcement } = useAnnouncement();
 
     // Автофокус на инпут при открытии формы
@@ -54,9 +57,13 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
 
     const handleConfirmNewColumn = useCallback(() => {
         const name = newColumnName.trim();
-        if (name) {
-            onCreateColumn?.(name);
+        if (!name) {
+            setShowColumnHint(true);
+            newColumnInputRef.current?.focus();
+            return;
         }
+        onCreateColumn?.(name);
+        setShowColumnHint(false);
         setIsAddingColumn(false);
         setNewColumnName("");
     }, [newColumnName, onCreateColumn]);
@@ -64,6 +71,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
     const handleCancelNewColumn = useCallback(() => {
         setIsAddingColumn(false);
         setNewColumnName("");
+        setShowColumnHint(false);
     }, []);
 
     const newColumnContainerRef = useRef<HTMLDivElement>(null);
@@ -461,8 +469,10 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                     >
                         <KanbanColumn
                             column={column}
+                            canEdit={canEdit}
                             onAddTask={onAddTask}
                             onTaskClick={onTaskClick}
+                            onToggleSubtask={onToggleSubtask}
                             onDeleteTask={onDeleteTask}
                             onTaskDragStart={handleTaskDragStart}
                             onTaskDragOver={handleTaskDragOver}
@@ -478,11 +488,11 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                 ))}
 
                 {/* Кнопка "Добавить колонку" */}
-                {onCreateColumn && (
+                {canEdit && onCreateColumn && (
                     <div className="ml-2 w-[260px] flex-shrink-0" ref={newColumnContainerRef}>
                         {isAddingColumn ? (
                             <div
-                                className="w-[260px] flex-shrink-0 rounded-2xl flex flex-col border shadow-sm overflow-hidden h-[70vh] bg-white"
+                                className="w-[260px] flex-shrink-0 rounded-2xl flex flex-col border shadow-sm overflow-hidden h-[70vh] bg-app-surface"
                                 onBlur={(e) => {
                                     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                                         handleCancelNewColumn();
@@ -490,27 +500,44 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                                 }}
                             >
                                 {/* Заголовок */}
-                                <div className="px-3 p-1.5 bg-[hsl(218,45%,94%)]">
-                                    <div className="flex items-center gap-1 w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus-within:border-blue-600">
+                                <div className="px-3 p-1.5 bg-[hsl(218,45%,94%)] dark:bg-app-ghost">
+                                    <div
+                                        className={cn(
+                                            "flex items-center gap-1 w-full h-8 rounded-lg border border-[--input-border] bg-[--input-bg] px-2 text-sm focus-within:border-[--input-focus-border] focus-within:shadow-[0_0_0_2px_var(--input-focus-shadow)]",
+                                            showColumnHint &&
+                                                "border-[--red-58] ring-1 ring-[--red-58]/20",
+                                        )}
+                                    >
                                         <input
                                             ref={newColumnInputRef}
                                             value={newColumnName}
-                                            onChange={(e) => setNewColumnName(e.target.value)}
+                                            onChange={(e) => {
+                                                setNewColumnName(e.target.value);
+                                                if (e.target.value.trim()) {
+                                                    setShowColumnHint(false);
+                                                }
+                                            }}
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter") handleConfirmNewColumn();
                                                 if (e.key === "Escape") handleCancelNewColumn();
                                             }}
+                                            aria-invalid={showColumnHint}
                                             placeholder="Название колонки..."
-                                            className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-gray-500 placeholder:text-gray-400"
+                                            className="flex-1 min-w-0 bg-transparent outline-none text-sm font-light text-[--input-text] placeholder:text-[--input-placeholder]"
                                         />
                                         <button
                                             onClick={handleConfirmNewColumn}
-                                            className="p-1 rounded-md hover:bg-black/10 text-gray-700 flex-shrink-0"
+                                            className="p-1 rounded-md hover:bg-[--color-black-10] text-[--input-icon-focus] flex-shrink-0"
                                             aria-label="Создать колонку"
                                         >
                                             <Plus className="h-4 w-4" />
                                         </button>
                                     </div>
+                                    {showColumnHint && (
+                                        <p className="mt-1 px-1 text-xs text-[--red-58]">
+                                            Введите название колонки
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Тело колонки — пустое */}
@@ -520,7 +547,7 @@ const KanbanBoardInner: React.FC<KanbanBoardProps> = ({
                             <Button
                                 variant="outline"
                                 onClick={() => setIsAddingColumn(true)}
-                                className="w-full justify-between text-sm text-black"
+                                className="w-full justify-between text-sm text-app-text"
                                 aria-label="Создать новую колонку"
                             >
                                 Добавить колонку

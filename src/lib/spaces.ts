@@ -9,14 +9,14 @@ import {
     type SpaceSettingsFull,
     type WorkSpaceFull,
     type WorkspaceParticipantListResponse,
+    type WorkspaceResumeListResponse,
+    type WorkspaceResumeFiltersResponse,
     type InviteLinkResponse,
+    type InviteLinkListResponse,
     type InviteLinkCreate,
     type JoinByLinkResponse,
 } from "@/types/api";
-
-export const getSuggestions = async (search: string): Promise<string[]> => {
-    return await api.get("/app/suggestions", { params: { search } });
-};
+import { queryKeys } from "./query-keys";
 
 export const getSpacesList = async (params?: SpacesListParams): Promise<SpacesListResponce> => {
     return await api.get("/workspaces/menu", { params });
@@ -25,12 +25,11 @@ export const getSpacesList = async (params?: SpacesListParams): Promise<SpacesLi
 export const useSpacesList = (params?: SpacesListParams) => {
     return useQuery({
         // params может содержать { page: 1, limit: 10 } и т.д.
-        queryKey: ["workspaces", "list", params],
+        queryKey: queryKeys.workspace.list(params),
         queryFn: () => getSpacesList(params),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
+        refetchOnMount: "always",
     });
 };
 
@@ -40,11 +39,10 @@ export const getNotificationsList = async (): Promise<Notification[]> => {
 
 export const useNotificationsList = () => {
     return useQuery({
-        queryKey: ["notifications", "list"],
+        queryKey: queryKeys.notifications.list(),
         queryFn: getNotificationsList,
         staleTime: 5 * 60 * 1000, // 10 минут
         gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false,
     });
 };
 
@@ -57,7 +55,8 @@ export const useCreateWorkspace = () => {
     return useMutation({
         mutationFn: createWorkspace,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.spaces() });
         },
     });
 };
@@ -72,10 +71,8 @@ export const useUpdateSpaceSettings = () => {
         mutationFn: ({ id, data }: { id: number; data: SpaceSettingsInput }) =>
             updateSpaceSettings(id, data),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] });
-            queryClient.invalidateQueries({
-                queryKey: ["workspaces", variables.id, "settings"],
-            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.settings(variables.id) });
         },
     });
 };
@@ -86,7 +83,7 @@ export const getSpaceSettings = async (workspaceId: number): Promise<SpaceSettin
 
 export const useSpaceSettings = (workspaceId: number, enabled?: boolean) => {
     return useQuery({
-        queryKey: ["workspaces", workspaceId, "settings"],
+        queryKey: queryKeys.workspace.settings(workspaceId),
         queryFn: () => getSpaceSettings(workspaceId),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -94,9 +91,15 @@ export const useSpaceSettings = (workspaceId: number, enabled?: boolean) => {
     });
 };
 
+export type UpdateWorkspaceInput = {
+    name: string;
+    description?: string;
+    color?: string;
+};
+
 export const updateWorkspaceName = async (
     id: number,
-    data: { name: string; description?: string },
+    data: UpdateWorkspaceInput,
 ): Promise<void> => {
     return await api.put(`/workspaces/${id}`, data);
 };
@@ -104,10 +107,11 @@ export const updateWorkspaceName = async (
 export const useUpdateWorkspaceName = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
+        mutationFn: ({ id, data }: { id: number; data: UpdateWorkspaceInput }) =>
             updateWorkspaceName(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.spaces() });
         },
     });
 };
@@ -120,15 +124,24 @@ export const useDeleteWorkspace = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: deleteWorkspace,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] });
+        onSuccess: (_data, id) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.spaces() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.settings(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.inviteLinks(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.participants(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.resumes(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.createdProjects() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.project.lists() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.project.recent() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.project.byIds() });
         },
     });
 };
 
 // === Invite link ===
 
-export const getInviteLink = async (workspaceId: number): Promise<InviteLinkResponse> => {
+export const getInviteLinks = async (workspaceId: number): Promise<InviteLinkListResponse> => {
     return await api.get(`/workspaces/${workspaceId}/invite-link`);
 };
 
@@ -139,14 +152,18 @@ export const createInviteLink = async (
     return await api.post(`/workspaces/${workspaceId}/invite-link`, data ?? {});
 };
 
-export const revokeInviteLink = async (workspaceId: number): Promise<void> => {
+export const revokeInviteLink = async (workspaceId: number, token: string): Promise<void> => {
+    return await api.delete(`/workspaces/${workspaceId}/invite-link/${token}`);
+};
+
+export const revokeAllInviteLinks = async (workspaceId: number): Promise<void> => {
     return await api.delete(`/workspaces/${workspaceId}/invite-link`);
 };
 
-export const useInviteLink = (workspaceId: number, enabled?: boolean) => {
+export const useInviteLinks = (workspaceId: number, enabled?: boolean) => {
     return useQuery({
-        queryKey: ["workspaces", workspaceId, "invite-link"],
-        queryFn: () => getInviteLink(workspaceId),
+        queryKey: queryKeys.workspace.inviteLinks(workspaceId),
+        queryFn: () => getInviteLinks(workspaceId),
         staleTime: 5 * 60 * 1000,
         retry: false,
         enabled: enabled ?? true,
@@ -160,7 +177,7 @@ export const useCreateInviteLink = () => {
             createInviteLink(id, data),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: ["workspaces", variables.id, "invite-link"],
+                queryKey: queryKeys.workspace.inviteLinks(variables.id),
             });
         },
     });
@@ -169,9 +186,23 @@ export const useCreateInviteLink = () => {
 export const useRevokeInviteLink = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: revokeInviteLink,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+        mutationFn: ({ id, token }: { id: number; token: string }) => revokeInviteLink(id, token),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workspace.inviteLinks(variables.id),
+            });
+        },
+    });
+};
+
+export const useRevokeAllInviteLinks = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: revokeAllInviteLinks,
+        onSuccess: (_data, id) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workspace.inviteLinks(id),
+            });
         },
     });
 };
@@ -183,8 +214,14 @@ export const joinByLink = async (token: string): Promise<JoinByLinkResponse> => 
 };
 
 export const useJoinByLink = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: joinByLink,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.workspace.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.spaces() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
+        },
     });
 };
 
@@ -208,7 +245,7 @@ export const getWorkspaceParticipants = async (
 
 export const useWorkspaceParticipants = (workspaceId: number, params?: ParticipantsParams) => {
     return useQuery({
-        queryKey: ["workspaces", workspaceId, "participants", params],
+        queryKey: queryKeys.workspace.participants(workspaceId, params),
         queryFn: () => getWorkspaceParticipants(workspaceId, params),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -230,8 +267,51 @@ export const useRemoveWorkspaceParticipant = () => {
             removeWorkspaceParticipant(workspaceId, userId),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: ["workspaces", variables.workspaceId, "participants"],
+                queryKey: queryKeys.workspace.participants(variables.workspaceId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workspace.resumes(variables.workspaceId),
             });
         },
+    });
+};
+
+// === Workspace resumes ===
+
+export type ResumeParams = {
+    page?: number;
+    limit?: number;
+    search?: string;
+    skills?: string[];
+    interests?: string[];
+};
+
+export const getWorkspaceResumes = async (
+    workspaceId: number,
+    params?: ResumeParams,
+): Promise<WorkspaceResumeListResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/resumes`, { params });
+};
+
+export const useWorkspaceResumes = (workspaceId: number, params?: ResumeParams) => {
+    return useQuery({
+        queryKey: queryKeys.workspace.resumes(workspaceId, params),
+        queryFn: () => getWorkspaceResumes(workspaceId, params),
+        enabled: !!workspaceId,
+    });
+};
+
+export const getWorkspaceResumeFilters = async (
+    workspaceId: number,
+): Promise<WorkspaceResumeFiltersResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/resumes/filters`);
+};
+
+export const useWorkspaceResumeFilters = (workspaceId: number) => {
+    return useQuery({
+        queryKey: queryKeys.workspace.resumeFilters(workspaceId),
+        queryFn: () => getWorkspaceResumeFilters(workspaceId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!workspaceId,
     });
 };

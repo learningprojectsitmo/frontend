@@ -13,7 +13,6 @@ const STATUS_LABELS: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
     archived: "Архив",
 };
 
@@ -56,10 +55,14 @@ export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFi
                 >
                     <CheckboxGroup
                         options={projects
-                            .map((p) => ({
-                                value: p.status?.name || "draft",
-                                label: STATUS_LABELS[p.status?.name || "draft"],
-                            }))
+                            .map((p) => {
+                                const name = p.status?.name || "";
+                                return {
+                                    value: name,
+                                    label: STATUS_LABELS[name],
+                                };
+                            })
+                            .filter((opt) => opt.value && opt.value !== "draft" && opt.label)
                             .filter(
                                 (opt, i, arr) => arr.findIndex((o) => o.value === opt.value) === i,
                             )

@@ -1,5 +1,11 @@
 import { Icon } from "@/components/ui/icons";
-import { IconButton } from "@/components/ui/button/icon-button";
+import { Switch } from "@/components/ui/switch/switch";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
 
 export type ResumeData = {
     id: number;
@@ -14,8 +20,8 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
     return {
         id: item.id,
         position: item.header,
-        views: "—",
-        invitations: "—",
+        views: String(item.views_count ?? 0),
+        invitations: String(item.invitations_count ?? 0),
         lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("ru-RU") : "—",
         isVisible: item.is_visible,
     };
@@ -24,25 +30,75 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
 type ResumeCardProps = {
     resume: ResumeData;
     onClick?: () => void;
+    onShare?: () => void;
+    onDelete?: () => void;
+    onToggleVisibility?: (id: number) => void;
+    readOnly?: boolean;
 };
 
-export function ResumeCard({ resume, onClick }: ResumeCardProps) {
+export function ResumeCard({
+    resume,
+    onClick,
+    onShare,
+    onDelete,
+    onToggleVisibility,
+    readOnly,
+}: ResumeCardProps) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="w-full text-left rounded-[22px] border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow cursor-pointer"
-        >
-            <div className="flex items-center justify-between">
-                <h3 className="text-[15px] font-bold text-gray-900">{resume.position}</h3>
-                <IconButton
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600"
-                    icon={<Icon name="kebab" size={16} />}
-                    variant="ghost"
-                />
+        <div className="relative w-full text-left rounded-[22px] border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <button
+                type="button"
+                onClick={onClick}
+                aria-label="Открыть резюме"
+                className="absolute inset-0 rounded-[22px] cursor-pointer"
+            />
+
+            <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[15px] font-bold text-gray-900 pointer-events-none">
+                    {resume.position}
+                </h3>
+                {!readOnly && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer relative z-10"
+                            >
+                                <Icon name="kebab" size={16} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[180px]">
+                            {onShare && (
+                                <DropdownMenuItem
+                                    className="gap-2 cursor-pointer"
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        onShare();
+                                    }}
+                                >
+                                    <Icon name="share" size={14} />
+                                    Поделиться
+                                </DropdownMenuItem>
+                            )}
+                            {onDelete && (
+                                <DropdownMenuItem
+                                    className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        onDelete();
+                                    }}
+                                >
+                                    <Icon name="trash" size={14} />
+                                    Удалить
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 pointer-events-none">
                 <div className="flex-1">
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
                         Просмотры
@@ -61,20 +117,32 @@ export function ResumeCard({ resume, onClick }: ResumeCardProps) {
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 pointer-events-none">
                     Последнее изменение: {resume.lastUpdated}
                 </span>
-                <div className="flex items-center gap-1.5 text-xs font-medium">
-                    <Icon
-                        name={resume.isVisible ? "eye-on" : "eye-off"}
-                        size={14}
-                        className={resume.isVisible ? "text-green-500" : "text-gray-400"}
-                    />
-                    <span className={resume.isVisible ? "text-green-600" : "text-gray-500"}>
-                        {resume.isVisible ? "Видно всем" : "Скрыто"}
+                {readOnly ? (
+                    <span className="text-xs font-medium text-green-600 pointer-events-none">
+                        Видно всем
                     </span>
-                </div>
+                ) : (
+                    <div className="flex items-center gap-2 relative z-10 pointer-events-auto">
+                        <Switch
+                            id={`resume-visibility-${resume.id}`}
+                            checked={resume.isVisible}
+                            onCheckedChange={() => onToggleVisibility?.(resume.id)}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <label
+                            htmlFor={`resume-visibility-${resume.id}`}
+                            className="text-xs font-medium cursor-pointer"
+                        >
+                            <span className={resume.isVisible ? "text-green-600" : "text-gray-500"}>
+                                {resume.isVisible ? "Видно всем" : "Скрыто"}
+                            </span>
+                        </label>
+                    </div>
+                )}
             </div>
-        </button>
+        </div>
     );
 }

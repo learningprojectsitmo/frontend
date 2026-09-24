@@ -1,7 +1,9 @@
 export interface Member {
     id: number;
+    userId?: number;
     name: string;
     role: string;
+    workspaceRole: string;
     contacts:
         | string
         | { telegram?: string | null; email?: string | null; linkedin?: string | null };
@@ -20,7 +22,12 @@ export interface Replycant {
     resumeUrl: string;
     responseDate: string;
     avatarUrl?: string;
+    role: string;
+    type: "response" | "invitation";
+    responseStatus: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
     status: "invite" | "invited";
+    userId: number;
+    allowMultiProjectParticipation: boolean;
 }
 
 export interface Role {

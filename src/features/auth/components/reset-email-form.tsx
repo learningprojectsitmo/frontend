@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input/input";
 import { useResetWithEmail, resetWithEmailInputSchema, type ResetWithEmailInput } from "@/lib/auth";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
-import { toast } from "sonner";
+import { notifyError } from "@/components/ui/notifications";
 
 export const ResetEmailForm = () => {
     const [searchParams] = useSearchParams();
@@ -26,13 +26,13 @@ export const ResetEmailForm = () => {
     const onSubmit = (values: ResetWithEmailInput) => {
         resetEmail.mutate(values, {
             onError: () => {
-                toast.error("Ошибка при отправке инструкции");
+                notifyError("Ошибка при отправке инструкции");
             },
         });
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link
                     to={paths.auth.login.getHref(redirectTo)}
@@ -40,13 +40,19 @@ export const ResetEmailForm = () => {
                 >
                     <Icon name="arrow-left" width={20} height={20} />
                 </Link>
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
                 <div className="w-9 h-9"></div>
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Сброс пароля
             </h2>
-            <h4 className="mb-8 text-body font-medium font-sans text-[#4A5565]">
+            <h4 className="mb-8 text-body font-medium font-sans text-gray-600">
                 Введите свой адрес электронной почты, и вы получите инструкцию по смене пароля
             </h4>
 
@@ -70,11 +76,7 @@ export const ResetEmailForm = () => {
                         )}
                     />
 
-                    <Button
-                        type="submit"
-                        className="w-full h-12 bg-[#030213] text-white"
-                        disabled={resetEmail.isPending || resetEmail.isSuccess}
-                    >
+                    <Button variant="dark" size="fill48" type="submit">
                         {resetEmail.isPending ? "Подтвердить..." : "Подтвердить"}
                     </Button>
                 </form>

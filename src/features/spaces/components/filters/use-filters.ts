@@ -44,8 +44,10 @@ export function useFilters(projects: ProjectListItemResponse[]) {
     const availableStatuses = useMemo(() => {
         const set = new Set<string>();
         for (const p of projects) {
-            const name = p.status?.name || "draft";
-            set.add(name);
+            const name = p.status?.name || "";
+            if (name && name !== "draft") {
+                set.add(name);
+            }
         }
         return [...set].sort();
     }, [projects]);

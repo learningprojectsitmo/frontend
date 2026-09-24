@@ -18,7 +18,7 @@ const statusLabels: Record<string, string> = {
     review: "На проверке",
     planned: "Запланирован",
     completed: "Выполнен",
-    draft: "Черновик",
+    archived: "Архив",
 };
 
 function formatDate(iso: string): string {
@@ -31,17 +31,18 @@ function formatDate(iso: string): string {
 }
 
 function mapProjectListItem(item: ProjectListItemResponse) {
-    const statusName = item.status?.name || "draft";
+    const statusName = item.status?.name || "";
     const isArchived = statusName === "archived";
 
     return {
         id: item.id,
-        tag: isArchived ? "draft" : statusName,
-        tagLabel: statusLabels[statusName] || statusName,
+        tag: statusName,
+        tagLabel: statusLabels[statusName] || "",
         title: item.name,
         description: item.description || "",
         progressValue: item.progress,
         dateText: item.deadline ? `Дедлайн: ${formatDate(item.deadline)}` : "",
+        stageText: item.current_stage_name || "",
         tags: item.tags.map((t) => ({ text: t })),
         membersCount: item.participants_count,
         users: item.participants_preview.map((u) => ({ name: u.full_name })),
@@ -72,7 +73,7 @@ export function SpaceProjectList({
 
         if (filters.statuses.length > 0) {
             result = result.filter((p) => {
-                const statusName = p.status?.name || "draft";
+                const statusName = p.status?.name || "";
                 return filters.statuses.includes(statusName);
             });
         }
@@ -142,22 +143,22 @@ export function SpaceProjectList({
     return (
         <section>
             {/* Toolbar */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h2 className="text-lg font-semibold text-app-text">Проекты</h2>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {/* Search */}
-                    <div className="relative">
+                    <div className="relative flex-1 min-w-[180px]">
                         <Search
                             size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                         />
                         <input
                             type="text"
                             placeholder="Поиск проектов"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-[240px] h-10 pl-9 pr-3 bg-white border border-[#E5E7EB] rounded-[12px] text-[14px] text-app-text placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] transition-colors"
+                            className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                         />
                     </div>
 
@@ -169,13 +170,13 @@ export function SpaceProjectList({
                     />
 
                     {/* Grid/List toggle */}
-                    <div className="flex items-center h-10 bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                    <div className="flex items-center h-10 bg-app-surface border border-gray-200 rounded-[12px] overflow-hidden">
                         <button
                             onClick={() => setViewMode("grid")}
                             className={`px-3 h-full flex items-center transition-colors ${
                                 viewMode === "grid"
-                                    ? "bg-[#111827] text-white"
-                                    : "text-[#6B7280] hover:bg-gray-50"
+                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                    : "text-gray-500 hover:bg-gray-50"
                             }`}
                         >
                             <Icon name="grid" size={16} />
@@ -184,8 +185,8 @@ export function SpaceProjectList({
                             onClick={() => setViewMode("list")}
                             className={`px-3 h-full flex items-center transition-colors ${
                                 viewMode === "list"
-                                    ? "bg-[#111827] text-white"
-                                    : "text-[#6B7280] hover:bg-gray-50"
+                                    ? "bg-gray-900 text-white dark:bg-gray-100"
+                                    : "text-gray-500 hover:bg-gray-50"
                             }`}
                         >
                             <List size={16} />
@@ -214,7 +215,7 @@ export function SpaceProjectList({
                         : "В этом пространстве пока нет проектов"}
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                     {mappedProjects.map((project) => (
                         <Link
                             key={project.id}
@@ -228,6 +229,7 @@ export function SpaceProjectList({
                                 description={project.description}
                                 progressValue={project.progressValue}
                                 dateText={project.dateText}
+                                stageText={project.stageText}
                                 tags={project.tags}
                                 membersCount={project.membersCount}
                                 users={project.users}
@@ -237,7 +239,7 @@ export function SpaceProjectList({
                     ))}
                 </div>
             ) : (
-                <div className="bg-white rounded-[20px] border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
                     <SpaceProjectTable projects={visibleRaw} />
                 </div>
             )}

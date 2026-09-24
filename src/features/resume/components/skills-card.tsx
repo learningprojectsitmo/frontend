@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type ResumeSkill } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeSkill, useDeleteResumeSkill } from "@/lib/resume";
+import { LIMITS } from "@/features/resume/validation";
 
 type Props = {
     skills: ResumeSkill[];
@@ -30,7 +31,7 @@ export const SkillsCard = ({ skills, isEditing, resumeId }: Props) => {
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
+        <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-semibold tracking-tight">Навыки</h3>
                 {isEditing && !showForm && (
@@ -45,7 +46,7 @@ export const SkillsCard = ({ skills, isEditing, resumeId }: Props) => {
             <div className="flex flex-wrap gap-2">
                 {skills.map((skill) => (
                     <div key={skill.id} className="group relative">
-                        <span className="px-3 py-1 rounded-full bg-zinc-100 text-sm text-gray-700">
+                        <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700">
                             {skill.name}
                         </span>
                         {isEditing && (
@@ -65,7 +66,8 @@ export const SkillsCard = ({ skills, isEditing, resumeId }: Props) => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Название навыка"
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-200 outline-none focus:border-gray-400"
+                        maxLength={LIMITS.name}
+                        className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
                     <div className="flex gap-2 justify-end">
                         <button

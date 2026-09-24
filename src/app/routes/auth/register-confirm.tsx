@@ -10,10 +10,10 @@ const RegisterConfirmRoute = () => {
     const redirectTo = searchParams.get("redirectTo");
 
     return (
-        <AuthLayout title="Введите код из письма">
+        <AuthLayout title="Введите код из письма" redirectIfAuthed={false}>
             <RegisterConfirmForm
                 onSuccess={() => {
-                    navigate(`${paths.auth.registerContacts.getHref(redirectTo)}`, {
+                    navigate(`${paths.auth.registerName.getHref(redirectTo)}`, {
                         replace: true,
                     });
                 }}

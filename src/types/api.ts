@@ -24,7 +24,29 @@ export type User = Entity<{
     last_name: string;
     middle_name: string;
     email: string;
+    lang: string;
+    tg_nickname?: string | null;
+    vk_nickname?: string | null;
+    show_my_contacts?: boolean;
 }>;
+
+export type UserUpdate = {
+    email?: string;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
+    isu_number?: number;
+    tg_nickname?: string | null;
+    phone?: string | null;
+    vk_nickname?: string | null;
+    role_id?: number;
+    show_my_contacts?: boolean;
+};
+
+export type NewUserResponse = {
+    id: number;
+    email: string;
+};
 
 export type LoginResponse = {
     access_token: string;
@@ -58,6 +80,20 @@ export type ProjectRole = {
     title: string;
     tasks: string[];
     count: number;
+};
+
+export type Role = {
+    id: number;
+    name: string;
+    description: string | null;
+};
+
+export type RoleListResponse = {
+    items: Role[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
 };
 
 export interface ProjectSingle extends Project {
@@ -130,6 +166,11 @@ export type BackendReplycant = {
     contacts: string;
     resume_url: string;
     response_date: string;
+    vacancy_id: number | null;
+    role: string;
+    type: "response" | "invitation";
+    status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
+    allow_multi_project_participation: boolean;
 };
 
 export type ProjectListItemResponse = {
@@ -137,11 +178,15 @@ export type ProjectListItemResponse = {
     name: string;
     status: BackendProjectStatus | null;
     deadline: string | null;
+    theme: string | null;
     description: string | null;
     participants_count: number;
     progress: number;
     tags: string[];
     participants_preview: BackendParticipantPreview[];
+    author_id: number;
+    current_stage_id: number | null;
+    current_stage_name: string | null;
 };
 
 export type ProjectListResponse = {
@@ -152,10 +197,83 @@ export type ProjectListResponse = {
     total_pages: number;
 };
 
+export type BackendProjectStage = {
+    id: number;
+    name: string;
+    order: number;
+    requires_approval: boolean;
+    visible_to_participants: boolean;
+    is_current: boolean;
+    duration_days: number | null;
+    deadline?: string | null;
+    kind?: string;
+};
+
+export type BackendProjectType = {
+    id: number;
+    name: string;
+    description: string | null;
+    stages: BackendProjectStage[];
+};
+
+export type BackendStageRejection = {
+    stage_name: string;
+    comment: string | null;
+    actor_name: string;
+    created_at: string | null;
+};
+
+export type SpecificationStatus = "draft" | "submitted" | "approved";
+
+export type RequirementGroup = {
+    name: string;
+    requirements: string[];
+};
+
+export type ProjectSpecification = {
+    id: number;
+    project_id: number;
+    goal: string | null;
+    tasks: string[];
+    functional_requirements: RequirementGroup[];
+    non_functional_requirements: RequirementGroup[];
+    acceptance_criteria: string[];
+    status: SpecificationStatus;
+    rejection_comment: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+export type SpecificationUpdate = {
+    goal?: string | null;
+    tasks?: string[] | null;
+    functional_requirements?: RequirementGroup[] | null;
+    non_functional_requirements?: RequirementGroup[] | null;
+    acceptance_criteria?: string[] | null;
+};
+
+export type SpecificationCommentAuthor = {
+    id: number;
+    username: string;
+};
+
+export type SpecificationComment = {
+    id: number;
+    specification_id: number;
+    author: SpecificationCommentAuthor;
+    text: string;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
 export type ProjectFullResponse = {
     id: number;
     name: string;
     author_id: number;
+    author_name: string;
+    author_email: string | null;
+    has_user_applied: boolean;
+    theme: string | null;
     description: string | null;
     max_participants: number | null;
     status_id: number | null;
@@ -170,6 +288,11 @@ export type ProjectFullResponse = {
     members: BackendMember[];
     replycants: BackendReplycant[];
     vacancies: BackendVacancy[];
+    project_type_id: number | null;
+    current_stage_id: number | null;
+    stage_pending_approval: boolean;
+    stages: BackendProjectStage[];
+    stage_rejection: BackendStageRejection | null;
 };
 
 export type ResumeCreate = {
@@ -198,6 +321,8 @@ export type ResumeFull = {
     id: number;
     header: string;
     author_id: number;
+    views_count: number;
+    invitations_count: number;
     resume_text: string | null;
     role: string | null;
     about: string | null;
@@ -343,6 +468,8 @@ export type SpaceSettingsInput = {
     icon_url?: string | null;
     allow_multi_project_participation?: boolean;
     allow_multi_project_creation?: boolean;
+    default_project_deadline?: string | null;
+    require_project_type_on_create?: boolean;
 };
 
 export type SpaceSettingsFull = {
@@ -355,6 +482,8 @@ export type SpaceSettingsFull = {
     icon_url: string | null;
     allow_multi_project_participation: boolean;
     allow_multi_project_creation: boolean;
+    default_project_deadline: string | null;
+    require_project_type_on_create: boolean;
     created_at: string;
     updated_at: string;
 };
@@ -375,17 +504,51 @@ export type Category = {
     color: string;
 };
 
-export type NotificationType = "mention" | "request" | "join";
+export type NotificationType =
+    | "response_received"
+    | "response_accepted"
+    | "response_rejected"
+    | "invitation_received"
+    | "invitation_accepted"
+    | "invitation_rejected"
+    | "stage_approval_required"
+    | "task_created"
+    | "task_updated"
+    | "task_moved"
+    | "task_deleted"
+    | "subtask_created"
+    | "subtask_updated"
+    | "subtask_deleted";
+
+export interface NotificationData {
+    actor_id: number | null;
+    actor_name: string;
+    project_id: number;
+    project_name: string;
+    vacancy_title: string | null;
+    invitation_id?: number;
+    response_id?: number;
+    stage_name?: string;
+    task_title?: string;
+    column_name?: string;
+    subtask_title?: string;
+}
 
 export interface Notification {
     id: number;
     type: NotificationType;
-    name: string;
-    action: string;
-    project: string;
-    time: string;
-    avatar: string;
+    data: NotificationData;
     read: boolean;
+    created_at: string;
+}
+
+export interface NotificationListResponse {
+    items: Notification[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    unread_count: number;
 }
 
 // ========== ДОСКА ==========
@@ -495,6 +658,7 @@ export type WorkspaceMember = {
     avatar_url: string | null;
     projects: { id: number; title: string }[];
     role: string;
+    workspace_role: string;
     contacts: { telegram?: string | null; email?: string | null; linkedin?: string | null };
     resume_url: string;
     created_at: string;
@@ -508,6 +672,29 @@ export type WorkspaceParticipantListResponse = {
     total_pages: number;
 };
 
+export type WorkspaceResumeItem = {
+    id: number;
+    header: string;
+    skills: string[];
+    interests: string[];
+    participant_name: string;
+    participant_id: number;
+    in_team: boolean;
+};
+
+export type WorkspaceResumeListResponse = {
+    items: WorkspaceResumeItem[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type WorkspaceResumeFiltersResponse = {
+    skills: string[];
+    interests: string[];
+};
+
 export type InviteLinkResponse = {
     token: string;
     url: string;
@@ -517,6 +704,10 @@ export type InviteLinkResponse = {
     created_at: string;
 };
 
+export type InviteLinkListResponse = {
+    links: InviteLinkResponse[];
+};
+
 export type InviteLinkCreate = {
     role_id?: number;
 };
@@ -524,6 +715,7 @@ export type InviteLinkCreate = {
 export type JoinByLinkResponse = {
     message: string;
     workspace_id: number;
+    already_member: boolean;
 };
 
 // ─── Profile responses / invitations / projects ────────────────────────
@@ -556,6 +748,7 @@ export type MyInvitationItem = {
     resume_title: string;
     date: string;
     status: string;
+    allow_multi_project_participation: boolean;
 };
 
 export type MyInvitationListResponse = {

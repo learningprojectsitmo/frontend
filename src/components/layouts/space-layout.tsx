@@ -1,22 +1,65 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Outlet, useSearchParams, Link } from "react-router";
+import { Outlet, useSearchParams, Link, NavLink, useNavigate } from "react-router";
 
 import { paths } from "@/config/paths";
-import { useSpacesList, getSuggestions } from "@/lib/spaces";
+import { useSpacesList } from "@/lib/spaces";
+import { useSearchResults } from "@/lib/search";
 import { cn } from "@/lib/utils";
-import { useDebounce } from "@/utils/debounce";
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import { SearchBar } from "@/components/ui/search-bar";
+import { SearchBar, type SuggestionGroup } from "@/components/ui/search-bar";
 import { Sidebar } from "@/features/spaces/components/sidebar";
 import { UserNav } from "@/features/spaces/components/user-nav";
 import { NotificationsNav } from "@/features/spaces/components/notifications";
 
+// ── Мобильная нижняя навигация ──
+const mobileNavItems = [
+    { to: "/app", end: true, icon: "home", label: "Пространства" },
+    { to: "/app/search", end: false, icon: "magnifier", label: "Поиск" },
+    { to: "/app/ideas", end: false, icon: "lightbulb", label: "Идеи" },
+    { to: "/app/profile", end: false, icon: "profile", label: "Профиль" },
+] as const;
+
+function MobileNav() {
+    return (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-app-surface border-t border-gray-200">
+            <div className="flex items-stretch justify-around h-14 px-2">
+                {mobileNavItems.map((item) => (
+                    <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        className={({ isActive }) =>
+                            cn(
+                                "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 rounded-[8px] my-1",
+                                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700",
+                            )
+                        }
+                    >
+                        {({ isActive }) => (
+                            <>
+                                <Icon
+                                    name={item.icon}
+                                    size={20}
+                                    className={isActive ? "text-blue-600" : "text-gray-500"}
+                                />
+                                <span className="text-[11px] font-medium leading-none">
+                                    {item.label}
+                                </span>
+                            </>
+                        )}
+                    </NavLink>
+                ))}
+            </div>
+        </nav>
+    );
+}
+
 function SpaceLayoutSkeleton() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center gap-4 sm:gap-12">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+                <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                     <span
                         className="text-[30px] font-bold text-app-text"
                         style={{ fontFamily: "Inter, sans-serif" }}
@@ -26,7 +69,7 @@ function SpaceLayoutSkeleton() {
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="hidden md:block w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -49,7 +92,7 @@ function SpaceLayoutSkeleton() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-0 md:ml-[56px] flex items-center justify-center p-8">
                     <div className="w-full max-w-4xl space-y-6">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
@@ -64,7 +107,7 @@ function SpaceLayoutSkeleton() {
 function SpaceLayoutError() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -96,21 +139,21 @@ function SpaceLayoutError() {
 function SpaceLayoutNotFound() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
-                        className="text-[30px] font-bold text-app-text"
+                        className="text-[30px] font-bold text-app-text shrink-0"
                         style={{ fontFamily: "Inter, sans-serif" }}
                     >
                         EduFlow
                     </span>
-                    <div className="relative">
+                    <div className="relative hidden sm:block">
                         <SearchBar
                             placeholder="Ищите проекты, пространства или участников..."
                             onChange={() => {}}
                             suggestions={[]}
                             value=""
-                            className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                            className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-gray-100 !border-none"
                         />
                     </div>
                 </div>
@@ -121,12 +164,12 @@ function SpaceLayoutNotFound() {
                     >
                         <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                     </Link>
-                    <NotificationsNav notifications={undefined} />
+                    <NotificationsNav />
                     <UserNav />
                 </div>
             </header>
             <div className="flex-1 flex mt-[72px]">
-                <aside className="w-[260px] md:w-[56px] bg-white border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
+                <aside className="w-[260px] md:w-[56px] bg-app-surface border-r border-app-border fixed top-[72px] left-0 bottom-0 z-[9]">
                     <div className="flex items-center gap-1 px-2 py-2">
                         <div className="h-9 flex-1 rounded-[10px] bg-gray-100 animate-pulse hidden md:block" />
                         <div className="h-9 w-9 rounded-[10px] bg-gray-100 animate-pulse shrink-0" />
@@ -149,7 +192,7 @@ function SpaceLayoutNotFound() {
                         ))}
                     </div>
                 </aside>
-                <main className="flex-1 ml-[260px] md:ml-[56px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-0 md:ml-[56px] flex items-center justify-center p-8">
                     <div className="text-center max-w-md">
                         <div className="flex justify-center mb-6">
                             <div className="relative">
@@ -214,28 +257,31 @@ function SpaceLayoutNotFound() {
 const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     search,
     onSearchChange,
+    onSearchSubmit,
     suggestions,
 }: {
     search: string;
     onSearchChange: (v: string) => void;
+    onSearchSubmit: (v: string) => void;
     suggestions: string[];
 }) {
     return (
-        <header className="h-[72px] bg-white border-b border-[#ECECEC] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
-            <div className="flex items-center gap-12">
+        <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                 <span
-                    className="text-[30px] font-bold text-app-text"
+                    className="text-[30px] font-bold text-app-text shrink-0"
                     style={{ fontFamily: "Inter, sans-serif" }}
                 >
                     EduFlow
                 </span>
-                <div className="relative">
+                <div className="relative hidden sm:block">
                     <SearchBar
                         placeholder="Ищите проекты, пространства или участников..."
                         onChange={onSearchChange}
+                        onSearch={onSearchSubmit}
                         suggestions={suggestions}
                         value={search}
-                        className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-[#F3F4F6] !border-none"
+                        className="w-auto sm:w-[280px] lg:w-[420px] !h-11 !rounded-full !bg-gray-100 !border-none"
                     />
                 </div>
             </div>
@@ -246,7 +292,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
                 >
                     <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                 </Link>
-                <NotificationsNav notifications={undefined} />
+                <NotificationsNav />
                 <UserNav />
             </div>
         </header>
@@ -257,8 +303,8 @@ function SpaceLayoutMain({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <main
             className={cn(
-                "flex-1 overflow-y-auto transition-all duration-200",
-                isCollapsed ? "ml-[56px]" : "ml-[260px]",
+                "flex-1 overflow-y-auto transition-all duration-200 pb-16 lg:pb-0",
+                isCollapsed ? "ml-0 lg:ml-[56px]" : "ml-0 lg:ml-[260px]",
             )}
         >
             <Outlet />
@@ -300,19 +346,56 @@ function SpaceLayoutContent({
     }, [data]);
 
     const [search, setSearch] = useState("");
-    const debouncedSearch = useDebounce(search);
-    const [suggestions, setSuggestions] = useState<string[]>([
-        "Mobile App",
-        "Mobile App Learning",
-        "Mobile App X",
-        "Web Development",
-        "UI/UX Design",
-    ]);
+    const { data: searchData } = useSearchResults(search);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!debouncedSearch) return;
-        getSuggestions(debouncedSearch).then(setSuggestions);
-    }, [debouncedSearch]);
+    const suggestions = useMemo<SuggestionGroup[]>(() => {
+        if (!searchData) return [];
+        const groups: SuggestionGroup[] = [];
+        if (searchData.projects.length > 0) {
+            groups.push({
+                id: "projects",
+                label: "Проекты",
+                items: searchData.projects.slice(0, 3).map((p) => ({
+                    text: p.name,
+                    href: paths.app.project.getHref(p.id),
+                    meta: p.workspace_name ?? undefined,
+                })),
+            });
+        }
+        if (searchData.spaces.length > 0) {
+            groups.push({
+                id: "spaces",
+                label: "Пространства",
+                items: searchData.spaces.slice(0, 3).map((s) => ({
+                    text: s.title,
+                    href: paths.app.space.getHref(s.id),
+                    meta: s.category ?? undefined,
+                })),
+            });
+        }
+        if (searchData.users.length > 0) {
+            groups.push({
+                id: "users",
+                label: "Участники",
+                items: searchData.users.slice(0, 3).map((u) => ({
+                    text: [u.last_name, u.first_name, u.middle_name].filter(Boolean).join(" "),
+                    href: paths.app.profile.getHref(u.id),
+                    meta: u.role ?? undefined,
+                })),
+            });
+        }
+        return groups;
+    }, [searchData]);
+
+    const handleSearchSubmit = useCallback(
+        (value: string) => {
+            const q = value.trim();
+            if (!q) return;
+            navigate(`${paths.app.root.getHref()}?q=${encodeURIComponent(q)}`);
+        },
+        [navigate],
+    );
 
     const handleToggle = useCallback(() => {
         setIsCollapsed((prev) => {
@@ -327,6 +410,7 @@ function SpaceLayoutContent({
             <SpaceLayoutHeader
                 search={search}
                 onSearchChange={setSearch}
+                onSearchSubmit={handleSearchSubmit}
                 suggestions={suggestions}
             />
             <div className="flex-1 flex flex-row mt-16">
@@ -339,6 +423,7 @@ function SpaceLayoutContent({
                 />
                 <SpaceLayoutMain isCollapsed={isCollapsed} />
             </div>
+            <MobileNav />
         </div>
     );
 }

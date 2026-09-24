@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/api-client";
 import { Icon } from "@/components/ui/icons";
-import { toast } from "sonner";
+import { notifyError } from "@/components/ui/notifications";
 
 const CreateAccFormSchema = z
     .object({
@@ -35,11 +36,12 @@ export const CreateAccForm = () => {
     const redirectTo = searchParams.get("redirectTo");
 
     const createAcc = useCreateAcc({
-        onSuccess: () => {
+        onSuccess: (data) => {
             sessionStorage.setItem(
                 "register",
                 JSON.stringify({
-                    email: form.getValues("email"),
+                    email: data.email,
+                    newuser_id: data.id,
                 }),
             );
 
@@ -64,15 +66,15 @@ export const CreateAccForm = () => {
                 password: values.password,
             },
             {
-                onError: () => {
-                    toast.error("Ошибка при создании аккаунта");
+                onError: (error) => {
+                    notifyError(getApiErrorMessage(error, "Ошибка при создании аккаунта"));
                 },
             },
         );
     };
 
     return (
-        <div className="bg-white w-full max-w-[520px] px-12 py-8 bg-white rounded-2xl ">
+        <div className="bg-app-surface w-full max-w-[520px] px-12 py-8 bg-app-surface rounded-2xl ">
             <div className="flex place-content-between width-full mb-8">
                 <Link
                     to={paths.auth.login.getHref(redirectTo)}
@@ -80,13 +82,19 @@ export const CreateAccForm = () => {
                 >
                     <Icon name="arrow-left" width={20} height={20} />
                 </Link>
-                <Icon name="logo-edu-flow" width={120} height={32} alt="EduFlow Logo" />
+                <Icon
+                    name="logo-edu-flow"
+                    width={120}
+                    height={32}
+                    alt="EduFlow Logo"
+                    color="var(--app-text)"
+                />
                 <div className="w-9 h-9"></div>
             </div>
             <h2 className="text-heading-3 font-semibold mb-8 text-grey-400 font-sans">
                 Создание нового аккаунта
             </h2>
-            <h4 className="mb-12 text-grey-400 text-[#4A5565] font-medium font-sans text-body">
+            <h4 className="mb-12 text-grey-400 text-gray-600 font-medium font-sans text-body">
                 Введите свой адрес электронной почты и создайте пароль
             </h4>
 
@@ -172,11 +180,7 @@ export const CreateAccForm = () => {
                         )}
                     />
 
-                    <Button
-                        type="submit"
-                        // className="w-full h-12 bg-[#050511] hover:bg-black text-white rounded-lg text-lg font-semibold"
-                        className="w-full h-12 bg-[#030213] text-white"
-                    >
+                    <Button variant="dark" size="fill48" type="submit">
                         Подтвердить
                     </Button>
                 </form>

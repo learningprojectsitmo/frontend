@@ -1,18 +1,26 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useResponses } from "@/features/profile/api/use-profile-data";
 import { ListToolbar } from "./list-toolbar";
 import { EmptyState } from "./empty-state";
 import { ResponsesFilters } from "./filters/responses-filters";
-import { defaultProfileFilters, type ProfileFiltersState } from "@/types/profile";
+import {
+    defaultProfileFilters,
+    type ProfileFiltersState,
+    type ResponseItem,
+} from "@/types/profile";
 import { ResponseCard, type ResponseCardAction } from "./response-card";
-import { api } from "@/lib/api-client";
+import { api, getApiErrorMessage } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateProjectImpact } from "@/lib/projects";
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
     pending: { text: "На рассмотрении", color: "#D97706", bg: "#FEF3C7" },
     accepted: { text: "Принят", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонён", color: "#EF4444", bg: "#FEE2E2" },
     withdrawn: { text: "Отозван", color: "#6B7280", bg: "#F3F4F6" },
+    in_team: { text: "В команде", color: "#2563EB", bg: "#DBEAFE" },
 };
 
 export function ResponsesSection() {
@@ -23,6 +31,7 @@ export function ResponsesSection() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingWithdraw, setPendingWithdraw] = useState<number | null>(null);
+    const [pendingConfirmJoin, setPendingConfirmJoin] = useState<number | null>(null);
 
     const items = useMemo(() => responses ?? [], [responses]);
 
@@ -100,11 +109,38 @@ export function ResponsesSection() {
         setPendingWithdraw(responseId);
         try {
             await api.patch(`/responses/${responseId}/withdraw`);
-            queryClient.invalidateQueries({ queryKey: ["profile", "responses"] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            const item = items.find((r) => r.id === responseId);
+            if (item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+            }
         } catch {
             // ignore
         } finally {
             setPendingWithdraw(null);
+        }
+    };
+
+    const handleConfirmJoin = async (responseId: number) => {
+        setPendingConfirmJoin(responseId);
+        try {
+            await api.patch(`/responses/${responseId}/confirm-join`);
+            queryClient.setQueryData<ResponseItem[]>(queryKeys.profile.responses(), (old) =>
+                old?.map((r) => (r.id === responseId ? { ...r, status: "in_team" } : r)),
+            );
+            toast.success("Вы присоединились к команде");
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.responses() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            const item = items.find((r) => r.id === responseId);
+            if (item) {
+                invalidateProjectImpact(queryClient, item.projectId);
+            }
+        } catch (error) {
+            toast.error(getApiErrorMessage(error, "Не удалось подтвердить участие"));
+        } finally {
+            setPendingConfirmJoin(null);
         }
     };
 
@@ -121,7 +157,7 @@ export function ResponsesSection() {
                     onChangeView={setViewMode}
                 />
                 <div className="flex items-center justify-center py-16">
-                    <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#2563EB] rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -175,11 +211,11 @@ export function ResponsesSection() {
             </div>
 
             {filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-[14px] text-[#6B7280]">
+                <div className="text-center py-12 text-[14px] text-gray-500">
                     Отклики не найдены
                 </div>
             ) : viewMode === "grid" ? (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
                     {filteredItems.map((item) => {
                         const st = statusLabel[item.status] ?? statusLabel.pending;
                         const actions: ResponseCardAction[] = [];
@@ -187,7 +223,17 @@ export function ResponsesSection() {
                             actions.push({
                                 label: pendingWithdraw === item.id ? "..." : "Отозвать",
                                 variant: "outline",
+                                disabled: pendingWithdraw === item.id,
                                 onClick: () => handleWithdraw(item.id),
+                            });
+                        }
+                        if (item.status === "accepted") {
+                            actions.push({
+                                label:
+                                    pendingConfirmJoin === item.id ? "..." : "Подтвердить участие",
+                                variant: "primary",
+                                disabled: pendingConfirmJoin === item.id,
+                                onClick: () => handleConfirmJoin(item.id),
                             });
                         }
                         return (
@@ -208,26 +254,27 @@ export function ResponsesSection() {
                     })}
                 </div>
             ) : (
-                <div className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
+                <div className="bg-app-surface border border-gray-200 rounded-[16px] overflow-x-auto">
                     <table className="w-full text-left text-[13px]">
                         <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Проект</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Роль</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Дата</th>
-                                <th className="py-3 px-4 font-medium text-[#6B7280]">Статус</th>
+                            <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="py-3 px-4 font-medium text-gray-500">Проект</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Роль</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Дата</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Статус</th>
+                                <th className="py-3 px-4 font-medium text-gray-500">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredItems.map((item) => {
                                 const st = statusLabel[item.status] ?? statusLabel.pending;
                                 return (
-                                    <tr key={item.id} className="border-b border-[#F3F4F6]">
-                                        <td className="py-3 px-4 font-medium text-[#111827]">
+                                    <tr key={item.id} className="border-b border-gray-100">
+                                        <td className="py-3 px-4 font-medium text-gray-900">
                                             {item.projectName}
                                         </td>
-                                        <td className="py-3 px-4 text-[#6B7280]">{item.role}</td>
-                                        <td className="py-3 px-4 text-[#6B7280]">{item.date}</td>
+                                        <td className="py-3 px-4 text-gray-500">{item.role}</td>
+                                        <td className="py-3 px-4 text-gray-500">{item.date}</td>
                                         <td className="py-3 px-4">
                                             <span
                                                 className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium"
@@ -238,6 +285,31 @@ export function ResponsesSection() {
                                             >
                                                 {st.text}
                                             </span>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {item.status === "pending" && (
+                                                <button
+                                                    onClick={() => handleWithdraw(item.id)}
+                                                    disabled={pendingWithdraw === item.id}
+                                                    className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Отозвать
+                                                </button>
+                                            )}
+                                            {item.status === "accepted" && (
+                                                <button
+                                                    onClick={() => handleConfirmJoin(item.id)}
+                                                    disabled={pendingConfirmJoin === item.id}
+                                                    className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Подтвердить участие
+                                                </button>
+                                            )}
+                                            {(item.status === "rejected" ||
+                                                item.status === "withdrawn" ||
+                                                item.status === "in_team") && (
+                                                <span className="text-gray-400 text-[12px]">—</span>
+                                            )}
                                         </td>
                                     </tr>
                                 );

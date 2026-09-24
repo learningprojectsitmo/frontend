@@ -18,7 +18,7 @@ export function TagList({
     onShowMore,
 }: TagListProps) {
     return (
-        <div className="bg-white border border-[--color-black-10] rounded-[14px] p-4">
+        <div className="bg-app-surface border border-[--color-black-10] rounded-[14px] p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Теги</h3>
             {tags.length === 0 ? (
                 <div className="text-center py-6">
@@ -37,7 +37,7 @@ export function TagList({
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
                                 activeTag === tag.name
                                     ? "bg-[--azure-60]/10 text-[--azure-60] font-medium"
-                                    : "text-[--azure-46] hover:bg-[#F3F4F6] hover:text-[--grey-4]"
+                                    : "text-[--azure-46] hover:bg-gray-100 hover:text-[--grey-4]"
                             }`}
                         >
                             <span>{tag.name}</span>

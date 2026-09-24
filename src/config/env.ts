@@ -10,6 +10,10 @@ const createEnv = () => {
             .optional(),
         APP_URL: z.string().optional().default("http://localhost:3000"),
         APP_MOCK_API_PORT: z.string().optional().default("8080"),
+        SENTRY_DSN: z.string().optional(),
+        SENTRY_ENVIRONMENT: z.string().optional().default("development"),
+        SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
+        SENTRY_ERRORS_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
     });
 
     const envVars = Object.entries(import.meta.env).reduce<Record<string, string>>((acc, curr) => {
@@ -19,6 +23,19 @@ const createEnv = () => {
         }
         return acc;
     }, {});
+
+    // Runtime-конфиг (config.js, инъектируется в рантайме) имеет приоритет:
+    // позволяет менять API_URL/Sentry-параметры на сервере БЕЗ пересборки образа.
+    const runtimeConfig =
+        typeof window !== "undefined" && window.__APP_CONFIG__
+            ? Object.fromEntries(
+                  Object.entries(window.__APP_CONFIG__).filter(([key]) => {
+                      return key !== "" && import.meta.env[`VITE_APP_${key}`] !== undefined;
+                  }),
+              )
+            : {};
+
+    Object.assign(envVars, runtimeConfig);
 
     const parsedEnv = EnvSchema.safeParse(envVars);
 

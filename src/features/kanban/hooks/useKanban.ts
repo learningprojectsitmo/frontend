@@ -601,6 +601,9 @@ export const useToggleSubtask = () => {
             queryClient.invalidateQueries({
                 queryKey: [...kanbanKeys.tasks(), "subtasks", converted.taskId],
             });
+            queryClient.invalidateQueries({
+                queryKey: kanbanKeys.boards(),
+            });
         },
     });
 };
