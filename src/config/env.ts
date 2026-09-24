@@ -14,6 +14,7 @@ const createEnv = () => {
         SENTRY_ENVIRONMENT: z.string().optional().default("development"),
         SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
         SENTRY_ERRORS_SAMPLE_RATE: z.coerce.number().optional().default(1.0),
+        YANDEX_METRIKA_ID: z.string().optional(),
     });
 
     const envVars = Object.entries(import.meta.env).reduce<Record<string, string>>((acc, curr) => {

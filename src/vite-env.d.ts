@@ -17,6 +17,7 @@ interface AppConfig {
     SENTRY_ENVIRONMENT?: string;
     SENTRY_TRACES_SAMPLE_RATE?: string;
     SENTRY_ERRORS_SAMPLE_RATE?: string;
+    YANDEX_METRIKA_ID?: string;
 }
 
 interface Window {

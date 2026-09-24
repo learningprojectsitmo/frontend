@@ -5,4 +5,5 @@ window.__APP_CONFIG__ = {
     APP_URL: "http://localhost:3000",
     ENABLE_API_MOCKING: "true",
     APP_MOCK_API_PORT: "8080",
+    YANDEX_METRIKA_ID: "",
 };

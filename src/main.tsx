@@ -5,8 +5,10 @@ import "./index.css";
 import "@/components/block-editor/style.css";
 import { App } from "./app";
 import { setupSentry } from "./lib/sentry";
+import { setupYandexMetrika } from "./lib/metrika";
 
 setupSentry();
+setupYandexMetrika();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("No root element found");
