@@ -111,5 +111,8 @@
             "npm run lint",
             "npm run check-types"
         ]
+    },
+    "overrides": {
+        "use-sync-external-store": "1.2.2"
     }
 }
