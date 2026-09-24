@@ -64,13 +64,11 @@ export const ImagePrompt = ({
 };
 
 let resolvePromise: ((url: string | null) => void) | null = null;
-let isOpen = false;
 let setIsOpen: ((open: boolean) => void) | null = null;
 
 export function ImagePromptProvider() {
     const [open, setOpen] = useState(false);
 
-    isOpen = open;
     setIsOpen = setOpen;
 
     return (

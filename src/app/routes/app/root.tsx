@@ -16,7 +16,6 @@ export const ErrorBoundary = () => {
     return (
         <div style={{ padding: 32 }}>
             <h1 style={{ fontWeight: 700, marginBottom: 8 }}>Something went wrong!</h1>
-            {/* eslint-disable-next-line react/no-unescaped-entities */}
             <pre
                 style={{
                     whiteSpace: "pre-wrap",
