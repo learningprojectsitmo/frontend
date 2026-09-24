@@ -1,18 +1,18 @@
-# Утилиты и хелперы
+# Utilities and Helpers
 
-## 📁 Файлы утилит
+## 📁 Utility Files
 
 ```
 src/utils/
-├── cn.ts       # Объединение CSS-классов
-└── format.ts   # Форматирование данных
+├── cn.ts       # CSS class merging
+└── format.ts   # Data formatting
 ```
 
 ---
 
-## 🎨 cn() — объединение классов
+## 🎨 cn() — Class Merging
 
-Файл: `src/utils/cn.ts`
+File: `src/utils/cn.ts`
 
 ```tsx
 import { type ClassValue, clsx } from "clsx";
@@ -23,42 +23,42 @@ export function cn(...inputs: ClassValue[]) {
 }
 ```
 
-### Использование
+### Usage
 
 ```tsx
 import { cn } from "@/utils/cn";
 
-// Простые классы
+// Simple classes
 cn("px-4 py-2", "bg-blue-500");
 // → "px-4 py-2 bg-blue-500"
 
-// Условные классы
+// Conditional classes
 cn("base-class", condition && "active-class");
-// → "base-class active-class" или "base-class"
+// → "base-class active-class" or "base-class"
 
-// С пропсом className
+// With className prop
 <div className={cn("btn", variant === "primary" && "btn-primary", className)} />;
 ```
 
-### Почему twMerge?
+### Why twMerge?
 
-Tailwind позволяет дублировать классы с разными значениями:
+Tailwind can produce conflicting classes with different values:
 
 ```tsx
-// Конфликт: оба устанавливают padding
+// Conflict: both set padding
 cn("p-2", "p-4");
-// → "p-4" (twMerge разрешает конфликт)
+// → "p-4" (twMerge resolves the conflict)
 
-// clsx без twMerge оставит оба
+// clsx without twMerge keeps both
 clsx("p-2", "p-4");
-// → "p-2 p-4" (конфликт!)
+// → "p-2 p-4" (conflict!)
 ```
 
 ---
 
-## 📅 formatDate() — форматирование дат
+## 📅 formatDate() — Date Formatting
 
-Файл: `src/utils/format.ts`
+File: `src/utils/format.ts`
 
 ```tsx
 import { default as dayjs } from "dayjs";
@@ -66,27 +66,27 @@ import { default as dayjs } from "dayjs";
 export const formatDate = (date: number) => dayjs(date).format("MMMM D, YYYY h:mm A");
 ```
 
-### Формат
+### Format Tokens
 
-| Маркер | Описание                |
-| ------ | ----------------------- |
-| `MMMM` | Полное название месяца  |
-| `D`    | День месяца             |
-| `YYYY` | Год (4 цифры)           |
-| `h`    | Час (12-часовой формат) |
-| `mm`   | Минуты                  |
-| `A`    | AM/PM                   |
+| Token  | Description          |
+| ------ | -------------------- |
+| `MMMM` | Full month name      |
+| `D`    | Day of the month     |
+| `YYYY` | 4-digit year         |
+| `h`    | Hour (12-hour clock) |
+| `mm`   | Minutes              |
+| `A`    | AM/PM                |
 
-### Примеры
+### Examples
 
 ```tsx
 formatDate(1737800000000);
 // → "January 25, 2026 10:30 AM"
 ```
 
-### Расширение dayjs
+### Extending dayjs
 
-Для дополнительных функций:
+For additional functionality:
 
 ```tsx
 import dayjs from "dayjs";
@@ -102,13 +102,13 @@ dayjs("2026-01-25").fromNow();
 
 ## 🧩 clsx()
 
-Условные CSS-классы:
+Conditional CSS classes:
 
 ```tsx
 import { clsx } from "clsx";
 
 clsx("base", condition && "active");
-// → "base active" или "base"
+// → "base active" or "base"
 
 clsx("a", "b", ["c", false], { d: true });
 // → "a b c d"
@@ -116,9 +116,9 @@ clsx("a", "b", ["c", false], { d: true });
 
 ---
 
-## 🔧 Создание новых утилит
+## 🔧 Creating New Utilities
 
-### Шаблон
+### Template
 
 ```tsx
 // src/utils/new-util.ts
@@ -130,47 +130,51 @@ export function newUtil(...inputs: ClassValue[]) {
 }
 ```
 
-### Где использовать
+### Where to Use
 
-- Манипуляции с классами → `cn()`
-- Форматирование дат → `formatDate()`
-- Валидация → создать утилиту в `utils/`
-- Константы → `config/`
-
-### Шрифты
-
-Класс шрифта
-
-- `font-sans`
-
-Три типа жирности:
-
-- font-normal (400)
-- font-medium (500)
-- font-semibold (600)
-
-Типы размера шрифта и letter-spacing, line-height:
-
-- text-heading-1: 48px , lineHeight:1.2 , letterSpacing:-0.02em
-- text-heading-2: 36px
-- text-heading-3: 30px ,lineHeight:1.3 , letterSpacing:-0.01em
-- text-heading-4: 24px ,lineHeight:1.3 , letterSpacing:-0.01em
-- text-subheading: 20px ,lineHeight:1.4 , letterSpacing:0
-- text-body-large: 18px ,lineHeight:1.5 , letterSpacing:0
-- text-body: 16px ,lineHeight:1.5 , letterSpacing:0
-- text-button-large: 18px , lineHeight:1.5 , letterSpacing:0.02em
-- text-button: 16px , lineHeight:1.5 , letterSpacing:0.02em
-- text-input: 16px , lineHeight:1.5 , letterSpacing:0
-- text-input-message: 14px , lineHeight:1.4 , letterSpacing:0
-- text-signature: 14px , lineHeight:1.4 , letterSpacing:0
-- text-signature-small: 12px , lineHeight:1.4 , letterSpacing:0
-- text-link: 16px , lineHeight:1.5 , letterSpacing:0
-
-это также можно посмотреть и настроить в tailwind.config.js
+- Class manipulation → `cn()`
+- Date formatting → `formatDate()`
+- Validation → create a utility in `utils/`
+- Constants → `config/`
 
 ---
 
-### Debounce
+## 🔤 Fonts
 
-import { useDebounce } from '../../utils/debounce';
-const debouncedSearch = useDebounce(value, delay); (delay = 500ms)
+Font family class:
+
+- `font-sans`
+
+Three font weights:
+
+- `font-normal` (400)
+- `font-medium` (500)
+- `font-semibold` (600)
+
+Typography scale (font size, line-height, letter-spacing):
+
+- `text-heading-1`: 48px, line-height: 1.2, letter-spacing: -0.02em
+- `text-heading-2`: 36px
+- `text-heading-3`: 30px, line-height: 1.3, letter-spacing: -0.01em
+- `text-heading-4`: 24px, line-height: 1.3, letter-spacing: -0.01em
+- `text-subheading`: 20px, line-height: 1.4, letter-spacing: 0
+- `text-body-large`: 18px, line-height: 1.5, letter-spacing: 0
+- `text-body`: 16px, line-height: 1.5, letter-spacing: 0
+- `text-button-large`: 18px, line-height: 1.5, letter-spacing: 0.02em
+- `text-button`: 16px, line-height: 1.5, letter-spacing: 0.02em
+- `text-input`: 16px, line-height: 1.5, letter-spacing: 0
+- `text-input-message`: 14px, line-height: 1.4, letter-spacing: 0
+- `text-signature`: 14px, line-height: 1.4, letter-spacing: 0
+- `text-signature-small`: 12px, line-height: 1.4, letter-spacing: 0
+- `text-link`: 16px, line-height: 1.5, letter-spacing: 0
+
+These can also be viewed and customized in `tailwind.config.js`.
+
+---
+
+## ⏱ Debounce
+
+```tsx
+import { useDebounce } from "../../utils/debounce";
+const debouncedSearch = useDebounce(value, delay); // delay = 500ms
+```

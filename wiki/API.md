@@ -1,28 +1,28 @@
-# Работа с API
+# Working with API
 
 ## 📡 API Client
 
-Базовый HTTP-клиент настроен в `src/lib/api-client.ts`.
+Base HTTP client configured in `src/lib/api-client.ts`.
 
-### Конфигурация
+### Configuration
 
 ```tsx
 import { api } from "@/lib/api-client";
 
-// Создание axios instance с базовым URL
+// Creating axios instance with base URL
 export const api = Axios.create({
     baseURL: env.API_URL,
 });
 ```
 
-### Перехватчики (Interceptors)
+### Interceptors
 
 #### Request Interceptor
 
-Добавляет к каждому запросу:
+Adds to each request:
 
 - `Accept: application/json`
-- `Authorization: Bearer {token}` из localStorage
+- `Authorization: Bearer {token}` from localStorage
 - `withCredentials: true`
 
 ```tsx
@@ -43,12 +43,12 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
 
 #### Response Interceptor
 
-Обрабатывает ответы и ошибки:
+Handles responses and errors:
 
-- Извлекает `response.data`
-- Форматирует сообщения об ошибках
-- Показывает уведомления через `useNotifications`
-- Обрабатывает 401 ошибки
+- Extracts `response.data`
+- Formats error messages
+- Shows notifications via `useNotifications`
+- Handles 401 errors
 
 ```tsx
 api.interceptors.response.use(
@@ -75,40 +75,40 @@ api.interceptors.response.use(
 
 ## 🔧 React Query
 
-### Конфигурация
+### Configuration
 
-Файл: `src/lib/react-query.ts`
+File: `src/lib/react-query.ts`
 
 ```tsx
 export const queryConfig = {
     queries: {
         refetchOnWindowFocus: false,
         retry: false,
-        staleTime: 1000 * 60, // 1 минута
+        staleTime: 1000 * 60, // 1 minute
     },
 } satisfies DefaultOptions;
 ```
 
-### Типы
+### Types
 
 ```tsx
-// Тип возвращаемого значения API-функции
+// Return type of API function
 export type ApiFnReturnType<FnType extends (...args: any) => Promise<any>> = Awaited<
     ReturnType<FnType>
 >;
 
-// Конфиг для query
+// Query config
 export type QueryConfig<T extends (...args: any[]) => any> = Omit<
     ReturnType<T>,
     "queryKey" | "queryFn"
 >;
 
-// Конфиг для mutation
+// Mutation config
 export type MutationConfig<MutationFnType extends (...args: any) => Promise<any>> =
     UseMutationOptions<ApiFnReturnType<MutationFnType>, Error, Parameters<MutationFnType>[0]>;
 ```
 
-### Пример использования
+### Usage Example
 
 ```tsx
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -129,7 +129,7 @@ export function useLogin() {
     return useMutation({
         mutationFn: (data: LoginParams) => api.post("/auth/login", data),
         onSuccess: () => {
-            // Инвалидация кэша
+            // Cache invalidation
             queryClient.invalidateQueries({ queryKey: ["user"] });
         },
     });
@@ -138,11 +138,11 @@ export function useLogin() {
 
 ---
 
-## 📝 TypeScript Типы API
+## 📝 TypeScript API Types
 
-Файл: `src/types/api.ts`
+File: `src/types/api.ts`
 
-### Базовые типы
+### Base Types
 
 ```tsx
 export type BaseEntity = {
@@ -161,7 +161,7 @@ export type Meta = {
 };
 ```
 
-### Модели данных
+### Data Models
 
 ```tsx
 export type User = Entity<{
@@ -192,17 +192,17 @@ export type Discussion = Entity<{
 
 ---
 
-## 🔐 Аутентификация
+## 🔐 Authentication
 
-### Получение токена
+### Getting the Token
 
 ```tsx
 const token = localStorage.getItem("token");
 ```
 
-### Логаут
+### Logout
 
-При 401 ошибке можно выполнить редирект на страницу логина:
+On a 401 error, redirect to the login page:
 
 ```tsx
 const searchParams = new URLSearchParams();

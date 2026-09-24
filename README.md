@@ -1,61 +1,60 @@
-# BulletProof App
+![ITMO](https://raw.githubusercontent.com/aimclub/open-source-ops/43bb283758b43d75ec1df0a6bb4ae3eb20066323/badges/ITMO_badge_rus.svg)
+![Docker](https://img.shields.io/badge/Docker-%232496ED?logo=docker&logoColor=white)
 
-## 📋 Обзор проекта
+![Typescript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 
-**BulletProof App** — это веб-приложение, построенное на современном стеке технологий с акцентом на типобезопасность, производительность и удобство разработки.
+# Frontend of the platform for managing projects
 
----
+![logo](public/eduflow.png)
 
-## 🛠 Стек технологий
+## 📋 Description
 
-### Ядро
+A web platform for managing collaborative study projects featuring team distribution (auto/manual based on skills and interests), project management (milestones, tasks, roles, progress tracking, notifications), assessment by the teachers, and a public landing site for discovery and onboarding.
 
--**React 18** + **TypeScript** — UI и типизация
+Backend repository of the project is available [here](https://github.com/learningprojectsitmo/backend).
 
--**Vite** — сборка и dev-сервер
+## 🚀 Installation
 
--**ESBuild** — быстрая компиляция
+```bash
+# Install dependencies
+npm install
 
-### Маршрутизация
+# Start dev server
+npm run dev
 
--**React Router v6** — клиентская маршрутизация
+# Build
+npm run build
 
-- Файл конфигурации: `src/config/paths.ts`
-
-### Управление состоянием
-
--**TanStack Query (React Query)** — серверное состояние
-
-- Конфигурация: `src/lib/react-query.ts`
-
-### Сетевой слой
-
--**Axios** — HTTP-клиент
-
-- Перехватчики (interceptors) для auth и error handling
-- Файл: `src/lib/api-client.ts`
-
-### UI и стилизация
-
--**Tailwind CSS** — утилитарные классы
-
--**shadcn/ui** — компонентная библиотека
-
--**Radix UI** — доступные примитивы
-
--**Lucide React** — иконки
-
-### Утилиты
-
--**clsx** + **tailwind-merge** — управление классами
-
--**dayjs** — форматирование дат
-
----
-
-## 📁 Структура проекта
-
+# Linting
+npm run lint
 ```
+
+## 🛠 Tech Stack
+
+### Core
+
+-**React 18** + **TypeScript** — UI and typing
+
+-**Vite** — build and dev server
+
+-**ESBuild** — fast compilation
+
+### Routing
+
+-**React Router v6** — client-side routing
+
+- Configuration file: `src/config/paths.ts`
+
+### State Management
+
+-**TanStack Query (React Query)** — server state
+
+- Configuration: `src/lib/react-query.ts`
+
+### Network Layer
+
+-**Axios** — HTTP client
 
 src/
 ├── app/                    # Точка входа и маршруты
@@ -72,39 +71,63 @@ src/
 ├── utils/                 # Утилитарные функции
 └── assets/                # Статические ресурсы
 ```
+- Interceptors for auth and error handling
+- File: `src/lib/api-client.ts`
 
----
+### UI and Styling
 
-## 🚀 Быстрый старт
+-**Tailwind CSS** — utility classes
 
-```bash
+-**shadcn/ui** — component library
 
-# Установка зависимостей
+-**Radix UI** — accessible primitives
 
-npm install
+-**Lucide React** — icons
 
+### Utilities
 
-# Запуск dev-сервера
+-**clsx** + **tailwind-merge** — class management
 
-npm run dev
+-**dayjs** — date formatting
 
+## Requirements
 
-# Сборка
+For more information, see the file **[package.json](https://github.com/learningprojectsitmo/frontend/blob/main/package.json)**.
 
-npm run build
+## 📁 Project Structure
 
+```
 
-# Линтинг
+src/
+├── app/                    # Entry point and routes
+│   ├── index.tsx          # App component with providers
+│   └── routes/            # Application routes
+├── components/
+│   ├── layouts/           # Layout components
+│   ├── ui/                # UI-kit (shadcn/ui)
+│   └── errors/            # Error boundaries
+├── config/                # Configuration (paths, env)
+├── lib/                   # Libraries and utilities
+├── hooks/                 # Custom hooks
+├── types/                 # TypeScript types
+├── utils/                 # Utility functions
+└── assets/                # Static assets
+
+```
 
 npm run lint
 ```
+## 📚 Documentation
 
----
+- [Component Architecture](wiki/ARCHITECTURE.md)
+- [Working with API](wiki/API.md)
+- [Routing and Navigation](wiki/ROUTING.md)
+- [UI Components](wiki/COMPONENTS.md)
+- [Utilities and Helpers](wiki/UTILS.md)
 
-## 📚 Документация
+## Contacts
 
-- [Архитектура компонентов](wiki/ARCHITECTURE.md)
-- [Работа с API](wiki/API.md)
-- [Роутинг и навигация](wiki/ROUTING.md)
-- [UI-компоненты](wiki/COMPONENTS.md)
-- [Утилиты и хелперы](wiki/UTILS.md)
+Our contacts:
+
+- Afanasiev Anton, orderkworinaa@gmail.com
+- Karagulov Mansur, mrkaragulov@itmo.ru
