@@ -41,7 +41,7 @@ const BlockEditorDragHandle = () => {
 
     return (
         <DragHandle
-            computePositionConfig={{ placement: "left-start", strategy: "absolute" }}
+            computePositionConfig={{ placement: "left", strategy: "absolute" }}
             editor={editor}
             onNodeChange={({ node, pos }) => {
                 dragNodeRef.current = node ? { node, pos } : null;

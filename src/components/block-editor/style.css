@@ -18,7 +18,7 @@
     width: 100%;
     outline: none;
     min-height: 200px;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 2.5rem;
     overflow: auto hidden;
     transition: opacity 150ms ease-out;
     background: var(--app-surface);
