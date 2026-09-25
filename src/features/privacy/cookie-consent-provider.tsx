@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router";
 
 import { paths } from "@/config/paths";
 import { Button, type ButtonProps } from "@/components/ui/button/button";
@@ -172,14 +171,14 @@ const CookieConsentBanner = ({
             <div className="max-w-3xl text-sm leading-5 text-[--azure-46]">
                 Мы используем cookie и данные локального хранилища для работы сервиса. С вашего
                 согласия мы можем включать аналитику и диагностику.{" "}
-                <Link
-                    to={paths.legal.privacy.getHref()}
+                <a
+                    href={paths.legal.privacy.path}
                     target="_blank"
                     rel="noreferrer"
                     className="font-semibold text-[--azure-54] hover:underline"
                 >
                     Подробнее
-                </Link>
+                </a>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:shrink-0">
                 <Button
