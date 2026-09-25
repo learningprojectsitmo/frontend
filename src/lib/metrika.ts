@@ -6,8 +6,6 @@ declare global {
     }
 }
 
-type YandexMetrika = (id: number, action: string, params?: YandexMetrikaInitParams) => void;
-
 type YandexMetrikaInitParams = {
     defer?: boolean;
     clickmap?: boolean;
@@ -16,7 +14,9 @@ type YandexMetrikaInitParams = {
     webvisor?: boolean;
 };
 
-type MetrikaQueue = ((...args: unknown[]) => void) & { a?: unknown[][] };
+type YandexMetrikaParams = YandexMetrikaInitParams | string;
+type YandexMetrika = (id: number, action: string, params: YandexMetrikaParams) => void;
+type MetrikaQueue = YandexMetrika & { a: unknown[][] };
 
 const METRIKA_SCRIPT_SRC = "https://mc.yandex.ru/metrika/tag.js";
 
@@ -28,27 +28,52 @@ const METRIKA_INIT_PARAMS: YandexMetrikaInitParams = {
     webvisor: true,
 };
 
-export function setupYandexMetrika(): void {
+let activeCounterId: number | null = null;
+let lastTrackedPageUrl: string | undefined;
+
+const getCounterId = (): number | null => {
     const rawId = env.YANDEX_METRIKA_ID;
-    if (!rawId) return;
+    if (!rawId) return null;
 
     const counterId = Number(rawId);
-    if (!Number.isInteger(counterId) || counterId <= 0) return;
+    return Number.isInteger(counterId) && counterId > 0 ? counterId : null;
+};
 
-    const existing = window.ym;
-    if (existing) {
-        const queue = existing as MetrikaQueue;
-        queue.a = queue.a ?? [];
-        queue.a.push([counterId, "init", METRIKA_INIT_PARAMS]);
+export function setupYandexMetrika(): void {
+    const counterId = getCounterId();
+    if (!counterId || activeCounterId === counterId) return;
+
+    activeCounterId = counterId;
+
+    if (window.ym) {
+        window.ym(counterId, "init", METRIKA_INIT_PARAMS);
         return;
     }
 
-    const queue: MetrikaQueue = () => {};
-    queue.a = [[counterId, "init", METRIKA_INIT_PARAMS]];
+    const queue = ((...args: Parameters<YandexMetrika>) => {
+        queue.a.push(args);
+    }) as MetrikaQueue;
+    queue.a = [];
     window.ym = queue;
+    queue(counterId, "init", METRIKA_INIT_PARAMS);
 
     const script = document.createElement("script");
     script.async = true;
     script.src = METRIKA_SCRIPT_SRC;
     document.head.appendChild(script);
+}
+
+export function disableYandexMetrika(): void {
+    activeCounterId = null;
+    lastTrackedPageUrl = undefined;
+}
+
+export function trackYandexMetrikaPageView(url: string): void {
+    if (activeCounterId === null) return;
+
+    const pageUrl = new URL(url, window.location.origin).toString();
+    if (pageUrl === lastTrackedPageUrl) return;
+
+    lastTrackedPageUrl = pageUrl;
+    window.ym?.(activeCounterId, "hit", pageUrl);
 }

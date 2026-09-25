@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { useCookieConsent } from "@/features/privacy/cookie-consent-provider";
+
 type Theme = "light" | "dark";
 
 type ThemeProviderProps = {
@@ -17,12 +19,14 @@ const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 const STORAGE_KEY = "app-theme";
 
-const getInitialTheme = (fallback: Theme): Theme => {
-    try {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (stored === "light" || stored === "dark") return stored;
-    } catch {
-        // ignore
+const getInitialTheme = (fallback: Theme, storageEnabled = true): Theme => {
+    if (storageEnabled) {
+        try {
+            const stored = window.localStorage.getItem(STORAGE_KEY);
+            if (stored === "light" || stored === "dark") return stored;
+        } catch {
+            // ignore
+        }
     }
     try {
         if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
@@ -45,8 +49,17 @@ const applyTheme = (theme: Theme) => {
 };
 
 export const ThemeProvider = ({ children, defaultTheme = "light" }: ThemeProviderProps) => {
-    const [theme, setThemeState] = React.useState<Theme>(() => getInitialTheme(defaultTheme));
+    const { functionalEnabled } = useCookieConsent();
+    const [theme, setThemeState] = React.useState<Theme>(() =>
+        getInitialTheme(defaultTheme, functionalEnabled),
+    );
     const themeRef = React.useRef(theme);
+
+    React.useEffect(() => {
+        if (functionalEnabled) {
+            setThemeState(getInitialTheme(defaultTheme, true));
+        }
+    }, [defaultTheme, functionalEnabled]);
 
     React.useEffect(() => {
         themeRef.current = theme;
@@ -56,25 +69,35 @@ export const ThemeProvider = ({ children, defaultTheme = "light" }: ThemeProvide
         applyTheme(theme);
     }, [theme]);
 
-    const setTheme = React.useCallback((next: Theme) => {
-        try {
-            window.localStorage.setItem(STORAGE_KEY, next);
-        } catch {
-            // ignore
-        }
-        setThemeState(next);
-    }, []);
+    const setTheme = React.useCallback(
+        (next: Theme) => {
+            if (functionalEnabled) {
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, next);
+                } catch {
+                    // ignore
+                }
+            }
+            setThemeState(next);
+        },
+        [functionalEnabled],
+    );
 
-    const toggleTheme = React.useCallback((_point?: Point | null) => {
-        const next: Theme = themeRef.current === "dark" ? "light" : "dark";
-        try {
-            window.localStorage.setItem(STORAGE_KEY, next);
-        } catch {
-            // ignore
-        }
-        applyTheme(next);
-        setThemeState(next);
-    }, []);
+    const toggleTheme = React.useCallback(
+        (_point?: Point | null) => {
+            const next: Theme = themeRef.current === "dark" ? "light" : "dark";
+            if (functionalEnabled) {
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, next);
+                } catch {
+                    // ignore
+                }
+            }
+            applyTheme(next);
+            setThemeState(next);
+        },
+        [functionalEnabled],
+    );
 
     const value = React.useMemo(
         () => ({ theme, setTheme, toggleTheme }),

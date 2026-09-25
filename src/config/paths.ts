@@ -7,6 +7,12 @@ export const paths = {
         path: "/landing",
         getHref: () => "/landing",
     },
+    legal: {
+        privacy: {
+            path: "/privacy",
+            getHref: () => "/privacy",
+        },
+    },
 
     auth: {
         createAcc: {

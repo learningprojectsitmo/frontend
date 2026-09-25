@@ -7,22 +7,7 @@ RUN npm ci
 
 COPY . ./
 
-ARG VITE_APP_API_URL=/v1
-ARG VITE_APP_ENABLE_API_MOCKING=false
-ARG VITE_APP_SENTRY_DSN=
-ARG VITE_APP_SENTRY_ENVIRONMENT=production
-ARG VITE_APP_SENTRY_TRACES_SAMPLE_RATE=0.01
-ARG VITE_APP_SENTRY_ERRORS_SAMPLE_RATE=0.5
-ARG VITE_APP_YANDEX_METRIKA_ID=
-
-ENV NODE_ENV=production \
-    VITE_APP_API_URL=$VITE_APP_API_URL \
-    VITE_APP_ENABLE_API_MOCKING=$VITE_APP_ENABLE_API_MOCKING \
-    VITE_APP_SENTRY_DSN=$VITE_APP_SENTRY_DSN \
-    VITE_APP_SENTRY_ENVIRONMENT=$VITE_APP_SENTRY_ENVIRONMENT \
-    VITE_APP_SENTRY_TRACES_SAMPLE_RATE=$VITE_APP_SENTRY_TRACES_SAMPLE_RATE \
-    VITE_APP_SENTRY_ERRORS_SAMPLE_RATE=$VITE_APP_SENTRY_ERRORS_SAMPLE_RATE \
-    VITE_APP_YANDEX_METRIKA_ID=$VITE_APP_YANDEX_METRIKA_ID
+ENV NODE_ENV=production
 
 RUN npm run build
 
@@ -32,6 +17,9 @@ RUN npm run build
 FROM nginx:1.27-alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY runtime-config.js.template /etc/nginx/templates/config.js.template
+
+ENV NGINX_ENVSUBST_OUTPUT_DIR=/usr/share/nginx/html
 
 # SPA fallback + long-cache для ассетов; TLS/proxy/certbot — не наше дело (это edge).
 COPY <<'EOF' /etc/nginx/conf.d/default.conf

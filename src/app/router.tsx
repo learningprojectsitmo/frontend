@@ -1,10 +1,11 @@
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
-import type { LoaderFunction, ActionFunction } from "react-router";
+import type { LoaderFunction, ActionFunction, Location } from "react-router";
 
 import { paths } from "@/config/paths";
+import { trackYandexMetrikaPageView } from "@/lib/metrika";
 
 import { Spinner } from "@/components/ui/spinner/spinner";
 
@@ -77,6 +78,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
         {
             path: paths.landing.path,
             lazy: () => import("./routes/landing").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.legal.privacy.path,
+            lazy: () => import("./routes/privacy").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />,
         },
         {
@@ -199,6 +205,15 @@ export const AppRouter = () => {
     const queryClient = useQueryClient();
 
     const router = useMemo(() => createAppRouter(queryClient), [queryClient]);
+
+    useEffect(() => {
+        const trackLocation = (location: Location) => {
+            trackYandexMetrikaPageView(`${location.pathname}${location.search}${location.hash}`);
+        };
+
+        trackLocation(router.state.location);
+        return router.subscribe((state) => trackLocation(state.location));
+    }, [router]);
 
     return <RouterProvider router={router} />;
 };

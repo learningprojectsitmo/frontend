@@ -7,7 +7,15 @@ import { paths } from "@/config/paths";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
+import { Checkbox } from "@/components/ui/checkbox/checkbox";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input/input";
 import { useCreateAcc } from "@/lib/auth";
 import { getApiErrorMessage } from "@/lib/api-client";
@@ -22,6 +30,9 @@ const CreateAccFormSchema = z
             .min(5, "Пароль должен быть минимум 5 символов")
             .max(64, "Слишком большой пароль"),
         passwordConfirmation: z.string().min(5, "Подтвердите пароль"),
+        personalDataConsent: z.boolean().refine((value) => value, {
+            message: "Необходимо согласие на обработку персональных данных",
+        }),
     })
     .refine((data) => data.password === data.passwordConfirmation, {
         message: "Пароли не совпадают",
@@ -56,6 +67,7 @@ export const CreateAccForm = () => {
             email: "",
             password: "",
             passwordConfirmation: "",
+            personalDataConsent: false,
         },
     });
 
@@ -176,6 +188,40 @@ export const CreateAccForm = () => {
                                         </button>
                                     </div>
                                 </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="personalDataConsent"
+                        render={({ field }) => (
+                            <FormItem>
+                                <div className="flex items-start gap-3">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            aria-required="true"
+                                            onCheckedChange={(checked) =>
+                                                field.onChange(checked === true)
+                                            }
+                                        />
+                                    </FormControl>
+                                    <div className="text-sm font-normal leading-5 text-[--azure-46]">
+                                        <FormLabel>
+                                            Я согласен на обработку персональных данных
+                                        </FormLabel>{" "}
+                                        <Link
+                                            to={paths.legal.privacy.getHref()}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="font-semibold text-[--azure-54] hover:underline"
+                                        >
+                                            Политика конфиденциальности
+                                        </Link>
+                                    </div>
+                                </div>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />

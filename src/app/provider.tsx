@@ -11,6 +11,7 @@ import { queryConfig } from "@/lib/react-query";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { ImagePromptProvider } from "@/components/image-prompt";
+import { CookieConsentProvider } from "@/features/privacy/cookie-consent-provider";
 
 import "@/i18n/config";
 
@@ -36,13 +37,15 @@ const AppProvider = ({ children }: AppProviderProps) => {
         >
             <ErrorBoundary FallbackComponent={MainErrorFallback}>
                 <HelmetProvider>
-                    <QueryClientProvider client={queryClient}>
-                        {import.meta.env.DEV && <ReactQueryDevtools />}
-                        <LanguageSync />
-                        <ThemeProvider>{children}</ThemeProvider>
-                        <Notifications />
-                        <ImagePromptProvider />
-                    </QueryClientProvider>
+                    <CookieConsentProvider>
+                        <QueryClientProvider client={queryClient}>
+                            {import.meta.env.DEV && <ReactQueryDevtools />}
+                            <LanguageSync />
+                            <ThemeProvider>{children}</ThemeProvider>
+                            <Notifications />
+                            <ImagePromptProvider />
+                        </QueryClientProvider>
+                    </CookieConsentProvider>
                 </HelmetProvider>
             </ErrorBoundary>
         </React.Suspense>

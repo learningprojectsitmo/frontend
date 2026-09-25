@@ -27,14 +27,12 @@ const createEnv = () => {
 
     // Runtime-конфиг (config.js, инъектируется в рантайме) имеет приоритет:
     // позволяет менять API_URL/Sentry-параметры на сервере БЕЗ пересборки образа.
-    const runtimeConfig =
-        typeof window !== "undefined" && window.__APP_CONFIG__
-            ? Object.fromEntries(
-                  Object.entries(window.__APP_CONFIG__).filter(([key]) => {
-                      return key !== "" && import.meta.env[`VITE_APP_${key}`] !== undefined;
-                  }),
-              )
-            : {};
+    const runtimeConfig: Record<string, string> = {};
+    if (typeof window !== "undefined" && window.__APP_CONFIG__) {
+        for (const [key, value] of Object.entries(window.__APP_CONFIG__)) {
+            if (value !== undefined) runtimeConfig[key] = value;
+        }
+    }
 
     Object.assign(envVars, runtimeConfig);
 

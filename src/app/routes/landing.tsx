@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Head } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/button/icon-button";
@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
 import { useUser } from "@/lib/auth";
 import { useTheme } from "@/lib/theme-provider";
+import { useCookieConsent } from "@/features/privacy/cookie-consent-provider";
 import { Moon, Sun } from "lucide-react";
 
 const features = [
@@ -67,6 +68,7 @@ const LandingRoute = () => {
     const { data: user, isLoading } = useUser();
     const isLoggedIn = !isLoading && user;
     const { theme, toggleTheme } = useTheme();
+    const { openSettings } = useCookieConsent();
 
     return (
         <>
@@ -300,13 +302,20 @@ const LandingRoute = () => {
                     <p className="text-sm text-gray-400">
                         &copy; {new Date().getFullYear()} EduFlow. Все права защищены.
                     </p>
-                    <div className="flex gap-4 text-sm text-gray-400">
-                        <a href="#" className="hover:text-gray-600 transition-colors">
+                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-400">
+                        <Link
+                            to={paths.legal.privacy.getHref()}
+                            className="hover:text-gray-600 transition-colors"
+                        >
                             Политика конфиденциальности
-                        </a>
-                        <a href="#" className="hover:text-gray-600 transition-colors">
-                            Контакты
-                        </a>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={openSettings}
+                            className="hover:text-gray-600 transition-colors"
+                        >
+                            Настройки cookie
+                        </button>
                     </div>
                 </div>
             </footer>

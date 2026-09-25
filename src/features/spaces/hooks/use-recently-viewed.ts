@@ -1,10 +1,16 @@
 import { useCallback } from "react";
 
+import { useCookieConsent } from "@/features/privacy/cookie-consent-provider";
+
 const STORAGE_KEY = "recently_viewed_project_ids";
 const MAX_ITEMS = 20;
 
 export function useRecentlyViewed() {
+    const { functionalEnabled } = useCookieConsent();
+
     const getViewedProjectIds = useCallback((): number[] => {
+        if (!functionalEnabled) return [];
+
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return [];
@@ -13,10 +19,12 @@ export function useRecentlyViewed() {
         } catch {
             return [];
         }
-    }, []);
+    }, [functionalEnabled]);
 
     const addViewedProject = useCallback(
         (projectId: number) => {
+            if (!functionalEnabled) return;
+
             try {
                 const ids = getViewedProjectIds();
                 const filtered = ids.filter((id) => id !== projectId);
@@ -26,7 +34,7 @@ export function useRecentlyViewed() {
                 // localStorage might be full or unavailable
             }
         },
-        [getViewedProjectIds],
+        [functionalEnabled, getViewedProjectIds],
     );
 
     const clearViewedProjects = useCallback(() => {
