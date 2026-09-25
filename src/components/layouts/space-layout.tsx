@@ -160,7 +160,7 @@ function SpaceLayoutNotFound() {
                 <div className="flex items-center gap-3">
                     <Link
                         to={paths.app.ideas.getHref()}
-                        className="w-9 h-9 bg-transparent rounded-[8px] flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
+                        className="w-9 h-9 bg-transparent rounded-[8px] hidden lg:flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
                     >
                         <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                     </Link>
@@ -288,7 +288,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
             <div className="flex items-center gap-3">
                 <Link
                     to={paths.app.ideas.getHref()}
-                    className="w-9 h-9 bg-transparent rounded-[8px] flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
+                    className="w-9 h-9 bg-transparent rounded-[8px] hidden lg:flex items-center justify-center hover:bg-[--btn-outline-hover-bg] transition-colors"
                 >
                     <Icon name="lightbulb" size={20} className="text-[--btn-outline-text]" />
                 </Link>

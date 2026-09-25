@@ -160,7 +160,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                 </form>
             </Form>
 
-            <div className="relative my-8">
+            <div className="relative my-8 hidden">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-gray-200" />
                 </div>
@@ -171,7 +171,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
                 </div>
             </div>
 
-            <div className="flex justify-center space-x-8">
+            <div className="flex justify-center space-x-8 hidden">
                 <div className="flex justify-center w-32">
                     <button className="hover:opacity-80 transition-opacity">
                         <span className="font-bold text-lg tracking-wide">ITMO ID</span>
