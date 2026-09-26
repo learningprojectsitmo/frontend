@@ -284,13 +284,21 @@ export type ResumeParams = {
     search?: string;
     skills?: string[];
     interests?: string[];
+    /**
+     * Только основные резюме участников. Включается на странице пространства:
+     * без него бэкенд вернёт по карточке на каждое резюме участника.
+     */
+    defaultOnly?: boolean;
 };
 
 export const getWorkspaceResumes = async (
     workspaceId: number,
     params?: ResumeParams,
 ): Promise<WorkspaceResumeListResponse> => {
-    return await api.get(`/workspaces/${workspaceId}/resumes`, { params });
+    const { defaultOnly, ...rest } = params ?? {};
+    return await api.get(`/workspaces/${workspaceId}/resumes`, {
+        params: { ...rest, ...(defaultOnly ? { default_only: true } : {}) },
+    });
 };
 
 export const useWorkspaceResumes = (workspaceId: number, params?: ResumeParams) => {

@@ -37,7 +37,10 @@ export const queryKeys = {
         spaces: () => ["profile", "spaces"] as const,
         createdProjects: () => ["profile", "created-projects"] as const,
         projects: () => ["profile", "projects"] as const,
-        activity: () => ["profile", "activity"] as const,
+        // day — выбранный день графика; попадает в ключ, чтобы лента и общая
+        // лента не путались в кэше.
+        activity: (page = 1, limit?: number, day?: string | null) =>
+            compact(["profile", "activity", page, limit, day] as const),
     },
 
     project: {
@@ -47,6 +50,8 @@ export const queryKeys = {
         recent: () => ["projects", "recent"] as const,
         byIds: (ids?: number[]) =>
             ids ? (["projects", "by_ids", ids] as const) : (["projects", "by_ids"] as const),
+        activity: (id: string | number, page = 1, limit?: number, day?: string | null) =>
+            compact(["project", String(id), "activity", page, limit, day] as const),
     },
 
     projectTypes: {
@@ -98,3 +103,8 @@ export const queryKeys = {
 
     search: (q: string, scope: "default" | "extended" = "default") => ["search", scope, q] as const,
 };
+
+/** Убирает пустые сегменты из ключа: `undefined`/`null` не должны его различать. */
+function compact<T extends readonly unknown[]>(parts: T): T {
+    return parts.filter((p) => p !== undefined && p !== null) as unknown as T;
+}

@@ -10,6 +10,7 @@ type ResumeListProps = {
     onShare?: (id: number) => void;
     onDelete?: (id: number) => void;
     onToggleVisibility?: (id: number) => void;
+    onSetDefault?: (id: number) => void;
     readOnly?: boolean;
 };
 
@@ -20,6 +21,7 @@ export function ResumeList({
     onShare,
     onDelete,
     onToggleVisibility,
+    onSetDefault,
     readOnly,
 }: ResumeListProps) {
     return (
@@ -75,6 +77,7 @@ export function ResumeList({
                             onToggleVisibility={
                                 onToggleVisibility ? () => onToggleVisibility(resume.id) : undefined
                             }
+                            onSetDefault={onSetDefault ? () => onSetDefault(resume.id) : undefined}
                         />
                     ))}
                 </div>

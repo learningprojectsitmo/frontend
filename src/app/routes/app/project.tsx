@@ -74,6 +74,7 @@ import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
+import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -1771,6 +1772,10 @@ const SpaceRoute = () => {
                         onApprove={handleApproveStage}
                         onReject={handleRejectStage}
                     />
+                )}
+
+                {activeTab === "activity" && projectId > 0 && (
+                    <ProjectActivityTab projectId={projectId} />
                 )}
 
                 {activeTab === "kanban" && (

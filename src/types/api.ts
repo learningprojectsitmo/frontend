@@ -315,6 +315,8 @@ export type ResumeUpdate = {
     has_experience?: boolean;
     no_experience_description?: string | null;
     is_visible?: boolean;
+    /** Сделать резюме основным (переключение снимает признак с предыдущего). */
+    is_default?: boolean;
 };
 
 export type ResumeFull = {
@@ -330,6 +332,8 @@ export type ResumeFull = {
     has_experience: boolean;
     no_experience_description: string | null;
     is_visible: boolean;
+    /** Основное резюме автора. Ровно одно на пользователя. */
+    is_default: boolean;
     created_at: string;
     updated_at: string;
 };

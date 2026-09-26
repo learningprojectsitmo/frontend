@@ -14,6 +14,7 @@ export type ResumeData = {
     invitations: string;
     lastUpdated: string;
     isVisible: boolean;
+    isDefault: boolean;
 };
 
 export function mapResumeFromApi(item: import("@/types/api").ResumeFull): ResumeData {
@@ -24,6 +25,7 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
         invitations: String(item.invitations_count ?? 0),
         lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("ru-RU") : "—",
         isVisible: item.is_visible,
+        isDefault: item.is_default ?? false,
     };
 }
 
@@ -33,6 +35,7 @@ type ResumeCardProps = {
     onShare?: () => void;
     onDelete?: () => void;
     onToggleVisibility?: (id: number) => void;
+    onSetDefault?: (id: number) => void;
     readOnly?: boolean;
 };
 
@@ -42,6 +45,7 @@ export function ResumeCard({
     onShare,
     onDelete,
     onToggleVisibility,
+    onSetDefault,
     readOnly,
 }: ResumeCardProps) {
     return (
@@ -54,9 +58,16 @@ export function ResumeCard({
             />
 
             <div className="flex items-center justify-between gap-2">
-                <h3 className="text-[15px] font-bold text-gray-900 pointer-events-none">
-                    {resume.position}
-                </h3>
+                <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="text-[15px] font-bold text-gray-900 pointer-events-none truncate">
+                        {resume.position}
+                    </h3>
+                    {resume.isDefault && (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[#2563EB] bg-[#2563EB]/10 rounded-full px-2 py-0.5">
+                            Основное
+                        </span>
+                    )}
+                </div>
                 {!readOnly && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -69,6 +80,18 @@ export function ResumeCard({
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[180px]">
+                            {onSetDefault && !resume.isDefault && (
+                                <DropdownMenuItem
+                                    className="gap-2 cursor-pointer"
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        onSetDefault(resume.id);
+                                    }}
+                                >
+                                    <Icon name="check" size={14} />
+                                    Сделать основным
+                                </DropdownMenuItem>
+                            )}
                             {onShare && (
                                 <DropdownMenuItem
                                     className="gap-2 cursor-pointer"

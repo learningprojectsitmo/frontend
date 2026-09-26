@@ -89,6 +89,24 @@ export const useUpdateResume = () => {
     });
 };
 
+/**
+ * Сделать резюме основным. Основное ровно одно на автора: бэкенд снимает
+ * признак с предыдущего и обновляет списки резюме пространств.
+ */
+export const useSetDefaultResume = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => updateResume({ id, data: { is_default: true } }),
+        onSuccess: (_data, id) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(id) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+            invalidateWorkspaceResumes(queryClient);
+            toast.success("Резюме сделано основным");
+        },
+        onError: onSaveError,
+    });
+};
+
 export const createResume = async (data: ResumeCreate): Promise<ResumeFull> => {
     return await api.post("/resumes/", data);
 };

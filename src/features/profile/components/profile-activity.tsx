@@ -1,76 +1,83 @@
 import { useState } from "react";
-import { useActivityFor } from "@/features/profile/api/use-activity";
+import { ACTIVITY_PAGE_SIZE, useActivityFor } from "@/features/profile/api/use-activity";
 import { ContributionGraph } from "./contribution-graph";
+import { ActivityDayFilter } from "./activity-day-filter";
 import { ActivityFeed } from "./activity-feed";
+import { ActivityPagination } from "./activity-pagination";
 
 export function ProfileActivity({ userId }: { userId?: number | null }) {
     const [page, setPage] = useState(1);
-    const { data, isLoading } = useActivityFor(userId, page);
+    const [day, setDay] = useState<string | null>(null);
+    const { data, isLoading } = useActivityFor(userId, page, ACTIVITY_PAGE_SIZE, day);
 
     const totalPages = data?.total_pages ?? 0;
+
+    // Клик по дню всегда возвращает ленту на первую страницу: на второй
+    // выбранного дня может не оказаться, и лента выглядела бы пустой.
+    const selectDay = (next: string) => {
+        setDay((current) => (current === next ? null : next));
+        setPage(1);
+    };
 
     return (
         <div className="flex flex-col gap-6">
             <div className="bg-app-surface border border-gray-200 rounded-[16px] p-5">
                 <h2 className="text-[16px] font-semibold text-gray-900">
-                    Вклад за последний год
+                    Вклад с момента регистрации
                     {data && data.total > 0 && (
                         <span className="ml-2 text-[13px] font-normal text-gray-400 whitespace-nowrap">
                             {data.total} {pluralize(data.total)}
                         </span>
                     )}
                 </h2>
+                {data?.since && (
+                    <div className="mt-1 text-[12px] text-gray-400">с {formatDay(data.since)}</div>
+                )}
                 <div className="mt-4">
-                    <ContributionGraph summary={data?.summary ?? []} loading={isLoading} />
+                    <ContributionGraph
+                        summary={data?.summary ?? []}
+                        since={data?.since ?? null}
+                        loading={isLoading}
+                        onDayClick={selectDay}
+                        selectedDay={day}
+                    />
                 </div>
             </div>
 
             <div className="bg-app-surface border border-gray-200 rounded-[16px] p-5">
                 <h2 className="text-[16px] font-semibold text-gray-900 mb-4">Последние действия</h2>
-                <ActivityFeed items={data?.items ?? []} loading={isLoading} />
-
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6">
-                        <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page <= 1}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Назад
-                        </button>
-
-                        {Array.from({ length: totalPages }, (_, i) => i + 1)
-                            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                            .map((p, idx, arr) => (
-                                <span key={p} className="flex items-center">
-                                    {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                        <span className="px-1 text-gray-400 text-sm">...</span>
-                                    )}
-                                    <button
-                                        onClick={() => setPage(p)}
-                                        className={`w-8 h-8 text-sm font-medium rounded-[8px] transition-colors ${
-                                            p === page
-                                                ? "bg-[#2563EB] text-white"
-                                                : "text-gray-500 hover:bg-gray-50"
-                                        }`}
-                                    >
-                                        {p}
-                                    </button>
-                                </span>
-                            ))}
-
-                        <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={page >= totalPages}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-500 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Вперёд
-                        </button>
-                    </div>
+                {day && (
+                    <ActivityDayFilter
+                        day={day}
+                        total={data?.total ?? 0}
+                        onClear={() => {
+                            setDay(null);
+                            setPage(1);
+                        }}
+                    />
                 )}
+                <ActivityFeed
+                    items={data?.items ?? []}
+                    loading={isLoading}
+                    emptyMessage={day ? "В этот день действий не было" : "Активности пока нет"}
+                />
+
+                <ActivityPagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
         </div>
     );
+}
+
+function formatDay(value: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return value;
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    return date.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+    });
 }
 
 function pluralize(count: number): string {

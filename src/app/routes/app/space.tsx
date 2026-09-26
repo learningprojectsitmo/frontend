@@ -251,6 +251,9 @@ const SpaceRoute = () => {
         search: debouncedResumeSearch || undefined,
         skills: selectedResumeSkills.length > 0 ? selectedResumeSkills : undefined,
         interests: selectedResumeInterests.length > 0 ? selectedResumeInterests : undefined,
+        // На странице пространства у участника показываем только основное
+        // резюме, иначе список распухнет на число его резюме.
+        defaultOnly: true,
     };
 
     const { data: resumesData, isLoading: isResumesLoading } = useWorkspaceResumes(
