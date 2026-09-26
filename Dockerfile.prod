@@ -35,10 +35,23 @@ server {
         add_header Cache-Control "no-store";
     }
 
+    # Только контент-хешированные бандлы: имя файла меняется вместе с
+    # содержимым, поэтому immutable здесь честный.
+    # ^~ обязателен: без него регекс-локация ниже проверяется раньше
+    # префиксной и забирает /assets/*.js себе.
+    location ^~ /assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+    }
+
+    # Нехешированная статика (favicon.svg, apple-touch-icon.png, иконки из
+    # public/) по имени не версионируется — immutable здесь вводил бы в
+    # заблуждение: после деплоя браузер до 30 дней держал бы старый файл.
+    # Директива expires не используется: она добавляет вторую строку
+    # Cache-Control поверх add_header, и браузер получает дубликат.
     location ~* \.(?:js|css|map|woff2?|png|jpeg|jpg|gif|svg|ico|webp|txt|pdf)$ {
         try_files $uri =404;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, max-age=604800, must-revalidate" always;
     }
 
     location / {
