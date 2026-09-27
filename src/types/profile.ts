@@ -10,6 +10,12 @@ export type ResponseItem = {
     resumeTitle: string;
     date: string;
     status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
+    /**
+     * Уже состоит в другом проекте ЭТОГО пространства. Статус `in_team`
+     * выставляется на чтении, когда `allow_multi_project_participation` выключен,
+     * поэтому без этого флага «в команде» и «уже в другой команде» не различить.
+     */
+    busyInOtherProject: boolean;
 };
 
 export type InvitationItem = {
@@ -24,6 +30,8 @@ export type InvitationItem = {
     date: string;
     status: "pending" | "accepted" | "rejected" | "in_team";
     allowMultiProjectParticipation: boolean;
+    /** Уже состоит в другом проекте ЭТОГО пространства. */
+    busyInOtherProject: boolean;
 };
 
 export type ProfileSpace = {

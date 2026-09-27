@@ -75,6 +75,7 @@ import { JoinWarningDialog } from "@/features/project/components/join-warning-di
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
+import { WikiTab } from "@/features/project/components/wiki-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -93,6 +94,7 @@ import {
     useDeleteSubtask,
     useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
+import { normalizeResumeHref } from "@/lib/resume";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
 import {
@@ -142,7 +144,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             name: m.name,
             role: m.role,
             contacts: m.contacts,
-            resumeUrl: m.resume_url,
+            resumeUrl: normalizeResumeHref(m.resume_url),
             dateAdded: m.date_added,
             status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
                 | "default"
@@ -153,7 +155,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             name: r.name,
             priority: 0,
             contacts: r.contacts,
-            resumeUrl: r.resume_url,
+            resumeUrl: normalizeResumeHref(r.resume_url),
             responseDate: r.response_date,
             role: r.role || "",
             type: r.type || "response",
@@ -161,6 +163,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
             userId: r.user_id,
             allowMultiProjectParticipation: r.allow_multi_project_participation,
+            busyInOtherProject: r.busy_in_other_project,
         })),
     };
 }
@@ -911,6 +914,7 @@ const SpaceRoute = () => {
     const textTabs = [
         { value: "view", label: "Обзор проекта" },
         { value: "specification", label: "Техническое задание" },
+        { value: "wiki", label: "Wiki" },
         { value: "kanban", label: "Канбан-доска" },
         { value: "activity", label: "История активности" },
     ];
@@ -1694,7 +1698,6 @@ const SpaceRoute = () => {
                     workspaceId={project.spaceId}
                     vacancies={dataProject?.vacancies ?? []}
                     replycants={project.replycants}
-                    memberUserIds={new Set((dataProject?.members ?? []).map((m) => m.user_id))}
                 />
 
                 <JoinWarningDialog
@@ -1771,6 +1774,14 @@ const SpaceRoute = () => {
                         onAdvance={handleAdvanceStage}
                         onApprove={handleApproveStage}
                         onReject={handleRejectStage}
+                    />
+                )}
+
+                {activeTab === "wiki" && dataProject && (
+                    <WikiTab
+                        projectId={dataProject.id}
+                        isAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
                     />
                 )}
 

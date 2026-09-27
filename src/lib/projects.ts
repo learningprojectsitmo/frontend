@@ -28,6 +28,10 @@ export const invalidateProjectImpact = (
     if (workspaceId) {
         keys.push(queryKeys.workspace.participants(workspaceId));
         keys.push(queryKeys.workspace.resumes(workspaceId));
+        // Список приглашения хранится по паре (пространство, проект): после
+        // отправки приглашения кандидат получает reason "pending" и кнопка
+        // должна погаснуть без перезагрузки страницы.
+        keys.push(["workspaces", workspaceId, "invite-candidates"]);
     }
     keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
 };

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Search, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
+
+import { CheckboxRow } from "./checkbox-row";
 
 type CheckboxOption = {
     value: string;
@@ -73,35 +74,12 @@ export function CheckboxGroup({ options, selected, onChange }: CheckboxGroupProp
                 ) : (
                     <div className="flex flex-col">
                         {filteredOptions.map((opt) => (
-                            <label
+                            <CheckboxRow
                                 key={opt.value}
-                                className={cn(
-                                    "flex items-center gap-2.5 h-9 px-2 rounded-lg cursor-pointer transition-colors",
-                                    "hover:bg-gray-50",
-                                )}
-                            >
-                                <div
-                                    className={cn(
-                                        "w-4 h-4 rounded-[5px] border-2 flex items-center justify-center transition-colors shrink-0",
-                                        selected.includes(opt.value)
-                                            ? "bg-[#2563EB] border-[#2563EB]"
-                                            : "border-gray-300 bg-app-surface",
-                                    )}
-                                >
-                                    {selected.includes(opt.value) && (
-                                        <Check size={12} className="text-white stroke-[3]" />
-                                    )}
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    checked={selected.includes(opt.value)}
-                                    onChange={() => toggleOption(opt.value)}
-                                    className="sr-only"
-                                />
-                                <span className="text-[13px] font-normal text-gray-900 truncate">
-                                    {opt.label}
-                                </span>
-                            </label>
+                                label={opt.label}
+                                checked={selected.includes(opt.value)}
+                                onChange={() => toggleOption(opt.value)}
+                            />
                         ))}
                     </div>
                 )}

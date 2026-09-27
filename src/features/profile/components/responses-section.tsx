@@ -15,12 +15,32 @@ import { api, getApiErrorMessage } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateProjectImpact } from "@/lib/projects";
 
-const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
+type StatusLabel = { text: string; color: string; bg: string };
+
+const statusLabel: Record<string, StatusLabel> = {
     pending: { text: "На рассмотрении", color: "#D97706", bg: "#FEF3C7" },
     accepted: { text: "Принят", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонён", color: "#EF4444", bg: "#FEE2E2" },
     withdrawn: { text: "Отозван", color: "#6B7280", bg: "#F3F4F6" },
     in_team: { text: "В команде", color: "#2563EB", bg: "#DBEAFE" },
+};
+
+const BUSY_IN_TEAM_LABEL: StatusLabel = {
+    text: "Уже в другой команде",
+    color: "#6B7280",
+    bg: "#F3F4F6",
+};
+
+/**
+ * Подпись статуса отклика.
+ *
+ * Статус `in_team` бэкенд выставляет на чтении, когда человек состоит в другом
+ * проекте этого пространства, а множественные команды в нём запрещены. Такой
+ * отклик нельзя подтвердить, поэтому подпись уточняется отдельной меткой.
+ */
+const getStatusLabel = (item: ResponseItem): StatusLabel => {
+    if (item.busyInOtherProject && item.status === "in_team") return BUSY_IN_TEAM_LABEL;
+    return statusLabel[item.status] ?? statusLabel.pending;
 };
 
 export function ResponsesSection() {
@@ -217,7 +237,7 @@ export function ResponsesSection() {
             ) : viewMode === "grid" ? (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
                     {filteredItems.map((item) => {
-                        const st = statusLabel[item.status] ?? statusLabel.pending;
+                        const st = getStatusLabel(item);
                         const actions: ResponseCardAction[] = [];
                         if (item.status === "pending") {
                             actions.push({
@@ -227,7 +247,7 @@ export function ResponsesSection() {
                                 onClick: () => handleWithdraw(item.id),
                             });
                         }
-                        if (item.status === "accepted") {
+                        if (item.status === "accepted" && !item.busyInOtherProject) {
                             actions.push({
                                 label:
                                     pendingConfirmJoin === item.id ? "..." : "Подтвердить участие",
@@ -267,7 +287,7 @@ export function ResponsesSection() {
                         </thead>
                         <tbody>
                             {filteredItems.map((item) => {
-                                const st = statusLabel[item.status] ?? statusLabel.pending;
+                                const st = getStatusLabel(item);
                                 return (
                                     <tr key={item.id} className="border-b border-gray-100">
                                         <td className="py-3 px-4 font-medium text-gray-900">
@@ -296,15 +316,16 @@ export function ResponsesSection() {
                                                     Отозвать
                                                 </button>
                                             )}
-                                            {item.status === "accepted" && (
-                                                <button
-                                                    onClick={() => handleConfirmJoin(item.id)}
-                                                    disabled={pendingConfirmJoin === item.id}
-                                                    className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    Подтвердить участие
-                                                </button>
-                                            )}
+                                            {item.status === "accepted" &&
+                                                !item.busyInOtherProject && (
+                                                    <button
+                                                        onClick={() => handleConfirmJoin(item.id)}
+                                                        disabled={pendingConfirmJoin === item.id}
+                                                        className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Подтвердить участие
+                                                    </button>
+                                                )}
                                             {(item.status === "rejected" ||
                                                 item.status === "withdrawn" ||
                                                 item.status === "in_team") && (

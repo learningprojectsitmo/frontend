@@ -20,6 +20,27 @@ export const getResumeShareUrl = (id: number): string => {
     return `${window.location.origin}${paths.app.resume.getHref(id)}`;
 };
 
+/**
+ * Привести `resume_url` из API к рабочей ссылке SPA.
+ *
+ * Бэкенд отдаёт уже готовый href (`/app/resume?id=…&workspaceId=…`) — такой
+ * возвращаем как есть, сохраняя контекст пространства. Старый путь
+ * `/resume/{id}` в роутере не зарегистрирован, поэтому из него вытаскивается
+ * id и ссылка собирается заново. Раньше разбор шёл через `split("/").pop()`,
+ * который на новой форме давал мусор вида `/app/resume?id=resume?id=2`.
+ */
+export const normalizeResumeHref = (url: string | null | undefined): string => {
+    if (!url) return "";
+
+    const [path] = url.split("?");
+    if (path === paths.app.resume.path) {
+        return url;
+    }
+
+    const id = Number(path?.split("/").pop());
+    return Number.isInteger(id) && id > 0 ? paths.app.resume.getHref(id) : "";
+};
+
 export const copyToClipboard = async (text: string): Promise<void> => {
     try {
         await navigator.clipboard.writeText(text);

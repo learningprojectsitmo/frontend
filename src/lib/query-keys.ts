@@ -4,7 +4,10 @@ type WorkspaceParticipantsParams = {
     page?: number;
     limit?: number;
     search?: string;
-    project_id?: number;
+    project_ids?: number[];
+    without_project?: boolean;
+    role_ids?: number[];
+    has_resume?: boolean;
     date_from?: string;
     date_to?: string;
 };
@@ -71,6 +74,18 @@ export const queryKeys = {
             ["project", String(projectId), "specification", "comments"] as const,
     },
 
+    // Вики читается и анонимно, поэтому id страницы входит в ключ сам: без него
+    // публичный и авторизованный посетитель делили бы одну запись кэша.
+    wiki: {
+        all: (projectId: string | number) => ["project", String(projectId), "wiki"] as const,
+        pages: (projectId: string | number) =>
+            ["project", String(projectId), "wiki", "pages"] as const,
+        tree: (projectId: string | number) =>
+            ["project", String(projectId), "wiki", "tree"] as const,
+        page: (projectId: string | number, pageId: string | number) =>
+            ["project", String(projectId), "wiki", "page", String(pageId)] as const,
+    },
+
     workspace: {
         list: (params?: SpacesListParams) =>
             params ? (["workspaces", "list", params] as const) : (["workspaces", "list"] as const),
@@ -85,6 +100,10 @@ export const queryKeys = {
                 ? (["workspaces", id, "resumes", params] as const)
                 : (["workspaces", id, "resumes"] as const),
         resumeFilters: (id: number) => ["workspaces", id, "resumes", "filters"] as const,
+        inviteCandidates: (id: number, projectId: number, search?: string) =>
+            search
+                ? (["workspaces", id, "invite-candidates", String(projectId), search] as const)
+                : (["workspaces", id, "invite-candidates", String(projectId)] as const),
     },
 
     notifications: {
