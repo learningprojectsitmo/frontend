@@ -171,6 +171,12 @@ export type BackendReplycant = {
     type: "response" | "invitation";
     status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
     allow_multi_project_participation: boolean;
+    /**
+     * Уже состоит в другом проекте ЭТОГО пространства. Позволяет отличить
+     * «в команде» от «уже в другой команде»: статус `in_team` выставляется
+     * на чтении, когда `allow_multi_project_participation` выключен.
+     */
+    busy_in_other_project: boolean;
 };
 
 export type ProjectListItemResponse = {
@@ -694,6 +700,40 @@ export type WorkspaceResumeListResponse = {
     total_pages: number;
 };
 
+/**
+ * Участник пространства, которого можно пригласить в проект.
+ *
+ * Строка — это человек, а не резюме: `resume_id` может быть `null`, и скрытое
+ * либо пустое резюме не делает участника неприглашаемым.
+ */
+export type WorkspaceInviteCandidateItem = {
+    user_id: number;
+    name: string;
+    contacts: { telegram?: string | null; email?: string | null; linkedin?: string | null };
+    resume_id: number | null;
+    resume_url: string;
+    resume_header: string;
+    skills: string[];
+    interests: string[];
+    /** Уже состоит в этом проекте. */
+    in_project: boolean;
+    /** Состоит в другом проекте ЭТОГО пространства. */
+    busy: boolean;
+    /** Есть незакрытый отклик или уже отправленное приглашение в этот проект. */
+    pending: boolean;
+    can_invite: boolean;
+    /** "", "in_project", "pending", "busy" — причина, по которой пригласить нельзя. */
+    reason: "" | "in_project" | "pending" | "busy";
+};
+
+export type WorkspaceInviteCandidateListResponse = {
+    items: WorkspaceInviteCandidateItem[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
 export type WorkspaceResumeFiltersResponse = {
     skills: string[];
     interests: string[];
@@ -734,6 +774,7 @@ export type MyResponseItem = {
     resume_title: string;
     date: string;
     status: string;
+    busy_in_other_project: boolean;
 };
 
 export type MyResponseListResponse = {
@@ -753,6 +794,7 @@ export type MyInvitationItem = {
     date: string;
     status: string;
     allow_multi_project_participation: boolean;
+    busy_in_other_project: boolean;
 };
 
 export type MyInvitationListResponse = {

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useInvitations } from "@/features/profile/api/use-profile-data";
 import { ListToolbar } from "./list-toolbar";
 import { EmptyState } from "./empty-state";
@@ -12,11 +13,31 @@ import { queryKeys } from "@/lib/query-keys";
 import { invalidateProjectImpact } from "@/lib/projects";
 import type { InvitationItem } from "@/types/profile";
 
-const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
+type StatusLabel = { text: string; color: string; bg: string };
+
+const statusLabel: Record<string, StatusLabel> = {
     pending: { text: "Ожидает ответа", color: "#D97706", bg: "#FEF3C7" },
     accepted: { text: "В команде", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонено", color: "#EF4444", bg: "#FEE2E2" },
     in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
+};
+
+const BUSY_IN_TEAM_LABEL: StatusLabel = {
+    text: "Уже в другой команде",
+    color: "#6B7280",
+    bg: "#F3F4F6",
+};
+
+/**
+ * Подпись статуса приглашения.
+ *
+ * Статус `in_team` бэкенд выставляет на чтении, когда человек состоит в другом
+ * проекте этого пространства, а множественные команды в нём запрещены: принять
+ * такое приглашение уже нельзя, поэтому подпись уточняется отдельной меткой.
+ */
+const getStatusLabel = (item: InvitationItem): StatusLabel => {
+    if (item.busyInOtherProject && item.status === "in_team") return BUSY_IN_TEAM_LABEL;
+    return statusLabel[item.status] ?? statusLabel.pending;
 };
 
 export function InvitationsSection() {
@@ -104,14 +125,15 @@ export function InvitationsSection() {
         filters.datePreset !== "all",
     ].filter(Boolean).length;
 
-    const handleAction = async (invitationId: number, action: "accept" | "reject") => {
-        if (action === "accept") {
-            const item = items.find((r) => r.id === invitationId);
-            if (item && !item.allowMultiProjectParticipation) {
-                setJoinCandidate(item);
-                return;
-            }
-        }
+    /**
+     * Сам запрос без проверки на ограничение пространства.
+     *
+     * Вынесено отдельно от `handleAction` намеренно: `onConfirm` диалога должен
+     * вызвать именно её. Раньше он звал `handleAction`, который повторно проверял
+     * то же условие, которым этот диалог был открыт, и просто открывал его
+     * снова — запрос не уходил никогда.
+     */
+    const performAction = async (invitationId: number, action: "accept" | "reject") => {
         setPendingAction({ id: invitationId, type: action });
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
@@ -122,11 +144,29 @@ export function InvitationsSection() {
                 invalidateProjectImpact(queryClient, item.projectId);
                 queryClient.invalidateQueries({ queryKey: queryKeys.profile.projects() });
             }
+            toast.success(action === "accept" ? "Приглашение принято" : "Приглашение отклонено");
+            return true;
         } catch {
-            // ignore
+            toast.error(
+                action === "accept"
+                    ? "Не удалось принять приглашение"
+                    : "Не удалось отклонить приглашение",
+            );
+            return false;
         } finally {
             setPendingAction(null);
         }
+    };
+
+    const handleAction = (invitationId: number, action: "accept" | "reject") => {
+        if (action === "accept") {
+            const item = items.find((r) => r.id === invitationId);
+            if (item && !item.allowMultiProjectParticipation) {
+                setJoinCandidate(item);
+                return;
+            }
+        }
+        void performAction(invitationId, action);
     };
 
     if (isLoading) {
@@ -200,10 +240,10 @@ export function InvitationsSection() {
             ) : viewMode === "grid" ? (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
                     {filteredItems.map((item) => {
-                        const st = statusLabel[item.status] ?? statusLabel.pending;
+                        const st = getStatusLabel(item);
                         const isPending = pendingAction?.id === item.id;
                         const actions: ResponseCardAction[] = [];
-                        if (item.status === "pending") {
+                        if (item.status === "pending" && !item.busyInOtherProject) {
                             actions.push(
                                 {
                                     label:
@@ -257,7 +297,7 @@ export function InvitationsSection() {
                         </thead>
                         <tbody>
                             {filteredItems.map((item) => {
-                                const st = statusLabel[item.status] ?? statusLabel.pending;
+                                const st = getStatusLabel(item);
                                 return (
                                     <tr key={item.id} className="border-b border-gray-100">
                                         <td className="py-3 px-4 font-medium text-gray-900">
@@ -280,28 +320,29 @@ export function InvitationsSection() {
                                             </span>
                                         </td>
                                         <td className="py-3 px-4">
-                                            {item.status === "pending" && (
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() =>
-                                                            handleAction(item.id, "accept")
-                                                        }
-                                                        disabled={pendingAction?.id === item.id}
-                                                        className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        Принять
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleAction(item.id, "reject")
-                                                        }
-                                                        disabled={pendingAction?.id === item.id}
-                                                        className="font-medium text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        Отклонить
-                                                    </button>
-                                                </div>
-                                            )}
+                                            {item.status === "pending" &&
+                                                !item.busyInOtherProject && (
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                handleAction(item.id, "accept")
+                                                            }
+                                                            disabled={pendingAction?.id === item.id}
+                                                            className="font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            Принять
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleAction(item.id, "reject")
+                                                            }
+                                                            disabled={pendingAction?.id === item.id}
+                                                            className="font-medium text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            Отклонить
+                                                        </button>
+                                                    </div>
+                                                )}
                                             {item.status !== "pending" && (
                                                 <span className="text-gray-400 text-[12px]">—</span>
                                             )}
@@ -316,13 +357,17 @@ export function InvitationsSection() {
             <JoinWarningDialog
                 open={joinCandidate !== null}
                 projectName={joinCandidate?.projectName ?? ""}
+                loading={
+                    pendingAction?.id === joinCandidate?.id && pendingAction?.type === "accept"
+                }
                 onOpenChange={(open) => {
                     if (!open) setJoinCandidate(null);
                 }}
                 onConfirm={() => {
-                    const candidate = joinCandidate;
-                    setJoinCandidate(null);
-                    if (candidate) handleAction(candidate.id, "accept");
+                    if (!joinCandidate) return;
+                    void performAction(joinCandidate.id, "accept").then((ok) => {
+                        if (ok) setJoinCandidate(null);
+                    });
                 }}
             />
         </div>

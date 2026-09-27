@@ -3,11 +3,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useAcceptResponse, useInviteToProject } from "@/lib/projects";
-import { useWorkspaceResumes } from "@/lib/spaces";
+import { useWorkspaceInviteCandidates } from "@/lib/spaces";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Replycant } from "@/types/tables/forTables";
-import type { BackendVacancy } from "@/types/api";
+import type { BackendVacancy, WorkspaceInviteCandidateItem } from "@/types/api";
+
+/** Почему участника нельзя пригласить. Пустая строка — пригласить можно. */
+const REASON_LABELS: Record<Exclude<WorkspaceInviteCandidateItem["reason"], "">, string> = {
+    in_project: "Уже состоит в проекте",
+    pending: "Уже откликнулся или приглашён",
+    busy: "Уже в другой команде этого пространства",
+};
 
 type InviteDialogProps = {
     open: boolean;
@@ -16,7 +23,6 @@ type InviteDialogProps = {
     workspaceId: number;
     vacancies: BackendVacancy[];
     replycants: Replycant[];
-    memberUserIds: Set<number>;
 };
 
 export const InviteDialog = ({
@@ -26,24 +32,24 @@ export const InviteDialog = ({
     workspaceId,
     vacancies,
     replycants,
-    memberUserIds,
 }: InviteDialogProps) => {
-    const [activeTab, setActiveTab] = useState<string>("responses");
+    const [activeTab, setActiveTab] = useState<string>("participants");
     const [selectedVacancyId, setSelectedVacancyId] = useState<number | null>(null);
     const acceptResponseMutation = useAcceptResponse();
     const inviteMutation = useInviteToProject();
-    const { data: workspaceResumes } = useWorkspaceResumes(workspaceId);
+    const { data: candidates, isLoading: candidatesLoading } = useWorkspaceInviteCandidates(
+        workspaceId,
+        projectId,
+    );
 
     const pendingResponses = replycants.filter(
         (r) => r.type === "response" && r.responseStatus === "pending",
     );
 
-    const resumeCandidates = (workspaceResumes?.items ?? []).filter(
-        (r) =>
-            !r.in_team &&
-            !memberUserIds.has(r.participant_id) &&
-            !pendingResponses.some((p) => p.userId === r.participant_id),
-    );
+    // Пригодность приглашения считает бэкенд: иначе диалог повторил бы
+    // фильтры «уже в проекте / есть отклик / занят в другом проекте» вручную
+    // и снова разошёлся бы с серверной проверкой.
+    const inviteCandidates = candidates?.items ?? [];
 
     const handleAccept = (responseId: number) => {
         acceptResponseMutation.mutate(
@@ -60,9 +66,14 @@ export const InviteDialog = ({
         );
     };
 
-    const handleInvite = (userId: number, resumeId: number) => {
+    const handleInvite = (candidate: WorkspaceInviteCandidateItem) => {
         inviteMutation.mutate(
-            { projectId, userId, vacancyId: selectedVacancyId, resumeId },
+            {
+                projectId,
+                userId: candidate.user_id,
+                vacancyId: selectedVacancyId,
+                resumeId: candidate.resume_id,
+            },
             {
                 onSuccess: () => {
                     toast.success("Приглашение отправлено");
@@ -93,7 +104,7 @@ export const InviteDialog = ({
                 <Tabs
                     tabs={[
                         { value: "responses", label: "Из откликов" },
-                        { value: "resumes", label: "Из резюме" },
+                        { value: "participants", label: "Из участников" },
                     ]}
                     value={activeTab}
                     onValueChange={setActiveTab}
@@ -173,24 +184,31 @@ export const InviteDialog = ({
                             </div>
                         )}
 
-                        {resumeCandidates.length === 0 ? (
+                        {candidatesLoading ? (
+                            <p className="text-sm text-gray-600">Загрузка участников…</p>
+                        ) : inviteCandidates.length === 0 ? (
                             <p className="text-sm text-gray-600">
-                                Нет доступных резюме для приглашения.
+                                В этом пространстве пока нет участников, кого можно пригласить.
                             </p>
                         ) : (
                             <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                                {resumeCandidates.map((r) => (
+                                {inviteCandidates.map((r) => (
                                     <div
-                                        key={r.id}
+                                        key={r.user_id}
                                         className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-app-surface"
                                     >
                                         <div className="min-w-0">
                                             <p className="text-[14px] font-semibold text-gray-900 truncate">
-                                                {r.participant_name}
+                                                {r.name}
                                             </p>
                                             <p className="text-[13px] text-gray-600 truncate">
-                                                {r.header}
+                                                {r.resume_header || "Без резюме"}
                                             </p>
+                                            {r.reason !== "" && (
+                                                <p className="text-[12px] text-gray-500">
+                                                    {REASON_LABELS[r.reason]}
+                                                </p>
+                                            )}
                                             {r.skills.length > 0 && (
                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                     {r.skills.slice(0, 3).map((skill, i) => (
@@ -204,11 +222,22 @@ export const InviteDialog = ({
                                                 </div>
                                             )}
                                         </div>
+                                        {r.resume_url && (
+                                            <a
+                                                href={r.resume_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[12px] font-medium text-[#2563EB] hover:text-[#1d4ed8] shrink-0"
+                                            >
+                                                Резюме
+                                            </a>
+                                        )}
                                         <Button
                                             variant="dark"
                                             size="hug36"
-                                            disabled={inviteMutation.isPending}
-                                            onClick={() => handleInvite(r.participant_id, r.id)}
+                                            className="shrink-0"
+                                            disabled={!r.can_invite || inviteMutation.isPending}
+                                            onClick={() => handleInvite(r)}
                                         >
                                             Пригласить
                                         </Button>

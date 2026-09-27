@@ -28,6 +28,8 @@ export interface Replycant {
     status: "invite" | "invited";
     userId: number;
     allowMultiProjectParticipation: boolean;
+    /** Уже состоит в другом проекте ЭТОГО пространства. */
+    busyInOtherProject: boolean;
 }
 
 export interface Role {

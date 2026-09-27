@@ -64,19 +64,19 @@ export function ResponseCard({
 
     return (
         <div className="bg-app-surface border border-gray-200 rounded-[16px] p-5 flex flex-col gap-3">
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                <div className="flex flex-1 items-center gap-3 min-w-0">
                     <div
-                        className="w-10 h-10 rounded-[10px] flex items-center justify-center"
+                        className="w-10 h-10 shrink-0 rounded-[10px] flex items-center justify-center"
                         style={{ backgroundColor: `${folderColor}1A` }}
                     >
                         <FolderIcon color={folderColor} />
                     </div>
-                    <h3 className="text-[16px] font-bold text-gray-900 leading-tight">
+                    <h3 className="text-[16px] font-bold text-gray-900 leading-tight truncate min-w-0">
                         {projectName}
                     </h3>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
                     {status && (
                         <span
                             className="inline-flex items-center h-6 px-2.5 rounded-full text-[12px] font-medium leading-none"
@@ -87,7 +87,7 @@ export function ResponseCard({
                     )}
                     {actions?.map((action) => {
                         const base =
-                            "inline-flex items-center h-8 px-3.5 rounded-[10px] text-[13px] font-medium transition-colors";
+                            "inline-flex shrink-0 items-center h-8 px-3.5 rounded-[10px] text-[13px] font-medium whitespace-nowrap transition-colors";
                         const variants = {
                             primary: "bg-[#2563EB] text-white hover:bg-[#1D4ED8]",
                             outline:

@@ -28,6 +28,7 @@ function mapMyResponseItem(r: MyResponseListResponse["items"][number]): Response
         resumeTitle: r.resume_title,
         date: r.date,
         status: r.status as ResponseItem["status"],
+        busyInOtherProject: r.busy_in_other_project,
     };
 }
 
@@ -44,6 +45,7 @@ function mapMyInvitationItem(r: MyInvitationListResponse["items"][number]): Invi
         date: r.date,
         status: r.status as InvitationItem["status"],
         allowMultiProjectParticipation: r.allow_multi_project_participation,
+        busyInOtherProject: r.busy_in_other_project,
     };
 }
 

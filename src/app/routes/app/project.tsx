@@ -163,6 +163,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             status: r.status === "accepted" ? ("invited" as const) : ("invite" as const),
             userId: r.user_id,
             allowMultiProjectParticipation: r.allow_multi_project_participation,
+            busyInOtherProject: r.busy_in_other_project,
         })),
     };
 }
@@ -1697,7 +1698,6 @@ const SpaceRoute = () => {
                     workspaceId={project.spaceId}
                     vacancies={dataProject?.vacancies ?? []}
                     replycants={project.replycants}
-                    memberUserIds={new Set((dataProject?.members ?? []).map((m) => m.user_id))}
                 />
 
                 <JoinWarningDialog

@@ -100,6 +100,10 @@ export const queryKeys = {
                 ? (["workspaces", id, "resumes", params] as const)
                 : (["workspaces", id, "resumes"] as const),
         resumeFilters: (id: number) => ["workspaces", id, "resumes", "filters"] as const,
+        inviteCandidates: (id: number, projectId: number, search?: string) =>
+            search
+                ? (["workspaces", id, "invite-candidates", String(projectId), search] as const)
+                : (["workspaces", id, "invite-candidates", String(projectId)] as const),
     },
 
     notifications: {

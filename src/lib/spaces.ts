@@ -11,6 +11,7 @@ import {
     type WorkspaceParticipantListResponse,
     type WorkspaceResumeListResponse,
     type WorkspaceResumeFiltersResponse,
+    type WorkspaceInviteCandidateListResponse,
     type InviteLinkResponse,
     type InviteLinkListResponse,
     type InviteLinkCreate,
@@ -309,6 +310,38 @@ export const useWorkspaceResumes = (workspaceId: number, params?: ResumeParams) 
         queryKey: queryKeys.workspace.resumes(workspaceId, params),
         queryFn: () => getWorkspaceResumes(workspaceId, params),
         enabled: !!workspaceId,
+    });
+};
+
+// === Workspace invite candidates ===
+
+/**
+ * Кого из участников пространства можно пригласить в проект.
+ *
+ * Отдельный источник вместо ленты резюме (`/workspaces/{id}/resumes`): та
+ * отсекает скрытые резюме и беззаголовковые, поэтому список приглашения
+ * оказывался пустым. `project_id` обязателен — занятость считается по
+ * проектам этого пространства.
+ */
+export const getWorkspaceInviteCandidates = async (
+    workspaceId: number,
+    projectId: number,
+    search?: string,
+): Promise<WorkspaceInviteCandidateListResponse> => {
+    return await api.get(`/workspaces/${workspaceId}/invite-candidates`, {
+        params: { project_id: projectId, page: 1, limit: 200, ...(search ? { search } : {}) },
+    });
+};
+
+export const useWorkspaceInviteCandidates = (
+    workspaceId: number,
+    projectId: number | null,
+    search?: string,
+) => {
+    return useQuery({
+        queryKey: queryKeys.workspace.inviteCandidates(workspaceId, projectId ?? 0, search),
+        queryFn: () => getWorkspaceInviteCandidates(workspaceId, projectId as number, search),
+        enabled: !!workspaceId && !!projectId,
     });
 };
 

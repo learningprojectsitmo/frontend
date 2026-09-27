@@ -110,7 +110,8 @@ export const TableInvitations = ({
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
                                     {member.type === "response" &&
-                                        member.responseStatus === "accepted" && (
+                                        member.responseStatus === "accepted" &&
+                                        !member.busyInOtherProject && (
                                             <>
                                                 {member.userId === currentUserId ? (
                                                     <button
@@ -129,7 +130,9 @@ export const TableInvitations = ({
                                     {member.type === "response" &&
                                         member.responseStatus === "in_team" && (
                                             <span className="text-gray-400 text-[12px]">
-                                                Уже в команде
+                                                {member.busyInOtherProject
+                                                    ? "Уже в другой команде"
+                                                    : "Уже в команде"}
                                             </span>
                                         )}
                                     {member.type === "response" &&
@@ -161,7 +164,8 @@ export const TableInvitations = ({
                                         )}
                                     {member.type === "invitation" &&
                                         member.userId === currentUserId &&
-                                        member.responseStatus === "pending" && (
+                                        member.responseStatus === "pending" &&
+                                        !member.busyInOtherProject && (
                                             <>
                                                 <button
                                                     onClick={() => onAcceptInvitation?.(member.id)}
@@ -182,7 +186,9 @@ export const TableInvitations = ({
                                         member.responseStatus !== "pending" && (
                                             <span className="text-gray-400 text-[12px]">
                                                 {member.responseStatus === "in_team"
-                                                    ? "Уже в команде"
+                                                    ? member.busyInOtherProject
+                                                        ? "Уже в другой команде"
+                                                        : "Уже в команде"
                                                     : member.responseStatus === "rejected"
                                                       ? "Отклонено"
                                                       : "В команде"}
@@ -200,7 +206,9 @@ export const TableInvitations = ({
                                         member.responseStatus !== "pending" && (
                                             <span className="text-gray-400 text-[12px]">
                                                 {member.responseStatus === "in_team"
-                                                    ? "Уже в команде"
+                                                    ? member.busyInOtherProject
+                                                        ? "Уже в другой команде"
+                                                        : "Уже в команде"
                                                     : member.responseStatus === "rejected"
                                                       ? "Отклонено"
                                                       : "В команде"}
