@@ -4,7 +4,8 @@ type WorkspaceParticipantsParams = {
     page?: number;
     limit?: number;
     search?: string;
-    project_id?: number;
+    project_ids?: number[];
+    role_ids?: number[];
     date_from?: string;
     date_to?: string;
 };

@@ -5,9 +5,20 @@ type FilterTriggerProps = {
     activeCount: number;
     open: boolean;
     onClick: () => void;
+    /**
+     * Подпись кнопки. По умолчанию «Фильтры» — для одного общего триггера всех
+     * фильтров. Когда фильтров несколько и у каждого своя панель (например
+     * «Проект» / «Роль» / «Добавлен» в списке участников), передают своё имя.
+     */
+    label?: string;
 };
 
-export function FilterTrigger({ activeCount, open, onClick }: FilterTriggerProps) {
+export function FilterTrigger({
+    activeCount,
+    open,
+    onClick,
+    label = "Фильтры",
+}: FilterTriggerProps) {
     return (
         <button
             type="button"
@@ -19,7 +30,7 @@ export function FilterTrigger({ activeCount, open, onClick }: FilterTriggerProps
             )}
         >
             <ListFilter size={16} className="text-gray-500" />
-            <span>Фильтры</span>
+            <span>{label}</span>
             {activeCount > 0 && (
                 <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-[#2563EB] text-white text-[11px] font-semibold">
                     {activeCount}

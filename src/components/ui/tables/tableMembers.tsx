@@ -1,4 +1,4 @@
-import { Ellipsis, Mail, Linkedin, ExternalLink, UserMinus } from "lucide-react";
+import { Ellipsis, Mail, Linkedin, ExternalLink, UserMinus, Send } from "lucide-react";
 import { Link } from "react-router";
 import { type Member } from "@/types/tables/forTables";
 import { paths } from "@/config/paths";
@@ -142,12 +142,14 @@ export const TableMembers = ({
                                         {member.projects && member.projects.length > 0 ? (
                                             <div className="flex flex-col gap-1">
                                                 {member.projects.map((p) => (
-                                                    <span
+                                                    <Link
                                                         key={p.id}
-                                                        className="text-[#2563EB] font-medium"
+                                                        to={paths.app.project.getHref(p.id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="text-[#2563EB] font-medium hover:underline"
                                                     >
                                                         {p.title}
-                                                    </span>
+                                                    </Link>
                                                 ))}
                                             </div>
                                         ) : (
@@ -169,10 +171,11 @@ export const TableMembers = ({
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="text-blue-500 hover:text-blue-700 text-xs"
+                                                    className="text-blue-500 hover:text-blue-700"
                                                     title="Telegram"
+                                                    aria-label="Telegram"
                                                 >
-                                                    tg
+                                                    <Send className="h-4 w-4" />
                                                 </a>
                                             )}
                                             {member.contacts.email && (
@@ -201,14 +204,14 @@ export const TableMembers = ({
 
                                 <td className="px-6 py-4 hidden md:table-cell">
                                     {member.resumeUrl ? (
-                                        <a
-                                            href={member.resumeUrl}
+                                        <Link
+                                            to={member.resumeUrl}
                                             onClick={(e) => e.stopPropagation()}
                                             className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700"
                                         >
                                             Открыть
                                             <ExternalLink className="h-3 w-3" />
-                                        </a>
+                                        </Link>
                                     ) : (
                                         <span className="text-gray-400">—</span>
                                     )}

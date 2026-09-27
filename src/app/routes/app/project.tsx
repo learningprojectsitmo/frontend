@@ -94,6 +94,7 @@ import {
     useDeleteSubtask,
     useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
+import { normalizeResumeHref } from "@/lib/resume";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
 import {
@@ -143,7 +144,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             name: m.name,
             role: m.role,
             contacts: m.contacts,
-            resumeUrl: m.resume_url,
+            resumeUrl: normalizeResumeHref(m.resume_url),
             dateAdded: m.date_added,
             status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
                 | "default"
@@ -154,7 +155,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             name: r.name,
             priority: 0,
             contacts: r.contacts,
-            resumeUrl: r.resume_url,
+            resumeUrl: normalizeResumeHref(r.resume_url),
             responseDate: r.response_date,
             role: r.role || "",
             type: r.type || "response",

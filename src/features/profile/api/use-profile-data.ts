@@ -15,12 +15,7 @@ import type {
     PublicProfile,
 } from "@/types/profile";
 import { useProfile } from "@/lib/profile";
-
-function normalizeResumeUrl(url: string | null | undefined): string {
-    if (!url) return "";
-    const id = url.split("/").pop();
-    return id ? `/app/resume?id=${id}` : "";
-}
+import { normalizeResumeHref } from "@/lib/resume";
 
 function mapMyResponseItem(r: MyResponseListResponse["items"][number]): ResponseItem {
     return {
@@ -29,7 +24,7 @@ function mapMyResponseItem(r: MyResponseListResponse["items"][number]): Response
         projectName: r.project_name,
         description: r.description,
         role: r.role,
-        resumeUrl: normalizeResumeUrl(r.resume_url),
+        resumeUrl: normalizeResumeHref(r.resume_url),
         resumeTitle: r.resume_title,
         date: r.date,
         status: r.status as ResponseItem["status"],
@@ -44,7 +39,7 @@ function mapMyInvitationItem(r: MyInvitationListResponse["items"][number]): Invi
         description: r.description,
         inviterName: r.inviter_name,
         role: r.role,
-        resumeUrl: normalizeResumeUrl(r.resume_url),
+        resumeUrl: normalizeResumeHref(r.resume_url),
         resumeTitle: r.resume_title,
         date: r.date,
         status: r.status as InvitationItem["status"],

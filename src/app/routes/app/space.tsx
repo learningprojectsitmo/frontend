@@ -1,5 +1,5 @@
 import { ContentLayout } from "@/components/layouts";
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import { SpaceHeader } from "@/features/spaces/components/space-header";
@@ -7,6 +7,11 @@ import { SpaceProjectList } from "@/features/spaces/components/space-project-lis
 import { SpaceResumeSection } from "@/features/spaces/components/space-resume-section";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { ShareSpaceModal } from "@/features/spaces/components/share-space-modal";
+import {
+    ParticipantFilters,
+    emptyParticipantFilters,
+    type ParticipantFiltersState,
+} from "@/features/spaces/components/filters/participant-filters";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
@@ -16,7 +21,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuShortcut,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { Search, Check, X, Ellipsis } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -31,7 +36,8 @@ import {
 import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { ROLE_LABELS } from "@/lib/roles";
+import { ROLE_LABELS, useRoles } from "@/lib/roles";
+import { normalizeResumeHref } from "@/lib/resume";
 import { toast } from "sonner";
 import {
     Breadcrumb,
@@ -44,134 +50,6 @@ import {
 import { type Member } from "@/types/tables/forTables";
 import { type WorkspaceMember } from "@/types/api";
 
-// ── Filter Dropdown Component ──
-type FilterDropdownProps = {
-    options: { value: string; label: string }[];
-    selected: string[];
-    onChange: (selected: string[]) => void;
-    onReset: () => void;
-};
-
-function FilterDropdown({ options, selected, onChange, onReset }: FilterDropdownProps) {
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (ref.current && !ref.current.contains(event.target as Node)) {
-                setOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const filteredOptions = options.filter((o) =>
-        o.label.toLowerCase().includes(search.toLowerCase()),
-    );
-
-    const allSelected = selected.length === options.length;
-
-    const toggleAll = () => {
-        if (allSelected) {
-            onChange([]);
-        } else {
-            onChange(options.map((o) => o.value));
-        }
-    };
-
-    const handleReset = () => {
-        onReset();
-        setOpen(false);
-    };
-
-    return (
-        <div ref={ref} className="relative">
-            {open && (
-                <div className="absolute top-full mt-2 right-0 z-50 w-[320px] max-w-[calc(100vw-1rem)] bg-app-surface border border-gray-200 rounded-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[14px] font-semibold text-app-text">
-                            Проект {selected.length > 0 ? `(${selected.length})` : ""}
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={toggleAll}
-                                className="text-[13px] text-[#2563EB] font-medium hover:text-[#1d4ed8]"
-                            >
-                                {allSelected ? "Снять все" : "Выбрать все"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setOpen(false)}
-                                className="p-1 hover:bg-gray-100 rounded-md"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Search inside dropdown */}
-                    <div className="relative mb-2">
-                        <Search
-                            size={14}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Поиск"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[10px] text-[13px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB]"
-                        />
-                    </div>
-
-                    {/* Checkbox rows */}
-                    <div className="max-h-[240px] overflow-y-auto space-y-0.5">
-                        {filteredOptions.map((opt) => (
-                            <label
-                                key={opt.value}
-                                className="flex items-center gap-3 h-10 px-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                            >
-                                <div
-                                    className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center transition-colors ${
-                                        selected.includes(opt.value)
-                                            ? "bg-[#2563EB] border-[#2563EB]"
-                                            : "border-gray-300"
-                                    }`}
-                                >
-                                    {selected.includes(opt.value) && (
-                                        <Check size={12} className="text-white" />
-                                    )}
-                                </div>
-                                <span className="text-[13px] text-app-text font-medium">
-                                    {opt.label}
-                                </span>
-                            </label>
-                        ))}
-                        {filteredOptions.length === 0 && (
-                            <p className="text-[13px] text-app-muted text-center py-4">
-                                Не найдено
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Reset button */}
-                    <button
-                        type="button"
-                        onClick={handleReset}
-                        className="w-full mt-3 text-[13px] font-medium text-[#EF4444] hover:text-[#DC2626] transition-colors text-center"
-                    >
-                        Сбросить
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-}
-
 // ── Main Route ──
 const SpaceRoute = () => {
     const [searchParams] = useSearchParams();
@@ -179,6 +57,7 @@ const SpaceRoute = () => {
 
     const { data: dataSpaces, isLoading: isSpacesLoading } = useSpacesList();
     const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
+    const { data: rolesData } = useRoles();
     const { data: user } = useUser();
 
     const [shareOpen, setShareOpen] = useState(false);
@@ -221,10 +100,9 @@ const SpaceRoute = () => {
     const isPrivate = spaceSettings?.visibility === "private";
     const [participantSearch, setParticipantSearch] = useState("");
     const [participantPage, setParticipantPage] = useState(1);
-    const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+    const [participantFilters, setParticipantFilters] =
+        useState<ParticipantFiltersState>(emptyParticipantFilters);
     const limit = 10;
-
-    const projectIdFilter = selectedProjects.length === 1 ? Number(selectedProjects[0]) : undefined;
 
     const {
         data: participantsData,
@@ -234,7 +112,14 @@ const SpaceRoute = () => {
         page: participantPage,
         limit,
         search: participantSearch || undefined,
-        project_id: projectIdFilter,
+        project_ids:
+            participantFilters.projects.length > 0
+                ? participantFilters.projects.map(Number)
+                : undefined,
+        role_ids:
+            participantFilters.roles.length > 0 ? participantFilters.roles.map(Number) : undefined,
+        date_from: participantFilters.dateFrom || undefined,
+        date_to: participantFilters.dateTo || undefined,
     });
 
     // Resume filters state
@@ -318,7 +203,7 @@ const SpaceRoute = () => {
             role: ROLE_LABELS[m.role] ?? m.role,
             workspaceRole: m.workspace_role,
             contacts: m.contacts,
-            resumeUrl: m.resume_url,
+            resumeUrl: normalizeResumeHref(m.resume_url),
             dateAdded: m.created_at,
             avatarUrl: m.avatar_url ?? undefined,
             status: (isAuthor && m.user_id !== user?.id ? "delete" : "default") as
@@ -343,11 +228,34 @@ const SpaceRoute = () => {
         return dataProjects.items.map((p) => ({ value: String(p.id), label: p.name }));
     }, [dataProjects]);
 
+    // Role options for filter — берём справочник ролей, а не хардкод, чтобы новые
+    // роли из админки подхватывались автоматически.
+    const roleOptions = useMemo(() => {
+        if (!rolesData?.items) return [];
+        return rolesData.items.map((r) => ({
+            value: String(r.id),
+            label: ROLE_LABELS[r.name] ?? r.name,
+        }));
+    }, [rolesData]);
+
     const totalParticipants = participantsData?.total ?? 0;
     const totalPages = participantsData?.total_pages ?? 0;
 
-    const handleFilterReset = useCallback(() => {
-        setSelectedProjects([]);
+    const hasActiveFilters = Boolean(
+        participantSearch ||
+        participantFilters.projects.length > 0 ||
+        participantFilters.roles.length > 0 ||
+        participantFilters.dateFrom ||
+        participantFilters.dateTo,
+    );
+
+    const handleParticipantFiltersChange = useCallback((next: ParticipantFiltersState) => {
+        setParticipantFilters(next);
+        setParticipantPage(1);
+    }, []);
+
+    const handleParticipantFiltersReset = useCallback(() => {
+        setParticipantFilters(emptyParticipantFilters);
         setParticipantPage(1);
     }, []);
 
@@ -487,17 +395,13 @@ const SpaceRoute = () => {
                                     className="w-[200px]"
                                 />
 
-                                {projectOptions.length > 0 && (
-                                    <FilterDropdown
-                                        options={projectOptions}
-                                        selected={selectedProjects}
-                                        onChange={(v) => {
-                                            setSelectedProjects(v);
-                                            setParticipantPage(1);
-                                        }}
-                                        onReset={handleFilterReset}
-                                    />
-                                )}
+                                <ParticipantFilters
+                                    state={participantFilters}
+                                    onChange={handleParticipantFiltersChange}
+                                    onReset={handleParticipantFiltersReset}
+                                    projectOptions={projectOptions}
+                                    roleOptions={roleOptions}
+                                />
 
                                 {isAuthor && (
                                     <Button
@@ -555,7 +459,7 @@ const SpaceRoute = () => {
                         </div>
                     ) : mappedMembers.length === 0 ? (
                         <div className="text-center py-16 text-app-muted text-sm">
-                            {participantSearch || selectedProjects.length > 0
+                            {hasActiveFilters
                                 ? "Участники не найдены"
                                 : "В этом пространстве пока нет участников"}
                         </div>

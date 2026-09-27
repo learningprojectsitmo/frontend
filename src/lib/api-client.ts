@@ -57,6 +57,11 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
 
 export const api = Axios.create({
     baseURL: env.API_URL,
+    // Axios по умолчанию сериализует массивы как `key[]=v1&key[]=v2`, а FastAPI
+    // такие ключи молча игнорирует (list-параметр остаётся None) — фильтр
+    // «проигрывается» без всякой ошибки. `indexes: null` даёт повторяющиеся
+    // ключи `key=v1&key=v2`, которые парсер читает. Пустые массивы отбрасываются.
+    paramsSerializer: { indexes: null },
 });
 
 api.interceptors.request.use(authRequestInterceptor);
