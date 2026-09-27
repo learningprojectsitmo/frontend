@@ -232,7 +232,9 @@ export type ParticipantsParams = {
     limit?: number;
     search?: string;
     project_ids?: number[];
+    without_project?: boolean;
     role_ids?: number[];
+    has_resume?: boolean;
     date_from?: string;
     date_to?: string;
 };

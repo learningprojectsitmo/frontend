@@ -1,22 +1,35 @@
 import { useState, useCallback } from "react";
-import { Calendar, FolderKanban, Users } from "lucide-react";
+import { Calendar, FileText, FolderKanban, Users } from "lucide-react";
 
 import { CheckboxGroup } from "./checkbox-group";
+import { CheckboxRow } from "./checkbox-row";
 import { FilterDropdown } from "./filter-dropdown";
 import { FilterSection } from "./filter-section";
 import { FilterTrigger } from "./filter-trigger";
 
+/**
+ * Наличие резюме: три состояния одним значением, а не двумя чекбоксами —
+ * «есть» и «нет» взаимоисключающи, и пара булевых флагов дала бы
+ * невозможное сочетание «есть и нет».
+ */
+export type ResumePresence = "any" | "with" | "without";
+
 /** Активные фильтры списка участников. Значения — строки, как у CheckboxGroup. */
 export type ParticipantFiltersState = {
     projects: string[];
+    /** Участники без единого проекта в этом пространстве. */
+    withoutProject: boolean;
     roles: string[];
+    resume: ResumePresence;
     dateFrom: string;
     dateTo: string;
 };
 
 export const emptyParticipantFilters: ParticipantFiltersState = {
     projects: [],
+    withoutProject: false,
     roles: [],
+    resume: "any",
     dateFrom: "",
     dateTo: "",
 };
@@ -66,7 +79,7 @@ function DateRangeFields({
 
 /**
  * Единый фильтр списка участников: одна кнопка и одна панель с секциями
- * «Проект» / «Роль» / «Добавлен» — по образцу `ProjectFilters`.
+ * «Проект» / «Роль» / «Резюме» / «Добавлен» — по образцу `ProjectFilters`.
  *
  * Раньше фильтр по проектам жил прямо в `space.tsx` и не имел кнопки вовсе:
  * `setOpen(true)` не вызывался нигде, поэтому панель не могла открыться, и весь
@@ -83,7 +96,9 @@ export function ParticipantFilters({
 
     const activeCount = [
         state.projects.length > 0,
+        state.withoutProject,
         state.roles.length > 0,
+        state.resume !== "any",
         Boolean(state.dateFrom || state.dateTo),
     ].filter(Boolean).length;
 
@@ -97,6 +112,12 @@ export function ParticipantFilters({
         });
     };
 
+    const handleResumeChange = (next: ResumePresence) => {
+        // Повторный клик по активному пункту снимает фильтр — как у чекбоксов,
+        // которые ведут себя как переключатели.
+        onChange({ ...state, resume: state.resume === next ? "any" : next });
+    };
+
     return (
         <div className="relative">
             <FilterTrigger
@@ -106,19 +127,29 @@ export function ParticipantFilters({
             />
 
             <FilterDropdown open={open} onClose={handleClose} onReset={onReset}>
-                {projectOptions.length > 0 && (
-                    <FilterSection
-                        icon={<FolderKanban size={16} />}
-                        label="Проект"
-                        count={state.projects.length}
-                    >
+                {/* Секция всегда видна: в ней живёт «Без проекта» — единственный
+                    способ найти людей без проектов, и он нужен даже когда в
+                    пространстве пока нет ни одного проекта. */}
+                <FilterSection
+                    icon={<FolderKanban size={16} />}
+                    label="Проект"
+                    count={state.projects.length + (state.withoutProject ? 1 : 0)}
+                >
+                    <CheckboxRow
+                        label="Без проекта"
+                        checked={state.withoutProject}
+                        onChange={() =>
+                            onChange({ ...state, withoutProject: !state.withoutProject })
+                        }
+                    />
+                    {projectOptions.length > 0 && (
                         <CheckboxGroup
                             options={projectOptions}
                             selected={state.projects}
                             onChange={(v) => onChange({ ...state, projects: v })}
                         />
-                    </FilterSection>
-                )}
+                    )}
+                </FilterSection>
 
                 {roleOptions.length > 0 && (
                     <FilterSection
@@ -133,6 +164,25 @@ export function ParticipantFilters({
                         />
                     </FilterSection>
                 )}
+
+                <FilterSection
+                    icon={<FileText size={16} />}
+                    label="Резюме"
+                    count={state.resume === "any" ? undefined : 1}
+                >
+                    <div className="flex flex-col">
+                        <CheckboxRow
+                            label="Есть резюме"
+                            checked={state.resume === "with"}
+                            onChange={() => handleResumeChange("with")}
+                        />
+                        <CheckboxRow
+                            label="Нет резюме"
+                            checked={state.resume === "without"}
+                            onChange={() => handleResumeChange("without")}
+                        />
+                    </div>
+                </FilterSection>
 
                 <FilterSection
                     icon={<Calendar size={16} />}

@@ -77,6 +77,19 @@ function checkboxes(): HTMLInputElement[] {
     return [...container.querySelectorAll<HTMLInputElement>("input[type=checkbox]")];
 }
 
+/**
+ * Строка-чекбокс — это `label` с вложенным `input`, а не `button`, поэтому
+ * ищем по тексту подписи и кликаем сам инпут.
+ */
+function checkboxByLabel(text: string): HTMLInputElement {
+    const label = [...container.querySelectorAll("label")].find((l) =>
+        l.textContent?.includes(text),
+    );
+    const input = label?.querySelector<HTMLInputElement>("input[type=checkbox]");
+    if (!input) throw new Error(`чекбокс «${text}» не найден`);
+    return input;
+}
+
 function dateInputs(): HTMLInputElement[] {
     return [...container.querySelectorAll<HTMLInputElement>('input[type="date"]')];
 }
@@ -126,6 +139,7 @@ describe("ParticipantFilters: единый фильтр", () => {
         // then
         expect(buttonByText("Проект")).toBeDefined();
         expect(buttonByText("Роль")).toBeDefined();
+        expect(buttonByText("Резюме")).toBeDefined();
         expect(buttonByText("Добавлен")).toBeDefined();
     });
 
@@ -154,9 +168,24 @@ describe("ParticipantFilters: единый фильтр", () => {
     it("считает активные фильтры и показывает их на триггере", () => {
         // given
         // when
-        render({ projects: ["1"], roles: ["55"], dateFrom: "2026-01-01", dateTo: "" });
+        render({
+            projects: ["1"],
+            withoutProject: false,
+            roles: ["55"],
+            resume: "any",
+            dateFrom: "2026-01-01",
+            dateTo: "",
+        });
         // then
         expect(trigger().textContent).toContain("3");
+    });
+
+    it("считает «без проекта» и «нет резюме» как активные фильтры", () => {
+        // given
+        // when
+        render({ ...emptyParticipantFilters, withoutProject: true, resume: "without" });
+        // then
+        expect(trigger().textContent).toContain("2");
     });
 
     it("не показывает счётчик, когда фильтры не заданы", () => {
@@ -169,7 +198,7 @@ describe("ParticipantFilters: единый фильтр", () => {
 });
 
 describe("ParticipantFilters: секции", () => {
-    it("скрывает секцию проектов, если проектов нет", () => {
+    it("оставляет секцию проектов, даже когда проектов нет — ради «Без проекта»", () => {
         // given
         // when
         act(() => {
@@ -185,11 +214,7 @@ describe("ParticipantFilters: секции", () => {
         });
         click(trigger());
         // then
-        expect(
-            [...container.querySelectorAll("button")].some((b) =>
-                b.textContent?.includes("Проект"),
-            ),
-        ).toBe(false);
+        expect(buttonByText("Проект")).toBeDefined();
     });
 
     it("фильтрует по проектам", () => {
@@ -199,7 +224,7 @@ describe("ParticipantFilters: секции", () => {
         click(trigger());
         openSection("Проект");
         // when
-        click(checkboxes()[0]);
+        click(checkboxByLabel("Новый проект"));
         // then
         expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, projects: ["1"] });
     });
@@ -214,6 +239,103 @@ describe("ParticipantFilters: секции", () => {
         click(checkboxes()[1]);
         // then
         expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, roles: ["57"] });
+    });
+
+    it("включает «без проекта» — им ищут людей без проектов", () => {
+        // given
+        const onChange = vi.fn();
+        render(emptyParticipantFilters, onChange);
+        click(trigger());
+        openSection("Проект");
+        // when
+        click(checkboxByLabel("Без проекта"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({
+            ...emptyParticipantFilters,
+            withoutProject: true,
+        });
+    });
+
+    it("снимает «без проекта» повторным кликом", () => {
+        // given
+        const onChange = vi.fn();
+        render({ ...emptyParticipantFilters, withoutProject: true }, onChange);
+        click(trigger());
+        openSection("Проект");
+        // when
+        click(checkboxByLabel("Без проекта"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({
+            ...emptyParticipantFilters,
+            withoutProject: false,
+        });
+    });
+
+    it("показывает «без проекта» даже когда в пространстве нет проектов", () => {
+        // given
+        act(() => {
+            root.render(
+                <ParticipantFilters
+                    state={emptyParticipantFilters}
+                    onChange={vi.fn()}
+                    onReset={vi.fn()}
+                    projectOptions={[]}
+                    roleOptions={roleOptions}
+                />,
+            );
+        });
+        click(trigger());
+        openSection("Проект");
+        // then
+        expect(checkboxByLabel("Без проекта")).toBeDefined();
+    });
+
+    it("фильтрует «есть резюме»", () => {
+        // given
+        const onChange = vi.fn();
+        render(emptyParticipantFilters, onChange);
+        click(trigger());
+        openSection("Резюме");
+        // when
+        click(checkboxByLabel("Есть резюме"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, resume: "with" });
+    });
+
+    it("фильтрует «нет резюме»", () => {
+        // given
+        const onChange = vi.fn();
+        render(emptyParticipantFilters, onChange);
+        click(trigger());
+        openSection("Резюме");
+        // when
+        click(checkboxByLabel("Нет резюме"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, resume: "without" });
+    });
+
+    it("переключает «есть» на «нет» — они взаимоисключающие", () => {
+        // given
+        const onChange = vi.fn();
+        render({ ...emptyParticipantFilters, resume: "with" }, onChange);
+        click(trigger());
+        openSection("Резюме");
+        // when
+        click(checkboxByLabel("Нет резюме"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, resume: "without" });
+    });
+
+    it("повторный клик по активному пункту снимает фильтр по резюме", () => {
+        // given
+        const onChange = vi.fn();
+        render({ ...emptyParticipantFilters, resume: "without" }, onChange);
+        click(trigger());
+        openSection("Резюме");
+        // when
+        click(checkboxByLabel("Нет резюме"));
+        // then
+        expect(onChange).toHaveBeenCalledWith({ ...emptyParticipantFilters, resume: "any" });
     });
 
     it("фильтрует по датам", () => {
@@ -231,6 +353,30 @@ describe("ParticipantFilters: секции", () => {
         });
     });
 
+    it("не показывает счётчик у секции «Резюме», пока фильтр не задан", () => {
+        // given
+        render();
+        click(trigger());
+        // then
+        expect(buttonByText("Резюме").textContent).toBe("Резюме");
+    });
+
+    it("показывает счётчик у секции «Резюме», когда фильтр задан", () => {
+        // given
+        render({ ...emptyParticipantFilters, resume: "without" });
+        click(trigger());
+        // then
+        expect(buttonByText("Резюме").textContent).toBe("Резюме1");
+    });
+
+    it("считает «без проекта» в счётчике секции «Проект»", () => {
+        // given
+        render({ ...emptyParticipantFilters, withoutProject: true });
+        click(trigger());
+        // then
+        expect(buttonByText("Проект").textContent).toBe("Проект1");
+    });
+
     it("не даёт выбрать «по» раньше «с»", () => {
         // given
         render({ ...emptyParticipantFilters, dateFrom: "2026-02-01" });
@@ -245,7 +391,14 @@ describe("ParticipantFilters: секции", () => {
         // given
         const onReset = vi.fn();
         render(
-            { projects: ["1"], roles: ["55"], dateFrom: "2026-01-01", dateTo: "" },
+            {
+                projects: ["1"],
+                roles: ["55"],
+                withoutProject: true,
+                resume: "without",
+                dateFrom: "2026-01-01",
+                dateTo: "",
+            },
             vi.fn(),
             onReset,
         );

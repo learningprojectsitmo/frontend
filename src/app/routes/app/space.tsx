@@ -12,6 +12,7 @@ import {
     emptyParticipantFilters,
     type ParticipantFiltersState,
 } from "@/features/spaces/components/filters/participant-filters";
+import { selectedValuesToParam } from "@/features/spaces/components/filters/filter-params";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
@@ -104,6 +105,22 @@ const SpaceRoute = () => {
         useState<ParticipantFiltersState>(emptyParticipantFilters);
     const limit = 10;
 
+    // Project options for filter
+    const projectOptions = useMemo(() => {
+        if (!dataProjects?.items) return [];
+        return dataProjects.items.map((p) => ({ value: String(p.id), label: p.name }));
+    }, [dataProjects]);
+
+    // Role options for filter — берём справочник ролей, а не хардкод, чтобы новые
+    // роли из админки подхватывались автоматически.
+    const roleOptions = useMemo(() => {
+        if (!rolesData?.items) return [];
+        return rolesData.items.map((r) => ({
+            value: String(r.id),
+            label: ROLE_LABELS[r.name] ?? r.name,
+        }));
+    }, [rolesData]);
+
     const {
         data: participantsData,
         isLoading: isParticipantsLoading,
@@ -112,12 +129,13 @@ const SpaceRoute = () => {
         page: participantPage,
         limit,
         search: participantSearch || undefined,
-        project_ids:
-            participantFilters.projects.length > 0
-                ? participantFilters.projects.map(Number)
-                : undefined,
-        role_ids:
-            participantFilters.roles.length > 0 ? participantFilters.roles.map(Number) : undefined,
+        project_ids: selectedValuesToParam(participantFilters.projects, projectOptions)?.map(
+            Number,
+        ),
+        without_project: participantFilters.withoutProject,
+        role_ids: selectedValuesToParam(participantFilters.roles, roleOptions)?.map(Number),
+        has_resume:
+            participantFilters.resume === "any" ? undefined : participantFilters.resume === "with",
         date_from: participantFilters.dateFrom || undefined,
         date_to: participantFilters.dateTo || undefined,
     });
@@ -222,29 +240,15 @@ const SpaceRoute = () => {
 
     const canCreateProject = isManager && !hasCreatedProject;
 
-    // Project options for filter
-    const projectOptions = useMemo(() => {
-        if (!dataProjects?.items) return [];
-        return dataProjects.items.map((p) => ({ value: String(p.id), label: p.name }));
-    }, [dataProjects]);
-
-    // Role options for filter — берём справочник ролей, а не хардкод, чтобы новые
-    // роли из админки подхватывались автоматически.
-    const roleOptions = useMemo(() => {
-        if (!rolesData?.items) return [];
-        return rolesData.items.map((r) => ({
-            value: String(r.id),
-            label: ROLE_LABELS[r.name] ?? r.name,
-        }));
-    }, [rolesData]);
-
     const totalParticipants = participantsData?.total ?? 0;
     const totalPages = participantsData?.total_pages ?? 0;
 
     const hasActiveFilters = Boolean(
         participantSearch ||
         participantFilters.projects.length > 0 ||
+        participantFilters.withoutProject ||
         participantFilters.roles.length > 0 ||
+        participantFilters.resume !== "any" ||
         participantFilters.dateFrom ||
         participantFilters.dateTo,
     );
