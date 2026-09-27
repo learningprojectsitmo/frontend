@@ -75,6 +75,7 @@ import { JoinWarningDialog } from "@/features/project/components/join-warning-di
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
+import { WikiTab } from "@/features/project/components/wiki-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
 import { KanbanFilter } from "@/features/kanban/components/board-filter";
@@ -911,6 +912,7 @@ const SpaceRoute = () => {
     const textTabs = [
         { value: "view", label: "Обзор проекта" },
         { value: "specification", label: "Техническое задание" },
+        { value: "wiki", label: "Wiki" },
         { value: "kanban", label: "Канбан-доска" },
         { value: "activity", label: "История активности" },
     ];
@@ -1771,6 +1773,14 @@ const SpaceRoute = () => {
                         onAdvance={handleAdvanceStage}
                         onApprove={handleApproveStage}
                         onReject={handleRejectStage}
+                    />
+                )}
+
+                {activeTab === "wiki" && dataProject && (
+                    <WikiTab
+                        projectId={dataProject.id}
+                        isAuthor={isCreator}
+                        isTeacher={isTeacherForProject}
                     />
                 )}
 

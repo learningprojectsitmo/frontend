@@ -775,3 +775,60 @@ export type MyProjectListResponse = {
     items: MyProjectItem[];
     total: number;
 };
+
+// ─── Вики проекта ──────────────────────────────────────────────────────────
+
+export type WikiVisibility = "public" | "private";
+
+export type WikiPageAuthor = {
+    id: number;
+    username: string;
+};
+
+export type WikiPageFull = {
+    id: number;
+    project_id: number;
+    parent_id: number | null;
+    title: string;
+    content: string;
+    visibility: WikiVisibility;
+    position: number;
+    author: WikiPageAuthor | null;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+export type WikiPageSummary = {
+    id: number;
+    project_id: number;
+    parent_id: number | null;
+    title: string;
+    visibility: WikiVisibility;
+    position: number;
+    updated_at: string | null;
+};
+
+export type WikiPageListResponse = {
+    items: WikiPageSummary[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export type WikiPageCreate = {
+    title: string;
+    content?: string;
+    parent_id?: number | null;
+    visibility?: WikiVisibility;
+    position?: number | null;
+};
+
+/** Не переданные поля не меняются — как в бэкендовом WikiPageUpdate. */
+export type WikiPageUpdate = {
+    title?: string;
+    content?: string;
+    parent_id?: number | null;
+    visibility?: WikiVisibility;
+    position?: number | null;
+};

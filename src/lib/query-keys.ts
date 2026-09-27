@@ -71,6 +71,18 @@ export const queryKeys = {
             ["project", String(projectId), "specification", "comments"] as const,
     },
 
+    // Вики читается и анонимно, поэтому id страницы входит в ключ сам: без него
+    // публичный и авторизованный посетитель делили бы одну запись кэша.
+    wiki: {
+        all: (projectId: string | number) => ["project", String(projectId), "wiki"] as const,
+        pages: (projectId: string | number) =>
+            ["project", String(projectId), "wiki", "pages"] as const,
+        tree: (projectId: string | number) =>
+            ["project", String(projectId), "wiki", "tree"] as const,
+        page: (projectId: string | number, pageId: string | number) =>
+            ["project", String(projectId), "wiki", "page", String(pageId)] as const,
+    },
+
     workspace: {
         list: (params?: SpacesListParams) =>
             params ? (["workspaces", "list", params] as const) : (["workspaces", "list"] as const),

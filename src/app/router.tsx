@@ -195,6 +195,12 @@ export const createAppRouter = (queryClient: QueryClient) =>
             hydrateFallbackElement: <LoadingFallback />,
         },
         {
+            // Публичная вики — вне /app, поэтому без ProtectedRoute.
+            path: paths.wiki.path,
+            lazy: () => import("./routes/wiki").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
             path: "*",
             lazy: () => import("./routes/not-found").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />, // Добавить

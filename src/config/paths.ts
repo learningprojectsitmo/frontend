@@ -140,4 +140,12 @@ export const paths = {
             },
         },
     },
+
+    // Публичная вики: доступна без входа, поэтому живёт вне /app.
+    // Приватные страницы по этой ссылке не откроются — сервер отдаёт 404.
+    wiki: {
+        path: "/wiki/:projectId",
+        getHref: (projectId: number, pageId?: number | null) =>
+            `/wiki/${encodeURIComponent(projectId)}${pageId ? `?page=${encodeURIComponent(pageId)}` : ""}`,
+    },
 } as const;
