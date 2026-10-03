@@ -147,7 +147,9 @@ export function SpaceResumeSection({
     const activeFilterCount = selectedSkills.length + selectedInterests.length;
     const hasActiveFilters = Boolean(search) || activeFilterCount > 0;
 
-    if (isLoading) {
+    // Спиннер — только пока не пришёл первый ответ. Иначе на каждый поисковый
+    // запрос размонтируется вся секция вместе с полем ввода и фокус теряется.
+    if (isLoading && items.length === 0) {
         return (
             <section>
                 <div className="flex items-center justify-between mb-6">
@@ -180,7 +182,7 @@ export function SpaceResumeSection({
                             placeholder="Поиск резюме"
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
+                            className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-app-blue transition-colors"
                         />
                     </div>
 

@@ -7,14 +7,6 @@ import { FilterSection } from "./filter-section";
 import { CheckboxGroup } from "./checkbox-group";
 import { DateFilter } from "./date-filter";
 
-const STATUS_LABELS: Record<string, string> = {
-    in_progress: "В работе",
-    review: "На проверке",
-    planned: "Запланирован",
-    completed: "Выполнен",
-    archived: "Архив",
-};
-
 type ProjectFiltersProps = {
     state: FiltersState;
     onChange: (state: FiltersState) => void;
@@ -27,7 +19,7 @@ export function ProjectFilters({ state, onChange, onReset, options }: ProjectFil
     const [open, setOpen] = useState(false);
 
     const activeCount = [
-        state.statuses.length > 0,
+        state.stages.length > 0,
         state.tags.length > 0,
         state.members.length > 0,
         state.datePreset !== "all",
@@ -50,16 +42,13 @@ export function ProjectFilters({ state, onChange, onReset, options }: ProjectFil
             <FilterDropdown open={open} onClose={handleClose} onReset={onReset}>
                 <FilterSection
                     icon={<CircleDot size={16} />}
-                    label="Статус"
-                    count={state.statuses.length}
+                    label="Этап"
+                    count={state.stages.length}
                 >
                     <CheckboxGroup
-                        options={options.statuses
-                            .map((name) => ({ value: name, label: STATUS_LABELS[name] }))
-                            .filter((opt) => opt.label)
-                            .sort((a, b) => a.label.localeCompare(b.label, "ru"))}
-                        selected={state.statuses}
-                        onChange={(v) => onChange({ ...state, statuses: v })}
+                        options={options.stages.map((name) => ({ value: name, label: name }))}
+                        selected={state.stages}
+                        onChange={(v) => onChange({ ...state, stages: v })}
                     />
                 </FilterSection>
 

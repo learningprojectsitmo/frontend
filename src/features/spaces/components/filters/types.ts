@@ -1,12 +1,29 @@
 export type DatePreset = "all" | "today" | "7days" | "30days" | "custom";
 
-export type FiltersState = {
-    statuses: string[];
-    tags: string[];
-    members: number[];
+/** Общая для обоих фильтров часть: пресет даты. */
+export type DateFilterState = {
     datePreset: DatePreset;
     customDate?: { from: Date; to: Date };
 };
+
+/**
+ * Фильтры списка проектов пространства.
+ *
+ * `stages`, а не `statuses`: статус у всех проектов «draft» (создаёт его FixtureService),
+ * а реальный прогресс проекта задаёт его текущий этап.
+ */
+export type FiltersState = {
+    stages: string[];
+    tags: string[];
+    members: number[];
+} & DateFilterState;
+
+/** Фильтры списка пространств: у пространства статус есть, и он осмысленный. */
+export type SpaceFiltersState = {
+    statuses: string[];
+    tags: string[];
+    members: number[];
+} & DateFilterState;
 
 export type FilterSectionConfig = {
     id: string;
@@ -21,13 +38,13 @@ export type FilterSectionConfig = {
  * чтобы варианты не зависели от того, какая страница списка открыта.
  */
 export type ProjectFilterOptions = {
-    statuses: string[];
+    stages: string[];
     tags: string[];
     members: { id: number; full_name: string }[];
 };
 
 export const defaultFiltersState: FiltersState = {
-    statuses: [],
+    stages: [],
     tags: [],
     members: [],
     datePreset: "all",

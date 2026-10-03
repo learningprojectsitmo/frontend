@@ -5,13 +5,13 @@
     "type": "module",
     "scripts": {
         "dev": "vite --clearScreen false",
-        "build": "tsc && vite build --base=/",
+        "build": "npm run check-types && vite build --base=/",
         "preview": "vite preview",
         "test": "vitest",
         "lint": "eslint src",
         "lint:check": "eslint src --max-warnings 0",
         "format:check": "prettier --check . --ignore-path .prettierignore",
-        "check-types": "tsc --project tsconfig.json --pretty --noEmit",
+        "check-types": "tsc -p tsconfig.app.json --noEmit",
         "format": "prettier --write ."
     },
     "dependencies": {

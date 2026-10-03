@@ -52,6 +52,14 @@ const spaceSettingsSchema = z.object({
 
 type SpaceSettingsInput = z.infer<typeof spaceSettingsSchema>;
 
+// Бэкенд отдаёт `visibility`/`join_policy` как свободные строки, а форма принимает
+// только закрытые наборы — приводим явно, чтобы мусор из БД не ломал форму.
+const toVisibility = (value: string | undefined): "public" | "private" =>
+    value === "public" ? "public" : "private";
+
+const toJoinPolicy = (value: string | undefined): "open" | "link" | "invitation" =>
+    value === "link" || value === "invitation" ? value : "open";
+
 const visibilityOptions: RadioOption[] = [
     {
         value: "public",
@@ -172,8 +180,8 @@ const SpaceSettingsPage = () => {
             name: space.title,
             description: space.description || "",
             color: space.color ?? "",
-            visibility: settings.visibility ?? "public",
-            join_policy: settings.join_policy ?? "open",
+            visibility: toVisibility(settings.visibility),
+            join_policy: toJoinPolicy(settings.join_policy),
             default_role_id: settings.default_role_id ?? null,
             allow_multi_project_participation: settings.allow_multi_project_participation ?? false,
             allow_multi_project_creation: settings.allow_multi_project_creation ?? false,

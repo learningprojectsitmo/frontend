@@ -159,6 +159,33 @@ export type BackendVacancy = {
     required_count: number;
 };
 
+/**
+ * Вакансия в запросе на создание/обновление проекта.
+ *
+ * Бэкенд (`VacancyCreate`) id не принимает и не возвращает: там полная замена
+ * списка, поэтому переиспользовать `BackendVacancy` в payload нельзя.
+ */
+export type BackendVacancyInput = {
+    title: string;
+    tasks: string[];
+    required_count: number;
+};
+
+/** Тело `PUT /projects/{id}` — зеркало бэкендового `ProjectUpdate`. */
+export type ProjectUpdateInput = {
+    name?: string;
+    theme?: string | null;
+    description?: string | null;
+    max_participants?: number | null;
+    status_id?: number | null;
+    deadline?: string | null;
+    progress?: number | null;
+    tags?: string[];
+    workspace_id?: number | null;
+    vacancies?: BackendVacancyInput[];
+    project_type_id?: number | null;
+};
+
 export type BackendReplycant = {
     id: number;
     user_id: number;
@@ -215,7 +242,8 @@ export type ProjectFilterOptionResponse = {
 
 /** Справочники для фильтров списка проектов пространства */
 export type ProjectFilterFacetsResponse = {
-    statuses: string[];
+    /** Названия этапов: статус у всех проектов «draft», этап отражает реальный прогресс */
+    stages: string[];
     tags: string[];
     members: ProjectFilterMemberResponse[];
     projects: ProjectFilterOptionResponse[];
@@ -536,6 +564,7 @@ export type NotificationType =
     | "response_received"
     | "response_accepted"
     | "response_rejected"
+    | "response_confirmed"
     | "invitation_received"
     | "invitation_accepted"
     | "invitation_rejected"

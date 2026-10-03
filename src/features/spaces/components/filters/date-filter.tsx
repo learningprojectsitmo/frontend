@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { CalendarIcon } from "lucide-react";
-import type { DatePreset, FiltersState } from "./types";
+import type { DateFilterState, DatePreset } from "./types";
 import { Calendar } from "./calendar";
 
 const PRESETS: { value: DatePreset; label: string }[] = [
@@ -12,8 +12,8 @@ const PRESETS: { value: DatePreset; label: string }[] = [
 ];
 
 type DateFilterProps = {
-    state: FiltersState;
-    onChange: (patch: Partial<FiltersState>) => void;
+    state: DateFilterState;
+    onChange: (patch: Partial<DateFilterState>) => void;
 };
 
 function formatDate(date: Date): string {

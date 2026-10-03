@@ -10,7 +10,6 @@ function describeError(err: any): string {
 }
 
 export const ErrorBoundary = () => {
-    // @ts-expect-error — временный диагностический вывод (удалить после фикса)
     const routeError = useRouteError();
 
     return (

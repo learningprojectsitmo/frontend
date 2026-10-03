@@ -1,5 +1,5 @@
 import { api } from "./api-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     type Notification,
     type SpacesListParams,
@@ -251,6 +251,9 @@ export const useWorkspaceParticipants = (workspaceId: number, params?: Participa
     return useQuery({
         queryKey: queryKeys.workspace.participants(workspaceId, params),
         queryFn: () => getWorkspaceParticipants(workspaceId, params),
+        // Предыдущая страница остаётся на экране, пока грузится новая: без этого
+        // список мигает спиннером на каждый запрос и размонтирует поисковую строку.
+        placeholderData: keepPreviousData,
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         enabled: !!workspaceId,
@@ -309,6 +312,7 @@ export const useWorkspaceResumes = (workspaceId: number, params?: ResumeParams) 
     return useQuery({
         queryKey: queryKeys.workspace.resumes(workspaceId, params),
         queryFn: () => getWorkspaceResumes(workspaceId, params),
+        placeholderData: keepPreviousData,
         enabled: !!workspaceId,
     });
 };

@@ -2,6 +2,7 @@ import { Search, List } from "lucide-react";
 import { Icon } from "@/components/ui/icons";
 
 type ListToolbarProps = {
+    title?: string;
     searchPlaceholder?: string;
     searchValue: string;
     onSearch: (q: string) => void;

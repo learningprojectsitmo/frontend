@@ -133,7 +133,7 @@ export const InviteDialog = ({
                                                 href={r.resumeUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[13px] font-medium text-[#2563EB] hover:text-[#1d4ed8]"
+                                                className="text-[13px] font-medium text-app-blue hover:brightness-125"
                                             >
                                                 Открыть резюме
                                             </a>
@@ -173,7 +173,7 @@ export const InviteDialog = ({
                                             className={cn(
                                                 "px-3 py-1.5 rounded-lg border text-[13px] font-medium transition-all",
                                                 selectedVacancyId === vacancy.id
-                                                    ? "border-[#2B7FFF] bg-blue-50 text-gray-900"
+                                                    ? "border-app-blue bg-app-badge-blue text-gray-900"
                                                     : "border-gray-200 bg-app-surface text-gray-600 hover:border-gray-300",
                                             )}
                                         >
@@ -227,7 +227,7 @@ export const InviteDialog = ({
                                                 href={r.resume_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[12px] font-medium text-[#2563EB] hover:text-[#1d4ed8] shrink-0"
+                                                className="text-[12px] font-medium text-app-blue hover:brightness-125 shrink-0"
                                             >
                                                 Резюме
                                             </a>

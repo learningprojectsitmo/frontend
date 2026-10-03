@@ -80,7 +80,11 @@ function openCandidatesTab() {
 }
 
 function buttonByText(text: string): HTMLButtonElement | undefined {
-    return nodes().find((b) => b.textContent?.trim().includes(text));
+    // querySelectorAll отдаёт HTMLElement: сужаем до button через instanceof.
+    return nodes().find(
+        (b): b is HTMLButtonElement =>
+            b instanceof HTMLButtonElement && !!b.textContent?.trim().includes(text),
+    );
 }
 
 beforeEach(() => {

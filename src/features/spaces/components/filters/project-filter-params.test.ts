@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
     projectDateRange,
     projectFiltersToParams,
-    type ProjectFilterOptions,
 } from "@/features/spaces/components/filters/project-filter-params";
-import { defaultFiltersState, type FiltersState } from "@/features/spaces/components/filters/types";
+import {
+    defaultFiltersState,
+    type FiltersState,
+    type ProjectFilterOptions,
+} from "@/features/spaces/components/filters/types";
 
 const options: ProjectFilterOptions = {
-    statuses: ["planned", "in_progress"],
+    stages: ["Выбор темы", "Создание тз"],
     tags: ["ml", "backend"],
     members: [
         { id: 1, full_name: "Анна Иванова" },
@@ -35,13 +38,13 @@ describe("projectFiltersToParams", () => {
         expect(params).toEqual({});
     });
 
-    it("передаёт выбранные статусы и теги", () => {
+    it("передаёт выбранные этапы и теги", () => {
         // given
-        const state = filters({ statuses: ["planned"], tags: ["ml"] });
+        const state = filters({ stages: ["Создание тз"], tags: ["ml"] });
         // when
         const params = projectFiltersToParams(state, options);
         // then
-        expect(params.statuses).toEqual(["planned"]);
+        expect(params.stages).toEqual(["Создание тз"]);
         expect(params.tags).toEqual(["ml"]);
     });
 
@@ -56,11 +59,11 @@ describe("projectFiltersToParams", () => {
 
     it("выключает фильтр, если выбраны все доступные значения", () => {
         // given: полный IN исключил бы проекты без тегов — это не «без фильтра»
-        const state = filters({ statuses: ["planned", "in_progress"], tags: ["ml", "backend"] });
+        const state = filters({ stages: ["Выбор темы", "Создание тз"], tags: ["ml", "backend"] });
         // when
         const params = projectFiltersToParams(state, options);
         // then
-        expect(params.statuses).toBeUndefined();
+        expect(params.stages).toBeUndefined();
         expect(params.tags).toBeUndefined();
     });
 
@@ -68,7 +71,7 @@ describe("projectFiltersToParams", () => {
         // given: справочник ещё не пришёл, а галки уже стоят
         const state = filters({ members: [1, 2] });
         // when
-        const params = projectFiltersToParams(state, { statuses: [], tags: [], members: [] });
+        const params = projectFiltersToParams(state, { stages: [], tags: [], members: [] });
         // then
         expect(params.member_ids).toEqual([1, 2]);
     });

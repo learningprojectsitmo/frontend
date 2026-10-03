@@ -12,7 +12,6 @@ export function setupSentry() {
         environment: env.SENTRY_ENVIRONMENT,
         sampleRate: env.SENTRY_ERRORS_SAMPLE_RATE,
         tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
-        autoSessionTracking: false,
         sendDefaultPii: true,
     });
     isInitialized = true;

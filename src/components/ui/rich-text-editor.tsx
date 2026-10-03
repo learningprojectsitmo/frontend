@@ -136,7 +136,8 @@ export const RichTextEditor = ({
 
     useEffect(() => {
         if (editor && editor.getHTML() !== value) {
-            editor.commands.setContent(value, false);
+            // TipTap 3: второй аргумент — объект опций, а не флаг emitUpdate.
+            editor.commands.setContent(value, { emitUpdate: false });
         }
     }, [value, editor]);
 

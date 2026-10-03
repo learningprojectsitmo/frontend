@@ -263,7 +263,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     search: string;
     onSearchChange: (v: string) => void;
     onSearchSubmit: (v: string) => void;
-    suggestions: string[];
+    suggestions: SuggestionGroup[];
 }) {
     return (
         <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">

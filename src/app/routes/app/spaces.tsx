@@ -16,7 +16,7 @@ import { FilterDropdown } from "@/features/spaces/components/filters/filter-drop
 import { FilterSection } from "@/features/spaces/components/filters/filter-section";
 import { CheckboxGroup } from "@/features/spaces/components/filters/checkbox-group";
 import { DateFilter } from "@/features/spaces/components/filters/date-filter";
-import type { FiltersState } from "@/features/spaces/components/filters/types";
+import type { SpaceFiltersState } from "@/features/spaces/components/filters/types";
 import { Archive, CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
 import { useSearchResults, MIN_SEARCH_LENGTH } from "@/lib/search";
 import { SearchResultsPanel } from "@/components/search/search-results";
@@ -48,7 +48,7 @@ const SpacesRoute = () => {
     const [search, setSearch] = useState("");
     const [globalSearch, setGlobalSearch] = useState(searchParams.get("q") ?? "");
     const [filtersOpen, setFiltersOpen] = useState(false);
-    const [filterState, setFilterState] = useState<FiltersState>({
+    const [filterState, setFilterState] = useState<SpaceFiltersState>({
         statuses: [],
         tags: [],
         members: [],

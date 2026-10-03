@@ -18,6 +18,9 @@ const buttonVariants = cva(
                 outlineSoft:
                     "bg-[--btn-outline-soft-bg] border border-[--btn-outline-soft-border] text-[--btn-outline-soft-text] hover:bg-[--btn-outline-soft-hover-bg] hover:text-[--btn-outline-soft-hover-text] active:bg-[--btn-outline-soft-active-bg] active:text-[--btn-outline-soft-active-text] active:border-[--btn-outline-soft-active-border]",
                 blue: "bg-[--btn-blue-bg] text-[--btn-blue-text] hover:bg-[--btn-blue-hover-bg] hover:text-[--btn-blue-hover-text] active:bg-[--btn-blue-active-bg] active:text-[--btn-blue-active-text]",
+                // Ghost — без фона, как у IconButton: вторичные действия («Отмена»,
+                // переключатели) не должны выглядеть как основная кнопка.
+                ghost: "bg-transparent text-[--btn-outline-text] hover:bg-[--btn-outline-hover-bg] hover:text-[--btn-outline-hover-text] active:bg-[--btn-outline-active-bg] active:text-[--btn-outline-active-text]",
             },
             size: {
                 fixed36: "w-[187px] h-9 rounded-[8px] px-3 py-2",

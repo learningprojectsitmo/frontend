@@ -73,7 +73,7 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                     className={cn(
                                         "w-full text-left p-4 rounded-xl border transition-all",
                                         selectedVacancyId === vacancy.id
-                                            ? "border-[#2B7FFF] bg-blue-50 ring-1 ring-[#2B7FFF]"
+                                            ? "border-app-blue bg-app-badge-blue ring-1 ring-app-blue"
                                             : "border-gray-200 bg-app-surface hover:border-gray-300",
                                     )}
                                 >
@@ -104,7 +104,7 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                             )}
                                         </div>
                                         {selectedVacancyId === vacancy.id && (
-                                            <div className="w-5 h-5 rounded-full bg-[#2B7FFF] flex items-center justify-center shrink-0 mt-0.5">
+                                            <div className="w-5 h-5 rounded-full bg-app-blue flex items-center justify-center shrink-0 mt-0.5">
                                                 <Check className="size-3 text-white" />
                                             </div>
                                         )}
@@ -132,7 +132,7 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                         className={cn(
                                             "w-full text-left px-3 py-2 rounded-lg border transition-all text-sm",
                                             selectedResumeId === resume.id
-                                                ? "border-[#2B7FFF] bg-blue-50"
+                                                ? "border-app-blue bg-app-badge-blue"
                                                 : "border-gray-200 bg-app-surface hover:border-gray-300",
                                         )}
                                     >
@@ -141,7 +141,7 @@ export const ApplyDialog = ({ open, onOpenChange, projectId, vacancies }: ApplyD
                                                 {resume.header}
                                             </span>
                                             {selectedResumeId === resume.id && (
-                                                <Check className="size-4 text-[#2B7FFF]" />
+                                                <Check className="size-4 text-app-blue" />
                                             )}
                                         </div>
                                     </button>

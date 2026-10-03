@@ -67,7 +67,12 @@ function getInitials(name: string): string {
         .slice(0, 2);
 }
 
-function formatRelativeTime(dateStr: string, t: (key: string, opts?: object) => string): string {
+function formatRelativeTime(
+    dateStr: string,
+    // TFunction из react-i18next contravariant'ен к такой сигнатуре, поэтому
+    // принимаем его «сверху» через обёртку.
+    t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
     const now = dayjs();
     const date = dayjs(dateStr);
     const diffMinutes = now.diff(date, "minute");
@@ -237,7 +242,9 @@ export function NotificationsNav() {
                                     column_name: item.data.column_name,
                                     subtask_title: item.data.subtask_title,
                                 });
-                                const timeStr = formatRelativeTime(item.created_at, t);
+                                const timeStr = formatRelativeTime(item.created_at, (key, opts) =>
+                                    t(key, opts),
+                                );
                                 const initials = getInitials(item.data.actor_name);
                                 const hasActions =
                                     (item.type === "invitation_received" &&

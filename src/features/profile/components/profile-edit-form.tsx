@@ -120,7 +120,7 @@ export const ProfileEditForm = ({ onCancel }: ProfileEditFormProps) => {
             className="rounded-2xl border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8"
         >
             <div className="h-[80px] w-[80px] sm:h-[120px] sm:w-[120px] rounded-[20px] bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold shrink-0">
-                {form.watch("last_name").trim().charAt(0)}
+                {(form.watch("last_name") ?? "").trim().charAt(0)}
                 {form.watch("first_name").trim().charAt(0)}
             </div>
 

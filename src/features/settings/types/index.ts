@@ -2,6 +2,8 @@ export interface Role {
     id: string;
     name: string;
     description: string | null;
+    /** Бэкенд счётчик пользователей не отдаёт — есть только в моках. */
+    userCount?: number;
 }
 
 export interface RoleListResponse {

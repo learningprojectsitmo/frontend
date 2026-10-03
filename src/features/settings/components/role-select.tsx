@@ -58,9 +58,11 @@ export const RoleSelect = ({ roles, selectedRoleId, onRoleChange, className }: R
                         >
                             <div className="flex justify-between items-center">
                                 <span>{role.name}</span>
-                                <span className="text-[13px] text-[--azure-46]">
-                                    {role.userCount} чел.
-                                </span>
+                                {role.userCount !== undefined && (
+                                    <span className="text-[13px] text-[--azure-46]">
+                                        {role.userCount} чел.
+                                    </span>
+                                )}
                             </div>
                             <span className="text-[13px] text-[--azure-46] block mt-0.5">
                                 {role.description}

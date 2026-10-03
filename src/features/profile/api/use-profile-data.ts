@@ -5,6 +5,8 @@ import type {
     MyResponseListResponse,
     MyInvitationListResponse,
     MyProjectListResponse,
+    MyProjectItem,
+    ProfileResponse,
     Space,
 } from "@/types/api";
 import type {
@@ -142,12 +144,15 @@ export function useProfileProjects() {
     });
 }
 
+/** Ответ `/profile/{id}` до маппинга: snake_case-поля и сырые типы бэкенда. */
+type PublicProfileRaw = ProfileResponse & { spaces: Space[]; projects: MyProjectItem[] };
+
 export function usePublicProfile(userId: number, options?: { enabled?: boolean }) {
     return useQuery<PublicProfile>({
         queryKey: queryKeys.profile.byId(userId),
         enabled: options?.enabled ?? true,
         queryFn: async () => {
-            const data: PublicProfile = await api.get(`/profile/${userId}`);
+            const data = await api.get<PublicProfileRaw>(`/profile/${userId}`);
             return {
                 ...data,
                 spaces: data.spaces.map((s) => mapSpace(s, userId)),

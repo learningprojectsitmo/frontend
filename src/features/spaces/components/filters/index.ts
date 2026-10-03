@@ -4,7 +4,13 @@ export {
     emptyParticipantFilters,
     type ParticipantFiltersState,
 } from "./participant-filters";
-export { useFilters } from "./use-filters";
 export { defaultFiltersState } from "./types";
-export type { FiltersState, DatePreset, FilterSectionConfig, ProjectFilterOptions } from "./types";
+export type {
+    FiltersState,
+    SpaceFiltersState,
+    DateFilterState,
+    DatePreset,
+    FilterSectionConfig,
+    ProjectFilterOptions,
+} from "./types";
 export { projectFiltersToParams, projectDateRange } from "./project-filter-params";

@@ -25,7 +25,7 @@ export type ProjectsListParams = {
     page?: number;
     limit?: number;
     search?: string;
-    statuses?: string[];
+    stages?: string[];
     tags?: string[];
     member_ids?: number[];
     date_from?: string;

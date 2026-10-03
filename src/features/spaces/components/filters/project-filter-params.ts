@@ -52,20 +52,22 @@ export function projectDateRange(state: FiltersState): ProjectFilterDateRange | 
  * см. комментарий в filter-params.ts: полный IN исключил бы проекты без
  * тегов, а это не то же самое, что «без фильтра».
  */
+type ProjectFilterParams = Pick<
+    ProjectsListParams,
+    "stages" | "tags" | "member_ids" | "date_from" | "date_to"
+>;
+
 export function projectFiltersToParams(
     state: FiltersState,
     options: ProjectFilterOptions,
-): Pick<ProjectsListParams, "statuses" | "tags" | "member_ids" | "date_from" | "date_to"> {
-    const params: Pick<
-        ProjectsListParams,
-        "statuses" | "tags" | "member_ids" | "date_from" | "date_to"
-    > = {};
+): ProjectFilterParams {
+    const params: ProjectFilterParams = {};
 
-    const statuses = selectedValuesToParam(
-        state.statuses,
-        options.statuses.map((s) => ({ value: s })),
+    const stages = selectedValuesToParam(
+        state.stages,
+        options.stages.map((s) => ({ value: s })),
     );
-    if (statuses) params.statuses = statuses;
+    if (stages) params.stages = stages;
 
     const tags = selectedValuesToParam(
         state.tags,

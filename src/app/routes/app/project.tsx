@@ -48,7 +48,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select/select";
-import { SearchBar } from "@/components/ui/search-bar";
+import { SearchBar, type SuggestionGroup } from "@/components/ui/search-bar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
@@ -68,7 +68,7 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type ProjectFullResponse } from "@/types/api";
-import { type Replycant } from "@/types/tables/forTables";
+import { type Member, type Replycant } from "@/types/tables/forTables";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
@@ -138,18 +138,20 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             tasks: v.tasks,
             count: v.required_count,
         })),
-        members: p.members.map((m) => ({
-            id: m.id,
-            userId: m.user_id,
-            name: m.name,
-            role: m.role,
-            contacts: m.contacts,
-            resumeUrl: normalizeResumeHref(m.resume_url),
-            dateAdded: m.date_added,
-            status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
-                | "default"
-                | "delete",
-        })),
+        members: p.members.map(
+            (m): Member => ({
+                id: m.id,
+                userId: m.user_id,
+                name: m.name,
+                role: m.role,
+                contacts: m.contacts,
+                resumeUrl: normalizeResumeHref(m.resume_url),
+                dateAdded: m.date_added,
+                status: (canManage && m.user_id !== currentUserId ? "delete" : "default") as
+                    | "default"
+                    | "delete",
+            }),
+        ),
         replycants: p.replycants.map((r) => ({
             id: r.id,
             name: r.name,
@@ -930,12 +932,36 @@ const SpaceRoute = () => {
 
     const memberRoles = project?.members?.map((member) => member.role) || [];
 
-    const memberContacts = project?.members?.map((member) => member.contacts) || [];
+    // Контакты приходят то строкой, то объектом (telegram/email/linkedin) —
+    // для поиска и подсказок нужен плоский текст.
+    const contactsToText = (contacts: Member["contacts"]): string =>
+        typeof contacts === "string"
+            ? contacts
+            : Object.values(contacts ?? {})
+                  .filter(Boolean)
+                  .join(" ");
+
+    const memberContacts = project?.members?.map((member) => contactsToText(member.contacts)) || [];
     const replycantContacts = project?.replycants?.map((replycant) => replycant.contacts) || [];
 
-    const memberSuggestions = [...memberTitles, ...memberContacts, ...memberRoles];
+    // SearchBar ждёт группы (id/label/items), а не плоский список строк:
+    // на плоском массиве рендер падал бы на `group.items`.
+    const toSuggestionGroup = (id: string, label: string, values: string[]): SuggestionGroup => ({
+        id,
+        label,
+        items: [...new Set(values.filter(Boolean))].map((text) => ({ text })),
+    });
 
-    const replycantSuggestions = [...replycantTitles, ...replycantContacts];
+    const memberSuggestions: SuggestionGroup[] = [
+        toSuggestionGroup("team", "Участники", [
+            ...memberTitles,
+            ...memberRoles,
+            ...memberContacts,
+        ]),
+    ];
+    const replycantSuggestions: SuggestionGroup[] = [
+        toSuggestionGroup("replycants", "Отклики", [...replycantTitles, ...replycantContacts]),
+    ];
 
     const filteredMembers = useMemo(() => {
         let result = project?.members || [];
@@ -943,7 +969,7 @@ const SpaceRoute = () => {
             result = result.filter(
                 (member) =>
                     member.name.toLowerCase().includes(search.toLowerCase()) ||
-                    member.contacts.toLowerCase().includes(search.toLowerCase()) ||
+                    contactsToText(member.contacts).toLowerCase().includes(search.toLowerCase()) ||
                     member.role.toLowerCase().includes(search.toLowerCase()),
             );
         }

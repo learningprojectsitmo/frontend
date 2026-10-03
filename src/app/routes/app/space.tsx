@@ -122,7 +122,7 @@ const SpaceRoute = () => {
 
     const projectFilterOptions = useMemo<ProjectFilterOptions>(
         () => ({
-            statuses: projectFacets?.statuses || [],
+            stages: projectFacets?.stages || [],
             tags: projectFacets?.tags || [],
             members: projectFacets?.members || [],
         }),
@@ -162,6 +162,7 @@ const SpaceRoute = () => {
     }, []);
 
     const [participantSearch, setParticipantSearch] = useState("");
+    const debouncedParticipantSearch = useDebouncedValue(participantSearch, 300);
     const [participantPage, setParticipantPage] = useState(1);
     const [participantFilters, setParticipantFilters] =
         useState<ParticipantFiltersState>(emptyParticipantFilters);
@@ -190,7 +191,7 @@ const SpaceRoute = () => {
     } = useWorkspaceParticipants(workspaceId, {
         page: participantPage,
         limit,
-        search: participantSearch || undefined,
+        search: debouncedParticipantSearch || undefined,
         project_ids: selectedValuesToParam(participantFilters.projects, projectOptions)?.map(
             Number,
         ),

@@ -1,4 +1,9 @@
-import Axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import Axios, {
+    type AxiosError,
+    type AxiosInstance,
+    type AxiosRequestConfig,
+    type InternalAxiosRequestConfig,
+} from "axios";
 
 import { env } from "@/config/env";
 
@@ -55,7 +60,24 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
     return config;
 }
 
-export const api = Axios.create({
+/**
+ * Ответ перехватчика — это `response.data`, а не `AxiosResponse`, поэтому
+ * сигнатуры методов возвращают сам payload. Иначе каждый вызов в приложении
+ * требовал бы каста, а `await api.get<T>()` типизировался бы как `AxiosResponse<T>`
+ * и ломал вывод типов в хуках.
+ */
+export type ApiClient = {
+    interceptors: AxiosInstance["interceptors"];
+    defaults: AxiosInstance["defaults"];
+    <T = unknown>(config: AxiosRequestConfig): Promise<T>;
+    get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+    post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+    put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+    patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+    delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+};
+
+const axiosInstance = Axios.create({
     baseURL: env.API_URL,
     // Axios по умолчанию сериализует массивы как `key[]=v1&key[]=v2`, а FastAPI
     // такие ключи молча игнорирует (list-параметр остаётся None) — фильтр
@@ -63,6 +85,8 @@ export const api = Axios.create({
     // ключи `key=v1&key=v2`, которые парсер читает. Пустые массивы отбрасываются.
     paramsSerializer: { indexes: null },
 });
+
+export const api = axiosInstance as unknown as ApiClient;
 
 api.interceptors.request.use(authRequestInterceptor);
 
@@ -86,7 +110,7 @@ api.interceptors.response.use(
                 failedQueue.push({ resolve, reject });
             }).then((token) => {
                 originalRequest.headers.Authorization = `Bearer ${token}`;
-                return api(originalRequest);
+                return axiosInstance(originalRequest);
             });
         }
 
@@ -98,13 +122,14 @@ api.interceptors.response.use(
         const hadToken = !!accessToken;
 
         try {
-            const response = await refreshApi.post("/auth/refresh");
-            const newToken = (response as { access_token: string }).access_token;
+            const { access_token: newToken } = await refreshApi.post<{ access_token: string }>(
+                "/auth/refresh",
+            );
 
             setAccessToken(newToken);
             processQueue(null, newToken);
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            return api(originalRequest);
+            return axiosInstance(originalRequest);
         } catch (refreshError) {
             processQueue(refreshError, null);
             clearAccessToken();
@@ -122,7 +147,7 @@ api.interceptors.response.use(
 
 const refreshApi = Axios.create({
     baseURL: env.API_URL,
-});
+}) as unknown as ApiClient;
 
 refreshApi.interceptors.request.use((config) => {
     config.withCredentials = true;

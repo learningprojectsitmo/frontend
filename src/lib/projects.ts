@@ -7,15 +7,19 @@ import {
     type ProjectListResponse,
     type MyProjectListResponse,
     type ProjectFilterFacetsResponse,
+    type ProjectUpdateInput,
 } from "@/types/api";
 import { queryKeys, type ProjectsListParams } from "./query-keys";
+
+/** Ключи строятся через `as const`, поэтому элемент — readonly-кортеж. */
+type QueryKeyLike = readonly unknown[];
 
 export const invalidateProjectImpact = (
     queryClient: QueryClient,
     projectId: string | number,
     workspaceId?: number | null,
 ): void => {
-    const keys: readonly unknown[][] = [
+    const keys: QueryKeyLike[] = [
         queryKeys.project.detail(projectId),
         queryKeys.project.lists(),
         queryKeys.project.recent(),
@@ -64,19 +68,14 @@ export const useCreateProject = () => {
     });
 };
 
-export const getProject = async ({
-    queryKey,
-}: {
-    queryKey: [string, string];
-}): Promise<ProjectFullResponse> => {
-    const [, id] = queryKey;
+export const getProject = async (id: string): Promise<ProjectFullResponse> => {
     return await api.get(`/projects/${id}`);
 };
 
 export const useProject = (id: string) => {
     return useQuery({
         queryKey: queryKeys.project.detail(id),
-        queryFn: getProject,
+        queryFn: () => getProject(id),
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         enabled: !!id,
@@ -123,7 +122,7 @@ export const updateProject = async ({
     data,
 }: {
     id: string;
-    data: Partial<ProjectFullResponse>;
+    data: ProjectUpdateInput;
 }): Promise<ProjectFullResponse> => {
     return await api.put(`/projects/${id}`, data);
 };

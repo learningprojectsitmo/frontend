@@ -3,7 +3,8 @@ export interface Member {
     userId?: number;
     name: string;
     role: string;
-    workspaceRole: string;
+    /** Есть только у участников пространства: в составе проекта бэкенд роли в пространстве не отдаёт. */
+    workspaceRole?: string;
     contacts:
         | string
         | { telegram?: string | null; email?: string | null; linkedin?: string | null };

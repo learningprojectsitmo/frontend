@@ -70,7 +70,7 @@ const indentOf = (title: string): number => {
     return Number.parseInt(row?.style.paddingLeft ?? "0", 10);
 };
 
-const guides = (): HTMLElement[] => [...container.querySelectorAll("ul.border-l")];
+const guides = (): HTMLElement[] => [...container.querySelectorAll<HTMLElement>("ul.border-l")];
 
 describe("WikiTreeList", () => {
     it("показывает вложенность растущим отступом", () => {

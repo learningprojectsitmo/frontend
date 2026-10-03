@@ -88,7 +88,7 @@ export function SpaceProjectList({
     const mappedProjects = projects.map(mapProjectListItem);
     const hasActiveFilters =
         Boolean(search) ||
-        filters.statuses.length > 0 ||
+        filters.stages.length > 0 ||
         filters.tags.length > 0 ||
         filters.members.length > 0 ||
         filters.datePreset !== "all";
