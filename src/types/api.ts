@@ -203,6 +203,24 @@ export type ProjectListResponse = {
     total_pages: number;
 };
 
+export type ProjectFilterMemberResponse = {
+    id: number;
+    full_name: string;
+};
+
+export type ProjectFilterOptionResponse = {
+    id: number;
+    name: string;
+};
+
+/** Справочники для фильтров списка проектов пространства */
+export type ProjectFilterFacetsResponse = {
+    statuses: string[];
+    tags: string[];
+    members: ProjectFilterMemberResponse[];
+    projects: ProjectFilterOptionResponse[];
+};
+
 export type BackendProjectStage = {
     id: number;
     name: string;

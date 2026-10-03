@@ -6,8 +6,9 @@ import {
     type ProjectFullResponse,
     type ProjectListResponse,
     type MyProjectListResponse,
+    type ProjectFilterFacetsResponse,
 } from "@/types/api";
-import { queryKeys } from "./query-keys";
+import { queryKeys, type ProjectsListParams } from "./query-keys";
 
 export const invalidateProjectImpact = (
     queryClient: QueryClient,
@@ -82,19 +83,38 @@ export const useProject = (id: string) => {
     });
 };
 
-export const getProjectsList = async (workspaceId: string): Promise<ProjectListResponse> => {
-    return await api.get("/projects/", { params: { workspace_id: workspaceId } });
+export const getProjectsList = async (
+    workspaceId: string,
+    params?: ProjectsListParams,
+): Promise<ProjectListResponse> => {
+    return await api.get("/projects/", { params: { workspace_id: workspaceId, ...params } });
 };
 
-export const useProjectsList = (workspaceId: string) => {
+export const useProjectsList = (workspaceId: string, params?: ProjectsListParams) => {
     return useQuery({
-        queryKey: queryKeys.project.list(workspaceId),
-        queryFn: () => getProjectsList(workspaceId),
+        queryKey: queryKeys.project.list(workspaceId, params),
+        queryFn: () => getProjectsList(workspaceId, params),
         staleTime: 0,
         gcTime: 5 * 60 * 1000,
         refetchOnMount: "always",
         enabled: !!workspaceId,
         retry: 3,
+    });
+};
+
+export const getProjectFilters = async (
+    workspaceId: string | number,
+): Promise<ProjectFilterFacetsResponse> => {
+    return await api.get("/projects/filters", { params: { workspace_id: workspaceId } });
+};
+
+export const useProjectFilters = (workspaceId: string | number) => {
+    return useQuery({
+        queryKey: queryKeys.project.filters(workspaceId),
+        queryFn: () => getProjectFilters(workspaceId),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled: !!workspaceId,
     });
 };
 

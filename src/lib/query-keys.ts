@@ -20,6 +20,18 @@ type WorkspaceResumeParams = {
     interests?: string[];
 };
 
+/** Фильтры и постраничность списка проектов пространства */
+export type ProjectsListParams = {
+    page?: number;
+    limit?: number;
+    search?: string;
+    statuses?: string[];
+    tags?: string[];
+    member_ids?: number[];
+    date_from?: string;
+    date_to?: string;
+};
+
 /**
  * Централизованные query-ключи TanStack Query.
  *
@@ -48,7 +60,12 @@ export const queryKeys = {
 
     project: {
         detail: (id: string | number) => ["project", String(id)] as const,
-        list: (workspaceId: string | number) => ["projects", "list", String(workspaceId)] as const,
+        list: (workspaceId: string | number, params?: ProjectsListParams) =>
+            params
+                ? (["projects", "list", String(workspaceId), params] as const)
+                : (["projects", "list", String(workspaceId)] as const),
+        filters: (workspaceId: string | number) =>
+            ["projects", "filters", String(workspaceId)] as const,
         lists: () => ["projects", "list"] as const,
         recent: () => ["projects", "recent"] as const,
         byIds: (ids?: number[]) =>

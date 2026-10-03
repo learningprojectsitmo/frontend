@@ -16,6 +16,16 @@ export type FilterSectionConfig = {
     options?: { value: string; label: string }[];
 };
 
+/**
+ * Справочник пространства для фильтров проектов: приходит отдельным запросом,
+ * чтобы варианты не зависели от того, какая страница списка открыта.
+ */
+export type ProjectFilterOptions = {
+    statuses: string[];
+    tags: string[];
+    members: { id: number; full_name: string }[];
+};
+
 export const defaultFiltersState: FiltersState = {
     statuses: [],
     tags: [],

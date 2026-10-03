@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Users, Tag, CircleDot, Calendar } from "lucide-react";
-import type { ProjectListItemResponse } from "@/types/api";
-import type { FiltersState } from "./types";
+import type { FiltersState, ProjectFilterOptions } from "./types";
 import { FilterTrigger } from "./filter-trigger";
 import { FilterDropdown } from "./filter-dropdown";
 import { FilterSection } from "./filter-section";
@@ -20,10 +19,11 @@ type ProjectFiltersProps = {
     state: FiltersState;
     onChange: (state: FiltersState) => void;
     onReset: () => void;
-    projects: ProjectListItemResponse[];
+    /** Справочник пространства: варианты фильтра одинаковы на всех страницах. */
+    options: ProjectFilterOptions;
 };
 
-export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFiltersProps) {
+export function ProjectFilters({ state, onChange, onReset, options }: ProjectFiltersProps) {
     const [open, setOpen] = useState(false);
 
     const activeCount = [
@@ -54,18 +54,9 @@ export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFi
                     count={state.statuses.length}
                 >
                     <CheckboxGroup
-                        options={projects
-                            .map((p) => {
-                                const name = p.status?.name || "";
-                                return {
-                                    value: name,
-                                    label: STATUS_LABELS[name],
-                                };
-                            })
-                            .filter((opt) => opt.value && opt.value !== "draft" && opt.label)
-                            .filter(
-                                (opt, i, arr) => arr.findIndex((o) => o.value === opt.value) === i,
-                            )
+                        options={options.statuses
+                            .map((name) => ({ value: name, label: STATUS_LABELS[name] }))
+                            .filter((opt) => opt.label)
                             .sort((a, b) => a.label.localeCompare(b.label, "ru"))}
                         selected={state.statuses}
                         onChange={(v) => onChange({ ...state, statuses: v })}
@@ -74,9 +65,7 @@ export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFi
 
                 <FilterSection icon={<Tag size={16} />} label="Теги" count={state.tags.length}>
                     <CheckboxGroup
-                        options={[...new Set(projects.flatMap((p) => p.tags))]
-                            .sort((a, b) => a.localeCompare(b, "ru"))
-                            .map((t) => ({ value: t, label: t }))}
+                        options={options.tags.map((t) => ({ value: t, label: t }))}
                         selected={state.tags}
                         onChange={(v) => onChange({ ...state, tags: v })}
                     />
@@ -88,13 +77,7 @@ export function ProjectFilters({ state, onChange, onReset, projects }: ProjectFi
                     count={state.members.length}
                 >
                     <CheckboxGroup
-                        options={[
-                            ...new Map(
-                                projects.flatMap((p) =>
-                                    p.participants_preview.map((m) => [m.id, m] as const),
-                                ),
-                            ).values(),
-                        ]
+                        options={[...options.members]
                             .sort((a, b) => a.full_name.localeCompare(b.full_name, "ru"))
                             .map((m) => ({
                                 value: String(m.id),

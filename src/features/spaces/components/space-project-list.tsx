@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { Search, List } from "lucide-react";
 import { Icon } from "@/components/ui/icons";
@@ -6,11 +6,12 @@ import { Spinner } from "@/components/ui/spinner/spinner";
 import { ProjectCard } from "@/components/ui/card/project-card";
 import { paths } from "@/config/paths";
 import { type ProjectListItemResponse } from "@/types/api";
-import {
-    ProjectFilters,
-    defaultFiltersState,
-    type FiltersState,
-} from "@/features/spaces/components/filters";
+import { ProjectFilters } from "@/features/spaces/components/filters/project-filters";
+import type {
+    FiltersState,
+    ProjectFilterOptions,
+} from "@/features/spaces/components/filters/types";
+import { Pagination } from "@/features/spaces/components/pagination";
 import { SpaceProjectTable } from "@/features/spaces/components/space-project-table";
 
 const statusLabels: Record<string, string> = {
@@ -51,94 +52,46 @@ function mapProjectListItem(item: ProjectListItemResponse) {
 }
 
 type SpaceProjectListProps = {
+    /** Страница проектов с сервера: уже отфильтрованная и обрезанная по limit. */
     projects: ProjectListItemResponse[];
     total: number;
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
     isLoading: boolean;
     isError: boolean;
+    search: string;
+    onSearchChange: (value: string) => void;
+    filters: FiltersState;
+    onFiltersChange: (filters: FiltersState) => void;
+    onFiltersReset: () => void;
+    filterOptions: ProjectFilterOptions;
 };
 
 export function SpaceProjectList({
     projects,
-    total: _total,
+    total,
+    page,
+    totalPages,
+    onPageChange,
     isLoading,
     isError,
+    search,
+    onSearchChange,
+    filters,
+    onFiltersChange,
+    onFiltersReset,
+    filterOptions,
 }: SpaceProjectListProps) {
-    const [search, setSearch] = useState("");
-    const [filters, setFilters] = useState<FiltersState>(defaultFiltersState);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [visibleCount, setVisibleCount] = useState(9);
 
-    const filteredRaw = useMemo(() => {
-        let result = projects;
-
-        if (filters.statuses.length > 0) {
-            result = result.filter((p) => {
-                const statusName = p.status?.name || "";
-                return filters.statuses.includes(statusName);
-            });
-        }
-
-        if (filters.tags.length > 0) {
-            result = result.filter((p) => p.tags.some((t) => filters.tags.includes(t)));
-        }
-
-        if (filters.members.length > 0) {
-            result = result.filter((p) =>
-                p.participants_preview.some((m) => filters.members.includes(m.id)),
-            );
-        }
-
-        if (filters.datePreset !== "all") {
-            result = result.filter((p) => {
-                if (!p.deadline) return false;
-                const d = new Date(p.deadline);
-                const now = new Date();
-                switch (filters.datePreset) {
-                    case "today":
-                        return (
-                            d.getFullYear() === now.getFullYear() &&
-                            d.getMonth() === now.getMonth() &&
-                            d.getDate() === now.getDate()
-                        );
-                    case "7days": {
-                        const diff = now.getTime() - d.getTime();
-                        return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
-                    }
-                    case "30days": {
-                        const diff = now.getTime() - d.getTime();
-                        return diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
-                    }
-                    case "custom":
-                        if (!filters.customDate) return true;
-                        return d >= filters.customDate.from && d <= filters.customDate.to;
-                    default:
-                        return true;
-                }
-            });
-        }
-
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (p) =>
-                    p.name.toLowerCase().includes(q) ||
-                    (p.description || "").toLowerCase().includes(q),
-            );
-        }
-
-        return result;
-    }, [projects, search, filters]);
-
-    const visibleRaw = useMemo(() => {
-        return filteredRaw.slice(0, visibleCount);
-    }, [filteredRaw, visibleCount]);
-
-    const mappedProjects = useMemo(() => {
-        return visibleRaw.map(mapProjectListItem);
-    }, [visibleRaw]);
-
-    const hasMore = visibleCount < filteredRaw.length;
-    const handleLoadMore = () => setVisibleCount((prev) => prev + 6);
+    const mappedProjects = projects.map(mapProjectListItem);
+    const hasActiveFilters =
+        Boolean(search) ||
+        filters.statuses.length > 0 ||
+        filters.tags.length > 0 ||
+        filters.members.length > 0 ||
+        filters.datePreset !== "all";
 
     return (
         <section>
@@ -157,16 +110,16 @@ export function SpaceProjectList({
                             type="text"
                             placeholder="Поиск проектов"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => onSearchChange(e.target.value)}
                             className="w-full min-w-[180px] sm:w-[240px] h-10 pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] text-app-text placeholder:text-gray-400 outline-none focus:border-[#2563EB] transition-colors"
                         />
                     </div>
 
                     <ProjectFilters
                         state={filters}
-                        onChange={setFilters}
-                        onReset={() => setFilters(defaultFiltersState)}
-                        projects={projects}
+                        onChange={onFiltersChange}
+                        onReset={onFiltersReset}
+                        options={filterOptions}
                     />
 
                     {/* Grid/List toggle */}
@@ -204,13 +157,9 @@ export function SpaceProjectList({
                 <div className="text-center py-16 text-red-400 text-sm">
                     Не удалось загрузить проекты. Попробуйте обновить страницу.
                 </div>
-            ) : filteredRaw.length === 0 ? (
+            ) : projects.length === 0 ? (
                 <div className="text-center py-16 text-app-muted text-sm">
-                    {search ||
-                    filters.statuses.length > 0 ||
-                    filters.tags.length > 0 ||
-                    filters.members.length > 0 ||
-                    filters.datePreset !== "all"
+                    {hasActiveFilters
                         ? "Проекты не найдены"
                         : "В этом пространстве пока нет проектов"}
                 </div>
@@ -240,21 +189,17 @@ export function SpaceProjectList({
                 </div>
             ) : (
                 <div className="bg-app-surface rounded-[20px] border border-gray-200 overflow-hidden">
-                    <SpaceProjectTable projects={visibleRaw} />
+                    <SpaceProjectTable projects={projects} />
                 </div>
             )}
 
-            {/* Load more */}
-            {hasMore && (
-                <div className="w-full flex justify-center mt-8">
-                    <button
-                        onClick={handleLoadMore}
-                        className="text-[14px] font-semibold text-[#2563EB] hover:text-[#1d4ed8] transition-colors"
-                    >
-                        Загрузить ещё
-                    </button>
+            {total > 0 && (
+                <div className="text-center mt-6 text-[13px] text-app-muted">
+                    Показано {projects.length} из {total}
                 </div>
             )}
+
+            <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
         </section>
     );
 }

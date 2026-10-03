@@ -13,6 +13,12 @@ import {
     type ParticipantFiltersState,
 } from "@/features/spaces/components/filters/participant-filters";
 import { selectedValuesToParam } from "@/features/spaces/components/filters/filter-params";
+import { projectFiltersToParams } from "@/features/spaces/components/filters/project-filter-params";
+import {
+    defaultFiltersState,
+    type FiltersState,
+    type ProjectFilterOptions,
+} from "@/features/spaces/components/filters/types";
 import { SearchBar } from "@/components/ui/search-bar";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import {
@@ -34,9 +40,15 @@ import {
     useSpaceSettings,
     type ResumeParams,
 } from "@/lib/spaces";
-import { useProjectsList, useCreateProject, useProjectTypes } from "@/lib/projects";
+import {
+    useProjectsList,
+    useProjectFilters,
+    useCreateProject,
+    useProjectTypes,
+} from "@/lib/projects";
 import { useUser } from "@/lib/auth";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import type { ProjectsListParams } from "@/lib/query-keys";
 import { ROLE_LABELS, useRoles } from "@/lib/roles";
 import { normalizeResumeHref } from "@/lib/resume";
 import { toast } from "sonner";
@@ -57,7 +69,6 @@ const SpaceRoute = () => {
     const urlId = searchParams.get("id") || "";
 
     const { data: dataSpaces, isLoading: isSpacesLoading } = useSpacesList();
-    const { data: dataProjects, isLoading: isProjectsLoading, isError } = useProjectsList(urlId);
     const { data: rolesData } = useRoles();
     const { data: user } = useUser();
 
@@ -99,17 +110,68 @@ const SpaceRoute = () => {
     const workspaceId = spaceData?.id ?? 0;
     const { data: spaceSettings } = useSpaceSettings(workspaceId, !!spaceData);
     const isPrivate = spaceSettings?.visibility === "private";
+    // Projects state — фильтры и постраничность живут на сервере, поэтому любое
+    // их изменение возвращает список на первую страницу.
+    const [projectSearch, setProjectSearch] = useState("");
+    const debouncedProjectSearch = useDebouncedValue(projectSearch, 300);
+    const [projectFilters, setProjectFilters] = useState<FiltersState>(defaultFiltersState);
+    const [projectPage, setProjectPage] = useState(1);
+    const projectLimit = 10;
+
+    const { data: projectFacets } = useProjectFilters(workspaceId);
+
+    const projectFilterOptions = useMemo<ProjectFilterOptions>(
+        () => ({
+            statuses: projectFacets?.statuses || [],
+            tags: projectFacets?.tags || [],
+            members: projectFacets?.members || [],
+        }),
+        [projectFacets],
+    );
+
+    const projectParams: ProjectsListParams = {
+        page: projectPage,
+        limit: projectLimit,
+        search: debouncedProjectSearch || undefined,
+        ...projectFiltersToParams(projectFilters, projectFilterOptions),
+    };
+
+    const {
+        data: dataProjects,
+        isLoading: isProjectsLoading,
+        isError,
+    } = useProjectsList(urlId, projectParams);
+
+    const handleProjectSearchChange = useCallback((value: string) => {
+        setProjectSearch(value);
+        setProjectPage(1);
+    }, []);
+
+    const handleProjectFiltersChange = useCallback((next: FiltersState) => {
+        setProjectFilters(next);
+        setProjectPage(1);
+    }, []);
+
+    const handleProjectFiltersReset = useCallback(() => {
+        setProjectFilters(defaultFiltersState);
+        setProjectPage(1);
+    }, []);
+
+    const handleProjectPageChange = useCallback((page: number) => {
+        setProjectPage(page);
+    }, []);
+
     const [participantSearch, setParticipantSearch] = useState("");
     const [participantPage, setParticipantPage] = useState(1);
     const [participantFilters, setParticipantFilters] =
         useState<ParticipantFiltersState>(emptyParticipantFilters);
     const limit = 10;
 
-    // Project options for filter
+    // Опции фильтра участников — из справочника пространства: страница проектов
+    // пагинируется и не содержит всех проектов пространства.
     const projectOptions = useMemo(() => {
-        if (!dataProjects?.items) return [];
-        return dataProjects.items.map((p) => ({ value: String(p.id), label: p.name }));
-    }, [dataProjects]);
+        return (projectFacets?.projects || []).map((p) => ({ value: String(p.id), label: p.name }));
+    }, [projectFacets]);
 
     // Role options for filter — берём справочник ролей, а не хардкод, чтобы новые
     // роли из админки подхватывались автоматически.
@@ -359,8 +421,17 @@ const SpaceRoute = () => {
                 <SpaceProjectList
                     projects={dataProjects?.items || []}
                     total={dataProjects?.total || 0}
+                    page={projectPage}
+                    totalPages={dataProjects?.total_pages || 0}
+                    onPageChange={handleProjectPageChange}
                     isLoading={isProjectsLoading}
                     isError={isError}
+                    search={projectSearch}
+                    onSearchChange={handleProjectSearchChange}
+                    filters={projectFilters}
+                    onFiltersChange={handleProjectFiltersChange}
+                    onFiltersReset={handleProjectFiltersReset}
+                    filterOptions={projectFilterOptions}
                 />
 
                 <SpaceResumeSection
