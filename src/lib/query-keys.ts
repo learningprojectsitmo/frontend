@@ -135,6 +135,17 @@ export const queryKeys = {
 
     roles: () => ["roles"] as const,
 
+    /**
+     * Глобальные настройки инстанса. Ключи не включают пользователя: ответ
+     * публичной выборки одинаков для всех, а административный — доступен
+     * только админу, поэтому делить запись с публичной нельзя.
+     */
+    appSettings: {
+        all: () => ["app-settings"] as const,
+        public: () => ["app-settings", "public"] as const,
+        admin: () => ["app-settings", "admin"] as const,
+    },
+
     authResetEmail: (token: string) => ["auth", "reset-email", token] as const,
 
     search: (q: string, scope: "default" | "extended" = "default") => ["search", scope, q] as const,

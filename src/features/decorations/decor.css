@@ -1,0 +1,123 @@
+/*
+ * Новогодняя декорация. Живёт поверх приложения (z-index 100 — выше
+ * сайдбара z-[9], ниже sonner), ничего не перехватывает: pointer-events: none.
+ */
+
+.holiday-decor {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* ─── Снег ─────────────────────────────────────────────────────────────── */
+
+.holiday-decor__snow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ─── Гирлянда ─────────────────────────────────────────────────────────── */
+
+.holiday-decor__garland {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-inline: 4px;
+}
+
+.holiday-decor__garland-cord {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgb(34 87 43 / 0%),
+        rgb(34 87 43 / 45%) 10%,
+        rgb(34 87 43 / 45%) 90%,
+        rgb(34 87 43 / 0%)
+    );
+}
+
+.holiday-decor__garland-bulb {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    margin-top: 2px;
+    border-radius: 9999px;
+    animation: holiday-garland-twinkle 2.4s ease-in-out infinite;
+    animation-delay: var(--holiday-delay, 0s);
+}
+
+/* ─── Ёлочные шары ─────────────────────────────────────────────────────── */
+
+.holiday-decor__ornament {
+    position: absolute;
+    left: var(--holiday-x, 50%);
+    top: var(--holiday-y, 10%);
+    width: var(--holiday-size, 14px);
+    height: var(--holiday-size, 14px);
+    border-radius: 9999px;
+    animation: holiday-ornament-sway 6s ease-in-out infinite;
+    animation-delay: var(--holiday-delay, 0s);
+}
+
+.holiday-decor__ornament::after {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: rgb(154 124 74 / 70%);
+}
+
+/* ─── Анимации ─────────────────────────────────────────────────────────── */
+
+@keyframes holiday-garland-twinkle {
+    0%,
+    100% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        filter: brightness(1.7);
+    }
+}
+
+@keyframes holiday-ornament-sway {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(-4deg);
+    }
+
+    50% {
+        transform: translate3d(0, 7px, 0) rotate(4deg);
+    }
+}
+
+/*
+ * В проекте не было ни одного блока prefers-reduced-motion: системная
+ * настройка ОС уважается только здесь. Мигание и покачивание
+ * останавливаются, снег вместо падения рисуется статикой (см. snow.tsx).
+ */
+@media (prefers-reduced-motion: reduce) {
+    .holiday-decor__garland-bulb,
+    .holiday-decor__ornament {
+        animation: none;
+    }
+}

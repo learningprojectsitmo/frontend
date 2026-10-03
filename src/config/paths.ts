@@ -113,6 +113,10 @@ export const paths = {
                 path: "/app/admin/sessions",
                 getHref: () => "/app/admin/sessions",
             },
+            settings: {
+                path: "/app/admin/settings",
+                getHref: () => "/app/admin/settings",
+            },
         },
         profile: {
             path: "/app/profile",

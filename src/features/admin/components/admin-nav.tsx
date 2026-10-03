@@ -11,6 +11,7 @@ const ADMIN_SECTIONS: { label: string; href: string; icon: IconName; end?: boole
     { label: "Идеи", href: paths.app.admin.ideas.getHref(), icon: "lightbulb" },
     { label: "Аудит", href: paths.app.admin.audit.getHref(), icon: "list" },
     { label: "Сессии", href: paths.app.admin.sessions.getHref(), icon: "status" },
+    { label: "Настройки", href: paths.app.admin.settings.getHref(), icon: "settings" },
 ];
 
 export const AdminNav = () => {

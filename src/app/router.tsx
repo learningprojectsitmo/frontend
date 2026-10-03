@@ -185,6 +185,12 @@ export const createAppRouter = (queryClient: QueryClient) =>
                                 import("./routes/app/admin/sessions").then(convert(queryClient)),
                             hydrateFallbackElement: <LoadingFallback />,
                         },
+                        {
+                            path: "settings",
+                            lazy: () =>
+                                import("./routes/app/admin/settings").then(convert(queryClient)),
+                            hydrateFallbackElement: <LoadingFallback />,
+                        },
                     ],
                 },
             ],

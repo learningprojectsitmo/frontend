@@ -56,6 +56,19 @@ const en = {
             saved: "Language saved",
             saveError: "Failed to save language",
         },
+        adminSettings: {
+            title: "Site settings",
+            subtitle: "Global options applied to every page",
+            loadError: "Failed to load settings",
+            saved: "Setting saved",
+            saveError: "Failed to save the setting",
+            flags: {
+                new_year_decorations_enabled: {
+                    title: "New Year decorations",
+                    description: "Snow, garland and Christmas ornaments on every page",
+                },
+            },
+        },
     },
 };
 

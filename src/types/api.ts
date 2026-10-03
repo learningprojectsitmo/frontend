@@ -544,6 +544,36 @@ export type SpaceSettingsFull = {
     updated_at: string;
 };
 
+/**
+ * Глобальные настройки инстанса (управляются из админ-панели).
+ *
+ * Публичная выборка — только те ключи, которые бэкенд помечает как
+ * `public`: их читает в том числе анонимный посетитель, поэтому сюда
+ * нельзя выносить серверные параметры.
+ */
+export type AppSettingsPublic = {
+    new_year_decorations_enabled: boolean;
+};
+
+export type AppSettingKind = "bool" | "int" | "str";
+
+export type AppSettingValue = boolean | number | string | null;
+
+/** Одна строка реестра глобальных настроек с её текущим значением. */
+export type AppSettingItem = {
+    key: string;
+    value: AppSettingValue;
+    kind: AppSettingKind;
+    title: string;
+    description: string;
+    updated_at: string | null;
+    updated_by_id: number | null;
+};
+
+export type AppSettingsAdminResponse = {
+    items: AppSettingItem[];
+};
+
 export type WorkSpaceFull = {
     id: number;
     name: string;
