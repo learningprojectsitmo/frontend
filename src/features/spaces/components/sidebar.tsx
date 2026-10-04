@@ -157,6 +157,50 @@ export const Sidebar = memo(function Sidebar({
 
                 <DropdownMenuSeparator className="bg-gray-200 my-0" />
 
+                {!isCollapsed && (role === "admin" || role === "teacher") && (
+                    <div className="px-2 py-2">
+                        <NavLink to={paths.app.applications.getHref()} end className="w-full">
+                            {({ isActive }) => (
+                                <Button
+                                    variant={isActive ? "dark" : "outline"}
+                                    size="fill36"
+                                    align="left"
+                                    hasIconAsChild={true}
+                                    className="text-[13px] font-semibold w-full"
+                                >
+                                    <span className="flex items-center gap-2 w-full px-3">
+                                        <Icon name="mail" size={16} />
+                                        Все отклики и приглашения
+                                    </span>
+                                </Button>
+                            )}
+                        </NavLink>
+                    </div>
+                )}
+                {isCollapsed && (role === "admin" || role === "teacher") && (
+                    <div className="flex flex-col items-center px-2 py-2">
+                        <NavLink
+                            to={paths.app.applications.getHref()}
+                            end
+                            title="Все отклики и приглашения"
+                        >
+                            {({ isActive }) => (
+                                <div
+                                    className={cn(
+                                        "flex h-8 w-8 items-center justify-center rounded-[10px] transition-colors",
+                                        isActive
+                                            ? "bg-gray-900 text-white"
+                                            : "text-gray-700 hover:bg-gray-100",
+                                    )}
+                                >
+                                    <Icon name="mail" size={16} />
+                                </div>
+                            )}
+                        </NavLink>
+                        <div className="w-5 h-px bg-gray-200 my-2" />
+                    </div>
+                )}
+
                 {/* ── Основной контент ── */}
                 {isLoading ? (
                     // 1. Загрузка

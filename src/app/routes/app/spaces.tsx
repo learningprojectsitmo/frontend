@@ -5,10 +5,11 @@ import { ProjectCard } from "@/components/ui/card/project-card.tsx";
 import { useState, useMemo, useEffect } from "react";
 
 import { useSpacesList } from "@/lib/spaces";
+import { useProfile } from "@/lib/profile";
 import { useProjectsByIds } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
 import { Icon } from "@/components/ui/icons";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { paths } from "@/config/paths";
 import { SearchBar } from "@/components/ui/search-bar/search-bar";
 import { FilterTrigger } from "@/features/spaces/components/filters/filter-trigger";
@@ -17,7 +18,7 @@ import { FilterSection } from "@/features/spaces/components/filters/filter-secti
 import { CheckboxGroup } from "@/features/spaces/components/filters/checkbox-group";
 import { DateFilter } from "@/features/spaces/components/filters/date-filter";
 import type { SpaceFiltersState } from "@/features/spaces/components/filters/types";
-import { Archive, CircleDot, Calendar, LayoutGrid, List } from "lucide-react";
+import { Archive, CircleDot, Calendar, LayoutGrid, List, Inbox } from "lucide-react";
 import { useSearchResults, MIN_SEARCH_LENGTH } from "@/lib/search";
 import { SearchResultsPanel } from "@/components/search/search-results";
 const STATUS_LABELS: Record<string, string> = {
@@ -39,6 +40,13 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
 const SpacesRoute = () => {
     const [activeView, setActiveView] = useState("grid");
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    // Общий список откликов и приглашений отдаётся бэкендом только для
+    // admin|teacher (RESPONSE_LIST_ROLES), поэтому и кнопку входа на него
+    // показываем тем же ролям — остальным она бы вела в «Доступ запрещён».
+    const { data: profile } = useProfile();
+    const canSeeAllResponses = profile?.role === "admin" || profile?.role === "teacher";
 
     const { data: dataSpaces, isLoading: isLoadingSpaces } = useSpacesList();
     const { getViewedProjectIds } = useRecentlyViewed();
@@ -268,6 +276,17 @@ const SpacesRoute = () => {
                     >
                         Найти проект
                     </Button>
+                    {canSeeAllResponses && (
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            icon={<Inbox size={18} />}
+                            onClick={() => navigate(paths.app.applications.getHref())}
+                            className="mt-3 font-sans text-[13px] font-semibold gap-2"
+                        >
+                            Все отклики и приглашения
+                        </Button>
+                    )}
                 </div>
             </ContentLayout>
         );
@@ -284,6 +303,17 @@ const SpacesRoute = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
+                        {canSeeAllResponses && (
+                            <Button
+                                variant="outline"
+                                size="hug36"
+                                icon={<Inbox size={18} />}
+                                onClick={() => navigate(paths.app.applications.getHref())}
+                                className="font-sans text-[13px] font-semibold gap-2"
+                            >
+                                Все отклики и приглашения
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="hug36"

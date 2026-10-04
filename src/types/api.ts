@@ -879,6 +879,36 @@ export type MyInvitationListResponse = {
     total: number;
 };
 
+export type ResponseListItem = {
+    id: number;
+    project_id: number;
+    project_name: string;
+    workspace_id: number | null;
+    workspace_name: string | null;
+    user_id: number;
+    name: string;
+    respondent_email: string | null;
+    inviter_name: string | null;
+    vacancy_id: number | null;
+    role: string;
+    resume_url: string;
+    response_date: string;
+    type: string;
+    status: string;
+    allow_multi_project_participation: boolean;
+    busy_in_other_project: boolean;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+export type ResponseListResponse = {
+    items: ResponseListItem[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
 export type MyProjectItem = {
     id: number;
     title: string;

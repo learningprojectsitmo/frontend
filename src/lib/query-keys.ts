@@ -74,6 +74,13 @@ export const queryKeys = {
             compact(["project", String(id), "activity", page, limit, day] as const),
     },
 
+    responses: {
+        // Корневой ключ: параметры фильтра входят в `all()`, поэтому по
+        // префиксу можно инвалидировать список целиком — любой набор фильтров.
+        root: () => ["responses", "all"] as const,
+        all: (params: Record<string, unknown>) => compact(["responses", "all", params] as const),
+    },
+
     projectTypes: {
         all: () => ["project-types"] as const,
         scoped: (workspaceId?: number | null) =>

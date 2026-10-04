@@ -29,6 +29,9 @@ export const invalidateProjectImpact = (
         queryKeys.profile.projects(),
         queryKeys.profile.createdProjects(),
         queryKeys.specification.detail(projectId),
+        // Список откликов/приглашений лежит под ключом с параметрами фильтра,
+        // поэтому инвалидируем по корню — TanStack матчит ключи по префиксу.
+        queryKeys.responses.root(),
     ];
     if (workspaceId) {
         keys.push(queryKeys.workspace.participants(workspaceId));
@@ -326,6 +329,40 @@ export const useRejectResponse = () => {
     });
 };
 
+/**
+ * Действия со стороны кандидата: подтвердить вступление после принятия
+ * отклика, принять или отклонить присланное приглашение.
+ *
+ * Эти эндпоинты адресуются по id записи и не требуют project_id, поэтому
+ * входных данных здесь на одно поле меньше, чем у `ResponseActionInput`.
+ */
+export type ResponseSelfActionInput = {
+    responseId: number;
+    projectId: number;
+    workspaceId?: number | null;
+};
+
+const useSelfResponseAction = (
+    mutationFn: (variables: ResponseSelfActionInput) => Promise<{ message: string }>,
+) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn,
+        onSuccess: (_data, variables) => {
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
+        },
+    });
+};
+
+export const useConfirmJoinResponse = () =>
+    useSelfResponseAction(({ responseId }) => api.patch(`/responses/${responseId}/confirm-join`));
+
+export const useAcceptInvitation = () =>
+    useSelfResponseAction(({ responseId }) => api.patch(`/invitations/${responseId}/accept`));
+
+export const useRejectInvitation = () =>
+    useSelfResponseAction(({ responseId }) => api.patch(`/invitations/${responseId}/reject`));
+
 // ====== Типы проектов и этапы ======
 
 export const getProjectTypes = async (
@@ -531,5 +568,74 @@ export const useRejectStage = () => {
         mutationFn: ({ projectId, comment }: { projectId: number; comment?: string | null }) =>
             rejectStage(projectId, comment),
         onSuccess: (_data, { projectId }) => afterStageMutation(queryClient, projectId),
+    });
+};
+
+export type AllResponsesParams = {
+    type?: "all" | "response" | "invitation";
+    status?: string | null;
+    workspaceId?: number | null;
+    projectId?: number | null;
+    search?: string | null;
+    page?: number;
+    limit?: number;
+};
+
+export const useAllResponses = (params: AllResponsesParams = {}) => {
+    return useQuery({
+        queryKey: queryKeys.responses.all(params as Record<string, unknown>),
+        queryFn: async () => {
+            const { api } = await import("./api-client");
+            type ResponseListResponseApi = {
+                items: Array<{
+                    id: number;
+                    project_id: number;
+                    project_name: string;
+                    workspace_id: number | null;
+                    workspace_name: string | null;
+                    user_id: number;
+                    name: string;
+                    respondent_email: string | null;
+                    inviter_name: string | null;
+                    vacancy_id: number | null;
+                    role: string;
+                    resume_url: string;
+                    response_date: string;
+                    type: string;
+                    status: string;
+                    allow_multi_project_participation: boolean;
+                    busy_in_other_project: boolean;
+                    created_at: string | null;
+                    updated_at: string | null;
+                }>;
+                total: number;
+                page: number;
+                limit: number;
+                total_pages: number;
+            };
+            // Слеш обязателен. Роут на бэкенде объявлен как `@response_router.get("/")`,
+            // поэтому запрос без него уходит в 307-редирект, а браузер при
+            // следовании за ним отбрасывает заголовок Authorization — и
+            // `/responses/` отвечает 401 вместо данных.
+            return await api.get<ResponseListResponseApi>("/responses/", {
+                params: {
+                    // "all" — сентинел UI, а не значение из БД. Бэкенд применяет
+                    // `Response.type == type` только для непустого параметра,
+                    // поэтому отправка "all" отсекала бы вообще все записи
+                    // (в БД только "response"/"invitation"). "Все" = не слать
+                    // параметр вовсе.
+                    type: params.type && params.type !== "all" ? params.type : undefined,
+                    status: params.status ?? undefined,
+                    workspace_id: params.workspaceId ?? undefined,
+                    project_id: params.projectId ?? undefined,
+                    search: params.search ?? undefined,
+                    page: params.page ?? 1,
+                    limit: params.limit ?? 50,
+                },
+            });
+        },
+        // При смене фильтра показываем прошлые данные, а не «Данных не найдено»:
+        // таблица не мигает пустотой, пока летит новый запрос.
+        placeholderData: (prev) => prev,
     });
 };

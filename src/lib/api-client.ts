@@ -26,34 +26,92 @@ export const clearAccessToken = (): void => {
     accessToken = null;
 };
 
-// ─── Refresh queue (prevents concurrent refresh calls) ────────────────────
+// ─── Refresh single-flight ───────────────────────────────────────────────
+//
+// Refresh-cookie ротируется на каждом вызове, а бэкенд при повторном
+// использовании старого токена отзывает ВСЁ семейство сессии
+// (`auth_service.refresh_access_token` → reuse detection). Поэтому refresh
+// должен вызываться:
+//   * строго один раз на все параллельные 401 (`refreshPromise`, а не флаг),
+//   * не чаще, чем раз в REFRESH_COOLDOWN_MS — иначе React Query с
+//     `refetchOnWindowFocus` и перемонтированием компонентов выбивает новую
+//     волну 401, а та уходит в refresh до того, как браузер успеет записать
+//     новую cookie, и семейство сессии умирает.
 
-interface QueueItem {
-    resolve: (value: unknown) => void;
-    reject: (reason: unknown) => void;
-}
+let refreshPromise: Promise<string> | null = null;
+let lastRefreshAt = 0;
+const REFRESH_COOLDOWN_MS = 5_000;
 
-let isRefreshing = false;
-let failedQueue: QueueItem[] = [];
+/**
+ * Эндпоинты, где 401 — это ожидаемый ответ, а не протухший access-токен.
+ * Для них refresh бессмысленен: он либо ничего не даёт, либо (на `/auth/logout`)
+ * обнуляет куку, которую кто-то ещё пробует использовать.
+ *
+ * `/auth/me` в список НЕ входит: для залогиненного пользователя с истёкшим
+ * токеном это единственный запрос, который поднимает сессию обратно.
+ */
+const REFRESH_EXEMPT_PATHS = [
+    "/auth/login",
+    "/auth/token",
+    "/auth/refresh",
+    "/auth/logout",
+    "/auth/password-reset",
+];
 
-function processQueue(error: unknown, token: string | null = null): void {
-    failedQueue.forEach(({ resolve, reject }) => {
-        if (error) {
-            reject(error);
-        } else {
-            resolve(token);
+const isRefreshExempt = (url: string | undefined): boolean => {
+    if (!url) return false;
+    const path = url.split("?")[0] ?? "";
+    if (REFRESH_EXEMPT_PATHS.some((p) => path.includes(p))) return true;
+    // Регистрация: отдельный префикс роутера, 401 там означает «код неверный».
+    return path.includes("/signup");
+};
+
+type RetriableRequest = InternalAxiosRequestConfig & {
+    /** Токен, который реально ушёл в запрос, — нужен, чтобы отличить
+     * «протухший токен» от «токен обновился, пока запрос летел». */
+    _authToken?: string | null;
+    _retry?: boolean;
+};
+
+const refreshAccessToken = async (): Promise<string> => {
+    if (refreshPromise) return refreshPromise;
+
+    const pending = (async () => {
+        // Отмечаем попытку, а не только успех: при отказе refresh (например,
+        // после отзыва семейства сессии) cooldown всё равно должен остановить
+        // волну повторных попыток от остальных запросов.
+        lastRefreshAt = Date.now();
+
+        const { access_token } = await refreshApi.post<{ access_token: string }>("/auth/refresh");
+        if (!access_token) {
+            throw new Error("Refresh-ответ не содержит access_token");
         }
-    });
-    failedQueue = [];
-}
+        setAccessToken(access_token);
+        return access_token;
+    })();
+
+    refreshPromise = pending;
+
+    // Обнуляем строго после завершения: пока промис висит, все параллельные
+    // 401 получают один и тот же refresh вместо того, чтобы выбить новый.
+    pending
+        .finally(() => {
+            if (refreshPromise === pending) refreshPromise = null;
+        })
+        .catch(() => undefined);
+
+    return pending;
+};
 
 // ─── Axios instance ───────────────────────────────────────────────────────
 
-function authRequestInterceptor(config: InternalAxiosRequestConfig) {
+function authRequestInterceptor(config: RetriableRequest) {
+    const token = accessToken;
+    config._authToken = token;
     if (config.headers) {
         config.headers.Accept = "application/json";
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
     }
     config.withCredentials = true;
@@ -93,7 +151,7 @@ api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
     (response) => response.data,
     async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as RetriableRequest | undefined;
 
         if (!originalRequest) return Promise.reject(error);
 
@@ -101,44 +159,71 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        if (originalRequest._retry) {
+        // Здесь 401 — часть контракта эндпоинта, обновлять токен нельзя.
+        if (isRefreshExempt(originalRequest.url)) {
             return Promise.reject(error);
         }
 
-        if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-                failedQueue.push({ resolve, reject });
-            }).then((token) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                return axiosInstance(originalRequest);
-            });
+        // Запрос уже переигрывали с обновлённым токеном и всё равно 401 —
+        // значит токен не просто протух, а отозван. Помечаем сессию истёкшей,
+        // чтобы UI ушёл на вход, иначе приложение остаётся с мёртвым токеном.
+        if (originalRequest._retry) {
+            if (accessToken) {
+                _sessionExpired = true;
+            }
+            return Promise.reject(error);
         }
 
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        // Если токена не было — не показываем «Сессия истекла»,
-        // потому что сессии и не было (чистый визит, не залогинен).
         const hadToken = !!accessToken;
 
-        try {
-            const { access_token: newToken } = await refreshApi.post<{ access_token: string }>(
-                "/auth/refresh",
-            );
+        originalRequest._retry = true;
 
-            setAccessToken(newToken);
-            processQueue(null, newToken);
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            return axiosInstance(originalRequest);
+        const retryWith = async (token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return await axiosInstance(originalRequest);
+        };
+
+        // 1. Токен обновился, пока запрос летел со старым Authorization.
+        //    Refresh не нужен — просто переигрываем запрос с актуальным.
+        if (accessToken && accessToken !== originalRequest._authToken) {
+            return await retryWith(accessToken);
+        }
+
+        // 2. Refresh уже идёт — присоединяемся к нему. Проверять cooldown
+        //    здесь нельзя: `lastRefreshAt` выставляется в начале попытки,
+        //    и второй параллельный 401 отсёкся бы наглухо вместо повторного
+        //    запроса с уже обновлённым токеном.
+        if (refreshPromise) {
+            try {
+                return await retryWith(await refreshPromise);
+            } catch (refreshError) {
+                clearAccessToken();
+                if (hadToken) {
+                    _sessionExpired = true;
+                }
+                return Promise.reject(refreshError);
+            }
+        }
+
+        // 3. Refresh только что прошёл и не помог — 401 настоящий (токен отозван,
+        //    пользователь деактивирован). Ещё одна попытка лишь ускорит отзыв
+        //    семейства сессии, поэтому просто отдаём ошибку.
+        if (lastRefreshAt && Date.now() - lastRefreshAt < REFRESH_COOLDOWN_MS) {
+            if (hadToken) {
+                _sessionExpired = true;
+            }
+            return Promise.reject(error);
+        }
+
+        // 4. Свой refresh — он же выставит cooldown для следующей волны 401.
+        try {
+            return await retryWith(await refreshAccessToken());
         } catch (refreshError) {
-            processQueue(refreshError, null);
             clearAccessToken();
             if (hadToken) {
                 _sessionExpired = true;
             }
             return Promise.reject(refreshError);
-        } finally {
-            isRefreshing = false;
         }
     },
 );

@@ -78,6 +78,10 @@ export const paths = {
             path: "/app/project",
             getHref: (id: number) => `/app/project?id=${encodeURIComponent(id)}`,
         },
+        applications: {
+            path: "/app/applications",
+            getHref: () => "/app/applications",
+        },
         settings: {
             root: {
                 path: "/app/settings",

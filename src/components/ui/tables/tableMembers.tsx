@@ -71,203 +71,209 @@ export const TableMembers = ({
         ...(showStatus ? [HEADER_CELLS[6]] : []),
     ];
     return (
-        <div className="w-full overflow-hidden rounded-[20px] border border-gray-200 bg-app-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead className="text-app-text border-b border-gray-200 sticky top-[72px] bg-gray-50 z-10">
-                        <tr>
-                            {headers.map((header) => (
-                                <th
-                                    key={header.label}
-                                    className={cn(
-                                        "px-6 h-14 text-[15px] font-sans font-semibold whitespace-nowrap",
-                                        header.className,
-                                    )}
-                                >
-                                    {header.label}
-                                </th>
-                            ))}
-                            <th className="px-6 h-14 text-[15px] font-sans font-semibold" />
-                        </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
-                        {members.map((member) => (
-                            <tr
-                                key={member.id}
+        <div className="w-full overflow-hidden rounded-[20px] border border-app-border bg-app-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
+            {/*
+                `top-0`, а не `top-[72px]`: у таблицы есть прокручиваемый предок
+                (`overflow-hidden` на карточке — он тоже создаёт scrollport), поэтому
+                sticky отсчитывается от верха карточки, а не от страницы. Смещение
+                в 72px сдвигало шапку вниз и оставляло пустую полосу над таблицей.
+                Прилипать к странице под шапкой (h-[72px]) нельзя, не убрав
+                `overflow-hidden`, а он нужен, чтобы скруглить углы шапки.
+            */}
+            <table className="w-full text-left">
+                <thead className="text-app-text border-b border-app-border sticky top-0 bg-app-ghost z-10">
+                    <tr>
+                        {headers.map((header) => (
+                            <th
+                                key={header.label}
                                 className={cn(
-                                    "h-16 hover:bg-gray-50 transition",
-                                    onRowClick && "cursor-pointer",
+                                    "px-6 h-14 text-[15px] font-sans font-semibold whitespace-nowrap",
+                                    header.className,
                                 )}
-                                onClick={() => onRowClick?.(member)}
                             >
-                                <td className="px-6 py-4">
-                                    {member.userId ? (
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
-                                                {getInitials(member.name)}
-                                            </div>
-                                            <Link
-                                                to={paths.app.profile.getHref(member.userId)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="text-app-text font-sans text-blue-600 hover:underline"
-                                            >
-                                                {member.name}
-                                            </Link>
-                                        </div>
-                                    ) : member.avatarUrl ? (
-                                        <div className="flex items-center gap-3">
-                                            <img
-                                                src={member.avatarUrl}
-                                                className="flex h-9 w-9 rounded-full bg-gray-100"
-                                            />
-                                            <span className="text-app-text font-sans">
-                                                {member.name}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
-                                                {getInitials(member.name)}
-                                            </div>
-                                            <span className="text-app-text font-sans">
-                                                {member.name}
-                                            </span>
-                                        </div>
-                                    )}
-                                </td>
+                                {header.label}
+                            </th>
+                        ))}
+                        <th className="px-6 h-14 text-[15px] font-sans font-semibold" />
+                    </tr>
+                </thead>
 
-                                {showProject && (
-                                    <td className="px-6 py-4 text-app-text font-sans">
-                                        {member.projects && member.projects.length > 0 ? (
-                                            <div className="flex flex-col gap-1">
-                                                {member.projects.map((p) => (
-                                                    <Link
-                                                        key={p.id}
-                                                        to={paths.app.project.getHref(p.id)}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="text-[#2563EB] font-medium hover:underline"
-                                                    >
-                                                        {p.title}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400">—</span>
-                                        )}
-                                    </td>
-                                )}
-
-                                <td className="px-6 py-4 text-app-text font-sans">{member.role}</td>
-
-                                <td className="px-6 py-4 text-app-text font-sans hidden sm:table-cell">
-                                    {isStringContacts(member.contacts) ? (
-                                        member.contacts
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            {member.contacts.telegram && (
-                                                <a
-                                                    href={`https://t.me/${member.contacts.telegram.replace("@", "")}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="text-blue-500 hover:text-blue-700"
-                                                    title="Telegram"
-                                                    aria-label="Telegram"
-                                                >
-                                                    <Send className="h-4 w-4" />
-                                                </a>
-                                            )}
-                                            {member.contacts.email && (
-                                                <a
-                                                    href={`mailto:${member.contacts.email}`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="text-blue-500 hover:text-blue-700"
-                                                >
-                                                    <Mail className="h-4 w-4" />
-                                                </a>
-                                            )}
-                                            {member.contacts.linkedin && (
-                                                <a
-                                                    href={member.contacts.linkedin}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="text-blue-500 hover:text-blue-700"
-                                                >
-                                                    <Linkedin className="h-4 w-4" />
-                                                </a>
-                                            )}
+                <tbody className="divide-y divide-gray-200 text-[13px] font-sans font-medium">
+                    {members.map((member) => (
+                        <tr
+                            key={member.id}
+                            className={cn(
+                                "h-16 hover:bg-gray-50 transition",
+                                onRowClick && "cursor-pointer",
+                            )}
+                            onClick={() => onRowClick?.(member)}
+                        >
+                            <td className="px-6 py-4">
+                                {member.userId ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
+                                            {getInitials(member.name)}
                                         </div>
-                                    )}
-                                </td>
-
-                                <td className="px-6 py-4 hidden md:table-cell">
-                                    {member.resumeUrl ? (
                                         <Link
-                                            to={member.resumeUrl}
+                                            to={paths.app.profile.getHref(member.userId)}
                                             onClick={(e) => e.stopPropagation()}
-                                            className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700"
+                                            className="text-app-text font-sans text-blue-600 hover:underline"
                                         >
-                                            Открыть
-                                            <ExternalLink className="h-3 w-3" />
+                                            {member.name}
                                         </Link>
+                                    </div>
+                                ) : member.avatarUrl ? (
+                                    <div className="flex items-center gap-3">
+                                        <img
+                                            src={member.avatarUrl}
+                                            className="flex h-9 w-9 rounded-full bg-gray-100"
+                                        />
+                                        <span className="text-app-text font-sans">
+                                            {member.name}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
+                                            {getInitials(member.name)}
+                                        </div>
+                                        <span className="text-app-text font-sans">
+                                            {member.name}
+                                        </span>
+                                    </div>
+                                )}
+                            </td>
+
+                            {showProject && (
+                                <td className="px-6 py-4 text-app-text font-sans">
+                                    {member.projects && member.projects.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                            {member.projects.map((p) => (
+                                                <Link
+                                                    key={p.id}
+                                                    to={paths.app.project.getHref(p.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-[#2563EB] font-medium hover:underline"
+                                                >
+                                                    {p.title}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     ) : (
                                         <span className="text-gray-400">—</span>
                                     )}
                                 </td>
+                            )}
 
-                                <td className="px-6 py-4 text-app-text font-sans hidden md:table-cell">
-                                    {formatDateAdded(member.dateAdded)}
-                                </td>
+                            <td className="px-6 py-4 text-app-text font-sans">{member.role}</td>
 
-                                {showStatus && (
-                                    <td className="px-6 py-4">
-                                        {member.status === "delete" ? (
-                                            <span className="inline-flex items-center gap-1 text-xs text-red-500">
-                                                <span className="h-2 w-2 rounded-full bg-red-500" />
-                                                Удалён
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 text-xs text-green-500">
-                                                <span className="h-2 w-2 rounded-full bg-green-500" />
-                                                Активен
-                                            </span>
-                                        )}
-                                    </td>
-                                )}
-
-                                <td className="px-6 py-4">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <button
+                            <td className="px-6 py-4 text-app-text font-sans hidden sm:table-cell">
+                                {isStringContacts(member.contacts) ? (
+                                    member.contacts
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        {member.contacts.telegram && (
+                                            <a
+                                                href={`https://t.me/${member.contacts.telegram.replace("@", "")}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 onClick={(e) => e.stopPropagation()}
-                                                className="p-1 rounded-md hover:bg-gray-100 transition"
+                                                className="text-blue-500 hover:text-blue-700"
+                                                title="Telegram"
+                                                aria-label="Telegram"
                                             >
-                                                <Ellipsis className="h-4 w-4 text-gray-500" />
-                                            </button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            {member.status === "delete" && (
-                                                <DropdownMenuItem
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removeMember?.(member.id);
-                                                    }}
-                                                    className="text-[#EF4444]"
-                                                >
-                                                    <UserMinus className="h-4 w-4 mr-2" />
-                                                    {removeActionLabel}
-                                                </DropdownMenuItem>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                                <Send className="h-4 w-4" />
+                                            </a>
+                                        )}
+                                        {member.contacts.email && (
+                                            <a
+                                                href={`mailto:${member.contacts.email}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-blue-500 hover:text-blue-700"
+                                            >
+                                                <Mail className="h-4 w-4" />
+                                            </a>
+                                        )}
+                                        {member.contacts.linkedin && (
+                                            <a
+                                                href={member.contacts.linkedin}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-blue-500 hover:text-blue-700"
+                                            >
+                                                <Linkedin className="h-4 w-4" />
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+                            </td>
+
+                            <td className="px-6 py-4 hidden md:table-cell">
+                                {member.resumeUrl ? (
+                                    <Link
+                                        to={member.resumeUrl}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700"
+                                    >
+                                        Открыть
+                                        <ExternalLink className="h-3 w-3" />
+                                    </Link>
+                                ) : (
+                                    <span className="text-gray-400">—</span>
+                                )}
+                            </td>
+
+                            <td className="px-6 py-4 text-app-text font-sans hidden md:table-cell">
+                                {formatDateAdded(member.dateAdded)}
+                            </td>
+
+                            {showStatus && (
+                                <td className="px-6 py-4">
+                                    {member.status === "delete" ? (
+                                        <span className="inline-flex items-center gap-1 text-xs text-red-500">
+                                            <span className="h-2 w-2 rounded-full bg-red-500" />
+                                            Удалён
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 text-xs text-green-500">
+                                            <span className="h-2 w-2 rounded-full bg-green-500" />
+                                            Активен
+                                        </span>
+                                    )}
                                 </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                            )}
+
+                            <td className="px-6 py-4">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="p-1 rounded-md hover:bg-gray-100 transition"
+                                        >
+                                            <Ellipsis className="h-4 w-4 text-gray-500" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {member.status === "delete" && (
+                                            <DropdownMenuItem
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeMember?.(member.id);
+                                                }}
+                                                className="text-[#EF4444]"
+                                            >
+                                                <UserMinus className="h-4 w-4 mr-2" />
+                                                {removeActionLabel}
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
