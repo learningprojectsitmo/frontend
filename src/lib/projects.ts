@@ -363,6 +363,15 @@ export const useAcceptInvitation = () =>
 export const useRejectInvitation = () =>
     useSelfResponseAction(({ responseId }) => api.patch(`/invitations/${responseId}/reject`));
 
+/**
+ * Отзыв приглашения руководителем проекта (или админом пространства).
+ *
+ * Запись не удаляется, а переводится в статус `cancelled`, поэтому строка
+ * остаётся в истории проекта — как и в бэкендовой ленте активности.
+ */
+export const useCancelInvitation = () =>
+    useSelfResponseAction(({ responseId }) => api.delete(`/invitations/${responseId}`));
+
 // ====== Типы проектов и этапы ======
 
 export const getProjectTypes = async (

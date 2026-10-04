@@ -11,7 +11,7 @@
         "lint": "eslint src",
         "lint:check": "eslint src --max-warnings 0",
         "format:check": "prettier --check . --ignore-path .prettierignore",
-        "check-types": "tsc -p tsconfig.app.json --noEmit",
+        "check-types": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.test.json --noEmit",
         "format": "prettier --write ."
     },
     "dependencies": {

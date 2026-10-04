@@ -196,7 +196,7 @@ export type BackendReplycant = {
     vacancy_id: number | null;
     role: string;
     type: "response" | "invitation";
-    status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
+    status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team" | "cancelled";
     allow_multi_project_participation: boolean;
     /**
      * Уже состоит в другом проекте ЭТОГО пространства. Позволяет отличить
@@ -598,6 +598,7 @@ export type NotificationType =
     | "invitation_received"
     | "invitation_accepted"
     | "invitation_rejected"
+    | "invitation_cancelled"
     | "stage_approval_required"
     | "task_created"
     | "task_updated"

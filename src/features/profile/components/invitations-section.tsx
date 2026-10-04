@@ -20,6 +20,8 @@ const statusLabel: Record<string, StatusLabel> = {
     accepted: { text: "В команде", color: "#16A34A", bg: "#DCFCE7" },
     rejected: { text: "Отклонено", color: "#EF4444", bg: "#FEE2E2" },
     in_team: { text: "Уже в команде", color: "#2563EB", bg: "#DBEAFE" },
+    /** Руководитель проекта отозвал приглашение — это не отказ приглашённого. */
+    cancelled: { text: "Отозвано руководителем", color: "#6B7280", bg: "#F3F4F6" },
 };
 
 const BUSY_IN_TEAM_LABEL: StatusLabel = {

@@ -8,6 +8,7 @@ import {
     useAcceptInvitation,
     useAcceptResponse,
     useAllResponses,
+    useCancelInvitation,
     useConfirmJoinResponse,
     useRejectInvitation,
     useRejectResponse,
@@ -25,6 +26,7 @@ const STATUS_OPTIONS = [
     { value: "accepted", label: "Принят" },
     { value: "rejected", label: "Отклонён" },
     { value: "withdrawn", label: "Отозван" },
+    { value: "cancelled", label: "Отозвано руководителем" },
     { value: "in_team", label: "Уже в команде" },
 ];
 
@@ -42,6 +44,7 @@ const RESPONSE_STATUSES = new Set<string>([
     "accepted",
     "rejected",
     "withdrawn",
+    "cancelled",
     "in_team",
 ]);
 
@@ -89,6 +92,7 @@ const ApplicationsRoute = () => {
     const confirmJoinMutation = useConfirmJoinResponse();
     const acceptInvitationMutation = useAcceptInvitation();
     const rejectInvitationMutation = useRejectInvitation();
+    const cancelInvitationMutation = useCancelInvitation();
 
     /**
      * Таблица отдаёт обработчикам только id записи, а эндпоинты принятия
@@ -254,6 +258,23 @@ const ApplicationsRoute = () => {
             );
     };
 
+    const handleCancelInvitation = (responseId: number) => {
+        const target = getActionTarget(responseId);
+        if (!target) {
+            notifyError("Не удалось отозвать приглашение", "Запись не найдена в списке");
+            return;
+        }
+        cancelInvitationMutation
+            .mutateAsync({ ...target, responseId })
+            .then(() => notifySuccess("Приглашение отозвано"))
+            .catch((err: unknown) =>
+                notifyError(
+                    "Не удалось отозвать приглашение",
+                    getApiErrorMessage(err, "Попробуйте позже"),
+                ),
+            );
+    };
+
     const isAllowed = profile?.role === "admin" || profile?.role === "teacher";
 
     if (profile && !isAllowed) {
@@ -383,6 +404,7 @@ const ApplicationsRoute = () => {
                         onConfirmJoin={handleConfirmJoin}
                         onAcceptInvitation={handleAcceptInvitation}
                         onRejectInvitation={handleRejectInvitation}
+                        onCancelInvitation={handleCancelInvitation}
                         canManage={isAllowed}
                     />
                     {isLoading && <div className="mt-4 text-sm text-app-muted">Загрузка...</div>}

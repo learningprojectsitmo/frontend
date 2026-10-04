@@ -35,6 +35,7 @@ const INVITATION_TYPES: NotificationType[] = [
     "invitation_received",
     "invitation_accepted",
     "invitation_rejected",
+    "invitation_cancelled",
 ];
 const APPROVAL_TYPES: NotificationType[] = ["stage_approval_required"];
 const TASKS_TYPES: NotificationType[] = [

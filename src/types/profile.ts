@@ -28,7 +28,8 @@ export type InvitationItem = {
     resumeUrl: string;
     resumeTitle: string;
     date: string;
-    status: "pending" | "accepted" | "rejected" | "in_team";
+    /** `cancelled` — приглашение отозвано руководителем проекта. */
+    status: "pending" | "accepted" | "rejected" | "in_team" | "cancelled";
     allowMultiProjectParticipation: boolean;
     /** Уже состоит в другом проекте ЭТОГО пространства. */
     busyInOtherProject: boolean;

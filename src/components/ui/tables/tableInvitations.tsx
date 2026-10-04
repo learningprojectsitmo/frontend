@@ -10,6 +10,22 @@ const getInitials = (name: string) => {
         .toUpperCase();
 };
 
+/**
+ * Подпись статуса, по которому запись уже не ждёт решения.
+ *
+ * Отдельная функция, потому что в таблице подпись нужна в четырёх местах
+ * (своё/чужое приглашение × ожидает/не ожидает), а статус «Отозвано»
+ * добавился пятым значением — иначе пришлось бы править цепочку в каждой копии.
+ */
+const getResolvedStatusLabel = (member: Replycant): string => {
+    if (member.responseStatus === "in_team") {
+        return member.busyInOtherProject ? "Уже в другой команде" : "Уже в команде";
+    }
+    if (member.responseStatus === "cancelled") return "Отозвано руководителем";
+    if (member.responseStatus === "rejected") return "Отклонено";
+    return "В команде";
+};
+
 interface TableInvitationsGroup {
     key: string;
     projectName: string;
@@ -26,6 +42,7 @@ interface TableInvitationsProps {
     currentUserId?: number;
     onAcceptInvitation?: (id: number) => void;
     onRejectInvitation?: (id: number) => void;
+    onCancelInvitation?: (id: number) => void;
     onConfirmJoin?: (id: number) => void;
     grouped?: boolean;
     groups?: TableInvitationsGroup[];
@@ -42,6 +59,7 @@ export const TableInvitations = ({
     currentUserId,
     onAcceptInvitation,
     onRejectInvitation,
+    onCancelInvitation,
     onConfirmJoin,
     grouped = false,
     groups = [],
@@ -190,37 +208,40 @@ export const TableInvitations = ({
                                 </button>
                             </>
                         )}
+                    {/* Руководитель проекта может отозвать ещё не рассмотренное приглашение.
+                        Собственное приглашение приглашённому недоступно: там решение
+                        принимает он сам, кнопки выше. */}
                     {member.type === "invitation" &&
-                        member.userId === currentUserId &&
-                        member.responseStatus !== "pending" && (
-                            <span className="text-app-muted text-[12px]">
-                                {member.responseStatus === "in_team"
-                                    ? member.busyInOtherProject
-                                        ? "Уже в другой команде"
-                                        : "Уже в команде"
-                                    : member.responseStatus === "rejected"
-                                      ? "Отклонено"
-                                      : "В команде"}
-                            </span>
+                        member.userId !== currentUserId &&
+                        member.responseStatus === "pending" &&
+                        canManage && (
+                            <button
+                                onClick={() => onCancelInvitation?.(member.id)}
+                                className="font-medium text-red-500 hover:text-red-700"
+                            >
+                                Отозвать
+                            </button>
                         )}
                     {member.type === "invitation" &&
                         member.userId !== currentUserId &&
-                        member.responseStatus === "pending" && (
+                        member.responseStatus === "pending" &&
+                        !canManage && (
                             <span className="text-app-muted text-[12px]">
                                 Приглашение отправлено
                             </span>
                         )}
                     {member.type === "invitation" &&
+                        member.userId === currentUserId &&
+                        member.responseStatus !== "pending" && (
+                            <span className="text-app-muted text-[12px]">
+                                {getResolvedStatusLabel(member)}
+                            </span>
+                        )}
+                    {member.type === "invitation" &&
                         member.userId !== currentUserId &&
                         member.responseStatus !== "pending" && (
                             <span className="text-app-muted text-[12px]">
-                                {member.responseStatus === "in_team"
-                                    ? member.busyInOtherProject
-                                        ? "Уже в другой команде"
-                                        : "Уже в команде"
-                                    : member.responseStatus === "rejected"
-                                      ? "Отклонено"
-                                      : "В команде"}
+                                {getResolvedStatusLabel(member)}
                             </span>
                         )}
                 </div>

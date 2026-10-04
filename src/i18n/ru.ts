@@ -22,6 +22,8 @@ const ru = {
                 invitation_accepted: "{{actor_name}} принял приглашение в проект {{project_name}}",
                 invitation_rejected:
                     "{{actor_name}} отклонил приглашение в проект {{project_name}}",
+                invitation_cancelled:
+                    "{{actor_name}} отозвал ваше приглашение в проект {{project_name}}",
                 stage_approval_required:
                     "{{actor_name}} запросил утверждение этапа «{{stage_name}}» в проекте {{project_name}}",
                 task_created:

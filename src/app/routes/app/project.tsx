@@ -22,6 +22,7 @@ import {
     useAdvanceStage,
     useApproveStage,
     useRejectStage,
+    useCancelInvitation,
     invalidateProjectImpact,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
@@ -802,6 +803,27 @@ const SpaceRoute = () => {
             }
         },
         [project, queryClient],
+    );
+
+    const cancelInvitationMutation = useCancelInvitation();
+
+    /** Отзыв приглашения руководителем проекта: запись остаётся со статусом «Отозвано». */
+    const handleCancelInvitation = useCallback(
+        (invitationId: number) => {
+            if (!project) return;
+            cancelInvitationMutation.mutate(
+                { responseId: invitationId, projectId: project.id, workspaceId: project.spaceId },
+                {
+                    onSuccess: () => {
+                        toast.success("Приглашение отозвано");
+                    },
+                    onError: () => {
+                        toast.error("Не удалось отозвать приглашение");
+                    },
+                },
+            );
+        },
+        [project, cancelInvitationMutation],
     );
 
     const handleConfirmJoin = useCallback(
@@ -1705,6 +1727,7 @@ const SpaceRoute = () => {
                                 currentUserId={user?.id}
                                 onAcceptInvitation={handleAcceptInvitationRequest}
                                 onRejectInvitation={handleRejectInvitation}
+                                onCancelInvitation={handleCancelInvitation}
                                 onConfirmJoin={handleConfirmJoin}
                             />
                         )}

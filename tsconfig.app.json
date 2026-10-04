@@ -24,5 +24,10 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true
     },
-    "include": ["src"]
+    "include": ["src"],
+    /* Тесты живут в Node, а не в браузере: `api-trailing-slash.test.ts` читает
+       исходники через `node:fs` и знает `process.cwd()`. Типы Node нужны им,
+       но не нужны приложению — иначе `process` был бы доступен и в коде,
+       который уходит в бандл. У тестов свой проект: `tsconfig.test.json`. */
+    "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
