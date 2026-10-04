@@ -74,7 +74,7 @@ export const TableMembers = ({
         <div className="w-full overflow-hidden rounded-[20px] border border-gray-200 bg-app-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="text-app-text border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
+                    <thead className="text-app-text border-b border-gray-200 sticky top-[72px] bg-gray-50 z-10">
                         <tr>
                             {headers.map((header) => (
                                 <th

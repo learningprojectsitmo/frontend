@@ -57,4 +57,10 @@ export interface KanbanTaskProps {
     onEdit?: (task: Task) => void;
     onDelete?: (taskId: number) => void;
     onToggleSubtask?: (subtaskId: number) => void;
+    /**
+     * Формат подписи «сколько дней до дедлайна»; получает абсолютное число дней.
+     * Нужен за пределами приложения (например, на лендинге), где подпись должна
+     * быть переведена. По умолчанию — русский текст приложения.
+     */
+    formatDueLabel?: (days: number) => string;
 }

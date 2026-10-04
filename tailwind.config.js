@@ -56,6 +56,10 @@ export default {
                     primary: "var(--app-primary)",
                     blue: "var(--app-blue)",
                     ghost: "var(--app-ghost)",
+                    /* Frosted glass chrome (alpha baked into the CSS var, no `/opacity` modifier) */
+                    "chrome-bg": "var(--app-chrome-bg)",
+                    "chrome-bg-flat": "var(--app-chrome-bg-flat)",
+                    "chrome-border": "var(--app-chrome-border)",
                     "badge-blue": "var(--app-badge-blue-bg)",
                     "badge-blue-fg": "var(--app-badge-blue-fg)",
                     "badge-amber": "var(--app-badge-amber-bg)",

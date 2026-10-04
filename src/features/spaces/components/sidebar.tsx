@@ -113,7 +113,7 @@ export const Sidebar = memo(function Sidebar({
             <CreateSpaceModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
             <aside
                 className={cn(
-                    "theme-flip-chrome-rail bg-app-surface border-r border-app-border hidden lg:flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
+                    "theme-flip-chrome-rail bg-app-chrome-bg-flat supports-[backdrop-filter]:bg-app-chrome-bg backdrop-blur-xl backdrop-saturate-150 border-r border-app-chrome-border hidden lg:flex flex-col fixed top-[72px] left-0 bottom-0 z-[9] transition-all duration-200 overflow-hidden",
                     isCollapsed ? "w-[56px]" : "w-[260px]",
                 )}
             >

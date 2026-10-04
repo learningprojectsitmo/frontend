@@ -10,6 +10,7 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     onClick,
     onDragStart,
     onToggleSubtask,
+    formatDueLabel,
 }) => {
     const [isDraggable, setIsDraggable] = useState(false);
 
@@ -67,9 +68,9 @@ export const KanbanTask: React.FC<KanbanTaskProps> = ({
     let dueLabel: string | null = null;
     if (daysLeft !== null) {
         if (daysLeft >= 0 && daysLeft <= 7) {
-            dueLabel = `${daysLeft} дн.`;
+            dueLabel = formatDueLabel ? formatDueLabel(daysLeft) : `${daysLeft} дн.`;
         } else if (daysLeft < 0) {
-            dueLabel = `${-daysLeft} дн.`;
+            dueLabel = formatDueLabel ? formatDueLabel(-daysLeft) : `${-daysLeft} дн.`;
         }
         // daysLeft > 7 → null (ничего не показываем)
     }

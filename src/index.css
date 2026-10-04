@@ -49,6 +49,14 @@
         --app-blue: #2563eb;
         /* Surface slightly raised / ghost (chips, hover, subtle bg) */
         --app-ghost: #f3f4f6;
+        /* Hover state for ghost inputs (search bar) */
+        --app-input-bg-hover: #e8eaef;
+        /* Frosted (glass) app chrome: alpha is baked into the value, because Tailwind
+           cannot inject an alpha modifier into a `var(--token)` color (it emits nothing). */
+        --app-chrome-bg: #ffffffb3;
+        /* Opaque fallback for browsers without backdrop-filter support */
+        --app-chrome-bg-flat: #fffffff2;
+        --app-chrome-border: #e5e7ebcc;
         /* Light tinted badge backgrounds (keep readable in dark) */
         --app-badge-blue-bg: #eef2ff;
         --app-badge-blue-fg: #4f46e5;
@@ -269,6 +277,12 @@
         --app-primary: #0f172a;
         --app-blue: #3b82f6;
         --app-ghost: #1a2438;
+        /* Hover state for ghost inputs (search bar) */
+        --app-input-bg-hover: #212c42;
+        /* Frosted (glass) app chrome — see the light-theme note above */
+        --app-chrome-bg: #111a2e8c;
+        --app-chrome-bg-flat: #111a2ef2;
+        --app-chrome-border: #2a3448b3;
         --app-badge-blue-bg: #1e2745;
         --app-badge-blue-fg: #a5b4fc;
         --app-badge-amber-bg: #3a2f14;

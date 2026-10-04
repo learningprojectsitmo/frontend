@@ -12,6 +12,14 @@ import { Sidebar } from "@/features/spaces/components/sidebar";
 import { UserNav } from "@/features/spaces/components/user-nav";
 import { NotificationsNav } from "@/features/spaces/components/notifications";
 
+// ── Стеклянный хром (хедер / мобильный нав) ──
+// Токены app-chrome-* хранят альфу внутри значения: Tailwind не умеет добавлять
+// прозрачность к `var(--token)`-цветам (bg-app-surface/90 просто не компилируется).
+const glassChromeClass =
+    "bg-app-chrome-bg-flat supports-[backdrop-filter]:bg-app-chrome-bg backdrop-blur-xl backdrop-saturate-150";
+
+const headerChromeClass = `h-[72px] border-b border-app-chrome-border ${glassChromeClass} flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10`;
+
 // ── Мобильная нижняя навигация ──
 const mobileNavItems = [
     { to: "/app", end: true, icon: "home", label: "Пространства" },
@@ -22,7 +30,9 @@ const mobileNavItems = [
 
 function MobileNav() {
     return (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-app-surface border-t border-gray-200">
+        <nav
+            className={`lg:hidden fixed bottom-0 left-0 right-0 z-20 border-t border-app-chrome-border ${glassChromeClass}`}
+        >
             <div className="flex items-stretch justify-around h-14 px-2">
                 {mobileNavItems.map((item) => (
                     <NavLink
@@ -58,7 +68,7 @@ function MobileNav() {
 function SpaceLayoutSkeleton() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className={headerChromeClass}>
                 <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -107,7 +117,7 @@ function SpaceLayoutSkeleton() {
 function SpaceLayoutError() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className={headerChromeClass}>
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text"
@@ -139,7 +149,7 @@ function SpaceLayoutError() {
 function SpaceLayoutNotFound() {
     return (
         <div className="flex flex-col min-h-screen bg-app-background">
-            <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+            <header className={headerChromeClass}>
                 <div className="flex items-center gap-4 sm:gap-12">
                     <span
                         className="text-[30px] font-bold text-app-text shrink-0"
@@ -266,7 +276,7 @@ const SpaceLayoutHeader = React.memo(function SpaceLayoutHeader({
     suggestions: SuggestionGroup[];
 }) {
     return (
-        <header className="h-[72px] bg-app-surface border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-10">
+        <header className={headerChromeClass}>
             <div className="flex items-center gap-4 sm:gap-12 min-w-0">
                 <span
                     className="text-[30px] font-bold text-app-text shrink-0"
@@ -303,7 +313,10 @@ function SpaceLayoutMain({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <main
             className={cn(
-                "flex-1 overflow-y-auto transition-all duration-200 pb-16 lg:pb-0",
+                // pt-[72px] instead of an offset on the wrapper above: the scrollport
+                // starts at y=0 so page content slides under the fixed glass header,
+                // which is what makes its backdrop-blur visible.
+                "flex-1 overflow-y-auto pt-[72px] transition-all duration-200 pb-16 lg:pb-0",
                 isCollapsed ? "ml-0 lg:ml-[56px]" : "ml-0 lg:ml-[260px]",
             )}
         >
@@ -413,7 +426,7 @@ function SpaceLayoutContent({
                 onSearchSubmit={handleSearchSubmit}
                 suggestions={suggestions}
             />
-            <div className="flex-1 flex flex-row mt-[72px]">
+            <div className="flex-1 flex flex-row">
                 <Sidebar
                     isCollapsed={isCollapsed}
                     onToggle={handleToggle}

@@ -202,20 +202,26 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
         };
 
         return (
-            <div ref={wrapperRef} className={cn("relative isolate w-full h-9", className)}>
+            <div
+                ref={wrapperRef}
+                className={cn("relative isolate w-full h-9 rounded-[12px]", className)}
+            >
                 <div
                     className={cn(
-                        "absolute top-0 left-0 w-full flex flex-col transition-all duration-200 z-10 overflow-hidden rounded-[12px] border",
+                        // h-full + rounded-[inherit]: поле всегда совпадает с обёрткой по
+                        // высоте и радиусу, иначе её фон вылезает полосой/уголками и
+                        // читается как рамка вокруг поля. Радиус задаёт обёртка.
+                        "absolute inset-x-0 top-0 w-full h-full flex flex-col transition-all duration-200 z-10 overflow-hidden rounded-[inherit] border",
                         disabled
                             ? "bg-[--input-disabled-bg] border-transparent opacity-70"
                             : isFocused
                               ? "border-[--color-blue-primary] shadow-[0_0_0_3px_var(--color-blue-15)] ring-1 ring-[--color-blue-primary] bg-app-surface"
-                              : "bg-app-ghost border-transparent hover:bg-gray-200/50",
+                              : "bg-app-ghost border-transparent hover:bg-[--app-input-bg-hover]",
                     )}
                 >
                     <div
                         className={cn(
-                            "flex items-center h-9 px-4 shrink-0 transition-colors",
+                            "flex items-center h-full px-4 shrink-0 transition-colors",
                             isFocused ? "bg-app-surface" : "bg-transparent",
                         )}
                     >
@@ -264,7 +270,9 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
                     </div>
                 </div>
                 {showSuggestions && (
-                    <div className="flex flex-col pt-9 max-h-80 overflow-y-auto absolute left-0 right-0 mt-1 bg-app-surface border border-app-border rounded-[12px] shadow-lg animate-[filter-in_160ms_cubic-bezier(0.16,1,0.3,1)]">
+                    // top-full вместо pt-9: панель всегда начинается ровно под полем,
+                    // независимо от высоты обёртки (36/44px).
+                    <div className="flex flex-col max-h-80 overflow-y-auto absolute left-0 right-0 top-full mt-1 bg-app-surface border border-app-border rounded-[12px] shadow-lg animate-[filter-in_160ms_cubic-bezier(0.16,1,0.3,1)]">
                         {groupsWithOffset.map((group) => (
                             <div key={group.id} className="flex flex-col">
                                 <span className="block px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-app-muted font-sans">

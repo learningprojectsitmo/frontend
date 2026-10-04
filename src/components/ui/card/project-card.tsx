@@ -15,6 +15,10 @@ export interface ProjectCardProps extends React.HTMLAttributes<HTMLDivElement> {
     membersCount: number;
     users: Array<{ src?: string; name: string }>;
     archived?: boolean;
+    /** Подпись над шкалой прогресса. По умолчанию — русский текст приложения. */
+    progressLabel?: string;
+    /** Формат счётчика участников. По умолчанию — русский текст приложения. */
+    membersLabel?: string;
     className?: string;
 }
 
@@ -48,6 +52,8 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
             membersCount,
             users,
             archived = false,
+            progressLabel = "Прогресс",
+            membersLabel = "участника",
             className,
             ...props
         },
@@ -105,7 +111,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
 
                     {/* Progress Section */}
                     <div className="flex flex-col gap-1.5">
-                        <span className="text-[12px] text-gray-400">Прогресс</span>
+                        <span className="text-[12px] text-gray-400">{progressLabel}</span>
                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div
                                 className="h-full rounded-full bg-gray-900 transition-all duration-300"
@@ -150,7 +156,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                         <div className="flex items-center gap-2">
                             <Users size={16} className="text-gray-500 shrink-0" />
                             <span className="text-[13px] text-gray-600">
-                                {membersCount} участника
+                                {membersCount} {membersLabel}
                             </span>
                         </div>
 

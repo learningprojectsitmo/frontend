@@ -27,7 +27,7 @@ const PrivacyRoute = () => (
         <main className="mx-auto max-w-4xl px-6 py-10 sm:py-14">
             <div className="rounded-2xl border border-[--color-black-10] bg-app-surface p-6 sm:p-10">
                 <p className="text-sm font-semibold text-[--azure-54]">Черновик</p>
-                <h1 className="mt-2 text-3xl font-bold text-[--grey-4]">
+                <h1 className="mt-2 break-words text-3xl font-bold text-[--grey-4]">
                     Политика конфиденциальности
                 </h1>
                 <p className="mt-4 text-sm leading-6 text-[--azure-46]">

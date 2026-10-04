@@ -3,10 +3,6 @@ export const paths = {
         path: "/",
         getHref: () => "/",
     },
-    landing: {
-        path: "/landing",
-        getHref: () => "/landing",
-    },
     legal: {
         privacy: {
             path: "/privacy",
