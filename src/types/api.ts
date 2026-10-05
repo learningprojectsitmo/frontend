@@ -152,6 +152,13 @@ export type BackendMember = {
     date_added: string;
 };
 
+/**
+ * Потолок длины одной задачи роли. Зеркалит `MAX_VACANCY_TASK_LENGTH`
+ * в бэкендовой `src/schema/project.py`: проверка до отправки должна
+ * совпадать с серверной, иначе пользователь увидит 422 вместо подсказки.
+ */
+export const MAX_VACANCY_TASK_LENGTH = 500;
+
 export type BackendVacancy = {
     id: number;
     title: string;
@@ -160,15 +167,28 @@ export type BackendVacancy = {
 };
 
 /**
- * Вакансия в запросе на создание/обновление проекта.
+ * Вакансия в запросе на создание проекта.
  *
- * Бэкенд (`VacancyCreate`) id не принимает и не возвращает: там полная замена
- * списка, поэтому переиспользовать `BackendVacancy` в payload нельзя.
+ * Бэкенд (`VacancyCreate`) id не принимает и не возвращает: при создании
+ * список ролей и так пустой, поэтому переиспользовать `BackendVacancy`
+ * в payload нельзя. Для обновления — см. `BackendVacancyUpdateInput`.
  */
 export type BackendVacancyInput = {
     title: string;
     tasks: string[];
     required_count: number;
+};
+
+/**
+ * Вакансия в запросе на обновление проекта.
+ *
+ * `id` есть только у ролей, пришедших с сервера, и обязателен: бэкенд
+ * сопоставляет роли по нему и обновляет их на месте. Пересоздание роли
+ * обнулило бы `vacancy_id` у уже откликнувшихся, и роль пропала бы из
+ * откликов. Для новых роли поле не передаётся — их создаст бэкенд.
+ */
+export type BackendVacancyUpdateInput = BackendVacancyInput & {
+    id?: number;
 };
 
 /** Тело `PUT /projects/{id}` — зеркало бэкендового `ProjectUpdate`. */
@@ -182,7 +202,7 @@ export type ProjectUpdateInput = {
     progress?: number | null;
     tags?: string[];
     workspace_id?: number | null;
-    vacancies?: BackendVacancyInput[];
+    vacancies?: (BackendVacancyUpdateInput | BackendVacancyInput)[];
     project_type_id?: number | null;
 };
 

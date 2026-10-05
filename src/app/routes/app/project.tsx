@@ -52,7 +52,7 @@ import {
 import { SearchBar, type SuggestionGroup } from "@/components/ui/search-bar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { api, getApiErrorMessage } from "@/lib/api-client";
 import { ProgressBar } from "@/components/ui/progress-bar/project-progress-bar";
 import { IconButton } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -68,7 +68,13 @@ import {
 } from "@/components/ui/breadcrumb/breadcrumb";
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
-import { type ProjectFullResponse } from "@/types/api";
+import { type BackendVacancy, type ProjectFullResponse } from "@/types/api";
+import { findBlockedVacancies, type EditableVacancy } from "@/features/project/utils/vacancy-sync";
+import {
+    hasFormErrors,
+    validateProjectForm,
+    type ProjectFormErrors,
+} from "@/features/project/utils/project-validation";
 import { type Member, type Replycant } from "@/types/tables/forTables";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
@@ -112,6 +118,45 @@ function formatDate(iso: string): string {
         year: "numeric",
     });
 }
+
+/** Русские формы числительных: 1 отклик, 2 отклика, 5 откликов. */
+function pluralize(count: number, words: readonly [string, string, string]): string {
+    if (count % 10 === 1 && count % 100 !== 11) return words[0];
+    if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))
+        return words[1];
+    return words[2];
+}
+
+const RESPONSE_WORDS = ["отклик", "отклика", "откликов"] as const;
+
+/** Общая часть оформления полей ввода в форме редактирования. */
+const FIELD_INPUT_CLASS =
+    "justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 outline-none p-0";
+
+/** Ошибочное поле подсвечивается границей, а не только текстом под ним. */
+const fieldClass = (invalid: boolean) =>
+    `${FIELD_INPUT_CLASS} ${invalid ? "border-red-500" : "border-[#2B7FFF]"}`;
+
+const FIELD_TITLE_CLASS =
+    "flex-1 min-w-0 justify-center text-color-grey-4 text-[26px] sm:text-3xl font-semibold font-sans leading-8 sm:leading-9 bg-transparent border-b-2 outline-none p-0";
+
+/**
+ * Сообщение об ошибке под полем.
+ *
+ * `data-field-error` — не просто разметка: по нему `focusFirstError`
+ * находит первое проблемное поле и подводит к нему после нажатия
+ * «Сохранить». Поля могут быть за пределами экрана на длинной форме.
+ */
+const FieldError = ({ id, children }: { id?: string; children: React.ReactNode }) => (
+    <p
+        id={id}
+        data-field-error=""
+        role="alert"
+        className="text-red-600 text-[12px] font-medium font-sans leading-4"
+    >
+        {children}
+    </p>
+);
 
 function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canManage = false) {
     const statusName = p.status?.name || "Неизвестно";
@@ -228,10 +273,66 @@ const SpaceRoute = () => {
     const [editDescription, setEditDescription] = useState("");
     const [editTags, setEditTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState("");
-    const [editRoles, setEditRoles] = useState<{ title: string; tasks: string[]; count: number }[]>(
-        [],
+    const [editRoles, setEditRoles] = useState<EditableVacancy[]>([]);
+    /**
+     * Сколько откликов и приглашений висит на каждой роли проекта.
+     *
+     * Считаем все статусы — так же, как бэкенд в
+     * `get_response_counts_by_vacancy_ids`, иначе форма прошла бы проверку,
+     * а запрос упал бы с 422.
+     */
+    /**
+     * Роли, которые сняли в форме, но на которые кто-то уже откликнулся.
+     *
+     * Бэкенд такие удаления отклоняет: роль пропала бы из откликов, а её
+     * `vacancy_id` обнулился бы. Ловим это здесь, чтобы объяснить причину
+     * прямо в форме и дать вернуть роль, а не гадать по общему «не удалось
+     * сохранить».
+     */
+    const blockedRemovedRoles = useMemo(
+        () => findBlockedVacancies(dataProject?.vacancies, editRoles, dataProject?.replycants),
+        [dataProject, editRoles],
     );
     const updateProjectMutation = useUpdateProject();
+
+    /**
+     * Ошибки валидации под полями формы.
+     *
+     * Показываются на месте, а не во всплывающем уведомлении: на длинной
+     * странице формы тост проезжает мимо и не отвечает на вопрос «что не так
+     * и где». Значение `undefined` означает, что поле валидно.
+     */
+    const [fieldErrors, setFieldErrors] = useState<ProjectFormErrors>({ roles: [] });
+    const fieldTitleClassName = `${FIELD_TITLE_CLASS} ${fieldErrors.title ? "border-red-500" : "border-[#2B7FFF]"}`;
+
+    /** Прокрутка к первому полю с ошибкой — она может быть за пределами экрана. */
+    const focusFirstError = useCallback(() => {
+        requestAnimationFrame(() => {
+            formRef.current?.querySelector("[data-field-error]")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        });
+    }, []);
+
+    const clearFieldErrors = useCallback(() => {
+        setFieldErrors((prev) =>
+            prev.title || prev.form || prev.roles.some((r) => r?.title || r?.tasks)
+                ? { roles: [] }
+                : prev,
+        );
+    }, []);
+
+    /** Сбросить ошибку конкретного поля: пользователь начал исправлять. */
+    const clearRoleError = useCallback((index: number) => {
+        setFieldErrors((prev) => {
+            if (!prev.roles[index]) return prev;
+            const roles = [...prev.roles];
+            delete roles[index];
+            return { ...prev, form: undefined, roles };
+        });
+    }, []);
+
     const { addViewedProject } = useRecentlyViewed();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -239,6 +340,8 @@ const SpaceRoute = () => {
     const [descHasOverflow, setDescHasOverflow] = useState(false);
     const descRef = useRef<HTMLDivElement>(null);
     const descHiddenRef = useRef<HTMLDivElement>(null);
+    /** Контейнер редактируемой части: нужен для поиска первого ошибочного поля. */
+    const formRef = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
         const el = descRef.current;
@@ -296,6 +399,7 @@ const SpaceRoute = () => {
             setEditTags(dataProject.tags);
             setEditRoles(
                 (dataProject.vacancies || []).map((v) => ({
+                    id: v.id,
                     title: v.title,
                     tasks: [...v.tasks],
                     count: v.required_count,
@@ -307,21 +411,36 @@ const SpaceRoute = () => {
     const handleSave = async () => {
         if (!dataProject) return;
         const filtered = editTags.filter((t) => t.trim() !== "");
-        const totalRequired = editRoles.reduce((s, r) => s + r.count, 0);
-        if (editRoles.some((r) => !r.title.trim())) {
-            toast.error("Роль не может быть пустой");
+
+        // Правила проверки вынесены в project-validation и совпадают с
+        // VacancyCreate на бэкенде: ошибки показываются под полями, а не
+        // во всплывающем сообщении, которое на длинной странице не читается.
+        const errors = validateProjectForm({
+            title: editTitle,
+            roles: editRoles,
+            maxParticipants: dataProject.max_participants,
+        });
+
+        // Проверяем до запроса: ответ сервера с этой же причиной пришёл бы
+        // общим текстом, и пользователь не понял бы, что именно чинить.
+        if (blockedRemovedRoles.length > 0) {
+            errors.form = `Нельзя сохранить: ${blockedRemovedRoles
+                .map(
+                    ({ vacancy, responses }) =>
+                        `«${vacancy.title}» — ${responses} ${pluralize(responses, RESPONSE_WORDS)}`,
+                )
+                .join(
+                    "; ",
+                )}. Роль с откликами удалить нельзя: верните её или обработайте отклики на вкладке «Заявки и приглашения».`;
+        }
+
+        if (hasFormErrors(errors)) {
+            setFieldErrors(errors);
+            focusFirstError();
             return;
         }
-        if (editRoles.some((r) => r.tasks.filter((t) => t.trim() !== "").length === 0)) {
-            toast.error("У каждой роли должны быть указаны задачи");
-            return;
-        }
-        if (dataProject.max_participants && totalRequired > dataProject.max_participants) {
-            toast.error(
-                `Сумма необходимых участников (${totalRequired}) превышает максимальное количество (${dataProject.max_participants})`,
-            );
-            return;
-        }
+
+        setFieldErrors({ roles: [] });
         try {
             await updateProjectMutation.mutateAsync({
                 id: String(dataProject.id),
@@ -330,7 +449,11 @@ const SpaceRoute = () => {
                     theme: editTheme,
                     description: editDescription,
                     tags: filtered,
+                    // id обязателен для ролей, пришедших с сервера: по нему бэкенд обновляет
+                    // роль на месте и сохраняет привязку откликов. Новые роли
+                    // отправляются без id — бэкенд их создаст.
                     vacancies: editRoles.map((r) => ({
+                        ...(r.id !== null ? { id: r.id } : {}),
                         title: r.title,
                         tasks: r.tasks.filter((t) => t.trim() !== ""),
                         required_count: r.count,
@@ -338,21 +461,46 @@ const SpaceRoute = () => {
                 },
             });
             setIsEditing(false);
-        } catch {
-            toast.error("Не удалось сохранить изменения");
+        } catch (error) {
+            // Ответ сервера — не ошибка конкретного поля (например, блокировка
+            // удаления роли на бэкенде), поэтому показываем его над кнопкой, а
+            // не под случайным инпутом.
+            setFieldErrors({
+                roles: [],
+                form: getApiErrorMessage(error, "Не удалось сохранить изменения", true),
+            });
+            focusFirstError();
         }
     };
 
     const addRole = () => {
-        setEditRoles([...editRoles, { title: "", tasks: [""], count: 1 }]);
+        setEditRoles([...editRoles, { id: null, title: "", tasks: [""], count: 1 }]);
     };
 
     const removeRole = (index: number) => {
+        // Роль с откликами всё равно не удалится: `findBlockedVacancies`
+        // покажет её в блоке под формой с кнопкой «Вернуть роль». Всплывающее
+        // предупреждение не нужно — оно исчезает и не отвечает, что делать.
         setEditRoles(editRoles.filter((_, i) => i !== index));
+    };
+
+    const restoreRole = (vacancy: BackendVacancy) => {
+        setEditRoles((prev) => [
+            ...prev,
+            {
+                id: vacancy.id,
+                title: vacancy.title,
+                tasks: [...vacancy.tasks],
+                count: vacancy.required_count,
+            },
+        ]);
+        toast.success(`Роль «${vacancy.title}» возвращена`);
     };
 
     const updateRole = (index: number, field: string, value: string | number | string[]) => {
         setEditRoles(editRoles.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+        // Пользователь правит поле — снимаем подсветку ошибки под ним.
+        if (field === "title" || field === "tasks") clearRoleError(index);
     };
 
     const updateTask = (roleIndex: number, taskIndex: number, value: string) => {
@@ -393,6 +541,7 @@ const SpaceRoute = () => {
             setEditTags(dataProject.tags);
             setEditRoles(
                 (dataProject.vacancies || []).map((v) => ({
+                    id: v.id,
                     title: v.title,
                     tasks: [...v.tasks],
                     count: v.required_count,
@@ -1088,12 +1237,28 @@ const SpaceRoute = () => {
                             {/*  */}
                             <div className="self-stretch flex justify-start items-center gap-3 flex-wrap">
                                 {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={editTitle}
-                                        onChange={(e) => setEditTitle(e.target.value)}
-                                        className="flex-1 min-w-0 justify-center text-color-grey-4 text-[26px] sm:text-3xl font-semibold font-sans leading-8 sm:leading-9 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
-                                    />
+                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                        <input
+                                            type="text"
+                                            value={editTitle}
+                                            onChange={(e) => {
+                                                setEditTitle(e.target.value);
+                                                clearFieldErrors();
+                                            }}
+                                            aria-invalid={Boolean(fieldErrors.title)}
+                                            aria-describedby={
+                                                fieldErrors.title
+                                                    ? "project-title-error"
+                                                    : undefined
+                                            }
+                                            className={fieldTitleClassName}
+                                        />
+                                        {fieldErrors.title && (
+                                            <FieldError id="project-title-error">
+                                                {fieldErrors.title}
+                                            </FieldError>
+                                        )}
+                                    </div>
                                 ) : (
                                     <div className="justify-center text-color-grey-4 text-[26px] sm:text-3xl font-semibold font-sans leading-8 sm:leading-9">
                                         {project.title}
@@ -1208,7 +1373,20 @@ const SpaceRoute = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3 items-center">
+                        {/* Сквозная ошибка формы: ответ сервера, блокировка удаления
+                            роли с откликами, превышение лимита участников. Эти
+                            проблемы не принадлежат одному полю, поэтому текст
+                            стоит рядом с кнопкой, а не под случайным инпутом. */}
+                        {isEditing && fieldErrors.form && (
+                            <div
+                                data-field-error=""
+                                role="alert"
+                                className="w-full basis-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700 text-[13px] font-medium font-sans leading-5"
+                            >
+                                {fieldErrors.form}
+                            </div>
+                        )}
                         {isCreator && !isEditing ? (
                             <Button
                                 variant="dark"
@@ -1229,6 +1407,7 @@ const SpaceRoute = () => {
                                     size="hug36"
                                     className="font-sans text-[13px] font-semibold gap-2"
                                     onClick={handleSave}
+                                    loading={updateProjectMutation.isPending}
                                 >
                                     Сохранить
                                 </Button>
@@ -1443,7 +1622,7 @@ const SpaceRoute = () => {
                                         <div className="self-stretch h-0 outline outline-1 outline-[#0000001A] dark:outline-[#ffffff1f]"></div>
                                         {isEditing ? (
                                             <div className="self-stretch inline-flex justify-start items-center gap-5">
-                                                <div className="w-48 px-1 py-2 flex justify-start items-center">
+                                                <div className="w-48 px-1 py-2 flex flex-col gap-1">
                                                     <input
                                                         type="text"
                                                         value={role.title}
@@ -1454,8 +1633,27 @@ const SpaceRoute = () => {
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="w-full justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                        aria-invalid={Boolean(
+                                                            fieldErrors.roles[index]?.title,
+                                                        )}
+                                                        aria-describedby={
+                                                            fieldErrors.roles[index]?.title
+                                                                ? `role-${index}-title-error`
+                                                                : undefined
+                                                        }
+                                                        className={`w-full ${fieldClass(
+                                                            Boolean(
+                                                                fieldErrors.roles[index]?.title,
+                                                            ),
+                                                        )}`}
                                                     />
+                                                    {fieldErrors.roles[index]?.title && (
+                                                        <FieldError
+                                                            id={`role-${index}-title-error`}
+                                                        >
+                                                            {fieldErrors.roles[index]?.title}
+                                                        </FieldError>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 px-1 py-2 flex flex-col gap-1.5">
                                                     {(role.tasks.length ? role.tasks : [""]).map(
@@ -1475,7 +1673,12 @@ const SpaceRoute = () => {
                                                                             e.target.value,
                                                                         )
                                                                     }
-                                                                    className="flex-1 justify-center text-gray-900 text-[13px] font-medium font-sans leading-5 bg-transparent border-b-2 border-[#2B7FFF] outline-none p-0"
+                                                                    className={`flex-1 ${fieldClass(
+                                                                        Boolean(
+                                                                            fieldErrors.roles[index]
+                                                                                ?.tasks,
+                                                                        ),
+                                                                    )}`}
                                                                 />
                                                                 <button
                                                                     type="button"
@@ -1488,6 +1691,13 @@ const SpaceRoute = () => {
                                                                 </button>
                                                             </div>
                                                         ),
+                                                    )}
+                                                    {fieldErrors.roles[index]?.tasks && (
+                                                        <FieldError
+                                                            id={`role-${index}-tasks-error`}
+                                                        >
+                                                            {fieldErrors.roles[index]?.tasks}
+                                                        </FieldError>
                                                     )}
                                                 </div>
                                                 <div className="w-48 px-1 py-2 flex justify-start items-center gap-2">
@@ -1568,6 +1778,42 @@ const SpaceRoute = () => {
                                             максимальное количество ({dataProject.max_participants})
                                         </div>
                                     )}
+                                {isEditing && blockedRemovedRoles.length > 0 && (
+                                    // Причина блокировки сохранения — здесь, у самой роли,
+                                    // а не только во всплывающем сообщении: иначе непонятно,
+                                    // что именно мешает сохранить.
+                                    <div
+                                        data-field-error=""
+                                        role="alert"
+                                        className="self-stretch mt-3 rounded-lg border border-red-200 bg-red-50 p-3 flex flex-col gap-2"
+                                    >
+                                        <div className="text-[13px] font-semibold text-red-700">
+                                            Не удастся сохранить: роли с откликами удалять нельзя
+                                        </div>
+                                        {blockedRemovedRoles.map(({ vacancy, responses }) => (
+                                            <div
+                                                key={vacancy.id}
+                                                className="flex flex-wrap items-center gap-2 text-[13px] text-red-700"
+                                            >
+                                                <span>
+                                                    «{vacancy.title}» — {responses}{" "}
+                                                    {pluralize(responses, RESPONSE_WORDS)}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => restoreRole(vacancy)}
+                                                    className="text-[13px] font-semibold underline hover:no-underline"
+                                                >
+                                                    Вернуть роль
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <div className="text-[12px] text-red-600">
+                                            Обработайте отклики на вкладке «Заявки и приглашения»,
+                                            чтобы освободить роль.
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
 

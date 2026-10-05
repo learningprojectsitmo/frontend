@@ -258,10 +258,26 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
         "Проект достиг максимального числа участников",
 };
 
-export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+/**
+ * Текст ошибки для показа пользователю.
+ *
+ * `preferServerDetail` для эндпоинтов, чьи `detail` уже приходят локализованными
+ * (например, `PUT /projects/{id}` объясняет, какую роль нельзя удалить и
+ * почему). Без флага остаётся старое поведение: наружу уходят только переводы
+ * из `ERROR_TRANSLATIONS`, а любой другой `detail` — служебный текст на
+ * английском, который пользователю ничего не объясняет.
+ */
+export const getApiErrorMessage = (
+    error: unknown,
+    fallback: string,
+    preferServerDetail = false,
+): string => {
     const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
     if (detail && ERROR_TRANSLATIONS[detail]) {
         return ERROR_TRANSLATIONS[detail];
+    }
+    if (preferServerDetail && detail) {
+        return detail;
     }
     return fallback;
 };

@@ -1,0 +1,135 @@
+import { describe, expect, it } from "vitest";
+
+import type { BackendVacancy } from "@/types/api";
+import {
+    countResponsesByVacancy,
+    findBlockedVacancies,
+    type EditableVacancy,
+} from "./vacancy-sync";
+
+const vacancy = (id: number, title: string): BackendVacancy => ({
+    id,
+    title,
+    tasks: ["задача"],
+    required_count: 1,
+});
+
+const kept = (id: number): EditableVacancy => ({
+    id,
+    title: `Роль ${id}`,
+    tasks: ["задача"],
+    count: 1,
+});
+
+describe("countResponsesByVacancy", () => {
+    it("считает отклики по vacancy_id", () => {
+        // given
+        const replycants = [{ vacancy_id: 5 }, { vacancy_id: 5 }, { vacancy_id: 6 }];
+
+        // when
+        const counts = countResponsesByVacancy(replycants);
+
+        // then
+        expect(counts.get(5)).toBe(2);
+        expect(counts.get(6)).toBe(1);
+    });
+
+    it("игнорирует отклики без роли", () => {
+        // given: отклик на весь проект, а не на конкретную роль
+        const replycants = [{ vacancy_id: null }, { vacancy_id: null }];
+
+        // when
+        const counts = countResponsesByVacancy(replycants);
+
+        // then
+        expect(counts.size).toBe(0);
+    });
+
+    it("учитывает все статусы, а не только ожидающие", () => {
+        // given: счёт обязан совпадать с бэкендом, который считает все строки
+        const replycants = [
+            { vacancy_id: 5 }, // pending
+            { vacancy_id: 5 }, // accepted
+            { vacancy_id: 5 }, // rejected
+            { vacancy_id: 5 }, // withdrawn
+        ];
+
+        // when
+        const counts = countResponsesByVacancy(replycants);
+
+        // then
+        expect(counts.get(5)).toBe(4);
+    });
+
+    it("не падает на пустом списке", () => {
+        expect(countResponsesByVacancy([]).size).toBe(0);
+        expect(countResponsesByVacancy(null).size).toBe(0);
+        expect(countResponsesByVacancy(undefined).size).toBe(0);
+    });
+});
+
+describe("findBlockedVacancies", () => {
+    it("находит роль с откликами, снятую в форме", () => {
+        // given
+        const vacancies = [vacancy(5, "Backend"), vacancy(6, "QA")];
+        const replycants = [{ vacancy_id: 6 }, { vacancy_id: 6 }, { vacancy_id: 6 }];
+
+        // when: роль 6 убрали, роль 5 оставили
+        const blocked = findBlockedVacancies(vacancies, [kept(5)], replycants);
+
+        // then
+        expect(blocked).toHaveLength(1);
+        expect(blocked[0].vacancy.title).toBe("QA");
+        expect(blocked[0].responses).toBe(3);
+    });
+
+    it("не блокирует, если роль осталась в форме", () => {
+        // given: роль с откликами не трогали, её правят
+        const blocked = findBlockedVacancies(
+            [vacancy(5, "Backend")],
+            [kept(5)],
+            [{ vacancy_id: 5 }],
+        );
+
+        // then
+        expect(blocked).toHaveLength(0);
+    });
+
+    it("не блокирует удаление роли без откликов", () => {
+        // given: на роль никто не откликался
+        const blocked = findBlockedVacancies([vacancy(5, "Backend")], [], []);
+
+        // then
+        expect(blocked).toHaveLength(0);
+    });
+
+    it("не считает новую роль за снятую", () => {
+        // given: роль добавлена прямо в форме, у неё ещё нет id на сервере
+        const blocked = findBlockedVacancies(
+            [vacancy(5, "Backend")],
+            [{ id: null, title: "Frontend", tasks: ["ui"], count: 1 }],
+            [{ vacancy_id: 5 }],
+        );
+
+        // then: снята серверная роль 5, а новая в форме осталась
+        expect(blocked.map((b) => b.vacancy.title)).toEqual(["Backend"]);
+    });
+
+    it("возвращает все снятые роли с откликами", () => {
+        // given
+        const vacancies = [vacancy(5, "A"), vacancy(6, "B"), vacancy(7, "C")];
+        const replycants = [{ vacancy_id: 5 }, { vacancy_id: 7 }];
+
+        // when: оставили только B
+        const blocked = findBlockedVacancies(vacancies, [kept(6)], replycants);
+
+        // then
+        expect(blocked.map((b) => b.vacancy.id)).toEqual([5, 7]);
+    });
+
+    it("устойчив к пустому проекту", () => {
+        expect(findBlockedVacancies([], [], [{ vacancy_id: 5 }])).toEqual([]);
+        expect(findBlockedVacancies(null, [], [])).toEqual([]);
+        expect(findBlockedVacancies(undefined, [], null)).toEqual([]);
+    });
+});
