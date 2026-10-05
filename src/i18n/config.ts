@@ -16,6 +16,16 @@ i18n.use(initReactI18next).init({
     interpolation: {
         escapeValue: false,
     },
+    // `useTranslation()` берёт `bindI18n` из `i18n.options.react`, а без него
+    // — из внутренних дефолтов react-i18next. Секреты переводов вшиты в бандл
+    // (никаких HTTP-загрузок namespace'ов), поэтому подписка должна быть
+    // именно на `languageChanged`: без неё компоненты не перерисовываются при
+    // смене языка и страница остаётся на старом языке до перезагрузки.
+    react: {
+        useSuspense: false,
+        bindI18n: "languageChanged",
+        bindI18nStore: "",
+    },
 });
 
 dayjs.locale("ru");

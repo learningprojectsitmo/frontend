@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import i18n from "@/i18n/config";
 import { useUser } from "@/lib/auth";
 import { settingsApi } from "@/lib/settings";
 import { queryKeys } from "@/lib/query-keys";
@@ -20,13 +21,16 @@ const LANGUAGES = [
 ] as const;
 
 export const LanguageSection = () => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { data: user } = useUser();
     const queryClient = useQueryClient();
 
     const updateLanguage = useMutation({
         mutationFn: async (lang: string) => {
-            i18n.changeLanguage(lang);
+            // Экземпляр берём из `@/i18n/config`: `useTranslation()` в
+            // react-i18next@17 отдаёт обёртку, чьё поле `language` — снимок на
+            // момент рендера, из-за чего компонент не видел смены языка.
+            void i18n.changeLanguage(lang);
             if (user?.id) {
                 await settingsApi.updateUserLanguage(user.id, lang);
             }
@@ -40,7 +44,7 @@ export const LanguageSection = () => {
         },
     });
 
-    const currentValue = user?.lang || i18n.language || "ru";
+    const currentValue = i18n.language || "ru";
 
     return (
         <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-[--color-black-10] bg-app-surface">
