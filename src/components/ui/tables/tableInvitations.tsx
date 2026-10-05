@@ -44,6 +44,13 @@ interface TableInvitationsProps {
     onRejectInvitation?: (id: number) => void;
     onCancelInvitation?: (id: number) => void;
     onConfirmJoin?: (id: number) => void;
+    /**
+     * id строки, действие по которой сейчас выполняется. Кнопки этой строки
+     * блокируются: без этого «Подтвердить участие» можно было нажать несколько
+     * раз подряд, и каждый клик уходил в отдельный PATCH — на той стороне
+     * появилось бы по строке участия на клик.
+     */
+    pendingActionId?: number | null;
     grouped?: boolean;
     groups?: TableInvitationsGroup[];
     defaultExpanded?: Record<string, boolean>;
@@ -61,6 +68,7 @@ export const TableInvitations = ({
     onRejectInvitation,
     onCancelInvitation,
     onConfirmJoin,
+    pendingActionId = null,
     grouped = false,
     groups = [],
     defaultExpanded,
@@ -81,6 +89,11 @@ export const TableInvitations = ({
     });
 
     const isExpanded = (key: string) => internalExpanded[key] ?? true;
+
+    const isRowPending = (id: number) => pendingActionId === id;
+
+    /** Класс кнопки-действия: единый для всех, чтобы заблокированные выглядели одинаково. */
+    const actionButtonClass = "font-medium disabled:cursor-not-allowed disabled:opacity-50";
 
     const toggleGroup = (key: string) => {
         setInternalExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -147,10 +160,14 @@ export const TableInvitations = ({
                             <>
                                 {member.userId === currentUserId ? (
                                     <button
+                                        type="button"
                                         onClick={() => onConfirmJoin?.(member.id)}
-                                        className="font-medium text-blue-600 hover:text-blue-700"
+                                        disabled={isRowPending(member.id)}
+                                        className={`${actionButtonClass} text-blue-600 hover:text-blue-700`}
                                     >
-                                        Подтвердить участие
+                                        {isRowPending(member.id)
+                                            ? "Подтверждаем…"
+                                            : "Подтвердить участие"}
                                     </button>
                                 ) : (
                                     <span className="text-app-muted text-[12px]">
@@ -170,14 +187,18 @@ export const TableInvitations = ({
                         canManage && (
                             <>
                                 <button
+                                    type="button"
                                     onClick={() => addToTeam?.(member.id)}
-                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                    disabled={isRowPending(member.id)}
+                                    className={`${actionButtonClass} text-blue-600 hover:text-blue-700`}
                                 >
                                     Принять
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => onReject?.(member.id)}
-                                    className="font-medium text-red-500 hover:text-red-700"
+                                    disabled={isRowPending(member.id)}
+                                    className={`${actionButtonClass} text-red-500 hover:text-red-700`}
                                 >
                                     Отклонить
                                 </button>
@@ -195,14 +216,18 @@ export const TableInvitations = ({
                         !member.busyInOtherProject && (
                             <>
                                 <button
+                                    type="button"
                                     onClick={() => onAcceptInvitation?.(member.id)}
-                                    className="font-medium text-blue-600 hover:text-blue-700"
+                                    disabled={isRowPending(member.id)}
+                                    className={`${actionButtonClass} text-blue-600 hover:text-blue-700`}
                                 >
-                                    Принять
+                                    {isRowPending(member.id) ? "Принимаем…" : "Принять"}
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => onRejectInvitation?.(member.id)}
-                                    className="font-medium text-red-500 hover:text-red-700"
+                                    disabled={isRowPending(member.id)}
+                                    className={`${actionButtonClass} text-red-500 hover:text-red-700`}
                                 >
                                     Отклонить
                                 </button>
@@ -216,8 +241,10 @@ export const TableInvitations = ({
                         member.responseStatus === "pending" &&
                         canManage && (
                             <button
+                                type="button"
                                 onClick={() => onCancelInvitation?.(member.id)}
-                                className="font-medium text-red-500 hover:text-red-700"
+                                disabled={isRowPending(member.id)}
+                                className={`${actionButtonClass} text-red-500 hover:text-red-700`}
                             >
                                 Отозвать
                             </button>

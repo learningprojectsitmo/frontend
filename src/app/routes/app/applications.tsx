@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { ContentLayout } from "@/components/layouts";
 import { notifyError, notifySuccess } from "@/components/ui/notifications";
@@ -173,12 +173,47 @@ const ApplicationsRoute = () => {
      */
     const getActionTarget = (responseId: number) => projectIdByResponseId.get(responseId);
 
+    /**
+     * Клик по кнопке действия может прийти повторно раньше, чем React перерисует
+     * кнопку: setState применяется на следующем рендере, поэтому два клика в
+     * одном тике успевают пройти оба, и на каждый уходит свой PATCH. Сервер на
+     * каждый такой запрос добавлял по строке участия — человек оказывался в
+     * команде дважды.
+     *
+     * Ref, а не state: меняется немедленно, без ожидания рендера, поэтому
+     * второй клик отсекается в том же тике. Снятие блокировки — в `finally`.
+     */
+    const inFlightIds = useRef(new Set<number>());
+
+    /** `false` — действие по этой записи уже выполняется, повторный клик игнорируем. */
+    const beginAction = (responseId: number): boolean => {
+        if (inFlightIds.current.has(responseId)) return false;
+        inFlightIds.current.add(responseId);
+        return true;
+    };
+
+    const endAction = (responseId: number): void => {
+        inFlightIds.current.delete(responseId);
+    };
+
+    /** id записи, действие по которой сейчас в полёте: для блокировки кнопок. */
+    const pendingActionId =
+        [
+            acceptResponseMutation,
+            rejectResponseMutation,
+            confirmJoinMutation,
+            acceptInvitationMutation,
+            rejectInvitationMutation,
+            cancelInvitationMutation,
+        ].find((mutation) => mutation.isPending)?.variables?.responseId ?? null;
+
     const handleAcceptResponse = (responseId: number) => {
         const target = getActionTarget(responseId);
         if (!target) {
             notifyError("Не удалось принять отклик", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         acceptResponseMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Отклик принят"))
@@ -187,7 +222,8 @@ const ApplicationsRoute = () => {
                     "Не удалось принять отклик",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const handleRejectResponse = (responseId: number) => {
@@ -196,6 +232,7 @@ const ApplicationsRoute = () => {
             notifyError("Не удалось отклонить отклик", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         rejectResponseMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Отклик отклонён"))
@@ -204,7 +241,8 @@ const ApplicationsRoute = () => {
                     "Не удалось отклонить отклик",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const handleConfirmJoin = (responseId: number) => {
@@ -213,6 +251,7 @@ const ApplicationsRoute = () => {
             notifyError("Не удалось подтвердить участие", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         confirmJoinMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Участие подтверждено"))
@@ -221,7 +260,8 @@ const ApplicationsRoute = () => {
                     "Не удалось подтвердить участие",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const handleAcceptInvitation = (responseId: number) => {
@@ -230,6 +270,7 @@ const ApplicationsRoute = () => {
             notifyError("Не удалось принять приглашение", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         acceptInvitationMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Приглашение принято"))
@@ -238,7 +279,8 @@ const ApplicationsRoute = () => {
                     "Не удалось принять приглашение",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const handleRejectInvitation = (responseId: number) => {
@@ -247,6 +289,7 @@ const ApplicationsRoute = () => {
             notifyError("Не удалось отклонить приглашение", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         rejectInvitationMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Приглашение отклонено"))
@@ -255,7 +298,8 @@ const ApplicationsRoute = () => {
                     "Не удалось отклонить приглашение",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const handleCancelInvitation = (responseId: number) => {
@@ -264,6 +308,7 @@ const ApplicationsRoute = () => {
             notifyError("Не удалось отозвать приглашение", "Запись не найдена в списке");
             return;
         }
+        if (!beginAction(responseId)) return;
         cancelInvitationMutation
             .mutateAsync({ ...target, responseId })
             .then(() => notifySuccess("Приглашение отозвано"))
@@ -272,7 +317,8 @@ const ApplicationsRoute = () => {
                     "Не удалось отозвать приглашение",
                     getApiErrorMessage(err, "Попробуйте позже"),
                 ),
-            );
+            )
+            .finally(() => endAction(responseId));
     };
 
     const isAllowed = profile?.role === "admin" || profile?.role === "teacher";
@@ -405,6 +451,7 @@ const ApplicationsRoute = () => {
                         onAcceptInvitation={handleAcceptInvitation}
                         onRejectInvitation={handleRejectInvitation}
                         onCancelInvitation={handleCancelInvitation}
+                        pendingActionId={pendingActionId}
                         canManage={isAllowed}
                     />
                     {isLoading && <div className="mt-4 text-sm text-app-muted">Загрузка...</div>}

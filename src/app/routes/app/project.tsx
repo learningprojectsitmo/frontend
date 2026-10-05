@@ -864,6 +864,14 @@ const SpaceRoute = () => {
 
     const [pendingResponseAction, setPendingResponseAction] = useState<number | null>(null);
 
+    /**
+     * Блокировка повторного подтверждения вступления: набор id, по которым
+     * запрос уже ушёл. Set в ref меняется немедленно, поэтому второй клик в том
+     * же тике, что и первый, отсекается — state на это не успевает.
+     */
+    const pendingConfirmJoinIds = useRef(new Set<number>());
+    const [pendingConfirmJoinId, setPendingConfirmJoinId] = useState<number | null>(null);
+
     const handleAcceptResponse = useCallback(
         (responseId: number) => {
             if (pendingResponseAction !== null) return;
@@ -977,6 +985,12 @@ const SpaceRoute = () => {
 
     const handleConfirmJoin = useCallback(
         async (responseId: number) => {
+            // Ref, а не state: два клика в одном тике успевают пройти до
+            // перерисовки кнопки, и на каждый уходил свой PATCH. Сервер добавлял
+            // по строке участия на запрос, и человек оказывался в команде дважды.
+            if (pendingConfirmJoinIds.current.has(responseId)) return;
+            pendingConfirmJoinIds.current.add(responseId);
+            setPendingConfirmJoinId(responseId);
             try {
                 await api.patch(`/responses/${responseId}/confirm-join`);
                 toast.success("Вы присоединились к команде");
@@ -985,6 +999,9 @@ const SpaceRoute = () => {
                 }
             } catch {
                 toast.error("Не удалось подтвердить участие");
+            } finally {
+                pendingConfirmJoinIds.current.delete(responseId);
+                setPendingConfirmJoinId((current) => (current === responseId ? null : current));
             }
         },
         [project, queryClient],
@@ -1975,6 +1992,7 @@ const SpaceRoute = () => {
                                 onRejectInvitation={handleRejectInvitation}
                                 onCancelInvitation={handleCancelInvitation}
                                 onConfirmJoin={handleConfirmJoin}
+                                pendingActionId={pendingConfirmJoinId}
                             />
                         )}
                     </>

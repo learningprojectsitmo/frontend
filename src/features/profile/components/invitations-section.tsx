@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useInvitations } from "@/features/profile/api/use-profile-data";
@@ -50,6 +50,8 @@ export function InvitationsSection() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingAction, setPendingAction] = useState<{ id: number; type: string } | null>(null);
+    /** id приглашений, действие по которым уже выполняется (см. `performAction`). */
+    const actingIds = useRef(new Set<number>());
     const [joinCandidate, setJoinCandidate] = useState<InvitationItem | null>(null);
 
     const items = useMemo(() => invitations ?? [], [invitations]);
@@ -136,6 +138,12 @@ export function InvitationsSection() {
      * снова — запрос не уходил никогда.
      */
     const performAction = async (invitationId: number, action: "accept" | "reject") => {
+        // Ref-блокировка: state обновляется на следующем рендере, поэтому два
+        // клика «Принять» в одном тике проходили оба и отправляли два PATCH.
+        // Сервер на каждый добавлял по строке участия — человек оказывался в
+        // команде дважды.
+        if (actingIds.current.has(invitationId)) return false;
+        actingIds.current.add(invitationId);
         setPendingAction({ id: invitationId, type: action });
         try {
             await api.patch(`/invitations/${invitationId}/${action}`);
@@ -156,6 +164,7 @@ export function InvitationsSection() {
             );
             return false;
         } finally {
+            actingIds.current.delete(invitationId);
             setPendingAction(null);
         }
     };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useResponses } from "@/features/profile/api/use-profile-data";
@@ -52,6 +52,13 @@ export function ResponsesSection() {
     const [filters, setFilters] = useState<ProfileFiltersState>(defaultProfileFilters);
     const [pendingWithdraw, setPendingWithdraw] = useState<number | null>(null);
     const [pendingConfirmJoin, setPendingConfirmJoin] = useState<number | null>(null);
+    /**
+     * Блокировка повторного подтверждения вступления. Set в ref меняется
+     * немедленно, в отличие от state выше: два клика в одном тике успевают пройти
+     * до перерисовки кнопки, и на каждый уходил свой PATCH — сервер добавлял по
+     * строке участия на запрос.
+     */
+    const confirmingIds = useRef(new Set<number>());
 
     const items = useMemo(() => responses ?? [], [responses]);
 
@@ -143,6 +150,8 @@ export function ResponsesSection() {
     };
 
     const handleConfirmJoin = async (responseId: number) => {
+        if (confirmingIds.current.has(responseId)) return;
+        confirmingIds.current.add(responseId);
         setPendingConfirmJoin(responseId);
         try {
             await api.patch(`/responses/${responseId}/confirm-join`);
@@ -160,6 +169,7 @@ export function ResponsesSection() {
         } catch (error) {
             toast.error(getApiErrorMessage(error, "Не удалось подтвердить участие"));
         } finally {
+            confirmingIds.current.delete(responseId);
             setPendingConfirmJoin(null);
         }
     };
