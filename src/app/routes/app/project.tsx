@@ -79,6 +79,7 @@ import { type Member, type Replycant } from "@/types/tables/forTables";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
+import { RejectResponseDialog } from "@/features/project/components/reject-response-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
@@ -212,6 +213,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             userId: r.user_id,
             allowMultiProjectParticipation: r.allow_multi_project_participation,
             busyInOtherProject: r.busy_in_other_project,
+            rejectionReason: r.rejection_reason,
         })),
     };
 }
@@ -275,17 +277,18 @@ const SpaceRoute = () => {
     const [tagInput, setTagInput] = useState("");
     const [editRoles, setEditRoles] = useState<EditableVacancy[]>([]);
     /**
-     * Сколько откликов и приглашений висит на каждой роли проекта.
+     * Сколько АКТИВНЫХ откликов и приглашений висит на каждой роли проекта.
      *
-     * Считаем все статусы — так же, как бэкенд в
-     * `get_response_counts_by_vacancy_ids`, иначе форма прошла бы проверку,
-     * а запрос упал бы с 422.
+     * Считаем только активные статусы (`pending`/`accepted`/`in_team`) — так
+     * же, как бэкенд в `get_response_counts_by_vacancy_ids`, иначе форма
+     * прошла бы проверку, а запрос упал бы с 422. Отклонённые и отозванные
+     * записи роль не блокируют: отказом её и освобождают.
      */
     /**
-     * Роли, которые сняли в форме, но на которые кто-то уже откликнулся.
+     * Роли, которые сняли в форме, но на которых есть активные отклики.
      *
-     * Бэкенд такие удаления отклоняет: роль пропала бы из откликов, а её
-     * `vacancy_id` обнулился бы. Ловим это здесь, чтобы объяснить причину
+     * Бэкенд такие удаления отклоняет: роль осталась бы в откликах, а новая
+     * форма её больше не показывает. Ловим это здесь, чтобы объяснить причину
      * прямо в форме и дать вернуть роль, а не гадать по общему «не удалось
      * сохранить».
      */
@@ -431,7 +434,7 @@ const SpaceRoute = () => {
                 )
                 .join(
                     "; ",
-                )}. Роль с откликами удалить нельзя: верните её или обработайте отклики на вкладке «Заявки и приглашения».`;
+                )}. Роль с активными откликами удалить нельзя: верните её или примите/отклоните отклики на вкладке «Заявки и приглашения».`;
         }
 
         if (hasFormErrors(errors)) {
@@ -478,7 +481,7 @@ const SpaceRoute = () => {
     };
 
     const removeRole = (index: number) => {
-        // Роль с откликами всё равно не удалится: `findBlockedVacancies`
+        // Роль с активными откликами не уйдёт из проекта: `findBlockedVacancies`
         // покажет её в блоке под формой с кнопкой «Вернуть роль». Всплывающее
         // предупреждение не нужно — оно исчезает и не отвечает, что делать.
         setEditRoles(editRoles.filter((_, i) => i !== index));
@@ -894,17 +897,35 @@ const SpaceRoute = () => {
         [project, acceptResponseMutation, pendingResponseAction],
     );
 
+    /**
+     * Отказ открывает диалог с опциональной причиной: сразу мутировать нельзя,
+     * иначе причина никогда не была бы указана. Сама отправка — в
+     * `handleRejectResponseConfirmed`.
+     */
+    const [rejectDialogResponseId, setRejectDialogResponseId] = useState<number | null>(null);
+    const rejectDialogApplicant =
+        project?.replycants.find((r) => r.id === rejectDialogResponseId)?.name ?? "";
+
     const handleRejectResponse = useCallback(
         (responseId: number) => {
             if (pendingResponseAction !== null) return;
             const replycant = project?.replycants.find((r) => r.id === responseId);
             if (!replycant) return;
-            setPendingResponseAction(responseId);
+            setRejectDialogResponseId(responseId);
+        },
+        [project, pendingResponseAction],
+    );
+
+    const handleRejectResponseConfirmed = useCallback(
+        (reason: string | null) => {
+            if (rejectDialogResponseId === null || pendingResponseAction !== null) return;
+            setPendingResponseAction(rejectDialogResponseId);
             rejectResponseMutation.mutate(
-                { projectId: project?.id || 0, responseId },
+                { projectId: project?.id || 0, responseId: rejectDialogResponseId, reason },
                 {
                     onSuccess: () => {
                         toast.success("Отклик отклонён");
+                        setRejectDialogResponseId(null);
                     },
                     onError: () => {
                         toast.error("Не удалось отклонить отклик");
@@ -913,7 +934,7 @@ const SpaceRoute = () => {
                 },
             );
         },
-        [project, rejectResponseMutation, pendingResponseAction],
+        [project, rejectResponseMutation, pendingResponseAction, rejectDialogResponseId],
     );
 
     const queryClient = useQueryClient();
@@ -1805,7 +1826,8 @@ const SpaceRoute = () => {
                                         className="self-stretch mt-3 rounded-lg border border-red-200 bg-red-50 p-3 flex flex-col gap-2"
                                     >
                                         <div className="text-[13px] font-semibold text-red-700">
-                                            Не удастся сохранить: роли с откликами удалять нельзя
+                                            Не удастся сохранить: роли с активными откликами удалять
+                                            нельзя
                                         </div>
                                         {blockedRemovedRoles.map(({ vacancy, responses }) => (
                                             <div
@@ -1826,8 +1848,8 @@ const SpaceRoute = () => {
                                             </div>
                                         ))}
                                         <div className="text-[12px] text-red-600">
-                                            Обработайте отклики на вкладке «Заявки и приглашения»,
-                                            чтобы освободить роль.
+                                            Примите или отклоните отклики на вкладке «Заявки и
+                                            приглашения», чтобы освободить роль.
                                         </div>
                                     </div>
                                 )}
@@ -1986,7 +2008,7 @@ const SpaceRoute = () => {
                                 members={filteredReplycants}
                                 addToTeam={handleAcceptResponse}
                                 onReject={handleRejectResponse}
-                                canManage={isCreator}
+                                canManage={canManageProject}
                                 currentUserId={user?.id}
                                 onAcceptInvitation={handleAcceptInvitationRequest}
                                 onRejectInvitation={handleRejectInvitation}
@@ -2024,6 +2046,16 @@ const SpaceRoute = () => {
                         setJoinWarningProject(null);
                         if (candidate) handleAcceptInvitation(candidate.id);
                     }}
+                />
+
+                <RejectResponseDialog
+                    open={rejectDialogResponseId !== null}
+                    applicantName={rejectDialogApplicant}
+                    loading={pendingResponseAction === rejectDialogResponseId}
+                    onOpenChange={(open) => {
+                        if (!open) setRejectDialogResponseId(null);
+                    }}
+                    onConfirm={handleRejectResponseConfirmed}
                 />
 
                 <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

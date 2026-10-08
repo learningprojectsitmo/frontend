@@ -21,10 +21,16 @@ const kept = (id: number): EditableVacancy => ({
     count: 1,
 });
 
+/** Отклик для подсчёта: `vacancy_id` + статус (как в `BackendReplycant`). */
+const response = (vacancyId: number | null, status = "pending") => ({
+    vacancy_id: vacancyId,
+    status,
+});
+
 describe("countResponsesByVacancy", () => {
     it("считает отклики по vacancy_id", () => {
         // given
-        const replycants = [{ vacancy_id: 5 }, { vacancy_id: 5 }, { vacancy_id: 6 }];
+        const replycants = [response(5), response(5), response(6)];
 
         // when
         const counts = countResponsesByVacancy(replycants);
@@ -36,7 +42,7 @@ describe("countResponsesByVacancy", () => {
 
     it("игнорирует отклики без роли", () => {
         // given: отклик на весь проект, а не на конкретную роль
-        const replycants = [{ vacancy_id: null }, { vacancy_id: null }];
+        const replycants = [response(null), response(null)];
 
         // when
         const counts = countResponsesByVacancy(replycants);
@@ -45,20 +51,33 @@ describe("countResponsesByVacancy", () => {
         expect(counts.size).toBe(0);
     });
 
-    it("учитывает все статусы, а не только ожидающие", () => {
-        // given: счёт обязан совпадать с бэкендом, который считает все строки
+    it("учитывает только активные статусы — как бэкенд", () => {
+        // given: счёт обязан совпадать с `get_response_counts_by_vacancy_ids`
         const replycants = [
-            { vacancy_id: 5 }, // pending
-            { vacancy_id: 5 }, // accepted
-            { vacancy_id: 5 }, // rejected
-            { vacancy_id: 5 }, // withdrawn
+            response(5, "pending"),
+            response(5, "accepted"),
+            response(5, "in_team"),
+            response(5, "rejected"),
+            response(5, "withdrawn"),
+            response(5, "cancelled"),
         ];
 
         // when
         const counts = countResponsesByVacancy(replycants);
 
+        // then: три активных записи, отклонённая/отозванная/отменённая не мешают
+        expect(counts.get(5)).toBe(3);
+    });
+
+    it("не считает роль свободной только из-за обработанных откликов", () => {
+        // given: на роль остались одни отказы
+        const replycants = [response(5, "rejected"), response(5, "withdrawn")];
+
+        // when
+        const counts = countResponsesByVacancy(replycants);
+
         // then
-        expect(counts.get(5)).toBe(4);
+        expect(counts.get(5)).toBeUndefined();
     });
 
     it("не падает на пустом списке", () => {
@@ -69,10 +88,10 @@ describe("countResponsesByVacancy", () => {
 });
 
 describe("findBlockedVacancies", () => {
-    it("находит роль с откликами, снятую в форме", () => {
+    it("находит роль с активными откликами, снятую в форме", () => {
         // given
         const vacancies = [vacancy(5, "Backend"), vacancy(6, "QA")];
-        const replycants = [{ vacancy_id: 6 }, { vacancy_id: 6 }, { vacancy_id: 6 }];
+        const replycants = [response(6), response(6), response(6)];
 
         // when: роль 6 убрали, роль 5 оставили
         const blocked = findBlockedVacancies(vacancies, [kept(5)], replycants);
@@ -83,13 +102,20 @@ describe("findBlockedVacancies", () => {
         expect(blocked[0].responses).toBe(3);
     });
 
+    it("не блокирует снятие роли, обработанной отказами", () => {
+        // given: все отклики отклонены — роль свободна
+        const replycants = [response(5, "rejected"), response(5, "withdrawn")];
+
+        // when
+        const blocked = findBlockedVacancies([vacancy(5, "Backend")], [], replycants);
+
+        // then
+        expect(blocked).toHaveLength(0);
+    });
+
     it("не блокирует, если роль осталась в форме", () => {
         // given: роль с откликами не трогали, её правят
-        const blocked = findBlockedVacancies(
-            [vacancy(5, "Backend")],
-            [kept(5)],
-            [{ vacancy_id: 5 }],
-        );
+        const blocked = findBlockedVacancies([vacancy(5, "Backend")], [kept(5)], [response(5)]);
 
         // then
         expect(blocked).toHaveLength(0);
@@ -108,17 +134,17 @@ describe("findBlockedVacancies", () => {
         const blocked = findBlockedVacancies(
             [vacancy(5, "Backend")],
             [{ id: null, title: "Frontend", tasks: ["ui"], count: 1 }],
-            [{ vacancy_id: 5 }],
+            [response(5)],
         );
 
         // then: снята серверная роль 5, а новая в форме осталась
         expect(blocked.map((b) => b.vacancy.title)).toEqual(["Backend"]);
     });
 
-    it("возвращает все снятые роли с откликами", () => {
+    it("возвращает все снятые роли с активными откликами", () => {
         // given
         const vacancies = [vacancy(5, "A"), vacancy(6, "B"), vacancy(7, "C")];
-        const replycants = [{ vacancy_id: 5 }, { vacancy_id: 7 }];
+        const replycants = [response(5), response(7, "accepted")];
 
         // when: оставили только B
         const blocked = findBlockedVacancies(vacancies, [kept(6)], replycants);
@@ -128,7 +154,7 @@ describe("findBlockedVacancies", () => {
     });
 
     it("устойчив к пустому проекту", () => {
-        expect(findBlockedVacancies([], [], [{ vacancy_id: 5 }])).toEqual([]);
+        expect(findBlockedVacancies([], [], [response(5)])).toEqual([]);
         expect(findBlockedVacancies(null, [], [])).toEqual([]);
         expect(findBlockedVacancies(undefined, [], null)).toEqual([]);
     });

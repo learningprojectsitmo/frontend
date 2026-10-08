@@ -17,6 +17,7 @@ import { useProfile } from "@/lib/profile";
 import { normalizeResumeHref } from "@/lib/resume";
 import { useSpacesList } from "@/lib/spaces";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { RejectResponseDialog } from "@/features/project/components/reject-response-dialog";
 import type { ResponseListItem } from "@/types/api";
 import type { Replycant } from "@/types/tables/forTables";
 
@@ -155,6 +156,7 @@ const ApplicationsRoute = () => {
                 status: responseStatus === "accepted" ? "invited" : "invite",
                 allowMultiProjectParticipation: item.allow_multi_project_participation,
                 busyInOtherProject: item.busy_in_other_project,
+                rejectionReason: item.rejection_reason,
             });
         });
 
@@ -226,16 +228,38 @@ const ApplicationsRoute = () => {
             .finally(() => endAction(responseId));
     };
 
+    /**
+     * Отказ открывает диалог с опциональной причиной, поэтому обработчик
+     * только запоминает запись, а отправка идёт из `handleRejectConfirmed`.
+     */
+    const [rejectTarget, setRejectTarget] = useState<number | null>(null);
+    const rejectTargetName = items.find((item) => item.id === rejectTarget)?.name ?? "";
+
     const handleRejectResponse = (responseId: number) => {
         const target = getActionTarget(responseId);
         if (!target) {
             notifyError("Не удалось отклонить отклик", "Запись не найдена в списке");
             return;
         }
-        if (!beginAction(responseId)) return;
+        setRejectTarget(responseId);
+    };
+
+    const handleRejectConfirmed = (reason: string | null) => {
+        if (rejectTarget === null) return;
+        const target = getActionTarget(rejectTarget);
+        if (!target) {
+            setRejectTarget(null);
+            notifyError("Не удалось отклонить отклик", "Запись не найдена в списке");
+            return;
+        }
+        if (!beginAction(rejectTarget)) return;
+        const responseId = rejectTarget;
         rejectResponseMutation
-            .mutateAsync({ ...target, responseId })
-            .then(() => notifySuccess("Отклик отклонён"))
+            .mutateAsync({ ...target, responseId, reason })
+            .then(() => {
+                notifySuccess("Отклик отклонён");
+                setRejectTarget(null);
+            })
             .catch((err: unknown) =>
                 notifyError(
                     "Не удалось отклонить отклик",
@@ -453,6 +477,15 @@ const ApplicationsRoute = () => {
                         onCancelInvitation={handleCancelInvitation}
                         pendingActionId={pendingActionId}
                         canManage={isAllowed}
+                    />
+                    <RejectResponseDialog
+                        open={rejectTarget !== null}
+                        applicantName={rejectTargetName}
+                        loading={rejectResponseMutation.isPending}
+                        onOpenChange={(open) => {
+                            if (!open && !rejectResponseMutation.isPending) setRejectTarget(null);
+                        }}
+                        onConfirm={handleRejectConfirmed}
                     />
                     {isLoading && <div className="mt-4 text-sm text-app-muted">Загрузка...</div>}
                     {isError && (

@@ -30,6 +30,7 @@ function mapMyResponseItem(r: MyResponseListResponse["items"][number]): Response
         resumeTitle: r.resume_title,
         date: r.date,
         status: r.status as ResponseItem["status"],
+        rejectionReason: r.rejection_reason,
         busyInOtherProject: r.busy_in_other_project,
     };
 }

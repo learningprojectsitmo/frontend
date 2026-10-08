@@ -297,6 +297,8 @@ export type ResponseActionInput = {
     projectId: number;
     responseId: number;
     workspaceId?: number | null;
+    /** Причина отказа (только для `rejectResponse`): до 200 символов, опциональна. */
+    reason?: string | null;
 };
 
 export const useAcceptResponse = () => {
@@ -312,11 +314,15 @@ export const useAcceptResponse = () => {
 export const rejectResponse = async ({
     projectId,
     responseId,
-}: {
-    projectId: number;
-    responseId: number;
-}): Promise<{ message: string }> => {
-    return await api.put(`/projects/${projectId}/responses/${responseId}/reject`);
+    reason,
+}: ResponseActionInput): Promise<{ message: string }> => {
+    // Бэкенд принимает объект: пустая причина приходит как `null`, а не как
+    // пустая строка — схема нормализует и то и другое, но явный null
+    // соответствует колонке `response.rejection_reason IS NULL`.
+    const trimmed = reason?.trim();
+    return await api.put(`/projects/${projectId}/responses/${responseId}/reject`, {
+        reason: trimmed ? trimmed : null,
+    });
 };
 
 export const useRejectResponse = () => {
@@ -614,6 +620,7 @@ export const useAllResponses = (params: AllResponsesParams = {}) => {
                     status: string;
                     allow_multi_project_participation: boolean;
                     busy_in_other_project: boolean;
+                    rejection_reason: string | null;
                     created_at: string | null;
                     updated_at: string | null;
                 }>;
