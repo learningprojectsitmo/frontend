@@ -215,6 +215,36 @@ export const useRemoveParticipant = () => {
     });
 };
 
+export const updateParticipantRole = async ({
+    projectId,
+    userId,
+    role,
+}: {
+    projectId: number;
+    userId: number;
+    role: string | null;
+}): Promise<ProjectFullResponse> => {
+    return await api.patch(`/projects/${projectId}/participants/${userId}/role`, { role });
+};
+
+export type UpdateParticipantRoleInput = {
+    projectId: number;
+    userId: number;
+    /** `null` снимает ручную роль: бэкенд снова выводит её автоматически. */
+    role: string | null;
+    workspaceId?: number | null;
+};
+
+export const useUpdateParticipantRole = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (variables: UpdateParticipantRoleInput) => updateParticipantRole(variables),
+        onSuccess: (_data, variables) => {
+            invalidateProjectImpact(queryClient, variables.projectId, variables.workspaceId);
+        },
+    });
+};
+
 export const applyForProject = async ({
     projectId,
     vacancyId,

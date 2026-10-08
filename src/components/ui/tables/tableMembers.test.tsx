@@ -160,3 +160,140 @@ describe("TableMembers: контакт Telegram", () => {
         expect(onRowClick).not.toHaveBeenCalled();
     });
 });
+
+function findRoleButton(): HTMLButtonElement | null {
+    return container.querySelector<HTMLButtonElement>('button[title="Изменить роль"]');
+}
+
+function setInputValue(input: HTMLInputElement, value: string) {
+    const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+    )!.set!;
+    setter.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+describe("TableMembers: редактирование роли", () => {
+    it("не делает роль редактируемой без прав", () => {
+        // given
+        // when
+        renderTable();
+        // then
+        expect(findRoleButton()).toBeNull();
+        expect(container.textContent).toContain("Участник");
+    });
+
+    it("показывает кнопку роли, когда есть право и обработчик", () => {
+        // given / when
+        renderTable({ canEditRole: true, onRoleChange: vi.fn() });
+        // then
+        expect(findRoleButton()?.textContent).toBe("Участник");
+    });
+
+    it("показывает прочерк для пустой роли", () => {
+        // given / when
+        renderTable({
+            members: [{ ...baseMember, role: "" }],
+            canEditRole: true,
+            onRoleChange: vi.fn(),
+        });
+        // then
+        expect(findRoleButton()?.textContent).toBe("—");
+    });
+
+    it("по клику открывает поле ввода", () => {
+        // given
+        renderTable({ canEditRole: true, onRoleChange: vi.fn() });
+        // when
+        act(() => {
+            findRoleButton()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+        // then
+        const input = container.querySelector<HTMLInputElement>('input[aria-label="Роль"]');
+        expect(input).not.toBeNull();
+        expect(input?.value).toBe("Участник");
+    });
+
+    it("по Enter сохраняет новую роль по id участия", () => {
+        // given
+        const onRoleChange = vi.fn();
+        renderTable({ canEditRole: true, onRoleChange });
+        act(() => {
+            findRoleButton()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+        const input = container.querySelector<HTMLInputElement>('input[aria-label="Роль"]')!;
+        // when
+        act(() => {
+            setInputValue(input, "Тимлид");
+            input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        });
+        // then
+        expect(onRoleChange).toHaveBeenCalledWith(1, "Тимлид");
+    });
+
+    it("пустое значение сохраняет как null, чтобы вернуть авто-роль", () => {
+        // given
+        const onRoleChange = vi.fn();
+        renderTable({ canEditRole: true, onRoleChange });
+        act(() => {
+            findRoleButton()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+        const input = container.querySelector<HTMLInputElement>('input[aria-label="Роль"]')!;
+        // when
+        act(() => {
+            setInputValue(input, "   ");
+            input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        });
+        // then
+        expect(onRoleChange).toHaveBeenCalledWith(1, null);
+    });
+
+    it("не сохраняет, если значение не изменилось", () => {
+        // given
+        const onRoleChange = vi.fn();
+        renderTable({ canEditRole: true, onRoleChange });
+        act(() => {
+            findRoleButton()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+        const input = container.querySelector<HTMLInputElement>('input[aria-label="Роль"]')!;
+        // when
+        act(() => {
+            input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        });
+        // then
+        expect(onRoleChange).not.toHaveBeenCalled();
+    });
+
+    it("по Escape отменяет правку без сохранения", () => {
+        // given
+        const onRoleChange = vi.fn();
+        renderTable({ canEditRole: true, onRoleChange });
+        act(() => {
+            findRoleButton()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+        const input = container.querySelector<HTMLInputElement>('input[aria-label="Роль"]')!;
+        // when
+        act(() => {
+            setInputValue(input, "Тимлид");
+            input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+        // then
+        expect(onRoleChange).not.toHaveBeenCalled();
+        expect(findRoleButton()?.textContent).toBe("Участник");
+    });
+
+    it("клик по роли не всплывает до обработчика строки", () => {
+        // given
+        const onRowClick = vi.fn();
+        renderTable({ canEditRole: true, onRoleChange: vi.fn(), onRowClick });
+        // when
+        act(() => {
+            findRoleButton()!.dispatchEvent(
+                new MouseEvent("click", { bubbles: true, cancelable: true }),
+            );
+        });
+        // then
+        expect(onRowClick).not.toHaveBeenCalled();
+    });
+});

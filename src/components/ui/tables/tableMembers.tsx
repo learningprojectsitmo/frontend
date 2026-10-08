@@ -1,4 +1,5 @@
 import { Ellipsis, Mail, Linkedin, ExternalLink, UserMinus, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { type Member } from "@/types/tables/forTables";
 import { paths } from "@/config/paths";
@@ -34,6 +35,86 @@ function isStringContacts(
     return typeof c === "string";
 }
 
+/**
+ * Ячейка «Роль»: с правом управления превращается в инлайн-редактор.
+ *
+ * Пустое значение (роль не выведена автоматически и не задана вручную)
+ * показывается прочерком, а не пустотой — иначе непонятно, есть ли что
+ * редактировать. Пустая строка при сохранении уходит как `null`: бэкенд
+ * снимает ручную роль и снова выводит её автоматически.
+ */
+const RoleCell = ({
+    member,
+    canEdit,
+    onRoleChange,
+}: {
+    member: Member;
+    canEdit: boolean;
+    onRoleChange?: (memberId: number, role: string | null) => void;
+}) => {
+    const [editing, setEditing] = useState(false);
+    const [value, setValue] = useState(member.role);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setValue(member.role);
+    }, [member.role]);
+
+    useEffect(() => {
+        if (editing) inputRef.current?.focus();
+    }, [editing]);
+
+    if (!canEdit || !onRoleChange) {
+        return <>{member.role || "—"}</>;
+    }
+
+    const commit = () => {
+        setEditing(false);
+        const next = value.trim();
+        if (next === member.role) return;
+        onRoleChange(member.id, next || null);
+    };
+
+    if (!editing) {
+        return (
+            <button
+                type="button"
+                title="Изменить роль"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setEditing(true);
+                }}
+                className="-mx-1 rounded px-1 text-left hover:bg-gray-100 transition"
+            >
+                {member.role || "—"}
+            </button>
+        );
+    }
+
+    return (
+        <input
+            ref={inputRef}
+            value={value}
+            maxLength={200}
+            aria-label="Роль"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    commit();
+                } else if (e.key === "Escape") {
+                    setValue(member.role);
+                    setEditing(false);
+                }
+            }}
+            className="w-full rounded border border-[#2B7FFF] px-1 py-0.5 text-[13px] outline-none"
+        />
+    );
+};
+
 const HEADER_CELLS: { label: string; className?: string }[] = [
     { label: "Имя" },
     { label: "Проекты" },
@@ -51,6 +132,10 @@ interface TableProps {
     showProject?: boolean;
     showStatus?: boolean;
     onRowClick?: (member: Member) => void;
+    /** Разрешить редактирование роли прямо в таблице (автор проекта/админ). */
+    canEditRole?: boolean;
+    /** Сохранение роли: `null` — снять ручную роль и вывести её автоматически. */
+    onRoleChange?: (memberId: number, role: string | null) => void;
 }
 
 export const TableMembers = ({
@@ -60,6 +145,8 @@ export const TableMembers = ({
     showProject = false,
     showStatus = false,
     onRowClick,
+    canEditRole = false,
+    onRoleChange,
 }: TableProps) => {
     const headers = [
         HEADER_CELLS[0],
@@ -165,7 +252,13 @@ export const TableMembers = ({
                                 </td>
                             )}
 
-                            <td className="px-6 py-4 text-app-text font-sans">{member.role}</td>
+                            <td className="px-6 py-4 text-app-text font-sans">
+                                <RoleCell
+                                    member={member}
+                                    canEdit={canEditRole}
+                                    onRoleChange={onRoleChange}
+                                />
+                            </td>
 
                             <td className="px-6 py-4 text-app-text font-sans hidden sm:table-cell">
                                 {isStringContacts(member.contacts) ? (

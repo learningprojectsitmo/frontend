@@ -16,6 +16,7 @@ import {
     useProject,
     useUpdateProject,
     useRemoveParticipant,
+    useUpdateParticipantRole,
     useAcceptResponse,
     useRejectResponse,
     useDeleteProject,
@@ -581,6 +582,7 @@ const SpaceRoute = () => {
     const [sortBy, setSortBy] = useState("default");
 
     const removeParticipantMutation = useRemoveParticipant();
+    const updateParticipantRoleMutation = useUpdateParticipantRole();
     const acceptResponseMutation = useAcceptResponse();
     const rejectResponseMutation = useRejectResponse();
     const deleteProjectMutation = useDeleteProject();
@@ -863,6 +865,28 @@ const SpaceRoute = () => {
             );
         },
         [project, removeParticipantMutation],
+    );
+
+    const handleRoleChange = useCallback(
+        (memberId: number, role: string | null) => {
+            const member = project?.members.find((m) => m.id === memberId);
+            // id строки участия ≠ id пользователя: эндпоинт адресуется по
+            // пользователю, поэтому берём userId найденного участника.
+            if (!member || !member.userId) return;
+            updateParticipantRoleMutation.mutate(
+                {
+                    projectId: project?.id || 0,
+                    userId: member.userId,
+                    role,
+                    workspaceId: project?.spaceId,
+                },
+                {
+                    onSuccess: () => toast.success("Роль обновлена"),
+                    onError: () => toast.error("Не удалось обновить роль"),
+                },
+            );
+        },
+        [project, updateParticipantRoleMutation],
     );
 
     const [pendingResponseAction, setPendingResponseAction] = useState<number | null>(null);
@@ -1950,6 +1974,8 @@ const SpaceRoute = () => {
                                     members={filteredMembers}
                                     removeMember={handleRemoveMember}
                                     removeActionLabel="Удалить из команды"
+                                    canEditRole={canManageTeam}
+                                    onRoleChange={handleRoleChange}
                                 />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
