@@ -362,6 +362,8 @@ export type ProjectFullResponse = {
     members: BackendMember[];
     replycants: BackendReplycant[];
     vacancies: BackendVacancy[];
+    /** Роли, снятые из проекта (архив). Отдаются отдельно от `vacancies`. */
+    archived_vacancies: BackendVacancy[];
     project_type_id: number | null;
     current_stage_id: number | null;
     stage_pending_approval: boolean;

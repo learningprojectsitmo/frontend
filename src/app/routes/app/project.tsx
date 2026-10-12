@@ -70,7 +70,7 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type BackendVacancy, type ProjectFullResponse } from "@/types/api";
-import { findBlockedVacancies, type EditableVacancy } from "@/features/project/utils/vacancy-sync";
+import { type EditableVacancy } from "@/features/project/utils/vacancy-sync";
 import {
     hasFormErrors,
     validateProjectForm,
@@ -120,16 +120,6 @@ function formatDate(iso: string): string {
         year: "numeric",
     });
 }
-
-/** Русские формы числительных: 1 отклик, 2 отклика, 5 откликов. */
-function pluralize(count: number, words: readonly [string, string, string]): string {
-    if (count % 10 === 1 && count % 100 !== 11) return words[0];
-    if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))
-        return words[1];
-    return words[2];
-}
-
-const RESPONSE_WORDS = ["отклик", "отклика", "откликов"] as const;
 
 /** Общая часть оформления полей ввода в форме редактирования. */
 const FIELD_INPUT_CLASS =
@@ -278,23 +268,20 @@ const SpaceRoute = () => {
     const [tagInput, setTagInput] = useState("");
     const [editRoles, setEditRoles] = useState<EditableVacancy[]>([]);
     /**
-     * Сколько АКТИВНЫХ откликов и приглашений висит на каждой роли проекта.
+     * Архивные роли, которых нет в форме прямо сейчас.
      *
-     * Считаем только активные статусы (`pending`/`accepted`/`in_team`) — так
-     * же, как бэкенд в `get_response_counts_by_vacancy_ids`, иначе форма
-     * прошла бы проверку, а запрос упал бы с 422. Отклонённые и отозванные
-     * записи роль не блокируют: отказом её и освобождают.
+     * Бэкенд помечает снятую роль `archived`, а не удаляет: на неё ссылается
+     * `response.vacancy_id`, поэтому история откликов и счётчик мест роли
+     * сохраняются. Показываем их отдельным блоком, чтобы роль можно было
+     * вернуть. Уже возвращённые в форму роли из архива не дублируются —
+     * `restoreRole` добавил их в `editRoles`, и после сохранения архив
+     * опустеет.
      */
-    /**
-     * Роли, которые сняли в форме, но на которых есть активные отклики.
-     *
-     * Бэкенд такие удаления отклоняет: роль осталась бы в откликах, а новая
-     * форма её больше не показывает. Ловим это здесь, чтобы объяснить причину
-     * прямо в форме и дать вернуть роль, а не гадать по общему «не удалось
-     * сохранить».
-     */
-    const blockedRemovedRoles = useMemo(
-        () => findBlockedVacancies(dataProject?.vacancies, editRoles, dataProject?.replycants),
+    const archivedRoles = useMemo(
+        () =>
+            (dataProject?.archived_vacancies ?? []).filter(
+                (v) => !editRoles.some((r) => r.id === v.id),
+            ),
         [dataProject, editRoles],
     );
     const updateProjectMutation = useUpdateProject();
@@ -425,19 +412,6 @@ const SpaceRoute = () => {
             maxParticipants: dataProject.max_participants,
         });
 
-        // Проверяем до запроса: ответ сервера с этой же причиной пришёл бы
-        // общим текстом, и пользователь не понял бы, что именно чинить.
-        if (blockedRemovedRoles.length > 0) {
-            errors.form = `Нельзя сохранить: ${blockedRemovedRoles
-                .map(
-                    ({ vacancy, responses }) =>
-                        `«${vacancy.title}» — ${responses} ${pluralize(responses, RESPONSE_WORDS)}`,
-                )
-                .join(
-                    "; ",
-                )}. Роль с активными откликами удалить нельзя: верните её или примите/отклоните отклики на вкладке «Заявки и приглашения».`;
-        }
-
         if (hasFormErrors(errors)) {
             setFieldErrors(errors);
             focusFirstError();
@@ -445,6 +419,12 @@ const SpaceRoute = () => {
         }
 
         setFieldErrors({ roles: [] });
+        // Роли, которые исчезнут из формы при сохранении: бэкенд не удаляет
+        // их, а помечает архивными. Список нужен для уведомления, иначе роль
+        // пропадает молча и непонятно, куда делась.
+        const archivedOnSave = (dataProject.vacancies ?? []).filter(
+            (v) => !editRoles.some((r) => r.id === v.id),
+        );
         try {
             await updateProjectMutation.mutateAsync({
                 id: String(dataProject.id),
@@ -464,11 +444,15 @@ const SpaceRoute = () => {
                     })),
                 },
             });
+            if (archivedOnSave.length === 1) {
+                toast.success(`Роль «${archivedOnSave[0].title}» перемещена в архив`);
+            } else if (archivedOnSave.length > 1) {
+                toast.success(`В архив перемещено ролей: ${archivedOnSave.length}`);
+            }
             setIsEditing(false);
         } catch (error) {
-            // Ответ сервера — не ошибка конкретного поля (например, блокировка
-            // удаления роли на бэкенде), поэтому показываем его над кнопкой, а
-            // не под случайным инпутом.
+            // Ответ сервера — не ошибка конкретного поля, поэтому показываем
+            // его над кнопкой, а не под случайным инпутом.
             setFieldErrors({
                 roles: [],
                 form: getApiErrorMessage(error, "Не удалось сохранить изменения", true),
@@ -482,9 +466,6 @@ const SpaceRoute = () => {
     };
 
     const removeRole = (index: number) => {
-        // Роль с активными откликами не уйдёт из проекта: `findBlockedVacancies`
-        // покажет её в блоке под формой с кнопкой «Вернуть роль». Всплывающее
-        // предупреждение не нужно — оно исчезает и не отвечает, что делать.
         setEditRoles(editRoles.filter((_, i) => i !== index));
     };
 
@@ -498,7 +479,7 @@ const SpaceRoute = () => {
                 count: vacancy.required_count,
             },
         ]);
-        toast.success(`Роль «${vacancy.title}» возвращена`);
+        toast.success(`Роль «${vacancy.title}» возвращена — сохраните проект`);
     };
 
     const updateRole = (index: number, field: string, value: string | number | string[]) => {
@@ -1840,41 +1821,45 @@ const SpaceRoute = () => {
                                             максимальное количество ({dataProject.max_participants})
                                         </div>
                                     )}
-                                {isEditing && blockedRemovedRoles.length > 0 && (
-                                    // Причина блокировки сохранения — здесь, у самой роли,
-                                    // а не только во всплывающем сообщении: иначе непонятно,
-                                    // что именно мешает сохранить.
+                                {archivedRoles.length > 0 && (
                                     <div
-                                        data-field-error=""
-                                        role="alert"
-                                        className="self-stretch mt-3 rounded-lg border border-red-200 bg-red-50 p-3 flex flex-col gap-2"
+                                        data-testid="archived-roles"
+                                        className="self-stretch mt-3 rounded-lg border border-gray-200 dark:border-[#ffffff1f] bg-app-surface p-3 flex flex-col gap-2"
                                     >
-                                        <div className="text-[13px] font-semibold text-red-700">
-                                            Не удастся сохранить: роли с активными откликами удалять
-                                            нельзя
+                                        <div className="text-[13px] font-semibold text-gray-600 dark:text-gray-300">
+                                            Архивные роли
                                         </div>
-                                        {blockedRemovedRoles.map(({ vacancy, responses }) => (
+                                        <div className="text-[12px] text-gray-500">
+                                            Роли сняты из проекта, но сохранены в истории откликов.
+                                            {isEditing
+                                                ? " Восстановите роль, чтобы снова набирать участников."
+                                                : " Вернуть роль можно в режиме редактирования."}
+                                        </div>
+                                        {archivedRoles.map((vacancy) => (
                                             <div
                                                 key={vacancy.id}
-                                                className="flex flex-wrap items-center gap-2 text-[13px] text-red-700"
+                                                className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-gray-500"
                                             >
                                                 <span>
-                                                    «{vacancy.title}» — {responses}{" "}
-                                                    {pluralize(responses, RESPONSE_WORDS)}
+                                                    «{vacancy.title}»
+                                                    {vacancy.tasks.length > 0 && (
+                                                        <span className="text-gray-400">
+                                                            {" "}
+                                                            — {vacancy.tasks.join("; ")}
+                                                        </span>
+                                                    )}
                                                 </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => restoreRole(vacancy)}
-                                                    className="text-[13px] font-semibold underline hover:no-underline"
-                                                >
-                                                    Вернуть роль
-                                                </button>
+                                                {isEditing && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => restoreRole(vacancy)}
+                                                        className="text-[13px] font-semibold text-[#2B7FFF] underline hover:no-underline"
+                                                    >
+                                                        Восстановить
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
-                                        <div className="text-[12px] text-red-600">
-                                            Примите или отклоните отклики на вкладке «Заявки и
-                                            приглашения», чтобы освободить роль.
-                                        </div>
                                     </div>
                                 )}
                             </div>
