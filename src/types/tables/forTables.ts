@@ -26,6 +26,8 @@ export interface Replycant {
     role: string;
     type: "response" | "invitation";
     responseStatus: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team" | "cancelled";
+    /** Причина отказа (`rejected`), если руководитель её указал. */
+    rejectionReason?: string | null;
     status: "invite" | "invited";
     userId: number;
     allowMultiProjectParticipation: boolean;

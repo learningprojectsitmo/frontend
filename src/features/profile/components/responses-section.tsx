@@ -278,6 +278,9 @@ export function ResponsesSection() {
                                 date={item.date}
                                 dateLabel="Отклик отправлен"
                                 status={st}
+                                rejectionReason={
+                                    item.status === "rejected" ? item.rejectionReason : null
+                                }
                                 actions={actions}
                             />
                         );
@@ -315,6 +318,14 @@ export function ResponsesSection() {
                                             >
                                                 {st.text}
                                             </span>
+                                            {item.status === "rejected" && item.rejectionReason && (
+                                                <span
+                                                    className="mt-1 block max-w-[220px] truncate text-[12px] text-gray-500"
+                                                    title={item.rejectionReason}
+                                                >
+                                                    {item.rejectionReason}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="py-3 px-4">
                                             {item.status === "pending" && (

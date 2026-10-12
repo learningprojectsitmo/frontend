@@ -16,6 +16,7 @@ import {
     useProject,
     useUpdateProject,
     useRemoveParticipant,
+    useUpdateParticipantRole,
     useAcceptResponse,
     useRejectResponse,
     useDeleteProject,
@@ -69,7 +70,7 @@ import {
 import { TableMembers } from "@/components/ui/tables/tableMembers";
 import { TableInvitations } from "@/components/ui/tables/tableInvitations";
 import { type BackendVacancy, type ProjectFullResponse } from "@/types/api";
-import { findBlockedVacancies, type EditableVacancy } from "@/features/project/utils/vacancy-sync";
+import { type EditableVacancy } from "@/features/project/utils/vacancy-sync";
 import {
     hasFormErrors,
     validateProjectForm,
@@ -79,6 +80,7 @@ import { type Member, type Replycant } from "@/types/tables/forTables";
 import { ApplyDialog } from "@/features/project/components/apply-dialog";
 import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
+import { RejectResponseDialog } from "@/features/project/components/reject-response-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
@@ -118,16 +120,6 @@ function formatDate(iso: string): string {
         year: "numeric",
     });
 }
-
-/** Русские формы числительных: 1 отклик, 2 отклика, 5 откликов. */
-function pluralize(count: number, words: readonly [string, string, string]): string {
-    if (count % 10 === 1 && count % 100 !== 11) return words[0];
-    if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))
-        return words[1];
-    return words[2];
-}
-
-const RESPONSE_WORDS = ["отклик", "отклика", "откликов"] as const;
 
 /** Общая часть оформления полей ввода в форме редактирования. */
 const FIELD_INPUT_CLASS =
@@ -212,6 +204,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
             userId: r.user_id,
             allowMultiProjectParticipation: r.allow_multi_project_participation,
             busyInOtherProject: r.busy_in_other_project,
+            rejectionReason: r.rejection_reason,
         })),
     };
 }
@@ -275,22 +268,20 @@ const SpaceRoute = () => {
     const [tagInput, setTagInput] = useState("");
     const [editRoles, setEditRoles] = useState<EditableVacancy[]>([]);
     /**
-     * Сколько откликов и приглашений висит на каждой роли проекта.
+     * Архивные роли, которых нет в форме прямо сейчас.
      *
-     * Считаем все статусы — так же, как бэкенд в
-     * `get_response_counts_by_vacancy_ids`, иначе форма прошла бы проверку,
-     * а запрос упал бы с 422.
+     * Бэкенд помечает снятую роль `archived`, а не удаляет: на неё ссылается
+     * `response.vacancy_id`, поэтому история откликов и счётчик мест роли
+     * сохраняются. Показываем их отдельным блоком, чтобы роль можно было
+     * вернуть. Уже возвращённые в форму роли из архива не дублируются —
+     * `restoreRole` добавил их в `editRoles`, и после сохранения архив
+     * опустеет.
      */
-    /**
-     * Роли, которые сняли в форме, но на которые кто-то уже откликнулся.
-     *
-     * Бэкенд такие удаления отклоняет: роль пропала бы из откликов, а её
-     * `vacancy_id` обнулился бы. Ловим это здесь, чтобы объяснить причину
-     * прямо в форме и дать вернуть роль, а не гадать по общему «не удалось
-     * сохранить».
-     */
-    const blockedRemovedRoles = useMemo(
-        () => findBlockedVacancies(dataProject?.vacancies, editRoles, dataProject?.replycants),
+    const archivedRoles = useMemo(
+        () =>
+            (dataProject?.archived_vacancies ?? []).filter(
+                (v) => !editRoles.some((r) => r.id === v.id),
+            ),
         [dataProject, editRoles],
     );
     const updateProjectMutation = useUpdateProject();
@@ -421,19 +412,6 @@ const SpaceRoute = () => {
             maxParticipants: dataProject.max_participants,
         });
 
-        // Проверяем до запроса: ответ сервера с этой же причиной пришёл бы
-        // общим текстом, и пользователь не понял бы, что именно чинить.
-        if (blockedRemovedRoles.length > 0) {
-            errors.form = `Нельзя сохранить: ${blockedRemovedRoles
-                .map(
-                    ({ vacancy, responses }) =>
-                        `«${vacancy.title}» — ${responses} ${pluralize(responses, RESPONSE_WORDS)}`,
-                )
-                .join(
-                    "; ",
-                )}. Роль с откликами удалить нельзя: верните её или обработайте отклики на вкладке «Заявки и приглашения».`;
-        }
-
         if (hasFormErrors(errors)) {
             setFieldErrors(errors);
             focusFirstError();
@@ -441,6 +419,12 @@ const SpaceRoute = () => {
         }
 
         setFieldErrors({ roles: [] });
+        // Роли, которые исчезнут из формы при сохранении: бэкенд не удаляет
+        // их, а помечает архивными. Список нужен для уведомления, иначе роль
+        // пропадает молча и непонятно, куда делась.
+        const archivedOnSave = (dataProject.vacancies ?? []).filter(
+            (v) => !editRoles.some((r) => r.id === v.id),
+        );
         try {
             await updateProjectMutation.mutateAsync({
                 id: String(dataProject.id),
@@ -460,11 +444,15 @@ const SpaceRoute = () => {
                     })),
                 },
             });
+            if (archivedOnSave.length === 1) {
+                toast.success(`Роль «${archivedOnSave[0].title}» перемещена в архив`);
+            } else if (archivedOnSave.length > 1) {
+                toast.success(`В архив перемещено ролей: ${archivedOnSave.length}`);
+            }
             setIsEditing(false);
         } catch (error) {
-            // Ответ сервера — не ошибка конкретного поля (например, блокировка
-            // удаления роли на бэкенде), поэтому показываем его над кнопкой, а
-            // не под случайным инпутом.
+            // Ответ сервера — не ошибка конкретного поля, поэтому показываем
+            // его над кнопкой, а не под случайным инпутом.
             setFieldErrors({
                 roles: [],
                 form: getApiErrorMessage(error, "Не удалось сохранить изменения", true),
@@ -478,9 +466,6 @@ const SpaceRoute = () => {
     };
 
     const removeRole = (index: number) => {
-        // Роль с откликами всё равно не удалится: `findBlockedVacancies`
-        // покажет её в блоке под формой с кнопкой «Вернуть роль». Всплывающее
-        // предупреждение не нужно — оно исчезает и не отвечает, что делать.
         setEditRoles(editRoles.filter((_, i) => i !== index));
     };
 
@@ -494,7 +479,7 @@ const SpaceRoute = () => {
                 count: vacancy.required_count,
             },
         ]);
-        toast.success(`Роль «${vacancy.title}» возвращена`);
+        toast.success(`Роль «${vacancy.title}» возвращена — сохраните проект`);
     };
 
     const updateRole = (index: number, field: string, value: string | number | string[]) => {
@@ -578,6 +563,7 @@ const SpaceRoute = () => {
     const [sortBy, setSortBy] = useState("default");
 
     const removeParticipantMutation = useRemoveParticipant();
+    const updateParticipantRoleMutation = useUpdateParticipantRole();
     const acceptResponseMutation = useAcceptResponse();
     const rejectResponseMutation = useRejectResponse();
     const deleteProjectMutation = useDeleteProject();
@@ -862,6 +848,28 @@ const SpaceRoute = () => {
         [project, removeParticipantMutation],
     );
 
+    const handleRoleChange = useCallback(
+        (memberId: number, role: string | null) => {
+            const member = project?.members.find((m) => m.id === memberId);
+            // id строки участия ≠ id пользователя: эндпоинт адресуется по
+            // пользователю, поэтому берём userId найденного участника.
+            if (!member || !member.userId) return;
+            updateParticipantRoleMutation.mutate(
+                {
+                    projectId: project?.id || 0,
+                    userId: member.userId,
+                    role,
+                    workspaceId: project?.spaceId,
+                },
+                {
+                    onSuccess: () => toast.success("Роль обновлена"),
+                    onError: () => toast.error("Не удалось обновить роль"),
+                },
+            );
+        },
+        [project, updateParticipantRoleMutation],
+    );
+
     const [pendingResponseAction, setPendingResponseAction] = useState<number | null>(null);
 
     /**
@@ -894,17 +902,35 @@ const SpaceRoute = () => {
         [project, acceptResponseMutation, pendingResponseAction],
     );
 
+    /**
+     * Отказ открывает диалог с опциональной причиной: сразу мутировать нельзя,
+     * иначе причина никогда не была бы указана. Сама отправка — в
+     * `handleRejectResponseConfirmed`.
+     */
+    const [rejectDialogResponseId, setRejectDialogResponseId] = useState<number | null>(null);
+    const rejectDialogApplicant =
+        project?.replycants.find((r) => r.id === rejectDialogResponseId)?.name ?? "";
+
     const handleRejectResponse = useCallback(
         (responseId: number) => {
             if (pendingResponseAction !== null) return;
             const replycant = project?.replycants.find((r) => r.id === responseId);
             if (!replycant) return;
-            setPendingResponseAction(responseId);
+            setRejectDialogResponseId(responseId);
+        },
+        [project, pendingResponseAction],
+    );
+
+    const handleRejectResponseConfirmed = useCallback(
+        (reason: string | null) => {
+            if (rejectDialogResponseId === null || pendingResponseAction !== null) return;
+            setPendingResponseAction(rejectDialogResponseId);
             rejectResponseMutation.mutate(
-                { projectId: project?.id || 0, responseId },
+                { projectId: project?.id || 0, responseId: rejectDialogResponseId, reason },
                 {
                     onSuccess: () => {
                         toast.success("Отклик отклонён");
+                        setRejectDialogResponseId(null);
                     },
                     onError: () => {
                         toast.error("Не удалось отклонить отклик");
@@ -913,7 +939,7 @@ const SpaceRoute = () => {
                 },
             );
         },
-        [project, rejectResponseMutation, pendingResponseAction],
+        [project, rejectResponseMutation, pendingResponseAction, rejectDialogResponseId],
     );
 
     const queryClient = useQueryClient();
@@ -1795,40 +1821,45 @@ const SpaceRoute = () => {
                                             максимальное количество ({dataProject.max_participants})
                                         </div>
                                     )}
-                                {isEditing && blockedRemovedRoles.length > 0 && (
-                                    // Причина блокировки сохранения — здесь, у самой роли,
-                                    // а не только во всплывающем сообщении: иначе непонятно,
-                                    // что именно мешает сохранить.
+                                {archivedRoles.length > 0 && (
                                     <div
-                                        data-field-error=""
-                                        role="alert"
-                                        className="self-stretch mt-3 rounded-lg border border-red-200 bg-red-50 p-3 flex flex-col gap-2"
+                                        data-testid="archived-roles"
+                                        className="self-stretch mt-3 rounded-lg border border-gray-200 dark:border-[#ffffff1f] bg-app-surface p-3 flex flex-col gap-2"
                                     >
-                                        <div className="text-[13px] font-semibold text-red-700">
-                                            Не удастся сохранить: роли с откликами удалять нельзя
+                                        <div className="text-[13px] font-semibold text-gray-600 dark:text-gray-300">
+                                            Архивные роли
                                         </div>
-                                        {blockedRemovedRoles.map(({ vacancy, responses }) => (
+                                        <div className="text-[12px] text-gray-500">
+                                            Роли сняты из проекта, но сохранены в истории откликов.
+                                            {isEditing
+                                                ? " Восстановите роль, чтобы снова набирать участников."
+                                                : " Вернуть роль можно в режиме редактирования."}
+                                        </div>
+                                        {archivedRoles.map((vacancy) => (
                                             <div
                                                 key={vacancy.id}
-                                                className="flex flex-wrap items-center gap-2 text-[13px] text-red-700"
+                                                className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-gray-500"
                                             >
                                                 <span>
-                                                    «{vacancy.title}» — {responses}{" "}
-                                                    {pluralize(responses, RESPONSE_WORDS)}
+                                                    «{vacancy.title}»
+                                                    {vacancy.tasks.length > 0 && (
+                                                        <span className="text-gray-400">
+                                                            {" "}
+                                                            — {vacancy.tasks.join("; ")}
+                                                        </span>
+                                                    )}
                                                 </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => restoreRole(vacancy)}
-                                                    className="text-[13px] font-semibold underline hover:no-underline"
-                                                >
-                                                    Вернуть роль
-                                                </button>
+                                                {isEditing && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => restoreRole(vacancy)}
+                                                        className="text-[13px] font-semibold text-[#2B7FFF] underline hover:no-underline"
+                                                    >
+                                                        Восстановить
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
-                                        <div className="text-[12px] text-red-600">
-                                            Обработайте отклики на вкладке «Заявки и приглашения»,
-                                            чтобы освободить роль.
-                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1928,6 +1959,8 @@ const SpaceRoute = () => {
                                     members={filteredMembers}
                                     removeMember={handleRemoveMember}
                                     removeActionLabel="Удалить из команды"
+                                    canEditRole={canManageTeam}
+                                    onRoleChange={handleRoleChange}
                                 />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -1986,7 +2019,7 @@ const SpaceRoute = () => {
                                 members={filteredReplycants}
                                 addToTeam={handleAcceptResponse}
                                 onReject={handleRejectResponse}
-                                canManage={isCreator}
+                                canManage={canManageProject}
                                 currentUserId={user?.id}
                                 onAcceptInvitation={handleAcceptInvitationRequest}
                                 onRejectInvitation={handleRejectInvitation}
@@ -2024,6 +2057,16 @@ const SpaceRoute = () => {
                         setJoinWarningProject(null);
                         if (candidate) handleAcceptInvitation(candidate.id);
                     }}
+                />
+
+                <RejectResponseDialog
+                    open={rejectDialogResponseId !== null}
+                    applicantName={rejectDialogApplicant}
+                    loading={pendingResponseAction === rejectDialogResponseId}
+                    onOpenChange={(open) => {
+                        if (!open) setRejectDialogResponseId(null);
+                    }}
+                    onConfirm={handleRejectResponseConfirmed}
                 />
 
                 <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

@@ -45,6 +45,8 @@ type ResponseCardProps = {
     date: string;
     dateLabel: string;
     status?: { text: string; color: string; bg: string } | null;
+    /** Причина отказа: показывается только при статусе «Отклонён». */
+    rejectionReason?: string | null;
     actions?: ResponseCardAction[];
 };
 
@@ -58,6 +60,7 @@ export function ResponseCard({
     date,
     dateLabel,
     status,
+    rejectionReason,
     actions,
 }: ResponseCardProps) {
     const folderColor = getFolderColor(projectId);
@@ -110,6 +113,12 @@ export function ResponseCard({
             </div>
 
             {description && <RichTextViewer html={description} />}
+
+            {rejectionReason && (
+                <div className="rounded-[10px] border border-red-100 bg-red-50 px-3 py-2 text-[13px] text-red-700">
+                    <span className="font-medium">Причина отказа:</span> {rejectionReason}
+                </div>
+            )}
 
             <div className="flex items-stretch border border-gray-200 rounded-[12px] overflow-hidden text-[13px]">
                 <div className="flex-1 px-3.5 py-2.5 flex flex-col gap-0.5 min-w-0">

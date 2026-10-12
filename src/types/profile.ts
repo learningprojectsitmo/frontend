@@ -10,6 +10,8 @@ export type ResponseItem = {
     resumeTitle: string;
     date: string;
     status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team";
+    /** Причина отказа (`rejected`), если руководитель её указал. */
+    rejectionReason?: string | null;
     /**
      * Уже состоит в другом проекте ЭТОГО пространства. Статус `in_team`
      * выставляется на чтении, когда `allow_multi_project_participation` выключен,

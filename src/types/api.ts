@@ -217,6 +217,8 @@ export type BackendReplycant = {
     role: string;
     type: "response" | "invitation";
     status: "pending" | "accepted" | "rejected" | "withdrawn" | "in_team" | "cancelled";
+    /** Причина отказа, если отклик отклонён (указана не всегда). */
+    rejection_reason: string | null;
     allow_multi_project_participation: boolean;
     /**
      * Уже состоит в другом проекте ЭТОГО пространства. Позволяет отличить
@@ -360,6 +362,8 @@ export type ProjectFullResponse = {
     members: BackendMember[];
     replycants: BackendReplycant[];
     vacancies: BackendVacancy[];
+    /** Роли, снятые из проекта (архив). Отдаются отдельно от `vacancies`. */
+    archived_vacancies: BackendVacancy[];
     project_type_id: number | null;
     current_stage_id: number | null;
     stage_pending_approval: boolean;
@@ -872,6 +876,8 @@ export type MyResponseItem = {
     resume_title: string;
     date: string;
     status: string;
+    /** Причина отказа при статусе `rejected`, если её указал руководитель. */
+    rejection_reason: string | null;
     busy_in_other_project: boolean;
 };
 
@@ -916,6 +922,8 @@ export type ResponseListItem = {
     response_date: string;
     type: string;
     status: string;
+    /** Причина отказа при статусе `rejected`, если её указал руководитель. */
+    rejection_reason: string | null;
     allow_multi_project_participation: boolean;
     busy_in_other_project: boolean;
     created_at: string | null;

@@ -182,8 +182,7 @@ export const TableInvitations = ({
                         </span>
                     )}
                     {member.type === "response" &&
-                        member.responseStatus !== "accepted" &&
-                        member.responseStatus !== "in_team" &&
+                        member.responseStatus === "pending" &&
                         canManage && (
                             <>
                                 <button
@@ -205,10 +204,30 @@ export const TableInvitations = ({
                             </>
                         )}
                     {member.type === "response" &&
-                        member.responseStatus !== "accepted" &&
-                        member.responseStatus !== "in_team" &&
+                        member.responseStatus === "pending" &&
                         !canManage && (
                             <span className="text-app-muted text-[12px]">Ожидает решения</span>
+                        )}
+                    {/* Решение принято: кнопки не показываем, иначе отклонённый
+                        отклик выглядел бы как требующий действия, а повторное
+                        «Принять» вернуло бы 400 «Can only accept pending». */}
+                    {member.type === "response" &&
+                        member.responseStatus !== "pending" &&
+                        member.responseStatus !== "accepted" &&
+                        member.responseStatus !== "in_team" && (
+                            <span className="flex flex-col gap-1">
+                                <span className="text-app-muted text-[12px]">
+                                    {getResolvedStatusLabel(member)}
+                                </span>
+                                {member.responseStatus === "rejected" && member.rejectionReason && (
+                                    <span
+                                        className="text-app-muted text-[11px] max-w-[220px] truncate"
+                                        title={member.rejectionReason}
+                                    >
+                                        Причина: {member.rejectionReason}
+                                    </span>
+                                )}
+                            </span>
                         )}
                     {member.type === "invitation" &&
                         member.userId === currentUserId &&
