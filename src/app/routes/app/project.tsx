@@ -105,12 +105,12 @@ import {
 } from "@/features/kanban/hooks/useKanban";
 import { normalizeResumeHref } from "@/lib/resume";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
-import { useUsers as useKanbanUsers } from "@/features/kanban/hooks/useUsers";
 import {
     defaultFilterState,
     filterColumns,
     type KanbanFilterState,
 } from "@/features/kanban/utils/filter-tasks";
+import { toProjectMembers } from "@/features/kanban/utils/project-members";
 
 function formatDate(iso: string): string {
     const d = new Date(iso);
@@ -655,12 +655,8 @@ const SpaceRoute = () => {
     const [kanbanFilter, setKanbanFilter] = useState<KanbanFilterState>(defaultFilterState);
     const { isOpen: isTaskPanelOpen, editingTask, openEditPanel, closePanel } = useTaskPanel();
     const { data: columns, isLoading: kanbanLoading, refetch } = useBoard(projectId);
-    const { data: kanbanAllUsers } = useKanbanUsers();
 
-    const projectMembers = useMemo(() => {
-        const memberUserIds = new Set((dataProject?.members ?? []).map((m) => m.user_id));
-        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
-    }, [kanbanAllUsers, dataProject]);
+    const projectMembers = useMemo(() => toProjectMembers(dataProject?.members), [dataProject]);
 
     const filteredColumns = useMemo(
         () => filterColumns(columns || [], kanbanFilter, user?.id),

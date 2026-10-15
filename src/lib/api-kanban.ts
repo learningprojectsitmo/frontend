@@ -30,23 +30,6 @@ interface PaginatedResponse<T> {
     total_pages: number;
 }
 
-// Тип для ответа /users
-interface UsersResponse {
-    items: Array<{
-        id: number;
-        email: string;
-        first_name: string;
-        last_name: string;
-        middle_name: string;
-        isu_number: number;
-        tg_nickname: string | null;
-    }>;
-    total: number;
-    page: number;
-    limit: number;
-    total_pages: number;
-}
-
 // Тип для создания колонки (преобразование snake_case в camelCase)
 interface CreateColumnPayload {
     project_id: number;
@@ -100,11 +83,6 @@ interface ReorderPayload {
 }
 
 export const kanbanApi = {
-    // Todo нужны участники команды, а не все пользователи
-    getAllUsers: (): Promise<UsersResponse> => {
-        return api.get("/users/");
-    },
-
     // ========== ДОСКА ==========
 
     getBoard: (projectId: number): Promise<ApiBoard> => {

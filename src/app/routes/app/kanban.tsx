@@ -22,8 +22,6 @@ import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import { Button } from "@/components/ui/button";
 import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-// Todo поменять хук
-import { useUsers } from "@/features/kanban/hooks/useUsers";
 import { useUser } from "@/lib/auth";
 import { useProject } from "@/lib/projects";
 import {
@@ -31,6 +29,7 @@ import {
     filterColumns,
     type KanbanFilterState,
 } from "@/features/kanban/utils/filter-tasks";
+import { toProjectMembers } from "@/features/kanban/utils/project-members";
 
 export const KanbanRoute = () => {
     const { spaceId } = useParams<{ spaceId: string }>();
@@ -42,7 +41,6 @@ export const KanbanRoute = () => {
 
     // Данные
     const { data: columns, isLoading, error, refetch } = useBoard(projectId);
-    const { data: kanbanAllUsers } = useUsers();
     const { data: currentUser } = useUser();
     const { data: projectData } = useProject(spaceId || "");
 
@@ -54,10 +52,7 @@ export const KanbanRoute = () => {
         [currentUser, projectData],
     );
 
-    const projectMembers = useMemo(() => {
-        const memberUserIds = new Set((projectData?.members ?? []).map((m) => m.user_id));
-        return (kanbanAllUsers ?? []).filter((u) => memberUserIds.has(u.id));
-    }, [kanbanAllUsers, projectData]);
+    const projectMembers = useMemo(() => toProjectMembers(projectData?.members), [projectData]);
 
     // Отфильтрованные колонки
     const filteredColumns = useMemo(
