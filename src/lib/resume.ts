@@ -59,8 +59,11 @@ export const shareResume = async (id: number): Promise<void> => {
     toast.success("Ссылка скопирована");
 };
 
+// preferServerDetail: сообщения валидации бэкенда (например, «Нельзя скрыть
+// основное резюме…») уже на русском — показываем их как есть, не заменяя
+// общей подсказкой.
 const onSaveError = (error: unknown) =>
-    toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения"));
+    toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения", true));
 const onDeleteError = (error: unknown) =>
     toast.error(getApiErrorMessage(error, "Не удалось удалить"));
 
@@ -105,24 +108,6 @@ export const useUpdateResume = () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(variables.id) });
             queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
             invalidateWorkspaceResumes(queryClient);
-        },
-        onError: onSaveError,
-    });
-};
-
-/**
- * Сделать резюме основным. Основное ровно одно на автора: бэкенд снимает
- * признак с предыдущего и обновляет списки резюме пространств.
- */
-export const useSetDefaultResume = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (id: number) => updateResume({ id, data: { is_default: true } }),
-        onSuccess: (_data, id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
-            invalidateWorkspaceResumes(queryClient);
-            toast.success("Резюме сделано основным");
         },
         onError: onSaveError,
     });

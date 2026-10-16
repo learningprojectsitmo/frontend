@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch/switch";
-import { type ResumeDetail } from "@/types/api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert/alert";
+import { type ResumeDetail, type ResumeSpaceAssign } from "@/types/api";
 import { CoverLetterCard } from "./cover-letter-card";
 import { ProfileCard } from "./profile-card";
 import { ExperienceTimeline } from "./experience-timeline";
@@ -13,9 +14,12 @@ import { EducationCard } from "./education-card";
 import { LanguagesCard } from "./languages-card";
 import { SkillsCard } from "./skills-card";
 import { InterestsCard } from "./interests-card";
+import { SpacesCard } from "./spaces-card";
 
 type Props = {
     data: ResumeDetail;
+    /** Пространства текущего пользователя для выбора публикации в редакторе. */
+    availableSpaces?: { id: number; title: string }[];
     isEditing?: boolean;
     sectionsEditable?: boolean;
     onEdit?: () => void;
@@ -27,6 +31,7 @@ type Props = {
         has_experience: boolean;
         no_experience_description: string | null;
         is_visible: boolean;
+        spaces: ResumeSpaceAssign[];
     }) => void;
     onCancel?: () => void;
     onShare?: () => void;
@@ -35,6 +40,7 @@ type Props = {
 
 export const ResumePage = ({
     data,
+    availableSpaces = [],
     isEditing,
     sectionsEditable = isEditing,
     onEdit,
@@ -49,6 +55,7 @@ export const ResumePage = ({
     const [editHasExperience, setEditHasExperience] = useState(true);
     const [editNoExpDescription, setEditNoExpDescription] = useState("");
     const [editIsVisible, setEditIsVisible] = useState(false);
+    const [editSpaces, setEditSpaces] = useState<ResumeSpaceAssign[]>([]);
     const [headerError, setHeaderError] = useState(false);
 
     useEffect(() => {
@@ -58,6 +65,12 @@ export const ResumePage = ({
         setEditHasExperience(data.resume.has_experience);
         setEditNoExpDescription(data.resume.no_experience_description ?? "");
         setEditIsVisible(data.resume.is_visible);
+        setEditSpaces(
+            data.resume.spaces.map((space) => ({
+                workspace_id: space.workspace_id,
+                is_default: space.is_default,
+            })),
+        );
     }, [
         data.resume.header,
         data.resume.about,
@@ -65,6 +78,7 @@ export const ResumePage = ({
         data.resume.has_experience,
         data.resume.no_experience_description,
         data.resume.is_visible,
+        data.resume.spaces,
     ]);
 
     const handleSaveClick = () => {
@@ -79,6 +93,7 @@ export const ResumePage = ({
             has_experience: editHasExperience,
             no_experience_description: editNoExpDescription || null,
             is_visible: editIsVisible,
+            spaces: editSpaces,
         });
     };
 
@@ -86,6 +101,8 @@ export const ResumePage = ({
         setEditHeader(value);
         if (headerError && value.trim()) setHeaderError(false);
     };
+
+    const hiddenDefaultSpaces = !editIsVisible && editSpaces.some((space) => space.is_default);
 
     return (
         <div className="flex flex-col gap-6">
@@ -124,6 +141,18 @@ export const ResumePage = ({
                         </Button>
                     </div>
                 </div>
+            )}
+
+            {isEditing && hiddenDefaultSpaces && (
+                <Alert variant="destructive">
+                    <Icon name="warning" size={16} />
+                    <AlertTitle>Резюме скрыто, но является основным</AlertTitle>
+                    <AlertDescription>
+                        В некоторых пространствах это резюме показано как основное. При скрытии
+                        основным должно стать другое видимое резюме — иначе сохранить не получится.
+                        Сделайте основным другое резюме в этих пространствах или включите видимость.
+                    </AlertDescription>
+                </Alert>
             )}
 
             <ProfileCard
@@ -191,6 +220,15 @@ export const ResumePage = ({
                 </div>
 
                 <div className="flex flex-col gap-6">
+                    {(data.resume.spaces.length > 0 || isEditing) && (
+                        <SpacesCard
+                            available={availableSpaces}
+                            assigned={data.resume.spaces}
+                            value={editSpaces}
+                            onChange={setEditSpaces}
+                            isEditing={isEditing}
+                        />
+                    )}
                     {(data.links.length > 0 || isEditing) && (
                         <PortfolioCard
                             links={data.links}

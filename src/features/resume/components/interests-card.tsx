@@ -37,19 +37,25 @@ export const InterestsCard = ({ interests, isEditing, resumeId }: Props) => {
                 {isEditing && !showForm && (
                     <button
                         onClick={() => setShowForm(true)}
-                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700"
+                        disabled={resumeId === 0}
+                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
+            {isEditing && resumeId === 0 && (
+                <p className="text-xs text-gray-400 mb-4">
+                    Сначала сохраните резюме, затем добавляйте интересы
+                </p>
+            )}
             <div className="flex flex-wrap gap-2">
                 {interests.map((item) => (
                     <div key={item.id} className="group relative">
                         <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700">
                             {item.name}
                         </span>
-                        {isEditing && (
+                        {isEditing && resumeId !== 0 && (
                             <button
                                 onClick={() => deleteMutation.mutate(item.id)}
                                 className="absolute -top-1.5 -right-1.5 bg-red-400 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"

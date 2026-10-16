@@ -51,12 +51,18 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
                 {isEditing && !showForm && (
                     <button
                         onClick={() => setShowForm(true)}
-                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700"
+                        disabled={resumeId === 0}
+                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
+            {isEditing && resumeId === 0 && (
+                <p className="text-xs text-gray-400 mb-4">
+                    Сначала сохраните резюме, затем добавляйте образование
+                </p>
+            )}
             <div className="space-y-4">
                 {educations.map((edu) => (
                     <div key={edu.id} className="group flex justify-between gap-3">
@@ -67,7 +73,7 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
                                 {[edu.degree, edu.years].filter(Boolean).join(", ")}
                             </p>
                         </div>
-                        {isEditing && (
+                        {isEditing && resumeId !== 0 && (
                             <button
                                 onClick={() => deleteMutation.mutate(edu.id)}
                                 className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity self-start"

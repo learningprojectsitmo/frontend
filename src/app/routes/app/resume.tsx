@@ -26,7 +26,7 @@ import { ResumePage } from "@/features/resume/components/resume-page";
 import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 import { paths } from "@/config/paths";
 import { toast } from "sonner";
-import type { ResumeDetail, ResumeUserInfo } from "@/types/api";
+import type { ResumeDetail, ResumeSpaceAssign, ResumeUserInfo } from "@/types/api";
 
 const ResumeRoute = () => {
     const navigate = useNavigate();
@@ -100,6 +100,7 @@ const ResumeRoute = () => {
         has_experience: boolean;
         no_experience_description: string | null;
         is_visible: boolean;
+        spaces: ResumeSpaceAssign[];
     }) => {
         if (isCreateMode) {
             if (!fields.header.trim()) {
@@ -114,6 +115,7 @@ const ResumeRoute = () => {
                 has_experience: fields.has_experience,
                 no_experience_description: fields.no_experience_description,
                 is_visible: fields.is_visible,
+                spaces: fields.spaces,
             });
             setIsEditing(false);
             navigate(paths.app.resume.getHref(resume.id, null, workspaceId));
@@ -154,7 +156,9 @@ const ResumeRoute = () => {
                 is_visible: false,
                 views_count: 0,
                 invitations_count: 0,
-                is_default: false,
+                spaces: workspaceId
+                    ? [{ workspace_id: workspaceId, workspace_name: "", is_default: false }]
+                    : [],
                 created_at: "",
                 updated_at: "",
             },
@@ -221,6 +225,7 @@ const ResumeRoute = () => {
 
                     <ResumePage
                         data={emptyDetail}
+                        availableSpaces={dataSpaces?.spaces ?? []}
                         isEditing={isEditing}
                         sectionsEditable={canEditSections}
                         onEdit={handleEdit}
@@ -329,6 +334,7 @@ const ResumeRoute = () => {
 
                 <ResumePage
                     data={data}
+                    availableSpaces={dataSpaces?.spaces ?? []}
                     isEditing={isEditing}
                     sectionsEditable={canEditSections}
                     onEdit={isOwner ? handleEdit : undefined}

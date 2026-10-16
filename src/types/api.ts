@@ -371,6 +371,18 @@ export type ProjectFullResponse = {
     stage_rejection: BackendStageRejection | null;
 };
 
+export type ResumeSpaceAssign = {
+    workspace_id: number;
+    /** Сделать резюме основным именно в этом пространстве (не более одного на автора). */
+    is_default?: boolean;
+};
+
+export type ResumeSpaceOut = {
+    workspace_id: number;
+    workspace_name: string;
+    is_default: boolean;
+};
+
 export type ResumeCreate = {
     header: string;
     resume_text?: string | null;
@@ -380,6 +392,8 @@ export type ResumeCreate = {
     has_experience?: boolean;
     no_experience_description?: string | null;
     is_visible?: boolean;
+    /** Пространства, на которые публикуется резюме. */
+    spaces?: ResumeSpaceAssign[];
 };
 
 export type ResumeUpdate = {
@@ -391,8 +405,8 @@ export type ResumeUpdate = {
     has_experience?: boolean;
     no_experience_description?: string | null;
     is_visible?: boolean;
-    /** Сделать резюме основным (переключение снимает признак с предыдущего). */
-    is_default?: boolean;
+    /** Полный список назначений на пространства (replace-all). */
+    spaces?: ResumeSpaceAssign[];
 };
 
 export type ResumeFull = {
@@ -408,8 +422,8 @@ export type ResumeFull = {
     has_experience: boolean;
     no_experience_description: string | null;
     is_visible: boolean;
-    /** Основное резюме автора. Ровно одно на пользователя. */
-    is_default: boolean;
+    /** Пространства, на которые назначено резюме. */
+    spaces: ResumeSpaceOut[];
     created_at: string;
     updated_at: string;
 };

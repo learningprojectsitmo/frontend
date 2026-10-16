@@ -53,12 +53,18 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                 {isEditing && !showForm && (
                     <button
                         onClick={() => setShowForm(true)}
-                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700"
+                        disabled={resumeId === 0}
+                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
+            {isEditing && resumeId === 0 && (
+                <p className="text-xs text-gray-400 mb-4">
+                    Сначала сохраните резюме, затем добавляйте ссылки
+                </p>
+            )}
             <div className="space-y-3">
                 {links.map((link) => (
                     <div key={link.id} className="flex items-center justify-between group">
@@ -72,7 +78,7 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                                 {platformLabels[link.platform.toLowerCase()] || link.platform}
                             </span>
                         </a>
-                        {isEditing && (
+                        {isEditing && resumeId !== 0 && (
                             <button
                                 onClick={() => handleDelete(link.id)}
                                 className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
