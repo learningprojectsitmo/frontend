@@ -49,6 +49,7 @@ export const ProfileCard = ({
                             {fullName}
                         </h1>
                         <input
+                            id="resume-header-input"
                             type="text"
                             value={editHeader ?? ""}
                             onChange={(e) => onHeaderChange?.(e.target.value)}

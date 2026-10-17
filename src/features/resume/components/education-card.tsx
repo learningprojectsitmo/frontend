@@ -8,10 +8,12 @@ type Props = {
     educations: ResumeEducation[];
     isEditing?: boolean;
     resumeId: number;
+    ensureResumeId?: () => Promise<number | null>;
 };
 
-export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
+export const EducationCard = ({ educations, isEditing, resumeId, ensureResumeId }: Props) => {
     const [showForm, setShowForm] = useState(false);
+    const [isEnsuring, setIsEnsuring] = useState(false);
     const [institution, setInstitution] = useState("");
     const [faculty, setFaculty] = useState("");
     const [degree, setDegree] = useState("");
@@ -19,6 +21,19 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
 
     const createMutation = useCreateResumeEducation(resumeId);
     const deleteMutation = useDeleteResumeEducation(resumeId);
+
+    const handleAddClick = async () => {
+        if (resumeId === 0) {
+            setIsEnsuring(true);
+            try {
+                const rid = await ensureResumeId?.();
+                if (!rid) return;
+            } finally {
+                setIsEnsuring(false);
+            }
+        }
+        setShowForm(true);
+    };
 
     const handleAdd = () => {
         if (!institution.trim()) return;
@@ -50,19 +65,14 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
                 <h3 className="text-base font-semibold tracking-tight">Образование</h3>
                 {isEditing && !showForm && (
                     <button
-                        onClick={() => setShowForm(true)}
-                        disabled={resumeId === 0}
+                        onClick={handleAddClick}
+                        disabled={isEnsuring}
                         className="text-[13px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
-            {isEditing && resumeId === 0 && (
-                <p className="text-xs text-gray-400 mb-4">
-                    Сначала сохраните резюме, затем добавляйте образование
-                </p>
-            )}
             <div className="space-y-4">
                 {educations.map((edu) => (
                     <div key={edu.id} className="group flex justify-between gap-3">

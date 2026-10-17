@@ -4,6 +4,7 @@ import { Icon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert/alert";
 import { type ResumeDetail, type ResumeSpaceAssign } from "@/types/api";
+import { toast } from "sonner";
 import { CoverLetterCard } from "./cover-letter-card";
 import { ProfileCard } from "./profile-card";
 import { ExperienceTimeline } from "./experience-timeline";
@@ -16,6 +17,17 @@ import { SkillsCard } from "./skills-card";
 import { InterestsCard } from "./interests-card";
 import { SpacesCard } from "./spaces-card";
 
+export type ResumeFormFields = {
+    header: string;
+    role: string | null;
+    about: string | null;
+    cover_letter: string | null;
+    has_experience: boolean;
+    no_experience_description: string | null;
+    is_visible: boolean;
+    spaces: ResumeSpaceAssign[];
+};
+
 type Props = {
     data: ResumeDetail;
     /** Пространства текущего пользователя для выбора публикации в редакторе. */
@@ -23,16 +35,9 @@ type Props = {
     isEditing?: boolean;
     sectionsEditable?: boolean;
     onEdit?: () => void;
-    onSave?: (data: {
-        header: string;
-        role: string | null;
-        about: string | null;
-        cover_letter: string | null;
-        has_experience: boolean;
-        no_experience_description: string | null;
-        is_visible: boolean;
-        spaces: ResumeSpaceAssign[];
-    }) => void;
+    onSave?: (data: ResumeFormFields) => void;
+    /** Создаёт резюме по текущим значениям формы, если его ещё нет (id=0). */
+    onEnsureResume?: (data: ResumeFormFields) => Promise<number | null>;
     onCancel?: () => void;
     onShare?: () => void;
     onDelete?: () => void;
@@ -45,6 +50,7 @@ export const ResumePage = ({
     sectionsEditable = isEditing,
     onEdit,
     onSave,
+    onEnsureResume,
     onCancel,
     onShare,
     onDelete,
@@ -81,20 +87,38 @@ export const ResumePage = ({
         data.resume.spaces,
     ]);
 
+    const buildFields = (): ResumeFormFields => ({
+        header: editHeader,
+        role: data.resume.role,
+        about: editAbout || null,
+        cover_letter: editCoverLetter || null,
+        has_experience: editHasExperience,
+        no_experience_description: editNoExpDescription || null,
+        is_visible: editIsVisible,
+        spaces: editSpaces,
+    });
+
     const handleSaveClick = () => {
         const headerValid = editHeader.trim().length > 0;
         setHeaderError(!headerValid);
         if (!headerValid) return;
-        onSave?.({
-            header: editHeader,
-            role: data.resume.role,
-            about: editAbout || null,
-            cover_letter: editCoverLetter || null,
-            has_experience: editHasExperience,
-            no_experience_description: editNoExpDescription || null,
-            is_visible: editIsVisible,
-            spaces: editSpaces,
-        });
+        onSave?.(buildFields());
+    };
+
+    // Вызывается карточками по клику «+ Добавить», когда резюме ещё не создано
+    // (resumeId === 0): создаёт черновик по текущим значениям формы и
+    // возвращает id. Пустой заголовок — подсветка + фокус на поле, null.
+    const ensureResumeId = async (): Promise<number | null> => {
+        if (data.resume.id !== 0) return data.resume.id;
+        if (!onEnsureResume) return null;
+        const headerValid = editHeader.trim().length > 0;
+        setHeaderError(!headerValid);
+        if (!headerValid) {
+            toast.error("Введите название резюме");
+            document.getElementById("resume-header-input")?.focus();
+            return null;
+        }
+        return await onEnsureResume(buildFields());
     };
 
     const handleHeaderChange = (value: string) => {
@@ -183,6 +207,7 @@ export const ResumePage = ({
                             experiences={data.experiences}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                             hasExperience={editHasExperience}
                             noExperienceDescription={editNoExpDescription}
                             onHasExperienceChange={setEditHasExperience}
@@ -234,6 +259,7 @@ export const ResumePage = ({
                             links={data.links}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.educations.length > 0 || isEditing) && (
@@ -241,6 +267,7 @@ export const ResumePage = ({
                             educations={data.educations}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.languages.length > 0 || isEditing) && (
@@ -248,6 +275,7 @@ export const ResumePage = ({
                             languages={data.languages}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.skills.length > 0 || isEditing) && (
@@ -255,6 +283,7 @@ export const ResumePage = ({
                             skills={data.skills}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.interests.length > 0 || isEditing) && (
@@ -262,6 +291,7 @@ export const ResumePage = ({
                             interests={data.interests}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                 </div>

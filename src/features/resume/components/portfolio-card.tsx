@@ -8,6 +8,7 @@ type Props = {
     links: ResumeLink[];
     isEditing?: boolean;
     resumeId: number;
+    ensureResumeId?: () => Promise<number | null>;
 };
 
 const platformLabels: Record<string, string> = {
@@ -15,13 +16,27 @@ const platformLabels: Record<string, string> = {
     dribbble: "Dribbble",
 };
 
-export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
+export const PortfolioCard = ({ links, isEditing, resumeId, ensureResumeId }: Props) => {
     const [newPlatform, setNewPlatform] = useState("");
     const [newUrl, setNewUrl] = useState("");
     const [showForm, setShowForm] = useState(false);
+    const [isEnsuring, setIsEnsuring] = useState(false);
 
     const createMutation = useCreateResumeLink(resumeId);
     const deleteMutation = useDeleteResumeLink(resumeId);
+
+    const handleAddClick = async () => {
+        if (resumeId === 0) {
+            setIsEnsuring(true);
+            try {
+                const rid = await ensureResumeId?.();
+                if (!rid) return;
+            } finally {
+                setIsEnsuring(false);
+            }
+        }
+        setShowForm(true);
+    };
 
     const urlError =
         newUrl.trim() && !isValidHttpUrl(newUrl)
@@ -52,19 +67,14 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
                 <h3 className="text-base font-semibold tracking-tight">Портфолио</h3>
                 {isEditing && !showForm && (
                     <button
-                        onClick={() => setShowForm(true)}
-                        disabled={resumeId === 0}
+                        onClick={handleAddClick}
+                        disabled={isEnsuring}
                         className="text-[13px] font-medium text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
-            {isEditing && resumeId === 0 && (
-                <p className="text-xs text-gray-400 mb-4">
-                    Сначала сохраните резюме, затем добавляйте ссылки
-                </p>
-            )}
             <div className="space-y-3">
                 {links.map((link) => (
                     <div key={link.id} className="flex items-center justify-between group">
