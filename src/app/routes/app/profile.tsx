@@ -90,7 +90,15 @@ const ProfileRoute = () => {
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);
-        setSearchParams(value === "resume" ? {} : { tab: value }, { replace: true });
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                if (value === "resume") next.delete("tab");
+                else next.set("tab", value);
+                return next;
+            },
+            { replace: true },
+        );
     };
 
     return (

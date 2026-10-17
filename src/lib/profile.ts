@@ -39,7 +39,7 @@ export const useUpdateOwnProfile = () => {
             updateOwnProfile(id, data),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
-            void queryClient.invalidateQueries({ queryKey: ["authenticated-user"] });
+            void queryClient.invalidateQueries({ queryKey: queryKeys.user() });
         },
     });
 };

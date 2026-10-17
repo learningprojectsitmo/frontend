@@ -8,7 +8,7 @@ import {
     useCreateResume,
     useDeleteResume,
     getResumeDetail,
-    deleteResume,
+    deleteDraftResume,
     shareResume,
     invalidateWorkspaceResumes,
 } from "@/lib/resume";
@@ -65,10 +65,10 @@ const ResumeRoute = () => {
         return () => {
             const draft = draftRef.current;
             if (draft.id > 0 && !draft.saved) {
-                void deleteResume(draft.id).catch(() => {});
+                void deleteDraftResume(queryClient, draft.id).catch(() => {});
             }
         };
-    }, []);
+    }, [queryClient]);
 
     // При переходе create → просмотр (после сохранения нового резюме) React Router
     // переиспользует ту же инстанцию роута: isEditing оставался true, и страница
@@ -95,7 +95,7 @@ const ResumeRoute = () => {
             const draft = draftRef.current;
             if (draft.id > 0 && !draft.saved) {
                 draftRef.current = { id: 0, saved: true };
-                void deleteResume(draft.id)
+                void deleteDraftResume(queryClient, draft.id)
                     .then(() => toast.success("Черновик удалён"))
                     .catch(() => {});
             }
@@ -244,6 +244,7 @@ const ResumeRoute = () => {
                 id: 0,
                 name: item.name,
                 level: item.level ?? null,
+                flag: item.flag,
                 sort_order: 0,
             })),
         };

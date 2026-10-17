@@ -120,22 +120,10 @@ export function useProfileSpaces(options?: { enabled?: boolean }) {
     });
 }
 
-export function useProfileCreatedProjects(options?: { enabled?: boolean }) {
-    return useQuery({
-        queryKey: ["profile", "created-projects"],
-        enabled: options?.enabled ?? true,
-        queryFn: async () => {
-            const data: MyProjectListResponse = await api.get("/projects/created");
-            return data.items.map(mapMyProjectItem);
-        },
-        staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-    });
-}
-
-export function useProfileProjects() {
+export function useProfileProjects(options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: ["profile", "projects"],
+        enabled: options?.enabled ?? true,
         queryFn: async () => {
             const data: MyProjectListResponse = await api.get("/projects/my");
             return data.items.map(mapMyProjectItem);

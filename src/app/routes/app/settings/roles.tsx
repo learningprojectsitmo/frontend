@@ -3,6 +3,7 @@ import { Tabs } from "@/components/ui/tabs/tabs";
 import { useState } from "react";
 import { SessionsTab } from "@/features/settings/components/sessions-tab";
 import { LanguageSection } from "@/features/settings/components/language-section";
+import { DecorationsSection } from "@/features/settings/components/decorations-section";
 import { CookieConsentSettingsSection } from "@/features/privacy/cookie-consent-provider";
 
 const SettingsPage = () => {
@@ -35,6 +36,7 @@ const SettingsPage = () => {
                 {activeTab === "general" && (
                     <div className="space-y-6">
                         <LanguageSection />
+                        <DecorationsSection />
                         <CookieConsentSettingsSection />
                     </div>
                 )}

@@ -3,6 +3,7 @@ import { usePublicAppSettings } from "@/lib/app-settings";
 import { Garland } from "./garland";
 import { Ornaments } from "./ornaments";
 import { Snow } from "./snow";
+import { useDecorationsAllowed } from "./use-decorations-allowed";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
 import "./decor.css";
@@ -10,6 +11,10 @@ import "./decor.css";
 /**
  * Новогодняя декорация поверх всего приложения. Включается глобальным флагом
  * `new_year_decorations_enabled` из админ-панели; по умолчанию выключено.
+ *
+ * Пользователь может отключить её у себя на странице настроек
+ * (`show_decorations`): декор не показывается, если админ выключил его глобально
+ * или пользователь снял галочку.
  *
  * Декор общий для всех страниц (лендинг, авторизация, /app, публичная вики),
  * поэтому его нужно монтировать в провайдере — единственном месте, которое
@@ -19,9 +24,12 @@ export const HolidayDecor = () => {
     const { data } = usePublicAppSettings();
     const prefersReducedMotion = usePrefersReducedMotion();
 
+    const adminEnabled = data?.new_year_decorations_enabled === true;
+    const allowed = useDecorationsAllowed(adminEnabled);
+
     // Пока флаг не приехал — не рисуем ничего: иначе декор моргал бы на
     // каждой загрузке страницы в течение первых ~100 мс.
-    if (!data?.new_year_decorations_enabled) {
+    if (!adminEnabled || !allowed) {
         return null;
     }
 

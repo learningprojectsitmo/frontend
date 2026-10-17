@@ -110,3 +110,85 @@ describe("TableInvitations: отзыв приглашения руководит
         expect(findAction("Отозвать")).toBeNull();
     });
 });
+
+describe("TableInvitations: сворачивание групп", () => {
+    const groups = [
+        {
+            key: "10",
+            projectName: "Проект Альфа",
+            workspaceName: "Пространство",
+            items: [baseInvitation],
+        },
+        {
+            key: "20",
+            projectName: "Проект Бета",
+            workspaceName: "Пространство",
+            items: [{ ...baseInvitation, id: 8, name: "Иванов Иван" }],
+        },
+    ];
+
+    const renderGrouped = (props: Partial<Parameters<typeof TableInvitations>[0]> = {}) => {
+        act(() => {
+            root.render(
+                <MemoryRouter>
+                    <TableInvitations
+                        headerList={["Имя", "Роль"]}
+                        members={[]}
+                        grouped
+                        groups={groups}
+                        {...props}
+                    />
+                </MemoryRouter>,
+            );
+        });
+    };
+
+    const clickGroupHeader = (projectName: string) => {
+        const header = [...container.querySelectorAll("tr")].find((tr) =>
+            tr.textContent?.includes(projectName),
+        );
+        expect(header).toBeTruthy();
+        act(() => {
+            header!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+    };
+
+    it("по умолчанию все группы свёрнуты: строки участников не в DOM", () => {
+        // given
+        // when
+        renderGrouped();
+        // then
+        expect(container.textContent).toContain("Проект Альфа");
+        expect(container.textContent).not.toContain("Петрова Анна");
+        expect(container.textContent).not.toContain("Иванов Иван");
+    });
+
+    it("клик по заголовку группы разворачивает её строки", () => {
+        // given
+        renderGrouped();
+        // when
+        clickGroupHeader("Проект Альфа");
+        // then
+        expect(container.textContent).toContain("Петрова Анна");
+        expect(container.textContent).not.toContain("Иванов Иван");
+    });
+
+    it("в управляемом режиме вызывает onExpandedChange с новой картой", () => {
+        // given
+        const onExpandedChange = vi.fn();
+        // when
+        renderGrouped({ expanded: {}, onExpandedChange });
+        clickGroupHeader("Проект Альфа");
+        // then
+        expect(onExpandedChange).toHaveBeenCalledWith({ "10": true });
+    });
+
+    it("разворачивает все группы, когда expanded передан со всеми ключами true", () => {
+        // given
+        // when
+        renderGrouped({ expanded: { "10": true, "20": true } });
+        // then
+        expect(container.textContent).toContain("Петрова Анна");
+        expect(container.textContent).toContain("Иванов Иван");
+    });
+});

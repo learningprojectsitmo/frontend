@@ -28,6 +28,7 @@ export type User = Entity<{
     tg_nickname?: string | null;
     vk_nickname?: string | null;
     show_my_contacts?: boolean;
+    show_decorations?: boolean;
 }>;
 
 export type UserUpdate = {
@@ -41,6 +42,7 @@ export type UserUpdate = {
     vk_nickname?: string | null;
     role_id?: number;
     show_my_contacts?: boolean;
+    show_decorations?: boolean;
 };
 
 export type NewUserResponse = {
@@ -474,6 +476,7 @@ export type ResumeLanguage = {
     id: number;
     name: string;
     level: string | null;
+    flag: string;
     sort_order: number;
 };
 
@@ -591,6 +594,7 @@ export type SpaceSettingsFull = {
  */
 export type AppSettingsPublic = {
     new_year_decorations_enabled: boolean;
+    halloween_decorations_enabled: boolean;
 };
 
 export type AppSettingKind = "bool" | "int" | "str";
