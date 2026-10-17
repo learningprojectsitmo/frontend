@@ -8,6 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select/select";
 import { type PortfolioFull, type EducationFull, type LanguageFull } from "@/types/api";
+import { FLAG_OPTIONS, DEFAULT_FLAG } from "@/lib/language-flags";
 import {
     useCreatePortfolio,
     useDeletePortfolio,
@@ -16,22 +17,6 @@ import {
     useCreateLanguage,
     useDeleteLanguage,
 } from "@/lib/profile";
-
-const FLAG_OPTIONS: { value: string; label: string }[] = [
-    { value: "🇷🇺", label: "Русский" },
-    { value: "🇺🇸", label: "Английский (US)" },
-    { value: "🇬🇧", label: "Английский (UK)" },
-    { value: "🇩🇪", label: "Немецкий" },
-    { value: "🇫🇷", label: "Французский" },
-    { value: "🇪🇸", label: "Испанский" },
-    { value: "🇮🇹", label: "Итальянский" },
-    { value: "🇨🇳", label: "Китайский" },
-    { value: "🇯🇵", label: "Японский" },
-    { value: "🇰🇷", label: "Корейский" },
-    { value: "🇵🇱", label: "Польский" },
-    { value: "🇹🇷", label: "Турецкий" },
-    { value: "🌐", label: "Без флага" },
-];
 
 type AdditionalSectionProps = {
     portfolio: PortfolioFull[];
@@ -297,7 +282,7 @@ function LanguageSection({ items, readOnly }: { items: LanguageFull[]; readOnly?
     const handleAdd = () => {
         if (!name.trim()) return;
         createMutation.mutate(
-            { name: name.trim(), level: level.trim(), flag: flag.trim() || "🌐" },
+            { name: name.trim(), level: level.trim(), flag: flag.trim() || DEFAULT_FLAG },
             {
                 onSuccess: () => {
                     setName("");
@@ -363,7 +348,7 @@ function LanguageSection({ items, readOnly }: { items: LanguageFull[]; readOnly?
                         placeholder="Уровень"
                         className="text-sm px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text outline-none focus:border-app-blue"
                     />
-                    <Select value={flag || "🌐"} onValueChange={setFlag}>
+                    <Select value={flag || DEFAULT_FLAG} onValueChange={setFlag}>
                         <SelectTrigger className="h-9 text-sm px-3 py-2 rounded-lg bg-app-surface">
                             <SelectValue placeholder="Флаг" />
                         </SelectTrigger>

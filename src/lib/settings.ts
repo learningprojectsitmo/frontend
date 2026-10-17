@@ -90,4 +90,12 @@ export const settingsApi = {
     updateUserLanguage: (userId: number, lang: string): Promise<{ lang: string }> => {
         return api.put(`/users/${userId}`, { lang });
     },
+
+    /** Персональный тумблер праздничного декора (глобально включается админом). */
+    updateUserDecorations: (
+        userId: number,
+        show: boolean,
+    ): Promise<{ show_decorations: boolean }> => {
+        return api.put(`/users/${userId}`, { show_decorations: show });
+    },
 };

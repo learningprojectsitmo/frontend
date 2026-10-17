@@ -40,7 +40,7 @@ export type ProjectsListParams = {
  */
 
 export const queryKeys = {
-    user: () => ["current-user"] as const,
+    user: () => ["authenticated-user"] as const,
 
     profile: {
         detail: () => ["profile"] as const,
@@ -138,6 +138,9 @@ export const queryKeys = {
 
     resume: {
         detail: (id: string | number) => ["resume", String(id), "detail"] as const,
+        skillSuggestions: (query: string) => ["resume", "suggestions", "skills", query] as const,
+        interestSuggestions: (query: string) =>
+            ["resume", "suggestions", "interests", query] as const,
     },
 
     roles: () => ["roles"] as const,

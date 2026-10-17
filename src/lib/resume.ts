@@ -59,8 +59,11 @@ export const shareResume = async (id: number): Promise<void> => {
     toast.success("Ссылка скопирована");
 };
 
+// preferServerDetail: сообщения валидации бэкенда (например, «Нельзя скрыть
+// основное резюме…») уже на русском — показываем их как есть, не заменяя
+// общей подсказкой.
 const onSaveError = (error: unknown) =>
-    toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения"));
+    toast.error(getApiErrorMessage(error, "Не удалось сохранить изменения", true));
 const onDeleteError = (error: unknown) =>
     toast.error(getApiErrorMessage(error, "Не удалось удалить"));
 
@@ -110,24 +113,6 @@ export const useUpdateResume = () => {
     });
 };
 
-/**
- * Сделать резюме основным. Основное ровно одно на автора: бэкенд снимает
- * признак с предыдущего и обновляет списки резюме пространств.
- */
-export const useSetDefaultResume = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (id: number) => updateResume({ id, data: { is_default: true } }),
-        onSuccess: (_data, id) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
-            invalidateWorkspaceResumes(queryClient);
-            toast.success("Резюме сделано основным");
-        },
-        onError: onSaveError,
-    });
-};
-
 export const createResume = async (data: ResumeCreate): Promise<ResumeFull> => {
     return await api.post("/resumes/", data);
 };
@@ -147,6 +132,17 @@ export const useCreateResume = () => {
 
 export const deleteResume = async (id: number): Promise<void> => {
     await api.delete(`/resumes/${id}`);
+};
+
+// Удаление авто-созданного черновика (клик «Отмена» или уход со страницы).
+// В отличие от useDeleteResume не показывает тост, но обязательно сбрасывает
+// кеши — иначе удалённый черновик остаётся в списке профиля/пространства
+// (["profile"] живёт со staleTime 5 мин).
+export const deleteDraftResume = async (queryClient: QueryClient, id: number): Promise<void> => {
+    await deleteResume(id);
+    queryClient.removeQueries({ queryKey: queryKeys.resume.detail(id) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail() });
+    invalidateWorkspaceResumes(queryClient);
 };
 
 export const useDeleteResume = () => {
@@ -234,7 +230,7 @@ export const createResumeLanguage = async ({
     data,
 }: {
     resumeId: number;
-    data: { name: string; level?: string | null; sort_order?: number };
+    data: { name: string; level?: string | null; flag?: string; sort_order?: number };
 }): Promise<ResumeLanguage> => {
     return await api.post(`/resumes/${resumeId}/languages`, data);
 };
@@ -244,7 +240,7 @@ export const updateResumeLanguage = async ({
     data,
 }: {
     langId: number;
-    data: { name?: string; level?: string | null; sort_order?: number };
+    data: { name?: string; level?: string | null; flag?: string; sort_order?: number };
 }): Promise<ResumeLanguage> => {
     return await api.put(`/resumes/languages/${langId}`, data);
 };
@@ -317,6 +313,10 @@ export const deleteResumeSkill = async (skillId: number): Promise<void> => {
     return await api.delete(`/resumes/skills/${skillId}`);
 };
 
+export const getSkillSuggestions = async (query: string): Promise<string[]> => {
+    return await api.get("/resumes/suggestions/skills", { params: { q: query } });
+};
+
 // ─── Resume Interest CRUD ─────────────────────────────────────────────
 
 export const createResumeInterest = async ({
@@ -331,6 +331,10 @@ export const createResumeInterest = async ({
 
 export const deleteResumeInterest = async (interestId: number): Promise<void> => {
     return await api.delete(`/resumes/interests/${interestId}`);
+};
+
+export const getInterestSuggestions = async (query: string): Promise<string[]> => {
+    return await api.get("/resumes/suggestions/interests", { params: { q: query } });
 };
 
 // ─── React Query mutations ───────────────────────────────────────────
@@ -514,5 +518,27 @@ export const useDeleteResumeInterest = (resumeId: number) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.resume.detail(resumeId) });
         },
         onError: onDeleteError,
+    });
+};
+
+// ─── React Query queries: подсказки навыков/интересов ─────────────────
+
+export const useSkillSuggestions = (query: string) => {
+    const trimmed = query.trim();
+    return useQuery({
+        queryKey: queryKeys.resume.skillSuggestions(trimmed),
+        queryFn: () => getSkillSuggestions(trimmed),
+        enabled: trimmed.length > 0,
+        staleTime: 60_000,
+    });
+};
+
+export const useInterestSuggestions = (query: string) => {
+    const trimmed = query.trim();
+    return useQuery({
+        queryKey: queryKeys.resume.interestSuggestions(trimmed),
+        queryFn: () => getInterestSuggestions(trimmed),
+        enabled: trimmed.length > 0,
+        staleTime: 60_000,
     });
 };

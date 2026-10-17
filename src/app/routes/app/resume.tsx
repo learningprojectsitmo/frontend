@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ContentLayout } from "@/components/layouts";
 import { useSearchParams, Link, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,8 @@ import {
     useUpdateResume,
     useCreateResume,
     useDeleteResume,
+    getResumeDetail,
+    deleteDraftResume,
     shareResume,
     invalidateWorkspaceResumes,
 } from "@/lib/resume";
@@ -22,7 +24,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb/breadcrumb";
-import { ResumePage } from "@/features/resume/components/resume-page";
+import { ResumePage, type ResumeFormFields } from "@/features/resume/components/resume-page";
 import { ConfirmDeleteResumeDialog } from "@/features/resume/components/confirm-delete-resume-dialog";
 import { paths } from "@/config/paths";
 import { toast } from "sonner";
@@ -39,7 +41,13 @@ const ResumeRoute = () => {
     const workspaceIdParam = searchParams.get("workspaceId");
     const workspaceId = workspaceIdParam ? parseInt(workspaceIdParam, 10) : null;
 
-    const { data, isLoading, error } = useResumeDetail(id);
+    // Авто-созданный по первому клику «+ Добавить» черновик: живёт в state,
+    // URL не меняется до явного «Сохранить». draftRef.saved=true — резюме
+    // больше не черновик (сохранён вручную), удалять при уходе нельзя.
+    const [createdId, setCreatedId] = useState(0);
+    const draftRef = useRef({ id: 0, saved: false });
+
+    const { data, isLoading, error } = useResumeDetail(createdId || id);
     const { data: profile } = useProfile();
     const { data: dataSpaces } = useSpacesList();
     const updateResumeMutation = useUpdateResume();
@@ -49,6 +57,18 @@ const ResumeRoute = () => {
     const [isEditing, setIsEditing] = useState(isCreateMode);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const canEditSections = isEditing;
+
+    // Уход со страницы без явного «Сохранить» (хлебные крошки, «назад»,
+    // любая навигация) — черновик подчищается. «Отмена» сбрасывает draftRef
+    // до вызова navigate, поэтому двойного DELETE не будет.
+    useEffect(() => {
+        return () => {
+            const draft = draftRef.current;
+            if (draft.id > 0 && !draft.saved) {
+                void deleteDraftResume(queryClient, draft.id).catch(() => {});
+            }
+        };
+    }, [queryClient]);
 
     // При переходе create → просмотр (после сохранения нового резюме) React Router
     // переиспользует ту же инстанцию роута: isEditing оставался true, и страница
@@ -72,6 +92,13 @@ const ResumeRoute = () => {
 
     const handleCancel = () => {
         if (isCreateMode) {
+            const draft = draftRef.current;
+            if (draft.id > 0 && !draft.saved) {
+                draftRef.current = { id: 0, saved: true };
+                void deleteDraftResume(queryClient, draft.id)
+                    .then(() => toast.success("Черновик удалён"))
+                    .catch(() => {});
+            }
             navigate("/app/profile");
         } else {
             setIsEditing(false);
@@ -92,18 +119,17 @@ const ResumeRoute = () => {
         navigate("/app/profile");
     };
 
-    const handleSave = async (fields: {
-        header: string;
-        role: string | null;
-        about: string | null;
-        cover_letter: string | null;
-        has_experience: boolean;
-        no_experience_description: string | null;
-        is_visible: boolean;
-    }) => {
+    const handleSave = async (fields: ResumeFormFields) => {
         if (isCreateMode) {
             if (!fields.header.trim()) {
                 toast.error("Введите название резюме");
+                return;
+            }
+            if (createdId > 0) {
+                await updateResumeMutation.mutateAsync({ id: createdId, data: fields });
+                draftRef.current.saved = true;
+                setIsEditing(false);
+                navigate(paths.app.resume.getHref(createdId, null, workspaceId));
                 return;
             }
             const resume = await createResumeMutation.mutateAsync({
@@ -114,7 +140,9 @@ const ResumeRoute = () => {
                 has_experience: fields.has_experience,
                 no_experience_description: fields.no_experience_description,
                 is_visible: fields.is_visible,
+                spaces: fields.spaces,
             });
+            draftRef.current = { id: resume.id, saved: true };
             setIsEditing(false);
             navigate(paths.app.resume.getHref(resume.id, null, workspaceId));
         } else {
@@ -124,6 +152,40 @@ const ResumeRoute = () => {
             }
             await updateResumeMutation.mutateAsync({ id, data: fields });
             setIsEditing(false);
+        }
+    };
+
+    // Первый клик «+ Добавить» в режиме создания: создаём резюме по текущим
+    // значениям формы и возвращаем его id, чтобы карточка открыла форму
+    // добавления. Ошибка создания (включая пустой заголовок) → null.
+    const handleEnsureResume = async (fields: ResumeFormFields): Promise<number | null> => {
+        if (!isCreateMode) return id;
+        if (createdId > 0) return createdId;
+        try {
+            const resume = await createResumeMutation.mutateAsync({
+                header: fields.header,
+                role: fields.role,
+                about: fields.about,
+                cover_letter: fields.cover_letter,
+                has_experience: fields.has_experience,
+                no_experience_description: fields.no_experience_description,
+                is_visible: fields.is_visible,
+                spaces: fields.spaces,
+            });
+            draftRef.current = { id: resume.id, saved: false };
+            setCreatedId(resume.id);
+            // Кладём реальный detail в кеш: карточки сразу получают валидные id
+            // секций, скопированных бэкендом из профиля. При сбое фоновый
+            // refetch из useResumeDetail доделает.
+            void queryClient
+                .fetchQuery({
+                    queryKey: queryKeys.resume.detail(resume.id),
+                    queryFn: () => getResumeDetail(resume.id),
+                })
+                .catch(() => {});
+            return resume.id;
+        } catch {
+            return null;
         }
     };
 
@@ -154,7 +216,9 @@ const ResumeRoute = () => {
                 is_visible: false,
                 views_count: 0,
                 invitations_count: 0,
-                is_default: false,
+                spaces: workspaceId
+                    ? [{ workspace_id: workspaceId, workspace_name: "", is_default: false }]
+                    : [],
                 created_at: "",
                 updated_at: "",
             },
@@ -180,9 +244,20 @@ const ResumeRoute = () => {
                 id: 0,
                 name: item.name,
                 level: item.level ?? null,
+                flag: item.flag,
                 sort_order: 0,
             })),
         };
+
+        // После авто-создания показываем реальный detail (с валидными id
+        // скопированных секций); до этого — пустышку с id=0.
+        const renderDetail: ResumeDetail =
+            createdId > 0
+                ? (data ?? {
+                      ...emptyDetail,
+                      resume: { ...emptyDetail.resume, id: createdId },
+                  })
+                : emptyDetail;
 
         return (
             <ContentLayout title="Новое резюме">
@@ -220,11 +295,13 @@ const ResumeRoute = () => {
                     </Breadcrumb>
 
                     <ResumePage
-                        data={emptyDetail}
+                        data={renderDetail}
+                        availableSpaces={dataSpaces?.spaces ?? []}
                         isEditing={isEditing}
                         sectionsEditable={canEditSections}
                         onEdit={handleEdit}
                         onSave={handleSave}
+                        onEnsureResume={handleEnsureResume}
                         onCancel={handleCancel}
                     />
                 </div>
@@ -329,6 +406,7 @@ const ResumeRoute = () => {
 
                 <ResumePage
                     data={data}
+                    availableSpaces={dataSpaces?.spaces ?? []}
                     isEditing={isEditing}
                     sectionsEditable={canEditSections}
                     onEdit={isOwner ? handleEdit : undefined}

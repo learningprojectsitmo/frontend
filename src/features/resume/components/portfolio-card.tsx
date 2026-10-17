@@ -3,11 +3,13 @@ import { type ResumeLink } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeLink, useDeleteResumeLink } from "@/lib/resume";
 import { isValidHttpUrl, LIMITS } from "@/features/resume/validation";
+import { SectionEmptyState } from "./section-empty-state";
 
 type Props = {
     links: ResumeLink[];
     isEditing?: boolean;
     resumeId: number;
+    ensureResumeId?: () => Promise<number | null>;
 };
 
 const platformLabels: Record<string, string> = {
@@ -15,13 +17,27 @@ const platformLabels: Record<string, string> = {
     dribbble: "Dribbble",
 };
 
-export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
+export const PortfolioCard = ({ links, isEditing, resumeId, ensureResumeId }: Props) => {
     const [newPlatform, setNewPlatform] = useState("");
     const [newUrl, setNewUrl] = useState("");
     const [showForm, setShowForm] = useState(false);
+    const [isEnsuring, setIsEnsuring] = useState(false);
 
     const createMutation = useCreateResumeLink(resumeId);
     const deleteMutation = useDeleteResumeLink(resumeId);
+
+    const handleAddClick = async () => {
+        if (resumeId === 0) {
+            setIsEnsuring(true);
+            try {
+                const rid = await ensureResumeId?.();
+                if (!rid) return;
+            } finally {
+                setIsEnsuring(false);
+            }
+        }
+        setShowForm(true);
+    };
 
     const urlError =
         newUrl.trim() && !isValidHttpUrl(newUrl)
@@ -48,43 +64,54 @@ export const PortfolioCard = ({ links, isEditing, resumeId }: Props) => {
 
     return (
         <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold tracking-tight">Портфолио</h3>
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
+                    Портфолио
+                </h3>
                 {isEditing && !showForm && (
                     <button
-                        onClick={() => setShowForm(true)}
-                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700"
+                        onClick={handleAddClick}
+                        disabled={isEnsuring}
+                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
-            <div className="space-y-3">
-                {links.map((link) => (
-                    <div key={link.id} className="flex items-center justify-between group">
-                        <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-blue-600 hover:underline min-w-0 truncate"
+            {links.length === 0 && !showForm ? (
+                <SectionEmptyState description="Добавьте ссылки на портфолио, чтобы ваши работы могли видеть другие" />
+            ) : (
+                <div className="flex flex-col gap-2">
+                    {links.map((link) => (
+                        <div
+                            key={link.id}
+                            className="flex items-center justify-between text-sm group"
                         >
-                            <span className="truncate">
-                                {platformLabels[link.platform.toLowerCase()] || link.platform}
-                            </span>
-                        </a>
-                        {isEditing && (
-                            <button
-                                onClick={() => handleDelete(link.id)}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors min-w-0"
                             >
-                                <Icon name="trash" size={14} />
-                            </button>
-                        )}
-                    </div>
-                ))}
-            </div>
+                                <Icon name="link" size={14} className="text-blue-500 shrink-0" />
+                                <span className="truncate">
+                                    {platformLabels[link.platform.toLowerCase()] || link.platform}
+                                </span>
+                            </a>
+                            {isEditing && resumeId !== 0 && (
+                                <button
+                                    onClick={() => handleDelete(link.id)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Icon name="trash" size={14} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
             {isEditing && showForm && (
-                <div className="mt-4 flex flex-col gap-2 p-3 bg-gray-50 rounded-xl">
+                <div className="mt-3 flex flex-col gap-2 p-3 bg-gray-50 rounded-xl">
                     <input
                         value={newPlatform}
                         onChange={(e) => setNewPlatform(e.target.value)}

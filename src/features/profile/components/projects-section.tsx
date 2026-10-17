@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useProfileCreatedProjects } from "@/features/profile/api/use-profile-data";
+import { useProfileProjects } from "@/features/profile/api/use-profile-data";
 import { ProjectCard } from "@/components/ui/card/project-card";
 import { ListToolbar } from "./list-toolbar";
 import { Link } from "react-router";
@@ -13,14 +13,27 @@ const statusToTag: Record<string, { tag: string; label: string }> = {
     not_started: { tag: "not_started", label: "Не завершен" },
 };
 
+// Бэкенд отдаёт start_date как ISO (`2026-10-03T02:38:50.491275+00:00`).
+// Показываем только дату с названием месяца (`03 октября 2026 г.`).
+const formatStartDate = (iso: string): string => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+};
+
 type ProjectsSectionProps = {
     projects?: ProfileProject[];
     readOnly?: boolean;
 };
 
 export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSectionProps) {
-    const { data: hookProjects, isLoading } = useProfileCreatedProjects({
-        enabled: propProjects === undefined,
+    const { data: hookProjects, isLoading } = useProfileProjects({
+        enabled: !readOnly && propProjects === undefined,
     });
     const [search, setSearch] = useState("");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -110,7 +123,9 @@ export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSe
                                     description={project.description}
                                     progressValue={project.progress}
                                     dateText={
-                                        project.startDate ? `Старт: ${project.startDate}` : ""
+                                        project.startDate
+                                            ? `Старт: ${formatStartDate(project.startDate)}`
+                                            : ""
                                     }
                                     tags={project.roles.map((r) => ({ text: r }))}
                                     membersCount={project.membersCount}
@@ -163,7 +178,7 @@ export function ProjectsSection({ projects: propProjects, readOnly }: ProjectsSe
                                             {project.membersCount}
                                         </td>
                                         <td className="py-3 px-4 text-gray-500">
-                                            {project.startDate}
+                                            {formatStartDate(project.startDate)}
                                         </td>
                                     </tr>
                                 );
