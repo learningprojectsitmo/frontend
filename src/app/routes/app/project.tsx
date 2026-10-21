@@ -1247,44 +1247,43 @@ const SpaceRoute = () => {
     return (
         <ContentLayout title={project.title}>
             <div className="mx-auto max-w-7xl p-6 flex flex-col gap-6">
-                <Breadcrumb className="min-h-[34px] flex flex-wrap gap-y-1.5 items-center">
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                                <Link to="/app" className="font-sans font-medium text-[16px]">
-                                    Все пространства
-                                </Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                                <Link
-                                    to={`/app/space?id=${project.spaceId}`}
-                                    className="font-sans font-medium text-[16px]"
-                                >
-                                    {spaceTitle}
-                                </Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage className="font-sans font-medium text-[16px]">
-                                {project.title}
-                            </BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-
-                {!isEditing && dataProject?.workspace_id && (
-                    <div className="flex justify-start">
+                <div className="flex justify-between items-center gap-4">
+                    <Breadcrumb className="min-h-[34px] flex flex-wrap gap-y-1.5 items-center flex-1 min-w-0">
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink asChild>
+                                    <Link to="/app" className="font-sans font-medium text-[16px]">
+                                        Все пространства
+                                    </Link>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbLink asChild>
+                                    <Link
+                                        to={`/app/space?id=${project.spaceId}`}
+                                        className="font-sans font-medium text-[16px]"
+                                    >
+                                        {spaceTitle}
+                                    </Link>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage className="font-sans font-medium text-[16px]">
+                                    {project.title}
+                                </BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
+                    {!isEditing && dataProject?.workspace_id && (
                         <ProjectNavButtons
                             prev={neighbors?.prev}
                             next={neighbors?.next}
                             onNavigate={handleNavigateToProject}
                         />
-                    </div>
-                )}
+                    )}
+                </div>
 
                 <div className="self-stretch flex flex-col xl:flex-row xl:items-start xl:gap-10 gap-6">
                     <div className="flex-1 flex justify-start items-start gap-5">
