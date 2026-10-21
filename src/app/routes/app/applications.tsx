@@ -64,6 +64,8 @@ const ApplicationsRoute = () => {
     const [search, setSearch] = useState<string>("");
     const [page, setPage] = useState<number>(1);
     const [limit, setLimit] = useState<number>(50);
+    /** Раскрытие групп по проектам: пустая карта = все свёрнуты. */
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
     const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -367,7 +369,26 @@ const ApplicationsRoute = () => {
                         </h1>
                         <p className="mt-1 text-sm text-app-muted">Сгруппированы по проектам</p>
                     </div>
-                    <div className="text-sm text-app-muted">Всего: {total}</div>
+                    <div className="flex items-center gap-4">
+                        {groups.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    const next: Record<string, boolean> = {};
+                                    const expandAll = !groups.every((g) => expandedGroups[g.key]);
+                                    groups.forEach((g) => {
+                                        next[g.key] = expandAll;
+                                    });
+                                    setExpandedGroups(next);
+                                }}
+                                className="px-3 py-2 text-sm text-app-muted hover:text-app-text"
+                            >
+                                {groups.every((g) => expandedGroups[g.key])
+                                    ? "Свернуть все"
+                                    : "Развернуть все"}
+                            </button>
+                        )}
+                        <div className="text-sm text-app-muted">Всего: {total}</div>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 p-4 bg-app-surface rounded-xl border border-app-border">
@@ -477,6 +498,8 @@ const ApplicationsRoute = () => {
                         onCancelInvitation={handleCancelInvitation}
                         pendingActionId={pendingActionId}
                         canManage={isAllowed}
+                        expanded={expandedGroups}
+                        onExpandedChange={setExpandedGroups}
                     />
                     <RejectResponseDialog
                         open={rejectTarget !== null}

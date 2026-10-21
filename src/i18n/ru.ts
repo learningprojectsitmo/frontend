@@ -53,6 +53,11 @@ const ru = {
             languageDescription: "Выберите язык интерфейса",
             saved: "Язык сохранён",
             saveError: "Не удалось сохранить язык",
+            decorations: "Праздничные украшения",
+            decorationsDescription:
+                "Показывать праздничное оформление (Новый год, Хэллоуин), когда его включил администратор",
+            decorationsSaved: "Настройка сохранена",
+            decorationsSaveError: "Не удалось сохранить настройку",
         },
         adminSettings: {
             title: "Настройки сайта",
@@ -64,6 +69,10 @@ const ru = {
                 new_year_decorations_enabled: {
                     title: "Новогодние украшения",
                     description: "Снег, гирлянда и ёлочные шары на всех страницах сайта",
+                },
+                halloween_decorations_enabled: {
+                    title: "Хэллоуинские украшения",
+                    description: "Паутина, летучие мыши и тыквы на всех страницах сайта",
                 },
             },
         },

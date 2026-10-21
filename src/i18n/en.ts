@@ -57,6 +57,11 @@ const en = {
             languageDescription: "Choose the interface language",
             saved: "Language saved",
             saveError: "Failed to save language",
+            decorations: "Holiday decorations",
+            decorationsDescription:
+                "Show festive decorations (New Year, Halloween) when enabled by the administrator",
+            decorationsSaved: "Setting saved",
+            decorationsSaveError: "Failed to save the setting",
         },
         adminSettings: {
             title: "Site settings",
@@ -68,6 +73,10 @@ const en = {
                 new_year_decorations_enabled: {
                     title: "New Year decorations",
                     description: "Snow, garland and Christmas ornaments on every page",
+                },
+                halloween_decorations_enabled: {
+                    title: "Halloween decorations",
+                    description: "Cobwebs, bats and pumpkins on every page",
                 },
             },
         },

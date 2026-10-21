@@ -3,15 +3,18 @@ import { type ResumeEducation } from "@/types/api";
 import { Icon } from "@/components/ui/icons";
 import { useCreateResumeEducation, useDeleteResumeEducation } from "@/lib/resume";
 import { LIMITS } from "@/features/resume/validation";
+import { SectionEmptyState } from "./section-empty-state";
 
 type Props = {
     educations: ResumeEducation[];
     isEditing?: boolean;
     resumeId: number;
+    ensureResumeId?: () => Promise<number | null>;
 };
 
-export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
+export const EducationCard = ({ educations, isEditing, resumeId, ensureResumeId }: Props) => {
     const [showForm, setShowForm] = useState(false);
+    const [isEnsuring, setIsEnsuring] = useState(false);
     const [institution, setInstitution] = useState("");
     const [faculty, setFaculty] = useState("");
     const [degree, setDegree] = useState("");
@@ -19,6 +22,19 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
 
     const createMutation = useCreateResumeEducation(resumeId);
     const deleteMutation = useDeleteResumeEducation(resumeId);
+
+    const handleAddClick = async () => {
+        if (resumeId === 0) {
+            setIsEnsuring(true);
+            try {
+                const rid = await ensureResumeId?.();
+                if (!rid) return;
+            } finally {
+                setIsEnsuring(false);
+            }
+        }
+        setShowForm(true);
+    };
 
     const handleAdd = () => {
         if (!institution.trim()) return;
@@ -46,40 +62,51 @@ export const EducationCard = ({ educations, isEditing, resumeId }: Props) => {
 
     return (
         <div className="bg-app-surface rounded-3xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold tracking-tight">Образование</h3>
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
+                    Образование
+                </h3>
                 {isEditing && !showForm && (
                     <button
-                        onClick={() => setShowForm(true)}
-                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700"
+                        onClick={handleAddClick}
+                        disabled={isEnsuring}
+                        className="text-[13px] font-medium text-blue-500 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-500"
                     >
                         + Добавить
                     </button>
                 )}
             </div>
-            <div className="space-y-4">
-                {educations.map((edu) => (
-                    <div key={edu.id} className="group flex justify-between gap-3">
-                        <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{edu.institution}</p>
-                            {edu.faculty && <p className="text-sm text-gray-500">{edu.faculty}</p>}
-                            <p className="text-sm text-gray-400">
-                                {[edu.degree, edu.years].filter(Boolean).join(", ")}
-                            </p>
+            {educations.length === 0 && !showForm ? (
+                <SectionEmptyState description="Добавьте информацию о своём образовании" />
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {educations.map((edu) => (
+                        <div key={edu.id} className="group flex justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-900">
+                                    {edu.institution}
+                                </p>
+                                {edu.faculty && (
+                                    <p className="text-xs text-gray-500 mt-0.5">{edu.faculty}</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    {[edu.degree, edu.years].filter(Boolean).join(" ")}
+                                </p>
+                            </div>
+                            {isEditing && resumeId !== 0 && (
+                                <button
+                                    onClick={() => deleteMutation.mutate(edu.id)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity self-start"
+                                >
+                                    <Icon name="trash" size={14} />
+                                </button>
+                            )}
                         </div>
-                        {isEditing && (
-                            <button
-                                onClick={() => deleteMutation.mutate(edu.id)}
-                                className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity self-start"
-                            >
-                                <Icon name="trash" size={14} />
-                            </button>
-                        )}
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
             {isEditing && showForm && (
-                <div className="mt-4 flex flex-col gap-2 p-3 bg-gray-50 rounded-xl">
+                <div className="mt-3 flex flex-col gap-2 p-3 bg-gray-50 rounded-xl">
                     <input
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}

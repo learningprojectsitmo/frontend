@@ -10,7 +10,9 @@ type SpacesSectionProps = {
 };
 
 export function SpacesSection({ spaces: propSpaces, readOnly }: SpacesSectionProps) {
-    const { data: hookData, isLoading } = useProfileSpaces({ enabled: propSpaces === undefined });
+    const { data: hookData, isLoading } = useProfileSpaces({
+        enabled: !readOnly && propSpaces === undefined,
+    });
     const items = propSpaces ?? hookData ?? [];
     const loading = isLoading && propSpaces === undefined;
     const title = readOnly ? "Пространства" : "Мои пространства";

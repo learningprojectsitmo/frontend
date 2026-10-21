@@ -6,7 +6,7 @@ import { ProfileEditForm } from "@/features/profile/components/profile-edit-form
 import { mapResumeFromApi, type ResumeData } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
-import { useUpdateResume, useDeleteResume, useSetDefaultResume, shareResume } from "@/lib/resume";
+import { useUpdateResume, useDeleteResume, shareResume } from "@/lib/resume";
 import { paths } from "@/config/paths";
 import { ResponsesSection } from "@/features/profile/components/responses-section";
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
@@ -51,7 +51,6 @@ const ProfileRoute = () => {
     const { data: invitations } = useInvitations();
     const deleteResumeMutation = useDeleteResume();
     const updateResumeMutation = useUpdateResume();
-    const setDefaultResumeMutation = useSetDefaultResume();
     const [editing, setEditing] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
 
@@ -79,10 +78,6 @@ const ProfileRoute = () => {
         updateResumeMutation.mutate({ id, data: { is_visible: !r.isVisible } });
     };
 
-    const handleSetDefault = (id: number) => {
-        setDefaultResumeMutation.mutate(id);
-    };
-
     const handleDeleteClick = (id: number) => {
         setDeleteTarget(resumes.find((r) => r.id === id) ?? null);
     };
@@ -95,7 +90,15 @@ const ProfileRoute = () => {
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);
-        setSearchParams(value === "resume" ? {} : { tab: value }, { replace: true });
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                if (value === "resume") next.delete("tab");
+                else next.set("tab", value);
+                return next;
+            },
+            { replace: true },
+        );
     };
 
     return (
@@ -162,7 +165,6 @@ const ProfileRoute = () => {
                                 onToggleVisibility={
                                     isOtherUser ? undefined : handleToggleVisibility
                                 }
-                                onSetDefault={isOtherUser ? undefined : handleSetDefault}
                             />
                         </div>
                         <div className="flex-[3] min-w-0">

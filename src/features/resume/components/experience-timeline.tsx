@@ -32,6 +32,7 @@ type Props = {
     experiences: ResumeExperience[];
     isEditing?: boolean;
     resumeId: number;
+    ensureResumeId?: () => Promise<number | null>;
     hasExperience?: boolean;
     noExperienceDescription?: string;
     onHasExperienceChange?: (value: boolean) => void;
@@ -42,12 +43,14 @@ export const ExperienceTimeline = ({
     experiences,
     isEditing,
     resumeId,
+    ensureResumeId,
     hasExperience,
     noExperienceDescription,
     onHasExperienceChange,
     onNoExperienceDescriptionChange,
 }: Props) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isEnsuring, setIsEnsuring] = useState(false);
     const [newCards, setNewCards] = useState<number[]>([]);
 
     const totalDuration = formatDuration(experiences);
@@ -58,7 +61,16 @@ export const ExperienceTimeline = ({
     const updateMutation = useUpdateResumeExperience(resumeId);
     const deleteMutation = useDeleteResumeExperience(resumeId);
 
-    const handleAddNew = () => {
+    const handleAddNew = async () => {
+        if (resumeId === 0) {
+            setIsEnsuring(true);
+            try {
+                const rid = await ensureResumeId?.();
+                if (!rid) return;
+            } finally {
+                setIsEnsuring(false);
+            }
+        }
         setNewCards((prev) => [...prev, Date.now()]);
     };
 
@@ -183,7 +195,7 @@ export const ExperienceTimeline = ({
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleAddNew}
-                                    disabled={resumeId === 0}
+                                    disabled={isEnsuring}
                                     className="text-sm font-medium text-[#4F6BFF] hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-[#4F6BFF]"
                                 >
                                     + Добавить опыт
@@ -200,11 +212,6 @@ export const ExperienceTimeline = ({
                                     </button>
                                 )}
                             </div>
-                            {resumeId === 0 && (
-                                <p className="text-xs text-gray-400 mt-2">
-                                    Сначала сохраните резюме, затем добавляйте опыт
-                                </p>
-                            )}
                         </div>
                     </>
                 )}

@@ -13,7 +13,7 @@ import { Spinner } from "@/components/ui/spinner/spinner";
 import { ThemeProvider, useTheme } from "@/lib/theme-provider";
 import { ImagePromptProvider } from "@/components/image-prompt";
 import { CookieConsentProvider } from "@/features/privacy/cookie-consent-provider";
-import { HolidayDecor } from "@/features/decorations";
+import { HolidayDecor, HalloweenDecor } from "@/features/decorations";
 
 import "@/i18n/config";
 
@@ -74,10 +74,11 @@ const AppProvider = ({ children }: AppProviderProps) => {
                             </ThemeProvider>
                             <Notifications />
                             <ImagePromptProvider />
-                            {/* Глобальный декор: рендерится только при включённом
-                                флаге из админ-панели, поэтому в обычном виде
-                                это пустой фрагмент. */}
+                            {/* Глобальный декор: каждый рендерится только при
+                                своём флаге из админ-панели, поэтому в обычном
+                                виде это пустой фрагмент. */}
                             <HolidayDecor />
+                            <HalloweenDecor />
                         </QueryClientProvider>
                     </CookieConsentProvider>
                 </HelmetProvider>

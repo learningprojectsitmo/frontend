@@ -55,6 +55,10 @@ interface TableInvitationsProps {
     groups?: TableInvitationsGroup[];
     defaultExpanded?: Record<string, boolean>;
     onToggleGroup?: (key: string) => void;
+    /** Управляемое состояние раскрытия групп: если передано — компонент не хранит своё. */
+    expanded?: Record<string, boolean>;
+    /** Вызывается с новой картой раскрытия при переключении группы (только в управляемом режиме). */
+    onExpandedChange?: (next: Record<string, boolean>) => void;
 }
 
 export const TableInvitations = ({
@@ -73,6 +77,8 @@ export const TableInvitations = ({
     groups = [],
     defaultExpanded,
     onToggleGroup,
+    expanded,
+    onExpandedChange,
 }: TableInvitationsProps) => {
     const typeLabels: Record<string, string> = {
         response: "Отклик",
@@ -83,12 +89,15 @@ export const TableInvitations = ({
         if (defaultExpanded) return defaultExpanded;
         const initial: Record<string, boolean> = {};
         groups.forEach((g) => {
-            initial[g.key] = true;
+            initial[g.key] = false;
         });
         return initial;
     });
 
-    const isExpanded = (key: string) => internalExpanded[key] ?? true;
+    /** Карта раскрытия: управляемая, если передан `expanded`, иначе внутренняя. */
+    const expandedMap = expanded ?? internalExpanded;
+
+    const isExpanded = (key: string) => expandedMap[key] ?? false;
 
     const isRowPending = (id: number) => pendingActionId === id;
 
@@ -96,7 +105,12 @@ export const TableInvitations = ({
     const actionButtonClass = "font-medium disabled:cursor-not-allowed disabled:opacity-50";
 
     const toggleGroup = (key: string) => {
-        setInternalExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+        const next = { ...expandedMap, [key]: !expandedMap[key] };
+        if (expanded !== undefined) {
+            onExpandedChange?.(next);
+        } else {
+            setInternalExpanded(next);
+        }
         onToggleGroup?.(key);
     };
 

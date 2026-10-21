@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch/switch";
-import { type ResumeDetail } from "@/types/api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert/alert";
+import { type ResumeDetail, type ResumeSpaceAssign } from "@/types/api";
+import { toast } from "sonner";
 import { CoverLetterCard } from "./cover-letter-card";
 import { ProfileCard } from "./profile-card";
 import { ExperienceTimeline } from "./experience-timeline";
@@ -13,21 +15,29 @@ import { EducationCard } from "./education-card";
 import { LanguagesCard } from "./languages-card";
 import { SkillsCard } from "./skills-card";
 import { InterestsCard } from "./interests-card";
+import { SpacesCard } from "./spaces-card";
+
+export type ResumeFormFields = {
+    header: string;
+    role: string | null;
+    about: string | null;
+    cover_letter: string | null;
+    has_experience: boolean;
+    no_experience_description: string | null;
+    is_visible: boolean;
+    spaces: ResumeSpaceAssign[];
+};
 
 type Props = {
     data: ResumeDetail;
+    /** Пространства текущего пользователя для выбора публикации в редакторе. */
+    availableSpaces?: { id: number; title: string }[];
     isEditing?: boolean;
     sectionsEditable?: boolean;
     onEdit?: () => void;
-    onSave?: (data: {
-        header: string;
-        role: string | null;
-        about: string | null;
-        cover_letter: string | null;
-        has_experience: boolean;
-        no_experience_description: string | null;
-        is_visible: boolean;
-    }) => void;
+    onSave?: (data: ResumeFormFields) => void;
+    /** Создаёт резюме по текущим значениям формы, если его ещё нет (id=0). */
+    onEnsureResume?: (data: ResumeFormFields) => Promise<number | null>;
     onCancel?: () => void;
     onShare?: () => void;
     onDelete?: () => void;
@@ -35,10 +45,12 @@ type Props = {
 
 export const ResumePage = ({
     data,
+    availableSpaces = [],
     isEditing,
     sectionsEditable = isEditing,
     onEdit,
     onSave,
+    onEnsureResume,
     onCancel,
     onShare,
     onDelete,
@@ -49,6 +61,7 @@ export const ResumePage = ({
     const [editHasExperience, setEditHasExperience] = useState(true);
     const [editNoExpDescription, setEditNoExpDescription] = useState("");
     const [editIsVisible, setEditIsVisible] = useState(false);
+    const [editSpaces, setEditSpaces] = useState<ResumeSpaceAssign[]>([]);
     const [headerError, setHeaderError] = useState(false);
 
     useEffect(() => {
@@ -58,6 +71,12 @@ export const ResumePage = ({
         setEditHasExperience(data.resume.has_experience);
         setEditNoExpDescription(data.resume.no_experience_description ?? "");
         setEditIsVisible(data.resume.is_visible);
+        setEditSpaces(
+            data.resume.spaces.map((space) => ({
+                workspace_id: space.workspace_id,
+                is_default: space.is_default,
+            })),
+        );
     }, [
         data.resume.header,
         data.resume.about,
@@ -65,27 +84,49 @@ export const ResumePage = ({
         data.resume.has_experience,
         data.resume.no_experience_description,
         data.resume.is_visible,
+        data.resume.spaces,
     ]);
+
+    const buildFields = (): ResumeFormFields => ({
+        header: editHeader,
+        role: data.resume.role,
+        about: editAbout || null,
+        cover_letter: editCoverLetter || null,
+        has_experience: editHasExperience,
+        no_experience_description: editNoExpDescription || null,
+        is_visible: editIsVisible,
+        spaces: editSpaces,
+    });
 
     const handleSaveClick = () => {
         const headerValid = editHeader.trim().length > 0;
         setHeaderError(!headerValid);
         if (!headerValid) return;
-        onSave?.({
-            header: editHeader,
-            role: data.resume.role,
-            about: editAbout || null,
-            cover_letter: editCoverLetter || null,
-            has_experience: editHasExperience,
-            no_experience_description: editNoExpDescription || null,
-            is_visible: editIsVisible,
-        });
+        onSave?.(buildFields());
+    };
+
+    // Вызывается карточками по клику «+ Добавить», когда резюме ещё не создано
+    // (resumeId === 0): создаёт черновик по текущим значениям формы и
+    // возвращает id. Пустой заголовок — подсветка + фокус на поле, null.
+    const ensureResumeId = async (): Promise<number | null> => {
+        if (data.resume.id !== 0) return data.resume.id;
+        if (!onEnsureResume) return null;
+        const headerValid = editHeader.trim().length > 0;
+        setHeaderError(!headerValid);
+        if (!headerValid) {
+            toast.error("Введите название резюме");
+            document.getElementById("resume-header-input")?.focus();
+            return null;
+        }
+        return await onEnsureResume(buildFields());
     };
 
     const handleHeaderChange = (value: string) => {
         setEditHeader(value);
         if (headerError && value.trim()) setHeaderError(false);
     };
+
+    const hiddenDefaultSpaces = !editIsVisible && editSpaces.some((space) => space.is_default);
 
     return (
         <div className="flex flex-col gap-6">
@@ -126,6 +167,18 @@ export const ResumePage = ({
                 </div>
             )}
 
+            {isEditing && hiddenDefaultSpaces && (
+                <Alert variant="destructive">
+                    <Icon name="warning" size={16} />
+                    <AlertTitle>Резюме скрыто, но является основным</AlertTitle>
+                    <AlertDescription>
+                        В некоторых пространствах это резюме показано как основное. При скрытии
+                        основным должно стать другое видимое резюме — иначе сохранить не получится.
+                        Сделайте основным другое резюме в этих пространствах или включите видимость.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <ProfileCard
                 user={data.user}
                 role={data.resume.role}
@@ -154,6 +207,7 @@ export const ResumePage = ({
                             experiences={data.experiences}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                             hasExperience={editHasExperience}
                             noExperienceDescription={editNoExpDescription}
                             onHasExperienceChange={setEditHasExperience}
@@ -191,11 +245,21 @@ export const ResumePage = ({
                 </div>
 
                 <div className="flex flex-col gap-6">
+                    {(data.resume.spaces.length > 0 || isEditing) && (
+                        <SpacesCard
+                            available={availableSpaces}
+                            assigned={data.resume.spaces}
+                            value={editSpaces}
+                            onChange={setEditSpaces}
+                            isEditing={isEditing}
+                        />
+                    )}
                     {(data.links.length > 0 || isEditing) && (
                         <PortfolioCard
                             links={data.links}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.educations.length > 0 || isEditing) && (
@@ -203,6 +267,7 @@ export const ResumePage = ({
                             educations={data.educations}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.languages.length > 0 || isEditing) && (
@@ -210,6 +275,7 @@ export const ResumePage = ({
                             languages={data.languages}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.skills.length > 0 || isEditing) && (
@@ -217,6 +283,7 @@ export const ResumePage = ({
                             skills={data.skills}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                     {(data.interests.length > 0 || isEditing) && (
@@ -224,6 +291,7 @@ export const ResumePage = ({
                             interests={data.interests}
                             isEditing={sectionsEditable}
                             resumeId={data.resume.id}
+                            ensureResumeId={ensureResumeId}
                         />
                     )}
                 </div>
