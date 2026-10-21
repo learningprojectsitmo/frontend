@@ -7,6 +7,7 @@ import {
     type ProjectListResponse,
     type MyProjectListResponse,
     type ProjectFilterFacetsResponse,
+    type ProjectNeighborsResponse,
     type ProjectUpdateInput,
 } from "@/types/api";
 import { queryKeys, type ProjectsListParams } from "./query-keys";
@@ -24,6 +25,9 @@ export const invalidateProjectImpact = (
         queryKeys.project.lists(),
         queryKeys.project.recent(),
         queryKeys.project.byIds(),
+        // Соседи хранят название проекта: переименование соседа должно
+        // обновить и его карточку в кнопках «назад/вперёд».
+        queryKeys.project.neighborsAll(),
         queryKeys.profile.responses(),
         queryKeys.profile.invitations(),
         queryKeys.profile.projects(),
@@ -117,6 +121,35 @@ export const useProjectFilters = (workspaceId: string | number) => {
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         enabled: !!workspaceId,
+    });
+};
+
+export const getProjectNeighbors = async (
+    workspaceId: string | number,
+    projectId: string | number,
+): Promise<ProjectNeighborsResponse> => {
+    return await api.get("/projects/neighbors", {
+        params: { workspace_id: workspaceId, project_id: projectId },
+    });
+};
+
+/**
+ * Соседи проекта в списке пространства — для кнопок «назад/вперёд».
+ *
+ * Запрос делается только когда известно пространство: у проекта без
+ * пространства соседей в списке не существует.
+ */
+export const useProjectNeighbors = (
+    workspaceId: string | number | null | undefined,
+    projectId: string | number | null | undefined,
+) => {
+    return useQuery({
+        queryKey: queryKeys.project.neighbors(workspaceId ?? "", projectId ?? ""),
+        queryFn: () =>
+            getProjectNeighbors(workspaceId as string | number, projectId as string | number),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled: !!workspaceId && !!projectId,
     });
 };
 

@@ -254,6 +254,24 @@ export type ProjectListResponse = {
     total_pages: number;
 };
 
+/** Соседний проект в списке пространства — для кнопок «назад/вперёд». */
+export type ProjectNeighborItemResponse = {
+    id: number;
+    name: string;
+    status: BackendProjectStatus;
+};
+
+/**
+ * Соседи текущего проекта в списке пространства.
+ *
+ * `prev` — проект ниже в списке (меньший id), `next` — выше (больший id).
+ * На краях списка соответствующее поле равно `null`.
+ */
+export type ProjectNeighborsResponse = {
+    prev: ProjectNeighborItemResponse | null;
+    next: ProjectNeighborItemResponse | null;
+};
+
 export type ProjectFilterMemberResponse = {
     id: number;
     full_name: string;

@@ -67,6 +67,11 @@ export const queryKeys = {
         filters: (workspaceId: string | number) =>
             ["projects", "filters", String(workspaceId)] as const,
         lists: () => ["projects", "list"] as const,
+        // Корневой ключ соседей: по нему инвалидируются все пары
+        // (пространство, проект) — в том числе после переименования соседа.
+        neighbors: (workspaceId: string | number, projectId: string | number) =>
+            ["projects", "neighbors", String(workspaceId), String(projectId)] as const,
+        neighborsAll: () => ["projects", "neighbors"] as const,
         recent: () => ["projects", "recent"] as const,
         byIds: (ids?: number[]) =>
             ids ? (["projects", "by_ids", ids] as const) : (["projects", "by_ids"] as const),

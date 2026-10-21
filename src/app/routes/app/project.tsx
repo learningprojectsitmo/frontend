@@ -24,6 +24,7 @@ import {
     useApproveStage,
     useRejectStage,
     useCancelInvitation,
+    useProjectNeighbors,
     invalidateProjectImpact,
 } from "@/lib/projects";
 import { useRecentlyViewed } from "@/features/spaces/hooks/use-recently-viewed";
@@ -82,6 +83,8 @@ import { InviteDialog } from "@/features/project/components/invite-dialog";
 import { JoinWarningDialog } from "@/features/project/components/join-warning-dialog";
 import { RejectResponseDialog } from "@/features/project/components/reject-response-dialog";
 import { StageStepper } from "@/features/project/components/stage-stepper";
+import { ProjectNavButtons } from "@/features/project/components/project-nav-buttons";
+import { buildProjectNavHref } from "@/features/project/utils/project-nav";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
 import { WikiTab } from "@/features/project/components/wiki-tab";
@@ -568,6 +571,18 @@ const SpaceRoute = () => {
     const rejectResponseMutation = useRejectResponse();
     const deleteProjectMutation = useDeleteProject();
     const navigate = useNavigate();
+
+    // Соседи текущего проекта в списке пространства — для кнопок
+    // «назад/вперёд». Запрос уходит только когда известно пространство.
+    const { data: neighbors } = useProjectNeighbors(dataProject?.workspace_id, dataProject?.id);
+
+    /** Переход к соседнему проекту: вкладка сохраняется, режим правки — нет. */
+    const handleNavigateToProject = useCallback(
+        (projectId: number) => {
+            navigate(buildProjectNavHref(projectId, searchParams));
+        },
+        [navigate, searchParams],
+    );
 
     const advanceStageMutation = useAdvanceStage();
     const approveStageMutation = useApproveStage();
@@ -1260,6 +1275,16 @@ const SpaceRoute = () => {
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
+
+                {!isEditing && dataProject?.workspace_id && (
+                    <div className="flex justify-start">
+                        <ProjectNavButtons
+                            prev={neighbors?.prev}
+                            next={neighbors?.next}
+                            onNavigate={handleNavigateToProject}
+                        />
+                    </div>
+                )}
 
                 <div className="self-stretch flex flex-col xl:flex-row xl:items-start xl:gap-10 gap-6">
                     <div className="flex-1 flex justify-start items-start gap-5">
