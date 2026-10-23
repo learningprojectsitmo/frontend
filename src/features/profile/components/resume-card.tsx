@@ -7,6 +7,12 @@ import {
     DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 
+export type ResumeSpace = {
+    workspaceId: number;
+    workspaceName: string;
+    isDefault: boolean;
+};
+
 export type ResumeData = {
     id: number;
     position: string;
@@ -14,6 +20,7 @@ export type ResumeData = {
     invitations: string;
     lastUpdated: string;
     isVisible: boolean;
+    spaces: ResumeSpace[];
 };
 
 export function mapResumeFromApi(item: import("@/types/api").ResumeFull): ResumeData {
@@ -24,6 +31,11 @@ export function mapResumeFromApi(item: import("@/types/api").ResumeFull): Resume
         invitations: String(item.invitations_count ?? 0),
         lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("ru-RU") : "—",
         isVisible: item.is_visible,
+        spaces: (item.spaces ?? []).map((space) => ({
+            workspaceId: space.workspace_id,
+            workspaceName: space.workspace_name,
+            isDefault: space.is_default,
+        })),
     };
 }
 
@@ -97,6 +109,35 @@ export function ResumeCard({
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
+                )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pointer-events-none">
+                <span className="text-xs font-medium text-gray-400">Пространства:</span>
+                {resume.spaces.length === 0 ? (
+                    <span className="text-xs text-gray-400">не опубликовано ни в одном</span>
+                ) : (
+                    resume.spaces.map((space) => (
+                        <span
+                            key={space.workspaceId}
+                            title={
+                                space.isDefault
+                                    ? "Основное резюме в этом пространстве — показывается на его странице"
+                                    : undefined
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
+                        >
+                            <Icon name="department" size={12} className="text-gray-400 shrink-0" />
+                            <span className="truncate max-w-[180px]">
+                                {space.workspaceName || "Без названия"}
+                            </span>
+                            {space.isDefault && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-[#2563EB] bg-[#2563EB]/10 rounded-full px-2 py-0.5">
+                                    Основное
+                                </span>
+                            )}
+                        </span>
+                    ))
                 )}
             </div>
 

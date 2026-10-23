@@ -2,6 +2,7 @@ import { usePublicAppSettings } from "@/lib/app-settings";
 
 import { Bats } from "./bats";
 import { Cobwebs } from "./cobwebs";
+import { Ghost } from "./ghost";
 import { Pumpkins } from "./pumpkins";
 import { useDecorationsAllowed } from "./use-decorations-allowed";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
@@ -37,6 +38,7 @@ export const HalloweenDecor = () => {
             <Cobwebs />
             <Bats staticMode={prefersReducedMotion} />
             <Pumpkins />
+            <Ghost staticMode={prefersReducedMotion} />
         </div>
     );
 };

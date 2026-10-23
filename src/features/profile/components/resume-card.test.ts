@@ -41,4 +41,27 @@ describe("mapResumeFromApi", () => {
         const item = mapResumeFromApi(resume({ updated_at: "" }));
         expect(item.lastUpdated).toBe("—");
     });
+
+    it("maps workspace assignments and the default flag", () => {
+        const item = mapResumeFromApi(
+            resume({
+                spaces: [
+                    { workspace_id: 10, workspace_name: "Учебное пространство", is_default: true },
+                    { workspace_id: 11, workspace_name: "Стажировки", is_default: false },
+                ],
+            }),
+        );
+        expect(item.spaces).toEqual([
+            { workspaceId: 10, workspaceName: "Учебное пространство", isDefault: true },
+            { workspaceId: 11, workspaceName: "Стажировки", isDefault: false },
+        ]);
+    });
+
+    it("returns an empty space list when the backend omits assignments", () => {
+        const item = mapResumeFromApi({
+            ...resume(),
+            spaces: undefined,
+        } as unknown as ResumeFull);
+        expect(item.spaces).toEqual([]);
+    });
 });

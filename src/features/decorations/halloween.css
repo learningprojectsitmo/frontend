@@ -3,6 +3,10 @@
  * сайдбара z-[9], ниже sonner), ничего не перехватывает: pointer-events: none.
  * Структура повторяет новогодний декор (см. decor.css): паутина — «рамка»,
  * мыши — движение, тыквы — покачивание по периметру.
+ *
+ * Интерактивные элементы (тыквы и привидение) точечно включают
+ * pointer-events: auto. Сами украшения стоят по краям и внизу, чтобы не
+ * накрывать кнопки хедера и бокового меню.
  */
 
 .halloween-decor {
@@ -17,42 +21,138 @@
 
 .halloween-decor__cobweb {
     position: absolute;
-    top: 0;
-    width: min(38vw, 160px);
-    height: min(38vw, 160px);
-    /* Средний тон читается и на светлой, и на тёмной теме; drop-shadow
-       добавляет контраст поверх любого фона. */
-    color: rgb(126 116 150 / 60%);
-    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 22%));
+    /* На мобильных поднята над нижней навигацией, на десктопе — в углу. */
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    width: min(30vw, 132px);
+    height: min(30vw, 132px);
+    color: rgb(96 84 128 / 58%);
+    opacity: 0.9;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 20%));
+    /* Мягко растворяем внешний край — паутина не спорит с контентом. */
+    mask-image: radial-gradient(circle at bottom left, #000 0 38%, transparent 86%);
+}
+
+.halloween-decor__cobweb--bl {
+    left: -16px;
+}
+
+.halloween-decor__cobweb--br {
+    right: -16px;
+    mask-image: radial-gradient(circle at bottom right, #000 0 38%, transparent 86%);
 }
 
 .halloween-decor__cobweb svg {
     display: block;
     width: 100%;
     height: 100%;
+    transform-origin: bottom left;
+    animation: halloween-cobweb-sway 9s ease-in-out infinite;
 }
 
-.halloween-decor__cobweb--tl {
-    left: 0;
+.halloween-decor__cobweb--br svg {
+    transform-origin: bottom right;
+    animation-direction: reverse;
 }
 
-.halloween-decor__cobweb--tr {
-    right: 0;
-    transform: scaleX(-1);
+.halloween-decor__cobweb-spider {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: halloween-spider-wiggle 4.5s ease-in-out infinite;
+}
+
+@media (min-width: 1024px) {
+    .halloween-decor__cobweb {
+        bottom: -14px;
+    }
 }
 
 /* ─── Летучие мыши ─────────────────────────────────────────────────────── */
 
+/*
+ * Кромка «пещеры» по верхнему краю экрана. Тонкая полоса не мешает кнопкам,
+ * но по клику вспугивает всю стаю. Мыши висят под хедером на паутинках.
+ */
+.halloween-decor__cave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    color: rgb(58 47 86 / 46%);
+    background: currentColor;
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 38%,
+        97% 74%,
+        94% 40%,
+        91% 80%,
+        87% 44%,
+        83% 68%,
+        79% 34%,
+        75% 76%,
+        71% 42%,
+        67% 66%,
+        63% 32%,
+        59% 72%,
+        55% 44%,
+        51% 64%,
+        47% 30%,
+        43% 74%,
+        39% 42%,
+        35% 66%,
+        31% 34%,
+        27% 74%,
+        23% 44%,
+        19% 70%,
+        15% 38%,
+        11% 76%,
+        7% 44%,
+        3% 68%,
+        0 38%
+    );
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .halloween-decor__bat {
     position: absolute;
-    left: -160px;
+    top: 72px;
     height: auto;
-    color: rgb(62 52 88 / 88%);
-    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 20%));
-    animation: halloween-bat-fly var(--bat-duration, 26s) linear infinite;
-    animation-direction: var(--bat-direction, normal);
-    animation-delay: var(--bat-delay, 0s);
-    will-change: transform;
+    color: rgb(58 47 86 / 92%);
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 24%));
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transform-origin: top center;
+    transition: filter 0.2s ease;
+    will-change: transform, opacity;
+}
+
+/* Паутинка идёт от мыши к верхней кромке хедера. */
+.halloween-decor__bat::before {
+    content: "";
+    position: absolute;
+    top: -72px;
+    left: 50%;
+    width: 1px;
+    height: 72px;
+    background: linear-gradient(to bottom, transparent, currentColor 10%, currentColor);
+    opacity: 0.42;
+    transition: opacity 0.12s linear;
+}
+
+/* Улетающая мышь отпускает паутинку — верёвка не летит вместе с ней. */
+.halloween-decor__bat--fleeing::before {
+    opacity: 0;
+}
+
+/* Расширяем зону клика: сама мышь визуально небольшая. */
+.halloween-decor__bat::after {
+    content: "";
+    position: absolute;
+    inset: -12px -8px;
 }
 
 .halloween-decor__bat svg {
@@ -61,9 +161,106 @@
     height: auto;
 }
 
-.halloween-decor__bat--static {
+/* Висящая мышь перевёрнута вниз головой и покачивается на паутинке. */
+.halloween-decor__bat-svg--folded {
+    transform: rotate(180deg);
+    transform-origin: center;
+    animation: halloween-bat-sway 4.4s ease-in-out infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+/* Пока мышь висит — она свернулась; раскрытые крылья нужны только для полёта. */
+.halloween-decor__bat .halloween-decor__bat-svg--open {
+    display: none;
+}
+
+.halloween-decor__bat--fleeing .halloween-decor__bat-svg--folded {
+    display: none;
+}
+
+.halloween-decor__bat--fleeing .halloween-decor__bat-svg--open {
+    display: block;
+}
+
+/* Свернувшаяся мышь тихо «дышит» и иногда моргает красными глазами. */
+.halloween-decor__bat-folded-body {
+    transform-box: fill-box;
+    transform-origin: 50% 35%;
+    animation: halloween-bat-breathe 5.6s ease-in-out infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+.halloween-decor__bat-eye {
+    fill: #ff4d5f;
+    filter: drop-shadow(0 0 1.5px rgb(255 70 90 / 90%));
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: halloween-bat-blink 6.4s steps(1, end) infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+/* Крылья и тело живут отдельными группами: взмах и покачивание не сливаются. */
+.halloween-decor__bat-wing,
+.halloween-decor__bat-body {
+    transform-box: fill-box;
+}
+
+.halloween-decor__bat-wing--left {
+    transform-origin: 100% 58%;
+    animation: halloween-bat-wing-shiver-left 6.8s ease-in-out infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+.halloween-decor__bat-wing--right {
+    transform-origin: 0% 58%;
+    animation: halloween-bat-wing-shiver-right 6.8s ease-in-out infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+.halloween-decor__bat-wing-vein {
+    fill: none;
+    stroke: rgb(255 255 255 / 18%);
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
+.halloween-decor__bat-body {
+    transform-origin: 50% 0%;
+    animation: halloween-bat-body-bob 4.4s ease-in-out infinite;
+    animation-delay: var(--bat-delay, 0s);
+}
+
+.halloween-decor__bat:hover {
+    filter: drop-shadow(0 0 8px rgb(170 150 255 / 70%));
+}
+
+.halloween-decor__bat--fleeing {
+    animation: halloween-bat-escape 2.6s cubic-bezier(0.25, 0.7, 0.4, 1) forwards;
+    pointer-events: none;
+}
+
+.halloween-decor__bat--fleeing .halloween-decor__bat-wing--left {
+    animation: halloween-bat-wing-flap-left 0.19s ease-in-out infinite alternate;
+}
+
+.halloween-decor__bat--fleeing .halloween-decor__bat-wing--right {
+    animation: halloween-bat-wing-flap-right 0.19s ease-in-out infinite alternate;
+}
+
+.halloween-decor__bat--fleeing .halloween-decor__bat-body {
     animation: none;
-    opacity: 0.75;
+}
+
+.halloween-decor__bat--gone {
+    display: none;
+}
+
+.halloween-decor__bat--static svg,
+.halloween-decor__bat--static .halloween-decor__bat-wing,
+.halloween-decor__bat--static .halloween-decor__bat-body,
+.halloween-decor__bat--static .halloween-decor__bat-folded-body,
+.halloween-decor__bat--static .halloween-decor__bat-eye {
+    animation: none;
 }
 
 /* ─── Тыквы ────────────────────────────────────────────────────────────── */
@@ -75,6 +272,9 @@
     width: var(--halloween-size, 28px);
     height: auto;
     opacity: 0.92;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
     filter: drop-shadow(0 0 8px rgb(232 114 12 / 35%));
     animation: halloween-pumpkin-float 7s ease-in-out infinite;
     animation-delay: var(--halloween-delay, 0s);
@@ -84,29 +284,483 @@
     display: block;
     width: 100%;
     height: auto;
+    transition:
+        transform 0.25s ease,
+        filter 0.25s ease;
+}
+
+.halloween-decor__pumpkin:hover svg,
+.halloween-decor__pumpkin:focus-visible svg {
+    transform: scale(1.12);
+}
+
+.halloween-decor__pumpkin--lit {
+    filter: drop-shadow(0 0 12px rgb(255 170 60 / 85%)) drop-shadow(0 0 28px rgb(255 120 20 / 55%));
+}
+
+.halloween-decor__pumpkin--lit svg {
+    transform: scale(1.06);
+}
+
+/* ─── Привидение ───────────────────────────────────────────────────────── */
+
+.halloween-decor__ghost {
+    position: absolute;
+    left: 50%;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    width: 76px;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transform: translate3d(-50%, 0, 0);
+    animation: halloween-ghost-walk 16s ease-in-out infinite;
+    --ghost-body: rgb(43 35 64 / 94%);
+    --ghost-stroke: rgb(255 255 255 / 26%);
+    --ghost-eye: rgb(232 240 255 / 96%);
+    --ghost-mouth: rgb(232 240 255 / 92%);
+    --ghost-blush: rgb(130 160 230 / 48%);
+    --ghost-glow: rgb(90 70 160 / 45%);
+    --ghost-glow-2: rgb(120 100 220 / 28%);
+    --ghost-glow-hover: rgb(110 85 190 / 65%);
+    --ghost-glow-hover-2: rgb(140 110 240 / 40%);
+}
+
+.halloween-decor__ghost svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 10px var(--ghost-glow)) drop-shadow(0 0 26px var(--ghost-glow-2));
+    transition: filter 0.25s ease;
+}
+
+/* На светлом фоне привидение тёмное, с холодным свечением по контуру. */
+.halloween-decor__ghost-body {
+    fill: var(--ghost-body);
+    stroke: var(--ghost-stroke);
+    transition:
+        fill 0.3s ease,
+        stroke 0.3s ease;
+}
+
+.halloween-decor__ghost-eye {
+    fill: var(--ghost-eye);
+    transition: fill 0.3s ease;
+}
+
+.halloween-decor__ghost-eye-arc {
+    fill: none;
+    stroke: var(--ghost-eye);
+    transition: stroke 0.3s ease;
+}
+
+.halloween-decor__ghost-tear {
+    fill: #9ad8ff;
+    filter: drop-shadow(0 0 3px rgb(120 190 255 / 80%));
+}
+
+.halloween-decor__ghost-mouth {
+    stroke: var(--ghost-mouth);
+    transition: stroke 0.3s ease;
+}
+
+.halloween-decor__ghost-brow {
+    stroke: var(--ghost-mouth);
+    transition: stroke 0.3s ease;
+}
+
+.halloween-decor__ghost-fang {
+    fill: var(--ghost-eye);
+    transition: fill 0.3s ease;
+}
+
+.halloween-decor__ghost-blush {
+    fill: var(--ghost-blush);
+    transition: fill 0.3s ease;
+}
+
+.halloween-decor__ghost:hover svg {
+    filter: drop-shadow(0 0 14px var(--ghost-glow-hover))
+        drop-shadow(0 0 34px var(--ghost-glow-hover-2));
+}
+
+.halloween-decor__ghost--static {
+    animation: none;
+}
+
+.halloween-decor__ghost--spooked svg {
+    animation: halloween-ghost-boo 0.6s ease;
+}
+
+.halloween-decor__ghost-boo {
+    position: absolute;
+    bottom: calc(100% + 18px);
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: max-content;
+    max-width: min(300px, calc(100vw - 100px));
+    padding: 8px 12px;
+    border: 1px solid rgb(255 255 255 / 12%);
+    border-radius: 14px;
+    background: rgb(43 35 64 / 95%);
+    color: #f4edff;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 10px 28px rgb(0 0 0 / 28%);
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+    pointer-events: none;
+}
+
+.halloween-decor__ghost-boo::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    border: 7px solid transparent;
+    border-top-color: rgb(43 35 64 / 95%);
+    border-bottom: 0;
+    transform: translateX(-50%);
+}
+
+.halloween-decor__ghost-boo-title {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: #ffb3c7;
+}
+
+.halloween-decor__ghost-boo-text {
+    font-weight: 500;
+}
+
+.halloween-decor__ghost-boo--happy {
+    border-color: rgb(255 214 102 / 38%);
+    background: rgb(60 42 18 / 96%);
+}
+
+.halloween-decor__ghost-boo--happy::after {
+    border-top-color: rgb(60 42 18 / 96%);
+}
+
+.halloween-decor__ghost-boo--happy .halloween-decor__ghost-boo-title {
+    color: #ffd666;
+}
+
+.halloween-decor__ghost-boo--angry {
+    border-color: rgb(255 95 120 / 36%);
+    background: rgb(60 20 32 / 97%);
+    box-shadow:
+        0 10px 28px rgb(0 0 0 / 30%),
+        0 0 18px rgb(255 70 100 / 22%);
+}
+
+.halloween-decor__ghost-boo--angry::after {
+    border-top-color: rgb(60 20 32 / 97%);
+}
+
+.halloween-decor__ghost-boo--angry .halloween-decor__ghost-boo-title {
+    color: #ff7a8d;
+    text-shadow: 0 0 10px rgb(255 60 90 / 55%);
+}
+
+.halloween-decor__ghost-boo--sad {
+    border-color: rgb(130 180 255 / 35%);
+    background: rgb(22 36 66 / 97%);
+}
+
+.halloween-decor__ghost-boo--sad::after {
+    border-top-color: rgb(22 36 66 / 97%);
+}
+
+.halloween-decor__ghost-boo--sad .halloween-decor__ghost-boo-title {
+    color: #9ecbff;
+}
+
+.halloween-decor__ghost-boo--secret {
+    border-color: rgb(255 214 102 / 55%);
+    background: rgb(58 40 20 / 96%);
+    color: #fff3c4;
+    box-shadow:
+        0 10px 28px rgb(0 0 0 / 30%),
+        0 0 22px rgb(255 196 80 / 35%);
+}
+
+.halloween-decor__ghost-boo--secret::after {
+    border-top-color: rgb(58 40 20 / 96%);
+}
+
+.halloween-decor__ghost-boo--secret .halloween-decor__ghost-boo-title {
+    color: #ffd666;
+}
+
+.halloween-decor__ghost--spooked .halloween-decor__ghost-boo {
+    animation: halloween-boo-pop 0.7s ease-out;
+}
+
+@media (min-width: 1024px) {
+    .halloween-decor__ghost {
+        bottom: 6px;
+        width: 84px;
+    }
+}
+
+/* ─── Тёмная тема ──────────────────────────────────────────────────────── */
+
+.dark .halloween-decor__cobweb {
+    color: rgb(216 204 255 / 55%);
+    filter: drop-shadow(0 0 6px rgb(170 150 255 / 35%));
+}
+
+.dark .halloween-decor__cave {
+    color: rgb(203 188 250 / 26%);
+}
+
+.dark .halloween-decor__bat {
+    color: rgb(203 188 250 / 92%);
+    filter: drop-shadow(0 0 6px rgb(170 150 255 / 50%));
+}
+
+.dark .halloween-decor__bat-wing-vein {
+    stroke: rgb(43 35 64 / 22%);
+}
+
+.dark .halloween-decor__ghost {
+    --ghost-body: rgb(225 240 255 / 88%);
+    --ghost-stroke: rgb(255 255 255 / 70%);
+    --ghost-eye: #2b2340;
+    --ghost-mouth: #2b2340;
+    --ghost-blush: rgb(160 200 255 / 55%);
+    --ghost-glow: rgb(190 220 255 / 85%);
+    --ghost-glow-2: rgb(140 175 255 / 55%);
+    --ghost-glow-hover: rgb(190 220 255 / 95%);
+    --ghost-glow-hover-2: rgb(140 175 255 / 65%);
+}
+
+/* Настроение меняется по клику: злость, радость, грусть. */
+.halloween-decor__ghost.halloween-decor__ghost--happy {
+    --ghost-body: rgb(160 98 16 / 96%);
+    --ghost-stroke: rgb(255 226 140 / 65%);
+    --ghost-eye: #fff3c4;
+    --ghost-mouth: #fff3c4;
+    --ghost-blush: rgb(255 120 80 / 55%);
+    --ghost-glow: rgb(255 190 70 / 65%);
+    --ghost-glow-2: rgb(220 140 30 / 45%);
+    --ghost-glow-hover: rgb(255 210 90 / 85%);
+    --ghost-glow-hover-2: rgb(240 160 40 / 55%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry {
+    --ghost-body: rgb(137 18 34 / 97%);
+    --ghost-stroke: rgb(255 120 135 / 58%);
+    --ghost-eye: #ff7a86;
+    --ghost-mouth: #ffdde0;
+    --ghost-blush: rgb(255 50 85 / 55%);
+    --ghost-glow: rgb(255 45 70 / 72%);
+    --ghost-glow-2: rgb(210 15 45 / 50%);
+    --ghost-glow-hover: rgb(255 65 90 / 90%);
+    --ghost-glow-hover-2: rgb(240 25 55 / 65%);
+}
+
+.halloween-decor__ghost--angry .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 3px rgb(255 60 90 / 90%));
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--sad {
+    --ghost-body: rgb(35 62 118 / 96%);
+    --ghost-stroke: rgb(150 190 255 / 55%);
+    --ghost-eye: #d6e9ff;
+    --ghost-mouth: #d6e9ff;
+    --ghost-blush: rgb(90 140 230 / 45%);
+    --ghost-glow: rgb(70 130 255 / 60%);
+    --ghost-glow-2: rgb(40 80 200 / 42%);
+    --ghost-glow-hover: rgb(90 150 255 / 80%);
+    --ghost-glow-hover-2: rgb(50 100 230 / 55%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--secret {
+    --ghost-body: rgb(190 140 20 / 97%);
+    --ghost-stroke: rgb(255 245 180 / 75%);
+    --ghost-eye: #fff8d0;
+    --ghost-mouth: #fff8d0;
+    --ghost-blush: rgb(255 170 80 / 60%);
+    --ghost-glow: rgb(255 220 90 / 80%);
+    --ghost-glow-2: rgb(210 150 20 / 58%);
+    --ghost-glow-hover: rgb(255 235 120 / 100%);
+    --ghost-glow-hover-2: rgb(230 170 30 / 70%);
 }
 
 /* ─── Анимации ─────────────────────────────────────────────────────────── */
 
-@keyframes halloween-bat-fly {
-    0% {
-        transform: translateX(0) translateY(0) rotate(-4deg);
-    }
-
-    25% {
-        transform: translateX(27vw) translateY(-10px) rotate(3deg);
+@keyframes halloween-cobweb-sway {
+    0%,
+    100% {
+        transform: rotate(-1.1deg);
     }
 
     50% {
-        transform: translateX(54vw) translateY(5px) rotate(-2deg);
+        transform: rotate(1.1deg);
+    }
+}
+
+@keyframes halloween-spider-wiggle {
+    0%,
+    100% {
+        transform: rotate(-7deg) translateY(0);
     }
 
-    75% {
-        transform: translateX(81vw) translateY(-8px) rotate(4deg);
+    50% {
+        transform: rotate(7deg) translateY(1px);
+    }
+}
+
+@keyframes halloween-bat-sway {
+    0%,
+    100% {
+        transform: rotate(180deg) rotate(-4deg);
+    }
+
+    50% {
+        transform: rotate(180deg) rotate(4deg);
+    }
+}
+
+@keyframes halloween-bat-breathe {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.035);
+    }
+}
+
+@keyframes halloween-bat-blink {
+    0%,
+    90%,
+    100% {
+        transform: scaleY(1);
+    }
+
+    93% {
+        transform: scaleY(0.16);
+    }
+
+    96% {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes halloween-bat-wing-shiver-left {
+    0%,
+    74%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    78% {
+        transform: rotate(8deg);
+    }
+
+    82% {
+        transform: rotate(-6deg);
+    }
+
+    86% {
+        transform: rotate(4deg);
+    }
+
+    90% {
+        transform: rotate(-2deg);
+    }
+}
+
+@keyframes halloween-bat-wing-shiver-right {
+    0%,
+    74%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    78% {
+        transform: rotate(-8deg);
+    }
+
+    82% {
+        transform: rotate(6deg);
+    }
+
+    86% {
+        transform: rotate(-4deg);
+    }
+
+    90% {
+        transform: rotate(2deg);
+    }
+}
+
+@keyframes halloween-bat-wing-flap-left {
+    from {
+        transform: rotate(-3deg);
+    }
+
+    to {
+        transform: rotate(26deg);
+    }
+}
+
+@keyframes halloween-bat-wing-flap-right {
+    from {
+        transform: rotate(3deg);
+    }
+
+    to {
+        transform: rotate(-26deg);
+    }
+}
+
+@keyframes halloween-bat-body-bob {
+    0%,
+    100% {
+        transform: translateY(0) scaleY(1);
+    }
+
+    50% {
+        transform: translateY(1.5px) scaleY(1.04);
+    }
+}
+
+@keyframes halloween-bat-escape {
+    0% {
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+
+    9% {
+        transform: translate3d(0, 12px, 0) rotate(-7deg) scale(1.04);
+        opacity: 1;
+    }
+
+    34% {
+        transform: translate3d(var(--fly-x-mid, -10vw), var(--fly-y-mid, -20vh), 0)
+            rotate(var(--fly-rotate-mid, 30deg)) scale(1.05);
+        opacity: 1;
+    }
+
+    55% {
+        transform: translate3d(var(--fly-x-mid, -10vw), var(--fly-y-mid, -20vh), 0)
+            rotate(var(--fly-rotate-mid, 30deg)) scale(1);
+        opacity: 0.95;
     }
 
     100% {
-        transform: translateX(108vw) translateY(0) rotate(-4deg);
+        transform: translate3d(var(--fly-x, -30vw), var(--fly-y, -50vh), 0)
+            rotate(var(--fly-rotate, 120deg)) scale(0.45);
+        opacity: 0;
     }
 }
 
@@ -121,15 +775,81 @@
     }
 }
 
+@keyframes halloween-ghost-walk {
+    0%,
+    100% {
+        transform: translate3d(calc(-50% - 9vw), 0, 0) rotate(-2deg);
+    }
+
+    25% {
+        transform: translate3d(calc(-50% - 4vw), -9px, 0) rotate(-1deg);
+    }
+
+    50% {
+        transform: translate3d(calc(-50% + 9vw), 0, 0) rotate(2deg);
+    }
+
+    75% {
+        transform: translate3d(calc(-50% + 4vw), -9px, 0) rotate(1deg);
+    }
+}
+
+@keyframes halloween-ghost-boo {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    30% {
+        transform: translateY(-18px) scale(1.08) rotate(-3deg);
+    }
+
+    60% {
+        transform: translateY(-5px) scale(0.96) rotate(2deg);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes halloween-boo-pop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 8px) scale(0.6);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translate(-50%, -5px) scale(1.04);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
 /*
- * При системном «уменьшить движение» останавливаем мышей и тыквы. Мыши при
- * этом показываются статично (см. bats.tsx): компонент читает настройку и
- * раскладывает их по экрану, а не оставляет за кадром.
+ * При системном «уменьшить движение» останавливаем мышей, паутину, тыквы и
+ * привидение. Мыши при этом показываются статично (см. bats.tsx): компонент
+ * читает настройку и раскладывает их по экрану, а не оставляет за кадром.
  */
 @media (prefers-reduced-motion: reduce) {
     .halloween-decor__bat,
     .halloween-decor__bat--static,
-    .halloween-decor__pumpkin {
+    .halloween-decor__bat svg,
+    .halloween-decor__bat-wing,
+    .halloween-decor__bat-body,
+    .halloween-decor__bat-folded-body,
+    .halloween-decor__bat-eye,
+    .halloween-decor__cobweb svg,
+    .halloween-decor__cobweb-spider,
+    .halloween-decor__pumpkin,
+    .halloween-decor__ghost,
+    .halloween-decor__ghost svg,
+    .halloween-decor__ghost--spooked,
+    .halloween-decor__ghost--spooked svg,
+    .halloween-decor__ghost--spooked .halloween-decor__ghost-boo {
         animation: none;
     }
 }
