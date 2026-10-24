@@ -118,9 +118,10 @@
 
 .halloween-decor__bat {
     position: absolute;
-    top: 72px;
+    top: 130px;
+    width: 32px;
     height: auto;
-    color: rgb(58 47 86 / 92%);
+    color: rgb(120 100 160 / 85%);
     filter: drop-shadow(0 1px 2px rgb(0 0 0 / 24%));
     cursor: pointer;
     pointer-events: auto;
@@ -134,12 +135,12 @@
 .halloween-decor__bat::before {
     content: "";
     position: absolute;
-    top: -72px;
+    top: -130px;
     left: 50%;
     width: 1px;
-    height: 72px;
+    height: 130px;
     background: linear-gradient(to bottom, transparent, currentColor 10%, currentColor);
-    opacity: 0.42;
+    opacity: 0.35;
     transition: opacity 0.12s linear;
 }
 
@@ -148,11 +149,11 @@
     opacity: 0;
 }
 
-/* Расширяем зону клика: сама мышь визуально небольшая. */
+/* Не перехватываем клики по навигации под мышью. */
 .halloween-decor__bat::after {
     content: "";
     position: absolute;
-    inset: -12px -8px;
+    inset: -4px;
 }
 
 .halloween-decor__bat svg {
@@ -161,9 +162,8 @@
     height: auto;
 }
 
-/* Висящая мышь перевёрнута вниз головой и покачивается на паутинке. */
+/* Мышь уже нарисована висящей вниз головой и покачивается на паутинке. */
 .halloween-decor__bat-svg--folded {
-    transform: rotate(180deg);
     transform-origin: center;
     animation: halloween-bat-sway 4.4s ease-in-out infinite;
     animation-delay: var(--bat-delay, 0s);
@@ -199,32 +199,14 @@
     animation-delay: var(--bat-delay, 0s);
 }
 
-/* Крылья и тело живут отдельными группами: взмах и покачивание не сливаются. */
-.halloween-decor__bat-wing,
+/* Тело и крылья — единый силуэт: при полёте взмах имитируется сжатием. */
+.halloween-decor__bat-wing-group {
+    transform-box: fill-box;
+    transform-origin: 50% 20%;
+}
+
 .halloween-decor__bat-body {
     transform-box: fill-box;
-}
-
-.halloween-decor__bat-wing--left {
-    transform-origin: 100% 58%;
-    animation: halloween-bat-wing-shiver-left 6.8s ease-in-out infinite;
-    animation-delay: var(--bat-delay, 0s);
-}
-
-.halloween-decor__bat-wing--right {
-    transform-origin: 0% 58%;
-    animation: halloween-bat-wing-shiver-right 6.8s ease-in-out infinite;
-    animation-delay: var(--bat-delay, 0s);
-}
-
-.halloween-decor__bat-wing-vein {
-    fill: none;
-    stroke: rgb(255 255 255 / 18%);
-    stroke-width: 1;
-    stroke-linecap: round;
-}
-
-.halloween-decor__bat-body {
     transform-origin: 50% 0%;
     animation: halloween-bat-body-bob 4.4s ease-in-out infinite;
     animation-delay: var(--bat-delay, 0s);
@@ -239,12 +221,8 @@
     pointer-events: none;
 }
 
-.halloween-decor__bat--fleeing .halloween-decor__bat-wing--left {
-    animation: halloween-bat-wing-flap-left 0.19s ease-in-out infinite alternate;
-}
-
-.halloween-decor__bat--fleeing .halloween-decor__bat-wing--right {
-    animation: halloween-bat-wing-flap-right 0.19s ease-in-out infinite alternate;
+.halloween-decor__bat--fleeing .halloween-decor__bat-wing-group {
+    animation: halloween-bat-flap 0.2s ease-in-out infinite alternate;
 }
 
 .halloween-decor__bat--fleeing .halloween-decor__bat-body {
@@ -256,7 +234,7 @@
 }
 
 .halloween-decor__bat--static svg,
-.halloween-decor__bat--static .halloween-decor__bat-wing,
+.halloween-decor__bat--static .halloween-decor__bat-wing-group,
 .halloween-decor__bat--static .halloween-decor__bat-body,
 .halloween-decor__bat--static .halloween-decor__bat-folded-body,
 .halloween-decor__bat--static .halloween-decor__bat-eye {
@@ -325,12 +303,28 @@
     --ghost-glow-hover-2: rgb(140 110 240 / 40%);
 }
 
-.halloween-decor__ghost svg {
+.halloween-decor__ghost--fleeing {
+    animation: none;
+    pointer-events: auto;
+}
+
+/* Устав от тычков, привидение прячется за краем экрана и выглядывает. */
+.halloween-decor__ghost--hiding {
+    animation: none;
+    pointer-events: auto;
+}
+
+.halloween-decor__ghost > svg {
     display: block;
     width: 100%;
     height: auto;
-    filter: drop-shadow(0 0 10px var(--ghost-glow)) drop-shadow(0 0 26px var(--ghost-glow-2));
-    transition: filter 0.25s ease;
+    transform: scale(calc(1 + var(--ghost-anger, 0) * 0.3));
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 0 10px var(--ghost-glow)) drop-shadow(0 0 26px var(--ghost-glow-2))
+        saturate(calc(1 + var(--ghost-anger, 0) * 1.4));
+    transition:
+        filter 0.25s ease,
+        transform 0.2s ease;
 }
 
 /* На светлом фоне привидение тёмное, с холодным свечением по контуру. */
@@ -373,23 +367,191 @@
     transition: fill 0.3s ease;
 }
 
+.halloween-decor__ghost-tongue {
+    fill: #ff6b8a;
+    stroke: rgb(150 20 50 / 45%);
+    stroke-width: 0.6;
+}
+
+/* ─── Призыватели: Дракула и священник ─────────────────────────────────── */
+
+/*
+ * На пике ярости рядом с призраком является «призыватель»:
+ *  - Дракула встаёт справа (left: calc(100% + 12px)),
+ *  - священник-экзорцист — слева (right: calc(100% + 12px)).
+ * Оба — призрачные и одинаково жуткие, появляются с общей анимацией
+ * halloween-summon. По клику выбирается один из двух (см. ghost.tsx).
+ */
+.halloween-decor__dracula,
+.halloween-decor__priest {
+    position: absolute;
+    bottom: 0;
+    width: 82px;
+    pointer-events: none;
+    animation: halloween-summon 0.55s ease-out both;
+}
+
+.halloween-decor__dracula {
+    left: calc(100% + 8px);
+}
+
+.halloween-decor__priest {
+    right: calc(100% + 8px);
+}
+
+.halloween-decor__dracula svg,
+.halloween-decor__priest svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.halloween-decor__dracula svg {
+    filter: drop-shadow(0 0 14px rgb(255 30 60 / 70%));
+}
+
+.halloween-decor__priest svg {
+    filter: drop-shadow(0 0 12px rgb(255 90 110 / 55%));
+}
+
+/* Дракула: широкий тёмно-фиолетовый плащ, высокий воротник, бледное лицо. */
+.halloween-decor__dracula-cape {
+    fill: #2a153b;
+    stroke: rgb(255 60 80 / 60%);
+    stroke-width: 1.2;
+}
+
+.halloween-decor__dracula-collar {
+    fill: #7a0f1f;
+    stroke: #ff5c7a;
+    stroke-width: 1;
+}
+
+.halloween-decor__dracula-face {
+    fill: #e8e4f0;
+    stroke: rgb(0 0 0 / 40%);
+    stroke-width: 0.8;
+}
+
+.halloween-decor__dracula-hair {
+    fill: #110a17;
+}
+
+.halloween-decor__dracula-shirt {
+    fill: #d9d2e6;
+    stroke: rgb(0 0 0 / 25%);
+    stroke-width: 0.6;
+}
+
+.halloween-decor__dracula-medal {
+    fill: #ffd666;
+    filter: drop-shadow(0 0 4px rgb(255 210 80 / 90%));
+}
+
+.halloween-decor__dracula-nose {
+    stroke: rgb(0 0 0 / 35%);
+}
+
+.halloween-decor__dracula-eye {
+    fill: #ff2b42;
+    filter: drop-shadow(0 0 4px rgb(255 30 60 / 95%));
+}
+
+.halloween-decor__dracula-mouth {
+    stroke: #ff5c7a;
+}
+
+.halloween-decor__dracula-fang {
+    fill: #fff;
+    filter: drop-shadow(0 0 2px rgb(255 255 255 / 80%));
+}
+
+/* Фраза призывателя над головой. */
+.halloween-decor__summon-boo {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    padding: 4px 9px;
+    border: 1px solid rgb(255 90 110 / 60%);
+    border-radius: 10px;
+    background: rgb(20 10 30 / 94%);
+    color: #ffdde0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: halloween-boo-pop 0.5s ease-out both;
+}
+
+.halloween-decor__priest .halloween-decor__summon-boo {
+    border-color: rgb(210 215 255 / 65%);
+    color: #e8ecff;
+}
+
+/* Священник-экзорцист: сутана, белый воротничок, красные глаза, крест. */
+.halloween-decor__priest-robe {
+    fill: #0f0b16;
+    stroke: rgb(255 80 100 / 35%);
+    stroke-width: 1;
+}
+
+.halloween-decor__priest-collar {
+    fill: #f4f0ff;
+    stroke: rgb(255 255 255 / 45%);
+    stroke-width: 0.8;
+}
+
+.halloween-decor__priest-face {
+    fill: #e6d2c4;
+    stroke: rgb(0 0 0 / 35%);
+    stroke-width: 0.9;
+}
+
+.halloween-decor__priest-hair {
+    fill: #1a1220;
+}
+
+.halloween-decor__priest-eye {
+    fill: #ff1f35;
+    filter: drop-shadow(0 0 4px rgb(255 30 60 / 95%));
+}
+
+.halloween-decor__priest-mouth {
+    stroke: #6b2030;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    fill: none;
+}
+
+.halloween-decor__priest-cross {
+    stroke: #ffe27a;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    fill: none;
+    filter: drop-shadow(0 0 6px rgb(255 220 90 / 90%));
+}
+
 .halloween-decor__ghost-blush {
     fill: var(--ghost-blush);
     transition: fill 0.3s ease;
 }
 
-.halloween-decor__ghost:hover svg {
+.halloween-decor__ghost:hover > svg {
     filter: drop-shadow(0 0 14px var(--ghost-glow-hover))
-        drop-shadow(0 0 34px var(--ghost-glow-hover-2));
+        drop-shadow(0 0 34px var(--ghost-glow-hover-2))
+        saturate(calc(1 + var(--ghost-anger, 0) * 1.4));
 }
 
 .halloween-decor__ghost--static {
     animation: none;
 }
 
-.halloween-decor__ghost--spooked svg {
+.halloween-decor__ghost--spooked > svg {
     animation: halloween-ghost-boo 0.6s ease;
 }
+
+/* ─── Пузырь с репликой ───────────────────────────────────────────────── */
 
 .halloween-decor__ghost-boo {
     position: absolute;
@@ -520,12 +682,13 @@
 }
 
 .dark .halloween-decor__bat {
-    color: rgb(203 188 250 / 92%);
-    filter: drop-shadow(0 0 6px rgb(170 150 255 / 50%));
+    color: rgb(200 180 255 / 95%);
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 40%));
 }
 
-.dark .halloween-decor__bat-wing-vein {
-    stroke: rgb(43 35 64 / 22%);
+.dark .halloween-decor__bat:hover {
+    color: #ffffff;
+    filter: drop-shadow(0 0 10px rgb(170 150 255 / 80%));
 }
 
 .dark .halloween-decor__ghost {
@@ -542,22 +705,69 @@
 
 /* Настроение меняется по клику: злость, радость, грусть. */
 .halloween-decor__ghost.halloween-decor__ghost--happy {
-    --ghost-body: rgb(160 98 16 / 96%);
-    --ghost-stroke: rgb(255 226 140 / 65%);
-    --ghost-eye: #fff3c4;
-    --ghost-mouth: #fff3c4;
-    --ghost-blush: rgb(255 120 80 / 55%);
-    --ghost-glow: rgb(255 190 70 / 65%);
-    --ghost-glow-2: rgb(220 140 30 / 45%);
-    --ghost-glow-hover: rgb(255 210 90 / 85%);
-    --ghost-glow-hover-2: rgb(240 160 40 / 55%);
+    --ghost-body: rgb(43 35 64 / 94%);
+    --ghost-stroke: rgb(255 255 255 / 26%);
+    --ghost-eye: rgb(232 240 255 / 96%);
+    --ghost-mouth: rgb(232 240 255 / 92%);
+    --ghost-blush: rgb(130 160 230 / 48%);
+    --ghost-glow: rgb(90 70 160 / 45%);
+    --ghost-glow-2: rgb(120 100 220 / 28%);
+    --ghost-glow-hover: rgb(110 85 190 / 65%);
+    --ghost-glow-hover-2: rgb(140 110 240 / 40%);
 }
 
+/* Уровень 1 - только ярко-красные светящиеся глаза, без бровей */
 .halloween-decor__ghost.halloween-decor__ghost--angry {
+    --ghost-eye: #ff3b4a;
+    --ghost-blush: rgb(255 50 85 / 16%);
+    --ghost-glow: rgb(255 45 70 / 18%);
+    --ghost-glow-2: rgb(210 15 45 / 12%);
+    --ghost-glow-hover: rgb(255 65 90 / 32%);
+    --ghost-glow-hover-2: rgb(240 25 55 / 18%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 7px rgb(255 40 70 / 99%)) drop-shadow(0 0 16px rgb(255 30 60 / 78%));
+}
+
+/* Уровень 2 - злой оскал и брови, тело пока тёмное */
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-2 {
+    --ghost-eye: #ff3b4a;
+    --ghost-mouth: #ff8a96;
+    --ghost-blush: rgb(255 50 85 / 30%);
+    --ghost-glow: rgb(255 45 70 / 32%);
+    --ghost-glow-2: rgb(210 15 45 / 24%);
+    --ghost-glow-hover: rgb(255 65 90 / 48%);
+    --ghost-glow-hover-2: rgb(240 25 55 / 32%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-2 .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 8px rgb(255 40 70 / 99%)) drop-shadow(0 0 18px rgb(255 30 60 / 82%));
+}
+
+/* Уровень 3 - тело начинает краснеть */
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-3 {
+    --ghost-body: rgb(120 35 45 / 97%);
+    --ghost-stroke: rgb(255 120 135 / 50%);
+    --ghost-eye: #ff3b4a;
+    --ghost-mouth: #ffb3ba;
+    --ghost-blush: rgb(255 50 85 / 45%);
+    --ghost-glow: rgb(255 45 70 / 55%);
+    --ghost-glow-2: rgb(210 15 45 / 38%);
+    --ghost-glow-hover: rgb(255 65 90 / 70%);
+    --ghost-glow-hover-2: rgb(240 25 55 / 48%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-3 .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 9px rgb(255 40 70 / 100%)) drop-shadow(0 0 20px rgb(255 30 60 / 88%));
+}
+
+/* Уровень 4 - тело полностью красное */
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-4 {
     --ghost-body: rgb(137 18 34 / 97%);
     --ghost-stroke: rgb(255 120 135 / 58%);
-    --ghost-eye: #ff7a86;
-    --ghost-mouth: #ffdde0;
+    --ghost-eye: #ff3b4a;
+    --ghost-mouth: #ffd0d5;
     --ghost-blush: rgb(255 50 85 / 55%);
     --ghost-glow: rgb(255 45 70 / 72%);
     --ghost-glow-2: rgb(210 15 45 / 50%);
@@ -565,8 +775,50 @@
     --ghost-glow-hover-2: rgb(240 25 55 / 65%);
 }
 
-.halloween-decor__ghost--angry .halloween-decor__ghost-eye {
-    filter: drop-shadow(0 0 3px rgb(255 60 90 / 90%));
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-4 .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 9px rgb(255 40 70 / 100%)) drop-shadow(0 0 20px rgb(255 30 60 / 88%));
+}
+
+/* Уровень 5 - багровеет */
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-5 {
+    --ghost-body: rgb(112 12 26 / 98%);
+    --ghost-stroke: rgb(255 100 120 / 62%);
+    --ghost-eye: #ff2b42;
+    --ghost-mouth: #ffc0c8;
+    --ghost-blush: rgb(255 40 75 / 62%);
+    --ghost-glow: rgb(255 35 60 / 85%);
+    --ghost-glow-2: rgb(200 10 38 / 58%);
+    --ghost-glow-hover: rgb(255 55 85 / 100%);
+    --ghost-glow-hover-2: rgb(230 15 45 / 70%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-5 .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 10px rgb(255 25 55 / 100%)) drop-shadow(0 0 22px rgb(255 15 45 / 90%));
+}
+
+/* Уровень 6 - предел ярости */
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-6 {
+    --ghost-body: rgb(82 6 16 / 99%);
+    --ghost-stroke: rgb(255 80 100 / 66%);
+    --ghost-eye: #ff1f35;
+    --ghost-mouth: #ffb0bc;
+    --ghost-blush: rgb(255 25 65 / 70%);
+    --ghost-glow: rgb(255 25 50 / 95%);
+    --ghost-glow-2: rgb(180 5 30 / 66%);
+    --ghost-glow-hover: rgb(255 45 75 / 100%);
+    --ghost-glow-hover-2: rgb(215 8 38 / 76%);
+}
+
+.halloween-decor__ghost.halloween-decor__ghost--angry-level-6 .halloween-decor__ghost-eye {
+    filter: drop-shadow(0 0 11px rgb(255 15 45 / 100%)) drop-shadow(0 0 26px rgb(255 5 35 / 95%));
+}
+
+.halloween-decor__ghost svg path,
+.halloween-decor__ghost svg ellipse {
+    transition:
+        fill 0.35s ease,
+        stroke 0.35s ease,
+        filter 0.25s ease;
 }
 
 .halloween-decor__ghost.halloween-decor__ghost--sad {
@@ -620,11 +872,11 @@
 @keyframes halloween-bat-sway {
     0%,
     100% {
-        transform: rotate(180deg) rotate(-4deg);
+        transform: rotate(-4deg);
     }
 
     50% {
-        transform: rotate(180deg) rotate(4deg);
+        transform: rotate(4deg);
     }
 }
 
@@ -655,71 +907,13 @@
     }
 }
 
-@keyframes halloween-bat-wing-shiver-left {
-    0%,
-    74%,
-    100% {
-        transform: rotate(0deg);
-    }
-
-    78% {
-        transform: rotate(8deg);
-    }
-
-    82% {
-        transform: rotate(-6deg);
-    }
-
-    86% {
-        transform: rotate(4deg);
-    }
-
-    90% {
-        transform: rotate(-2deg);
-    }
-}
-
-@keyframes halloween-bat-wing-shiver-right {
-    0%,
-    74%,
-    100% {
-        transform: rotate(0deg);
-    }
-
-    78% {
-        transform: rotate(-8deg);
-    }
-
-    82% {
-        transform: rotate(6deg);
-    }
-
-    86% {
-        transform: rotate(-4deg);
-    }
-
-    90% {
-        transform: rotate(2deg);
-    }
-}
-
-@keyframes halloween-bat-wing-flap-left {
+@keyframes halloween-bat-flap {
     from {
-        transform: rotate(-3deg);
+        transform: scaleY(1);
     }
 
     to {
-        transform: rotate(26deg);
-    }
-}
-
-@keyframes halloween-bat-wing-flap-right {
-    from {
-        transform: rotate(3deg);
-    }
-
-    to {
-        transform: rotate(-26deg);
+        transform: scaleY(0.6);
     }
 }
 
@@ -794,6 +988,24 @@
     }
 }
 
+/* Общая анимация появления «призывателя» — Дракулы или священника. */
+@keyframes halloween-summon {
+    0% {
+        opacity: 0;
+        transform: translateY(26px) scale(0.7);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.05);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 @keyframes halloween-ghost-boo {
     0% {
         transform: translateY(0) scale(1);
@@ -849,7 +1061,9 @@
     .halloween-decor__ghost svg,
     .halloween-decor__ghost--spooked,
     .halloween-decor__ghost--spooked svg,
-    .halloween-decor__ghost--spooked .halloween-decor__ghost-boo {
+    .halloween-decor__ghost--spooked .halloween-decor__ghost-boo,
+    .halloween-decor__dracula,
+    .halloween-decor__priest {
         animation: none;
     }
 }

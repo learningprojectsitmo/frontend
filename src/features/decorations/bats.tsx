@@ -23,11 +23,11 @@ type Escape = {
  * Кромка «пещеры» сверху вспугивает всю стаю сразу.
  */
 const BATS: Bat[] = [
-    { left: "10%", size: "40px", delay: "0s" },
-    { left: "28%", size: "32px", delay: "-1.2s" },
-    { left: "46%", size: "44px", delay: "-2.6s" },
-    { left: "65%", size: "34px", delay: "-0.7s" },
-    { left: "82%", size: "38px", delay: "-3.1s" },
+    { left: "10%", size: "32px", delay: "0s" },
+    { left: "28%", size: "26px", delay: "-1.2s" },
+    { left: "46%", size: "35px", delay: "-2.6s" },
+    { left: "65%", size: "27px", delay: "-0.7s" },
+    { left: "82%", size: "30px", delay: "-3.1s" },
 ];
 
 const ESCAPE_ANIMATION_MS = 2600;
@@ -37,73 +37,47 @@ const BatOpenSvg = () => {
     return (
         <svg
             className="halloween-decor__bat-svg halloween-decor__bat-svg--open"
-            viewBox="0 0 64 80"
-            fill="currentColor"
+            viewBox="0 0 40 24"
+            fill="none"
         >
-            {/* По одному цельному крылу с каждой стороны, без «лишних» лопастей */}
-            <g className="halloween-decor__bat-wing halloween-decor__bat-wing--left">
-                <path d="M31 33C24 21 13 16 2 20c7 8 10 17 11 27 1 5 4 9 9 11-1-7 1-16 9-25Z" />
+            <g className="halloween-decor__bat-wing-group">
                 <path
-                    className="halloween-decor__bat-wing-vein"
-                    d="M28 35C21 31 14 27 6 22M27 44c-4 3-7 7-8 12"
+                    className="halloween-decor__bat-body"
+                    d="M 20 4 C 18 4 16 7 15 9 C 10 6 4 7 1 10 C 3 13 4 16 4 19 C 7 17 10 17 13 19 C 15 16 17 14 20 14 C 23 14 25 16 27 19 C 30 17 33 17 36 19 C 36 16 37 13 39 10 C 36 7 30 6 25 9 C 24 7 22 4 20 4 Z"
+                    fill="currentColor"
                 />
-            </g>
-            <g className="halloween-decor__bat-wing halloween-decor__bat-wing--right">
-                <path d="M33 33c7-12 18-17 29-13-7 8-10 17-11 27-1 5-4 9-9 11 1-7-1-16-9-25Z" />
-                <path
-                    className="halloween-decor__bat-wing-vein"
-                    d="M36 35c7-4 14-8 22-13M37 44c4 3 7 7 8 12"
-                />
-            </g>
-            {/* Тело */}
-            <g className="halloween-decor__bat-body">
-                <ellipse cx="32" cy="40" rx="7" ry="16" />
-                {/* Уши */}
-                <path d="M27 30 24 13l8 13Z" />
-                <path d="M37 30 40 13l-8 13Z" />
-                {/* Лапки */}
-                <path
-                    d="M29 56l-2 8M35 56l2 8"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    fill="none"
-                />
-                {/* Красные глаза */}
-                <ellipse className="halloween-decor__bat-eye" cx="29" cy="34" rx="1.5" ry="2" />
-                <ellipse className="halloween-decor__bat-eye" cx="35" cy="34" rx="1.5" ry="2" />
+                <path d="M 17 6 L 14 0 L 20 5 Z" fill="currentColor" />
+                <path d="M 23 6 L 26 0 L 20 5 Z" fill="currentColor" />
+                <circle className="halloween-decor__bat-eye" cx="18" cy="8" r="1" />
+                <circle className="halloween-decor__bat-eye" cx="22" cy="8" r="1" />
             </g>
         </svg>
     );
 };
 
-/** Свернувшаяся мышь: крылья обнимают тело, видны только уши, лапки и глаза. */
+/** Свернувшаяся мышь: висит вниз головой, уши и глаза смотрят вниз. */
 const BatFoldedSvg = () => {
     return (
         <svg
             className="halloween-decor__bat-svg halloween-decor__bat-svg--folded"
-            viewBox="0 0 64 80"
-            fill="currentColor"
+            viewBox="0 0 40 40"
+            fill="none"
         >
-            <g className="halloween-decor__bat-folded-body">
-                {/* Сложенные крылья — тонкие складки вдоль тела */}
-                <path d="M28 24c-5 4-7 14-6 24 1 6 3 10 6 9-3-10-3-23 0-33Z" />
-                <path d="M36 24c5 4 7 14 6 24-1 6-3 10-6 9 3-10 3-23 0-33Z" />
-                {/* Узкое вытянутое тело */}
-                <path d="M32 18c-5 0-7 7-7 15 0 9 2 20 4 30 1 4 2 6 3 6s2-2 3-6c2-10 4-21 4-30 0-8-2-15-7-15Z" />
-                {/* Уши */}
-                <path d="M28 20 27 8l5 9Z" />
-                <path d="M36 20 37 8l-5 9Z" />
-                {/* Лапки, за которые мышь держится за паутинку */}
-                <path
-                    d="M30 69l-1 8M34 69l1 8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    fill="none"
-                />
-                {/* Красные глаза */}
-                <ellipse className="halloween-decor__bat-eye" cx="29.5" cy="32" rx="1.5" ry="2.1" />
-                <ellipse className="halloween-decor__bat-eye" cx="34.5" cy="32" rx="1.5" ry="2.1" />
-            </g>
+            <path
+                d="M 19 7 L 19 1 M 21 7 L 21 1"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+            />
+            <path
+                className="halloween-decor__bat-folded-body"
+                d="M 20 6 C 12 6 9 16 12 26 C 14 32 18 34 20 36 C 22 34 26 32 28 26 C 31 16 28 6 20 6 Z"
+                fill="currentColor"
+            />
+            <path d="M 14 26 L 11 36 L 18 32 Z" fill="currentColor" />
+            <path d="M 26 26 L 29 36 L 22 32 Z" fill="currentColor" />
+            <circle className="halloween-decor__bat-eye" cx="16" cy="24" r="1.5" />
+            <circle className="halloween-decor__bat-eye" cx="24" cy="24" r="1.5" />
         </svg>
     );
 };
