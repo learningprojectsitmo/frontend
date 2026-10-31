@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import type { ActivityItem } from "@/types/activity";
 
 const MONTHS = [
@@ -110,10 +111,20 @@ export function ActivityFeed({
                                     />
                                     {showActors &&
                                         (item.actor ? (
-                                            <Avatar
-                                                name={item.actor.name}
-                                                className="w-6 h-6 text-[10px]"
-                                            />
+                                            <Avatar className="size-6 text-[10px]">
+                                                <AvatarImage
+                                                    src={resolveAvatarUrl(item.actor.avatar_url)}
+                                                    alt={item.actor.name}
+                                                />
+                                                <AvatarFallback>
+                                                    {item.actor.name
+                                                        .split(" ")
+                                                        .map((w) => w[0])
+                                                        .join("")
+                                                        .toUpperCase()
+                                                        .slice(0, 2)}
+                                                </AvatarFallback>
+                                            </Avatar>
                                         ) : (
                                             <span
                                                 title="Системное действие"

@@ -1,5 +1,8 @@
+import { Camera } from "lucide-react";
+
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type SocialLink = { label: string; value: string };
 
@@ -10,6 +13,10 @@ type ProfileHeaderProps = {
     email: string | null;
     phone: string | null;
     socials: SocialLink[];
+    /** Абсолютный URL фото профиля (см. resolveAvatarUrl). */
+    avatarUrl?: string;
+    /** Если задан — на аватаре появляется оверлей «Изменить фото». */
+    onAvatarEdit?: () => void;
     showActions?: boolean;
     onEdit?: () => void;
     onShare?: () => void;
@@ -23,16 +30,39 @@ export const ProfileHeader = ({
     email,
     phone,
     socials,
+    avatarUrl,
+    onAvatarEdit,
     showActions = false,
     onEdit,
     onShare,
     onDelete,
 }: ProfileHeaderProps) => {
+    const avatar = (
+        <Avatar className="size-[80px] shrink-0 sm:size-[120px]">
+            <AvatarImage src={avatarUrl} alt={fullName} />
+            <AvatarFallback className="bg-gradient-to-br from-gray-800 to-gray-600 text-2xl font-bold text-white sm:text-4xl">
+                {initials}
+            </AvatarFallback>
+        </Avatar>
+    );
+
     return (
         <div className="rounded-2xl border border-gray-200 bg-app-surface p-4 sm:p-6 flex flex-col sm:flex-row gap-6 sm:gap-8">
-            <div className="h-[80px] w-[80px] sm:h-[120px] sm:w-[120px] rounded-[20px] bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold shrink-0">
-                {initials}
-            </div>
+            {onAvatarEdit ? (
+                <button
+                    type="button"
+                    onClick={onAvatarEdit}
+                    aria-label="Изменить фото профиля"
+                    className="group/avatar-edit relative h-fit w-fit shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-app-blue focus-visible:ring-offset-2"
+                >
+                    {avatar}
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover/avatar-edit:opacity-100 group-focus-visible/avatar-edit:opacity-100">
+                        <Camera className="size-6 sm:size-7" aria-hidden />
+                    </span>
+                </button>
+            ) : (
+                avatar
+            )}
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">

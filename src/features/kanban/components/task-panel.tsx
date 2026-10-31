@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { SubtaskList } from "./subtask-list";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import type {
     Task,
     ProjectMember,
@@ -151,12 +153,28 @@ const PropertyRow = ({
     </div>
 );
 
-const MemberAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: string }) => (
-    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-        {(firstName?.[0] ?? "").toUpperCase()}
-        {(lastName?.[0] ?? "").toUpperCase()}
-    </div>
-);
+const MemberAvatar = ({
+    firstName,
+    lastName,
+    avatarUrl,
+}: {
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+}) => {
+    const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
+    return (
+        <Avatar className="size-6 text-xs">
+            <AvatarImage
+                src={resolveAvatarUrl(avatarUrl)}
+                alt={`${firstName ?? ""} ${lastName ?? ""}`.trim()}
+            />
+            <AvatarFallback className="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                {initials}
+            </AvatarFallback>
+        </Avatar>
+    );
+};
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -799,6 +817,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                 <MemberAvatar
                                                     firstName={task.createdBy.firstName}
                                                     lastName={task.createdBy.lastName}
+                                                    avatarUrl={task.createdBy.avatarUrl}
                                                 />
                                                 <span>
                                                     {task.createdBy.firstName}{" "}
@@ -822,6 +841,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                     <MemberAvatar
                                                         firstName={m.firstName}
                                                         lastName={m.lastName}
+                                                        avatarUrl={m.avatarUrl}
                                                     />
                                                     <span>
                                                         {m.firstName} {m.lastName}
@@ -859,6 +879,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                                                                 <MemberAvatar
                                                                     firstName={m.firstName}
                                                                     lastName={m.lastName}
+                                                                    avatarUrl={m.avatarUrl}
                                                                 />
                                                                 <span>
                                                                     {m.firstName} {m.lastName}

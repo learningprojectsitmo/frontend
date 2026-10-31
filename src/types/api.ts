@@ -152,6 +152,7 @@ export type BackendMember = {
     contacts: string;
     resume_url: string;
     date_added: string;
+    avatar_url?: string | null;
 };
 
 /**
@@ -563,6 +564,7 @@ export type ProfileResponse = {
     tg_nickname: string | null;
     vk_nickname: string | null;
     role: string;
+    avatar_url: string | null;
     resumes: ResumeFull[];
     portfolio: PortfolioFull[];
     education: EducationFull[];

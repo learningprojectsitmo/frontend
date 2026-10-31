@@ -60,6 +60,7 @@ export interface ProjectMember {
     lastName: string;
     middleName?: string;
     email?: string;
+    avatarUrl?: string;
 }
 
 // ========== ДОСКА ==========

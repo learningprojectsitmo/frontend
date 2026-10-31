@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { Fragment, useState } from "react";
 import type { Replycant } from "@/types/tables/forTables";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 const getInitials = (name: string) => {
     return name
@@ -117,22 +119,13 @@ export const TableInvitations = ({
     const renderRow = (member: Replycant) => (
         <tr key={member.id} className="hover:bg-app-ghost transition">
             <td className="px-6 py-4">
-                {member.avatarUrl ? (
-                    <div className="flex items-center gap-3">
-                        <img
-                            src={member.avatarUrl}
-                            className="flex h-10 w-10 rounded-full bg-app-ghost"
-                        />
-                        <span className="text-app-text">{member.name}</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-app-ghost text-sm font-semibold text-app-text">
-                            {getInitials(member.name)}
-                        </div>
-                        <span className="text-app-text">{member.name}</span>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    <Avatar className="size-10 text-sm">
+                        <AvatarImage src={resolveAvatarUrl(member.avatarUrl)} alt={member.name} />
+                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-app-text">{member.name}</span>
+                </div>
             </td>
 
             <td className="px-6 py-4 text-app-text">{member.role || "—"}</td>

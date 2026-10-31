@@ -1,5 +1,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarGroup,
+    AvatarGroupCount,
+    AvatarImage,
+} from "@/components/ui/avatar";
 import { Calendar, Users, Flag } from "lucide-react";
 import { RichTextViewer } from "@/components/ui/rich-text-viewer";
 
@@ -161,31 +168,29 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                         </div>
 
                         {/* Avatars */}
-                        <div className="flex items-center">
-                            {displayUsers.map((user, index) => (
-                                <div
-                                    key={index}
-                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white text-[11px] font-semibold text-gray-900"
-                                    style={{ marginLeft: index > 0 ? "-8px" : "0" }}
-                                    title={user.name}
-                                >
-                                    {user.name
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")
-                                        .toUpperCase()
-                                        .slice(0, 2)}
-                                </div>
-                            ))}
+                        <AvatarGroup className="flex items-center">
+                            {displayUsers.map((user, index) => {
+                                const initials = user.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2);
+                                return (
+                                    <Avatar key={index} className="size-7 text-[11px]">
+                                        <AvatarImage src={user.src} alt={user.name} />
+                                        <AvatarFallback className="bg-gray-200 text-gray-900">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                );
+                            })}
                             {remainingCount > 0 && (
-                                <div
-                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white text-[11px] font-semibold text-gray-500"
-                                    style={{ marginLeft: "-8px" }}
-                                >
+                                <AvatarGroupCount className="size-7 text-[11px] text-gray-500">
                                     +{remainingCount}
-                                </div>
+                                </AvatarGroupCount>
                             )}
-                        </div>
+                        </AvatarGroup>
                     </div>
                 </div>
             </div>

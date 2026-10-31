@@ -8,6 +8,7 @@ const toProjectMember = (member: BackendMember): ProjectMember => {
         firstName,
         lastName: rest.join(" "),
         email: member.contacts,
+        avatarUrl: member.avatar_url ?? undefined,
     };
 };
 

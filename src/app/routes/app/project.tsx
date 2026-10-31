@@ -107,6 +107,8 @@ import {
     useToggleSubtask,
 } from "@/features/kanban/hooks/useKanban";
 import { normalizeResumeHref } from "@/lib/resume";
+import { resolveAvatarUrl } from "@/lib/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTaskPanel } from "@/features/kanban/hooks/useTaskPanel";
 import {
     defaultFilterState,
@@ -168,7 +170,10 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
         dateText: p.deadline ? formatDate(p.deadline) : "",
         tags: p.tags.map((t) => ({ text: t })),
         membersCount: p.participants_count,
-        users: p.participants_preview.map((u) => ({ name: u.full_name })),
+        users: p.participants_preview.map((u) => ({
+            name: u.full_name,
+            src: resolveAvatarUrl(u.avatar_url),
+        })),
         archived: isArchived,
         spaceId: p.workspace_id || 0,
         descriptionExtended: p.description || "",
@@ -184,6 +189,7 @@ function mapBackendProject(p: ProjectFullResponse, currentUserId?: number, canMa
                 id: m.id,
                 userId: m.user_id,
                 name: m.name,
+                avatarUrl: m.avatar_url ?? undefined,
                 role: m.role,
                 contacts: m.contacts,
                 resumeUrl: normalizeResumeHref(m.resume_url),
@@ -1990,14 +1996,20 @@ const SpaceRoute = () => {
                                             className="bg-app-surface border border-gray-200 rounded-[20px] p-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-app-text shrink-0">
-                                                    {member.name
-                                                        .split(" ")
-                                                        .map((n) => n[0])
-                                                        .join("")
-                                                        .toUpperCase()
-                                                        .slice(0, 2)}
-                                                </div>
+                                                <Avatar className="size-12 text-sm">
+                                                    <AvatarImage
+                                                        src={resolveAvatarUrl(member.avatarUrl)}
+                                                        alt={member.name}
+                                                    />
+                                                    <AvatarFallback>
+                                                        {member.name
+                                                            .split(" ")
+                                                            .map((n) => n[0])
+                                                            .join("")
+                                                            .toUpperCase()
+                                                            .slice(0, 2)}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                                 <div className="min-w-0">
                                                     <p className="text-[15px] font-semibold text-app-text truncate">
                                                         {member.name}

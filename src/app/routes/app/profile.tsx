@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { ProfileHeader, ResumeList, AdditionalSection } from "@/features/profile/components";
 import { ProfileEditForm } from "@/features/profile/components/profile-edit-form";
+import { AvatarEditorDialog } from "@/features/profile/components/avatar-editor";
 import { mapResumeFromApi, type ResumeData } from "@/features/profile/components/resume-card";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { useProfile } from "@/lib/profile";
 import { useUpdateResume, useDeleteResume, shareResume } from "@/lib/resume";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import { paths } from "@/config/paths";
 import { ResponsesSection } from "@/features/profile/components/responses-section";
 import { InvitationsSection } from "@/features/profile/components/invitations-section";
@@ -53,6 +55,9 @@ const ProfileRoute = () => {
     const updateResumeMutation = useUpdateResume();
     const [editing, setEditing] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<ResumeData | null>(null);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     const visibleProfile = isOtherUser ? otherProfile : profile;
 
@@ -116,6 +121,7 @@ const ProfileRoute = () => {
                             visibleProfile?.tg_nickname ?? null,
                             visibleProfile?.vk_nickname ?? null,
                         )}
+                        avatarUrl={resolveAvatarUrl(visibleProfile?.avatar_url)}
                         readOnly
                         onEdit={undefined}
                     />
@@ -133,6 +139,8 @@ const ProfileRoute = () => {
                             visibleProfile?.tg_nickname ?? null,
                             visibleProfile?.vk_nickname ?? null,
                         )}
+                        avatarUrl={resolveAvatarUrl(visibleProfile?.avatar_url)}
+                        onAvatarEdit={() => avatarInputRef.current?.click()}
                         readOnly={false}
                         onEdit={() => setEditing(true)}
                     />
@@ -198,6 +206,31 @@ const ProfileRoute = () => {
                     </div>
                 )}
             </div>
+
+            {!isOtherUser && (
+                <>
+                    <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(event) => {
+                            const chosen = event.target.files?.[0];
+                            if (chosen) {
+                                setAvatarFile(chosen);
+                                setAvatarEditorOpen(true);
+                            }
+                            event.target.value = "";
+                        }}
+                    />
+                    <AvatarEditorDialog
+                        open={avatarEditorOpen}
+                        file={avatarFile}
+                        hasAvatar={!!visibleProfile?.avatar_url}
+                        onOpenChange={setAvatarEditorOpen}
+                    />
+                </>
+            )}
 
             {!isOtherUser && (
                 <ConfirmDeleteResumeDialog

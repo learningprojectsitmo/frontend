@@ -9,7 +9,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 const getInitials = (name: string) => {
     return name
@@ -209,21 +211,17 @@ export const TableMembers = ({
                                             {member.name}
                                         </Link>
                                     </div>
-                                ) : member.avatarUrl ? (
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src={member.avatarUrl}
-                                            className="flex h-9 w-9 rounded-full bg-gray-100"
-                                        />
-                                        <span className="text-app-text font-sans">
-                                            {member.name}
-                                        </span>
-                                    </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-app-text">
-                                            {getInitials(member.name)}
-                                        </div>
+                                        <Avatar className="size-9 text-sm">
+                                            <AvatarImage
+                                                src={resolveAvatarUrl(member.avatarUrl)}
+                                                alt={member.name}
+                                            />
+                                            <AvatarFallback>
+                                                {getInitials(member.name)}
+                                            </AvatarFallback>
+                                        </Avatar>
                                         <span className="text-app-text font-sans">
                                             {member.name}
                                         </span>

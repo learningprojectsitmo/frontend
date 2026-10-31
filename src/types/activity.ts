@@ -6,6 +6,7 @@ export type ActivityDay = {
 export type ActivityActor = {
     id: number;
     name: string;
+    avatar_url?: string | null;
 };
 
 export type ActivityItem = {

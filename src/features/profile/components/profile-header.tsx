@@ -10,6 +10,8 @@ type ProfileHeaderProps = {
     phone: string;
     email: string;
     socials: SocialLink[];
+    avatarUrl?: string;
+    onAvatarEdit?: () => void;
     readOnly?: boolean;
     onEdit?: () => void;
     onShare?: () => void;
@@ -24,6 +26,8 @@ export const ProfileHeader = ({
     phone,
     email,
     socials,
+    avatarUrl,
+    onAvatarEdit,
     readOnly,
     onEdit,
     onShare,
@@ -40,6 +44,8 @@ export const ProfileHeader = ({
             email={email}
             phone={phone}
             socials={socials}
+            avatarUrl={avatarUrl}
+            onAvatarEdit={onAvatarEdit}
             showActions={!readOnly}
             onEdit={onEdit}
             onShare={onShare}
