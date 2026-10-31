@@ -72,12 +72,26 @@ const en = {
             flags: {
                 new_year_decorations_enabled: {
                     title: "New Year decorations",
-                    description: "Snow, garland and Christmas ornaments on every page",
+                    description:
+                        "Snow, garland, Christmas ornaments and a tree in the corner on every page",
                 },
                 halloween_decorations_enabled: {
                     title: "Halloween decorations",
                     description: "Cobwebs, bats and pumpkins on every page",
                 },
+            },
+        },
+        decorations: {
+            newYear: {
+                treeLabel: "New Year tree",
+                greetings: [
+                    "Happy New Year! The tree is decorated, the deadlines are postponed.",
+                    "May your exams pass themselves, with no retakes.",
+                    "May your labs be done in one night, not three.",
+                    "May the plagiarism checker smile and your supervisor reply the same day.",
+                    "Grants on time, coffee hot, merges conflict-free.",
+                    "This is a tree. It sparkles. You clicked. Everything is going to plan.",
+                ],
             },
         },
         landing: {

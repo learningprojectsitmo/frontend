@@ -1,8 +1,11 @@
 import { usePublicAppSettings } from "@/lib/app-settings";
 
+import { useCookieConsent } from "@/features/privacy/cookie-consent-provider";
+
 import { Garland } from "./garland";
 import { Ornaments } from "./ornaments";
 import { Snow } from "./snow";
+import { Tree } from "./tree";
 import { useDecorationsAllowed } from "./use-decorations-allowed";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
@@ -22,6 +25,7 @@ import "./decor.css";
  */
 export const HolidayDecor = () => {
     const { data } = usePublicAppSettings();
+    const { consent } = useCookieConsent();
     const prefersReducedMotion = usePrefersReducedMotion();
 
     const adminEnabled = data?.new_year_decorations_enabled === true;
@@ -34,10 +38,19 @@ export const HolidayDecor = () => {
     }
 
     return (
-        <div className="holiday-decor" aria-hidden="true">
-            <Snow staticMode={prefersReducedMotion} />
-            <Garland />
-            <Ornaments />
-        </div>
+        <>
+            <div className="holiday-decor" aria-hidden="true">
+                <Snow staticMode={prefersReducedMotion} />
+                <Garland />
+                <Ornaments />
+            </div>
+            {/*
+             * Ёлка стоит вне `aria-hidden`-контейнера: это кнопка с подсказкой,
+             * и внутри скрытого поддерева она была бы недоступна скринридерам.
+             * Пока показан баннер cookie (z-index выше), ёлку не рисуем — он
+             * всё равно накрыл бы её снизу.
+             */}
+            <Tree staticMode={prefersReducedMotion} hidden={consent === null} />
+        </>
     );
 };
