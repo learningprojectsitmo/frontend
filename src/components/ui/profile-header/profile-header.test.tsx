@@ -41,6 +41,10 @@ describe("ProfileHeader: ссылки на соцсети", () => {
     });
 
     it.each([
+        ["VK", "."],
+        ["VK", ".."],
+        ["VK", "@."],
+        ["VK", "@.."],
         ["VK", "javascript:alert(1)"],
         ["VK", "https://example.com/student"],
         ["VK", "https://vk.com.example.com/student"],

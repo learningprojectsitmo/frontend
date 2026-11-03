@@ -31,6 +31,8 @@ function getProfileUrl(label: string, value: string): string | null {
         }
     }
 
+    if (nickname === "." || nickname === "..") return null;
+
     return nicknamePattern.test(nickname) ? `https://${hosts[0]}/${nickname}` : null;
 }
 
