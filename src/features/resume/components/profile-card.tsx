@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icons";
 import { ProfileHeader } from "@/components/ui/profile-header";
+import { SocialContact } from "@/components/ui/profile-header/social-contact";
 import { type ResumeUserInfo } from "@/types/api";
 import { LIMITS } from "@/features/resume/validation";
 
@@ -88,21 +89,7 @@ export const ProfileCard = ({
                             </p>
                             <div className="flex flex-col gap-2">
                                 {socials.map((s) => (
-                                    <div
-                                        key={s.label}
-                                        className="flex items-center gap-2 text-sm text-gray-700"
-                                    >
-                                        <Icon
-                                            name={
-                                                s.label.toLowerCase() === "telegram"
-                                                    ? "telegram"
-                                                    : "vk"
-                                            }
-                                            size={14}
-                                            className="text-gray-400"
-                                        />
-                                        {s.value}
-                                    </div>
+                                    <SocialContact key={s.label} label={s.label} value={s.value} />
                                 ))}
                             </div>
                         </div>

@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
+import { SocialContact } from "./social-contact";
 
 type SocialLink = { label: string; value: string };
 
@@ -106,19 +107,7 @@ export const ProfileHeader = ({
                         </p>
                         <div className="flex flex-col gap-2">
                             {socials.map((s) => (
-                                <div
-                                    key={s.label}
-                                    className="flex items-center gap-2 text-sm text-gray-700"
-                                >
-                                    <Icon
-                                        name={
-                                            s.label.toLowerCase() === "telegram" ? "telegram" : "vk"
-                                        }
-                                        size={14}
-                                        className="text-gray-400"
-                                    />
-                                    {s.value}
-                                </div>
+                                <SocialContact key={s.label} label={s.label} value={s.value} />
                             ))}
                         </div>
                     </div>
