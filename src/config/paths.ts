@@ -78,6 +78,21 @@ export const paths = {
             path: "/app/project",
             getHref: (id: number) => `/app/project?id=${encodeURIComponent(id)}`,
         },
+        exams: {
+            path: "/app/exams",
+            getHref: (workspaceId: number, examId?: number) =>
+                `/app/exams?workspaceId=${encodeURIComponent(workspaceId)}${examId ? `&examId=${encodeURIComponent(examId)}` : ""}`,
+        },
+        examView: {
+            path: "/app/exams/view",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/view?workspaceId=${encodeURIComponent(workspaceId)}&examId=${encodeURIComponent(examId)}`,
+        },
+        examConduct: {
+            path: "/app/exams/conduct",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/conduct?workspaceId=${encodeURIComponent(workspaceId)}&examId=${encodeURIComponent(examId)}`,
+        },
         applications: {
             path: "/app/applications",
             getHref: () => "/app/applications",

@@ -28,7 +28,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuShortcut,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, GraduationCapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -377,6 +377,16 @@ const SpaceRoute = () => {
                     onShareOpen={() => setShareOpen(true)}
                     onCreateProject={() => setCreateDialogOpen(true)}
                 />
+                <div className="flex justify-end">
+                    <Button
+                        variant="outline"
+                        size="hug36"
+                        icon={<GraduationCapIcon />}
+                        onClick={() => navigate(`/app/exams?workspaceId=${spaceData.id}`)}
+                    >
+                        Экзамены пространства
+                    </Button>
+                </div>
 
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                     <DialogContent className="sm:max-w-[520px]">

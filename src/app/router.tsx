@@ -120,6 +120,21 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />, // Добавить
                 },
                 {
+                    path: paths.app.exams.path,
+                    lazy: () => import("./routes/app/exams").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
+                    path: paths.app.examView.path,
+                    lazy: () => import("./routes/app/exam-view").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
+                    path: paths.app.examConduct.path,
+                    lazy: () => import("./routes/app/exam-conduct").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.profile.path,
                     lazy: () => import("./routes/app/profile").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,

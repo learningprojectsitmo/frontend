@@ -92,6 +92,12 @@ export const queryKeys = {
             ["project-types", workspaceId ?? "system"] as const,
     },
 
+    projectTypeQuestions: {
+        detail: (workspaceId: number, typeId: number) =>
+            ["project-type-questions", workspaceId, typeId] as const,
+        templates: () => ["project-type-question-templates"] as const,
+    },
+
     stageHistory: {
         detail: (projectId: string | number) => ["stage-history", String(projectId)] as const,
     },
@@ -164,6 +170,25 @@ export const queryKeys = {
     authResetEmail: (token: string) => ["auth", "reset-email", token] as const,
 
     search: (q: string, scope: "default" | "extended" = "default") => ["search", scope, q] as const,
+
+    exams: {
+        list: (workspaceId: string | number, status?: "draft" | "published") =>
+            ["exams", "list", String(workspaceId), status ?? "all"] as const,
+        detail: (workspaceId: string | number, examId: string | number) =>
+            ["exams", "detail", String(workspaceId), String(examId)] as const,
+        settings: (workspaceId: string | number, examId: string | number) =>
+            ["exams", "settings", String(workspaceId), String(examId)] as const,
+        slots: (workspaceId: string | number, examId: string | number) =>
+            ["exams", "slots", String(workspaceId), String(examId)] as const,
+        registrations: (workspaceId: string | number, examId: string | number, self = false) =>
+            ["exams", "registrations", String(workspaceId), String(examId), self ? "self" : "all"] as const,
+        queue: (workspaceId: string | number, examId: string | number) =>
+            ["exams", "queue", String(workspaceId), String(examId)] as const,
+        currentAttempt: (workspaceId: string | number, examId: string | number) =>
+            ["exams", "attempts", "current", String(workspaceId), String(examId)] as const,
+        attempt: (workspaceId: string | number, examId: string | number, attemptId: string | number) =>
+            ["exams", "attempt", String(workspaceId), String(examId), String(attemptId)] as const,
+    },
 };
 
 /** Убирает пустые сегменты из ключа: `undefined`/`null` не должны его различать. */

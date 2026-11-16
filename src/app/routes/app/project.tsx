@@ -87,6 +87,7 @@ import { ProjectNavButtons } from "@/features/project/components/project-nav-but
 import { buildProjectNavHref } from "@/features/project/utils/project-nav";
 import { SpecificationTab } from "@/features/project/components/specification-tab";
 import { ProjectActivityTab } from "@/features/project/components/project-activity-tab";
+import { ProjectExamBlocks } from "@/features/project/components/project-exam-blocks";
 import { WikiTab } from "@/features/project/components/wiki-tab";
 import { KanbanBoard } from "@/features/kanban/components/board";
 import { TaskPanel, type TaskPatch } from "@/features/kanban/components/task-panel";
@@ -1535,6 +1536,13 @@ const SpaceRoute = () => {
                         variant="text"
                     />
                 </section>
+
+                {dataProject?.workspace_id && (
+                    <ProjectExamBlocks
+                        workspaceId={dataProject.workspace_id}
+                        projectTypeId={dataProject.project_type_id}
+                    />
+                )}
 
                 {activeTab === "view" && (
                     <>
