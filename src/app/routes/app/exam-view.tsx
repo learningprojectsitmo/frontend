@@ -1,1 +1,1 @@
-export { default } from "./exams";
+export { ExamDetail as default } from "@/features/exam/components/exam-detail";

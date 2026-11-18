@@ -1,5 +1,7 @@
+import { queryKeys } from "@/lib/query-keys";
 import { useState, memo } from "react";
 import { NavLink, Link } from "react-router";
+import { useQueries } from "@tanstack/react-query";
 import { paths } from "@/config/paths";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
@@ -7,6 +9,7 @@ import { DropdownMenuSeparator } from "@/components/ui/dropdown/dropdown-menu";
 import { GraduationCapIcon, PanelLeftClose, PanelLeftOpen, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateSpaceModal } from "./create-space-modal";
+import { examApi } from "@/lib/exams";
 
 type Space = {
     id: number;
@@ -107,6 +110,20 @@ export const Sidebar = memo(function Sidebar({
 }: SidebarProps) {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const hasNoCategories = activeCategories.every((cat) => cat.spaces.length === 0);
+    const workspaceIds = Array.from(
+        new Set(activeCategories.flatMap((category) => category.spaces.map((space) => space.id))),
+    );
+    const examQueries = useQueries({
+        queries: workspaceIds.map((workspaceId) => ({
+            queryKey: queryKeys.exams.list(workspaceId, "published"),
+            queryFn: () => examApi.list(workspaceId, "published"),
+            staleTime: 60 * 1000,
+        })),
+    });
+    const examsCount = examQueries.reduce(
+        (sum, query) => sum + (query.data?.items.length ?? 0),
+        0,
+    );
 
     return (
         <>
@@ -246,6 +263,23 @@ export const Sidebar = memo(function Sidebar({
                                     <Icon name="home" size={16} />
                                 </NavLink>
 
+                                <NavLink
+                                    to={paths.app.exams.getHref(0)}
+                                    title="Экзамены"
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "relative shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center transition-all duration-150",
+                                            isActive
+                                                ? "bg-app-badge-blue text-app-badge-blue-fg"
+                                                : "text-gray-500 hover:bg-gray-100 hover:text-gray-700",
+                                        )
+                                    }
+                                >
+                                    <span className="h-8 w-8 rounded-[10px] bg-[#4338CA] text-white flex items-center justify-center">
+                                        <Icon name="exam" size={16} />
+                                    </span>
+                                </NavLink>
+
                                 {activeCategories.some((c) => c.spaces.length > 0) && (
                                     <div className="w-5 h-px bg-gray-200 my-1" />
                                 )}
@@ -339,6 +373,36 @@ export const Sidebar = memo(function Sidebar({
                                             </ul>
                                         </div>
                                     ))}
+                                <div className="h-px bg-gray-200 -mx-3" />
+                                <div>
+                                    <p className="px-1 mb-2 text-[11px] font-semibold text-app-muted uppercase tracking-[0.08em]">
+                                        ЗАЩИТЫ ПРОЕКТОВ
+                                    </p>
+                                    <NavLink
+                                        to={paths.app.exams.getHref(0)}
+                                        end
+                                        className={({ isActive }) =>
+                                            cn(
+                                                "flex items-center gap-3 w-full h-11 px-3.5 rounded-[12px] transition-all duration-150",
+                                                isActive
+                                                    ? "bg-app-badge-blue"
+                                                    : "hover:bg-gray-50 border border-transparent",
+                                            )
+                                        }
+                                    >
+                                        <div className="shrink-0 h-8 w-8 rounded-[10px] flex items-center justify-center text-white bg-[#4338CA]">
+                                            <Icon name="exam" size={15} />
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[13px] font-semibold text-gray-800 leading-tight">
+                                                Экзамены
+                                            </span>
+                                            <span className="text-[11px] text-app-muted font-medium leading-tight">
+                                                {examsCount} {examsCount === 1 ? "экзамен" : examsCount >= 2 && examsCount <= 4 ? "экзамена" : "экзаменов"}
+                                            </span>
+                                        </div>
+                                    </NavLink>
+                                </div>
                             </div>
                         )}
                     </nav>

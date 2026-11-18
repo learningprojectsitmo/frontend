@@ -96,6 +96,8 @@ export const queryKeys = {
         detail: (workspaceId: number, typeId: number) =>
             ["project-type-questions", workspaceId, typeId] as const,
         templates: () => ["project-type-question-templates"] as const,
+        lock: (workspaceId: number, typeId: number) =>
+            ["project-type-questions-lock", workspaceId, typeId] as const,
     },
 
     stageHistory: {

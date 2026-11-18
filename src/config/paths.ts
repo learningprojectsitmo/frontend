@@ -80,8 +80,25 @@ export const paths = {
         },
         exams: {
             path: "/app/exams",
-            getHref: (workspaceId: number, examId?: number) =>
-                `/app/exams?workspaceId=${encodeURIComponent(workspaceId)}${examId ? `&examId=${encodeURIComponent(examId)}` : ""}`,
+            getHref: (workspaceId = 0) =>
+                workspaceId > 0
+                    ? `/app/exams?workspaceId=${encodeURIComponent(workspaceId)}`
+                    : "/app/exams",
+        },
+        examManage: {
+            path: "/app/exams/manage",
+            getHref: (workspaceId: number) =>
+                `/app/exams/manage?workspaceId=${encodeURIComponent(workspaceId)}`,
+        },
+        examNew: {
+            path: "/app/exams/new",
+            getHref: (workspaceId: number) =>
+                `/app/exams/new?workspaceId=${encodeURIComponent(workspaceId)}`,
+        },
+        examEdit: {
+            path: "/app/exams/:examId/edit",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/${encodeURIComponent(examId)}/edit?workspaceId=${encodeURIComponent(workspaceId)}`,
         },
         examView: {
             path: "/app/exams/view",

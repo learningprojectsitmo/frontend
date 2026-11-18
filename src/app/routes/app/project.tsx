@@ -1540,6 +1540,8 @@ const SpaceRoute = () => {
                 {dataProject?.workspace_id && (
                     <ProjectExamBlocks
                         workspaceId={dataProject.workspace_id}
+                        projectId={dataProject.id}
+                        isProjectAuthor={isCreator}
                         projectTypeId={dataProject.project_type_id}
                     />
                 )}
