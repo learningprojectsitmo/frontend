@@ -75,7 +75,7 @@ export function ExamHeader({
                     </div>
                     <div className="inline-flex items-center gap-3 text-[13px] text-app-muted">
                         <span>{disciplineCount} дисциплин</span>
-                        <span className="size-1.5 rounded-full bg-gray-400" />
+                        <span className="size-1.5 rounded-full bg-gray-400 dark:bg-app-muted" />
                         <span>{examCount} экзаменов</span>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ export function ExamHeader({
                         <button
                             type="button"
                             aria-label="Дополнительные действия"
-                            className="w-9 h-9 cursor-pointer p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 transition-colors"
+                            className="w-9 h-9 cursor-pointer p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 dark:hover:bg-app-ghost transition-colors"
                         >
                             <MoreHorizontal size={18} />
                         </button>
@@ -121,13 +121,13 @@ function ExamCard({
     exam,
     status,
     projectsCount,
-    participantsCount,
+    teamsCount,
 }: {
     workspaceId: number;
     exam: Exam;
     status: ExamStatus;
     projectsCount: number;
-    participantsCount: number;
+    teamsCount: number;
 }) {
     const meta = statusMeta[status];
 
@@ -164,7 +164,7 @@ function ExamCard({
                     </span>
                     <span className="flex items-center gap-2">
                         <Icon name="members" size={16} />
-                        {participantsCount} участника
+                        Команд: {teamsCount}
                     </span>
                 </div>
             </article>
@@ -183,28 +183,28 @@ function ExamTable({
     disciplineName: string;
     exams: Exam[];
     statusByExam: ReadonlyMap<number, ExamStatus>;
-    registrationByExam: Map<number, { projects: number; participants: number }>;
+    registrationByExam: Map<number, { projects: number; teams: number }>;
 }) {
     return (
-        <div className="overflow-x-auto rounded-[20px] border border-gray-200">
+        <div className="overflow-x-auto rounded-[20px] border border-gray-200 dark:border-app-border">
             <table className="w-full border-collapse text-left">
-                <thead className="border-b border-gray-200 bg-gray-50 text-app-text">
+                <thead className="border-b border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost text-app-text">
                     <tr>
                         <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Статус</th>
                         <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Название</th>
                         <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Дисциплина</th>
                         <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Дата/время</th>
                         <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Проекты</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Участники</th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Команды</th>
                         <th className="h-14 w-14 px-3" />
                     </tr>
                 </thead>
                 <tbody>
                     {exams.map((exam) => {
                         const status = statusMeta[statusByExam.get(exam.id) ?? "draft"];
-                        const counts = registrationByExam.get(exam.id) ?? { projects: 0, participants: 0 };
+                        const counts = registrationByExam.get(exam.id) ?? { projects: 0, teams: 0 };
                         return (
-                            <tr key={exam.id} className="group border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50">
+                            <tr key={exam.id} className="group border-b border-gray-100 dark:border-app-border transition-colors last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-medium leading-none ${status.className}`}>
                                         {status.label}
@@ -218,24 +218,24 @@ function ExamTable({
                                         {exam.configuration.title}
                                     </Link>
                                 </td>
-                                <td className="px-6 py-4 text-[13px] text-gray-600">{disciplineName}</td>
-                                <td className="px-6 py-4 text-[13px] text-gray-600">{formatExamDate(exam.configuration.starts_at)}</td>
+                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{disciplineName}</td>
+                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
                                 <td className="px-6 py-4">
-                                    <span className="flex items-center gap-2 text-[13px] text-gray-600">
+                                    <span className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-app-muted">
                                         <Icon name="project" size={14} />
                                         {counts.projects}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="flex items-center gap-2 text-[13px] text-gray-600">
+                                    <span className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-app-muted">
                                         <Icon name="members" size={14} />
-                                        {counts.participants}
+                                        {counts.teams}
                                     </span>
                                 </td>
                                 <td className="px-3 py-4 text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <button type="button" aria-label="Действия с экзаменом" className="cursor-pointer rounded-lg p-2 text-gray-500 hover:bg-gray-100">
+                                            <button type="button" aria-label="Действия с экзаменом" className="cursor-pointer rounded-lg p-2 text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost">
                                                 <Ellipsis size={16} />
                                             </button>
                                         </DropdownMenuTrigger>
@@ -267,7 +267,7 @@ function DisciplineExamList({
     title: string;
     exams: Exam[];
     statusByExam: ReadonlyMap<number, ExamStatus>;
-    registrationByExam: Map<number, { projects: number; participants: number }>;
+    registrationByExam: Map<number, { projects: number; teams: number }>;
 }) {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState<"all" | ExamStatus>("all");
@@ -295,13 +295,13 @@ function DisciplineExamList({
                             aria-label="Поиск экзаменов" placeholder="Поиск экзаменов"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            className="h-10 w-[240px] pl-9 pr-3 bg-app-surface border border-gray-200 rounded-[12px] text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
+                            className="h-10 w-[240px] pl-9 pr-3 bg-app-surface border border-gray-200 dark:border-app-border rounded-[12px] text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
                         />
                     </div>
                     <select
                         value={status}
                         onChange={(event) => setStatus(event.target.value as "all" | ExamStatus)}
-                        className="h-10 rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[13px]"
+                        className="h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                     >
                         <option value="all">Все статусы</option>
                         <option value="soon">Скоро</option>
@@ -311,12 +311,12 @@ function DisciplineExamList({
                         <option value="planned">Запланирован</option>
                         <option value="passed">Экзамен прошёл</option>
                     </select>
-                    <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 bg-app-surface">
+                    <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface">
                         <button
                             type="button"
                             onClick={() => setViewMode("grid")}
                             aria-label="Карточки" aria-pressed={viewMode === "grid"}
-                            className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500"}`}
+                            className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
                         >
                             <Icon name="grid" size={16} />
                         </button>
@@ -324,7 +324,7 @@ function DisciplineExamList({
                             type="button"
                             onClick={() => setViewMode("list")}
                             aria-label="Таблица" aria-pressed={viewMode === "list"}
-                            className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500"}`}
+                            className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
                         >
                             <List size={16} />
                         </button>
@@ -337,7 +337,7 @@ function DisciplineExamList({
             ) : viewMode === "grid" ? (
                 <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                     {filtered.map((exam) => {
-                        const counts = registrationByExam.get(exam.id) ?? { projects: 0, participants: 0 };
+                        const counts = registrationByExam.get(exam.id) ?? { projects: 0, teams: 0 };
                         return (
                             <ExamCard
                                 key={exam.id}
@@ -345,7 +345,7 @@ function DisciplineExamList({
                                 exam={exam}
                                 status={statusByExam.get(exam.id) ?? "draft"}
                                 projectsCount={counts.projects}
-                                participantsCount={counts.participants}
+                                teamsCount={counts.teams}
                             />
                         );
                     })}
@@ -372,9 +372,7 @@ export function ExamsOverview({
 }) {
     const navigate = useNavigate();
     const access = useExamWorkspaces(workspaceId);
-    const spaces = workspaceId
-        ? access.spaces.filter((space) => space.id === workspaceId)
-        : access.spaces;
+    const spaces = access.readable;
 
     const examQueries = useQueries({
         queries: spaces.map((space) => ({
@@ -417,12 +415,16 @@ export function ExamsOverview({
     });
 
     const registrationByExam = (() => {
-        const result = new Map<number, { projects: number; participants: number }>();
+        const result = new Map(visibleExams.map((exam, index) => {
+            const items = queueQueries[index]?.data?.items ?? [];
+            return [exam.id, { projects: new Set(items.map((item) => item.project_id)).size, teams: items.length }] as const;
+        }));
         registrationRequests.forEach(({ exam }, index) => {
-            const items = registrationQueries[index]?.data?.items ?? [];
+            const items = registrationQueries[index]?.data?.items;
+            if (!items) return;
             result.set(exam.id, {
                 projects: new Set(items.map((item) => item.project_id)).size,
-                participants: items.filter((item) => item.status === "active").length,
+                teams: items.filter((item) => item.status === "active").length,
             });
         });
         return result;
@@ -436,7 +438,7 @@ export function ExamsOverview({
         if (createWorkspace) navigate(paths.app.examNew.getHref(createWorkspace.id));
     };
 
-    if (access.isMenuLoading) {
+    if (access.isLoading) {
         return (
             <ContentLayout title="Экзамены">
                 <div className="flex h-64 items-center justify-center">
@@ -481,7 +483,7 @@ export function ExamsOverview({
                         >
                             <SelectTrigger
                                 aria-label="Фильтр по пространству"
-                                className="h-11 w-fit min-w-44 max-w-full cursor-pointer gap-2 rounded-xl border-gray-200 px-3.5 text-[13px] font-medium text-app-text sm:max-w-64 [&>span]:truncate [&>svg]:shrink-0"
+                                className="h-11 w-fit min-w-44 max-w-full cursor-pointer gap-2 rounded-xl border-gray-200 dark:border-app-border px-3.5 text-[13px] font-medium text-app-text sm:max-w-64 [&>span]:truncate [&>svg]:shrink-0"
                             >
                                 <SelectValue placeholder="Выберите пространство" />
                             </SelectTrigger>

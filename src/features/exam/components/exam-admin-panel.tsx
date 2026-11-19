@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { examApi, getExamErrorCode, getExamErrorMessage, invalidateExam, questionApi } from "@/lib/exams";
 import { useExamRegistrations, useExamSlots } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
-import { formatExamTime as formatTime, getRegistrationDeadline } from "../exam-display";
+import { formatExamTime as formatTime } from "../exam-display";
 import { hasEarlierFreeSlots, minute, resizeDraftSlots, slotScheduleError, slotStartAtTime, type LocalSlot } from "../exam-schedule";
 import { useProjectsList } from "@/lib/projects";
 import { getExamProjectLeader, useExamProjects } from "../use-exam-projects";
@@ -78,6 +78,17 @@ const defaultConfiguration = (): ExamConfiguration => ({
     transition_minutes: 1,
     assessment_window_minutes: 3,
 });
+
+const registrationFields = [
+    { key: "registration_opens_at", label: "Открытие записи" },
+    { key: "registration_closes_at", label: "Закрытие записи" },
+] as const;
+
+const localInputValue = (value: string | null) => {
+    if (!value) return "";
+    const date = new Date(value);
+    return new Date(date.getTime() - date.getTimezoneOffset() * minute).toISOString().slice(0, 16);
+};
 
 const localDate = (iso: string) => {
     const date = new Date(iso);
@@ -246,6 +257,12 @@ export function ExamAdminPanel({
             result.project_type_ids = "Выберите типы проектов из этого пространства";
         }
         if (Number.isNaN(new Date(configuration.starts_at).getTime())) result.starts_at = "Укажите дату";
+        const startsAt = Date.parse(configuration.starts_at);
+        const opensAt = Date.parse(configuration.registration_opens_at ?? "");
+        const closesAt = Date.parse(configuration.registration_closes_at ?? "");
+        if (opensAt > startsAt) result.registration_opens_at = "Запись должна открыться до начала экзамена.";
+        if (closesAt > startsAt) result.registration_closes_at = "Запись должна закрыться до начала экзамена.";
+        if (opensAt >= closesAt) result.registration_closes_at = "Закрытие должно быть позже открытия.";
         if (configuration.connection_url) {
             try {
                 const url = new URL(configuration.connection_url);
@@ -278,7 +295,7 @@ export function ExamAdminPanel({
             visibleError("title") ||
             visibleError("description") ||
             visibleError("project_type_ids") ||
-            visibleError("starts_at") ||
+            visibleError("starts_at") || visibleError("registration_opens_at") || visibleError("registration_closes_at") ||
             visibleError("max_score") ||
             visibleError("connection_url"),
         ),
@@ -395,16 +412,6 @@ export function ExamAdminPanel({
             return;
         }
 
-        const deadline = getRegistrationDeadline(configuration);
-        const opensAt = Date.parse(configuration.registration_opens_at ?? "");
-        // An existing opening time later than the deadline cannot be saved with an earlier close.
-        const applyDeadline = publishing && exam?.status === "draft" &&
-            (!Number.isFinite(opensAt) || opensAt < deadline) &&
-            Date.parse(configuration.registration_closes_at ?? "") !== deadline;
-        const configurationToSave = applyDeadline
-            ? { ...configuration, registration_closes_at: new Date(deadline).toISOString() }
-            : configuration;
-
         setSaving(true);
         let saved = exam;
         let stage: "settings" | "slots" | "publish" = "settings";
@@ -417,11 +424,11 @@ export function ExamAdminPanel({
             if (!saved) {
                 saved = await examApi.create(workspaceId, configuration);
                 setCreatedExam(saved);
-            } else if (configurationChanged || applyDeadline) {
+            } else if (configurationChanged) {
                 saved = await examApi.replaceSettings(workspaceId, saved.id, {
                     expected_version: saved.current_settings_version,
-                    reason: configurationChanged ? reason.trim() : "Установлен срок закрытия записи",
-                    configuration: configurationToSave,
+                    reason: reason.trim(),
+                    configuration,
                 });
             }
             await queryClient.cancelQueries({ queryKey: queryKeys.exams.detail(workspaceId, saved.id) });
@@ -618,7 +625,7 @@ export function ExamAdminPanel({
         if (!exam || !slot.id || pendingSlotId !== null || saving) return;
         const existing = assignedRegistrationBySlot.get(slot.id);
         setAssignOpenKey(null);
-        if (existing?.project_id === projectId) return;
+        if (existing?.started_at || existing?.project_id === projectId) return;
         setPendingSlotId(slot.id);
         if (existing) setHiddenRegistrationId(existing.id);
         let previousRegistrationCancelled = false;
@@ -676,9 +683,9 @@ export function ExamAdminPanel({
     };
 
     const renderQueueTable = () => localSlots.length > 0 || exam?.status !== "published" ? (
-        <div className={cn("min-h-0 overflow-auto rounded-[12px] border border-gray-200", queueExpanded && "flex-1")}>
+        <div className={cn("min-h-0 overflow-auto rounded-[12px] border border-gray-200 dark:border-app-border", queueExpanded && "flex-1")}>
             <table className="w-full min-w-[760px] border-collapse text-left">
-                <thead className="border-b border-gray-200 bg-gray-50 text-[12px] text-app-muted">
+                <thead className="border-b border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost text-[12px] text-app-muted">
                     <tr>
                         <th className="px-3 py-3 font-semibold">№</th>
                         <th className="px-3 py-3 font-semibold">Начало</th>
@@ -712,7 +719,7 @@ export function ExamAdminPanel({
                     return (
                         <tr
                             key={slot.key}
-                            className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
+                            className="border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost"
                             onDragOver={(event) => {
                                 if (slot.id && !registration && draggedSlotId.current) event.preventDefault();
                             }}
@@ -782,7 +789,7 @@ export function ExamAdminPanel({
                                     />
                                 )}
                             </td>
-                            <td className="px-3 py-3 text-[13px] text-gray-600">
+                            <td className="px-3 py-3 text-[13px] text-gray-600 dark:text-app-muted">
                                 {durationMinutes} мин.
                                 <span className="block text-[11px] text-app-muted">до {formatTime(slot.ends_at)}</span>
                             </td>
@@ -793,20 +800,20 @@ export function ExamAdminPanel({
                                     <span className="text-[13px] text-app-muted">{registration ? "Команда назначена" : "Не назначена"}</span>
                                 )}
                             </td>
-                            <td className="px-3 py-3 text-[13px] text-gray-600">
+                            <td className="px-3 py-3 text-[13px] text-gray-600 dark:text-app-muted">
                                 {registration ? getExamProjectLeader(project) ?? "Имя не указано" : "—"}
                             </td>
                             <td className="px-3 py-3">
                                 <span className={cn(
                                     "inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium",
-                                    registration ? "bg-[--status-completed-bg] text-emerald-700 dark:text-emerald-300" : "bg-gray-100 text-gray-600",
+                                    registration ? "bg-[--status-completed-bg] text-emerald-700 dark:text-emerald-300" : "bg-gray-100 dark:bg-app-ghost text-gray-600 dark:text-app-muted",
                                 )}>
                                     {registration ? "Назначена" : "Не назначена"}
                                 </span>
                             </td>
                             <td className="px-3 py-3">
                                 <div className="flex w-max max-w-[144px] flex-wrap justify-end gap-1 sm:max-w-none">
-                                    {exam?.status === "published" && slot.id && (
+                                    {exam?.status === "published" && slot.id && !registration?.started_at && (
                                         <Popover.Root
                                             open={assignOpenKey === slot.key}
                                             onOpenChange={(open) => {
@@ -819,7 +826,7 @@ export function ExamAdminPanel({
                                             </Popover.Trigger>
                                             <Popover.Portal container={queueExpanded ? queueDialogRef : undefined}>
                                             <Popover.Positioner positionMethod="fixed" align="end" sideOffset={8} collisionPadding={8} className="z-50">
-                                            <Popover.Popup aria-label="Выбор команды" className="w-[300px] max-w-[var(--available-width)] rounded-[16px] border border-gray-200 bg-app-surface p-2 text-left shadow-lg">
+                                            <Popover.Popup aria-label="Выбор команды" className="w-[300px] max-w-[var(--available-width)] rounded-[16px] border border-gray-200 dark:border-app-border bg-app-surface p-2 text-left shadow-lg">
                                                     <div className="relative mb-2">
                                                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
                                                         <input value={projectSearch} onChange={(event) => setProjectSearch(event.target.value)} aria-label="Поиск команды" placeholder="Поиск команды" className="h-9 w-full rounded-[10px] border border-app-border bg-app-surface pl-8 pr-3 text-[13px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring" />
@@ -828,7 +835,7 @@ export function ExamAdminPanel({
                                                         {availableProjects.length === 0 ? (
                                                             <p className="px-3 py-4 text-center text-[12px] text-app-muted">Нет доступных команд</p>
                                                         ) : availableProjects.map((item) => (
-                                                            <button key={item.id} type="button" className="flex w-full cursor-pointer items-center justify-between rounded-[8px] px-3 py-2 text-left text-[13px] hover:bg-gray-100" onClick={() => changeSlotAssignment(slot, item.id)}>
+                                                            <button key={item.id} type="button" className="flex w-full cursor-pointer items-center justify-between rounded-[8px] px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-app-ghost" onClick={() => changeSlotAssignment(slot, item.id)}>
                                                                 <span>{item.name}</span>
                                                                 {item.id === project?.id && <span className="text-[11px] text-app-muted">текущая</span>}
                                                             </button>
@@ -839,12 +846,12 @@ export function ExamAdminPanel({
                                             </Popover.Portal>
                                         </Popover.Root>
                                     )}
-                                    {registration && slot.id && (
+                                    {registration && !registration.started_at && slot.id && (
                                         <Button variant="ghost" size="hug36" disabled={pendingSlotId !== null || saving} onClick={() => changeSlotAssignment(slot)}>
                                             Убрать
                                         </Button>
                                     )}
-                                    <button type="button" onClick={() => removeLocalSlot(slot)} disabled={Boolean(slot.id) || saving} className={cn("flex h-9 w-9 items-center justify-center rounded-lg", slot.id ? "cursor-not-allowed text-gray-300" : "cursor-pointer text-gray-500 hover:bg-[--error-bg] hover:text-red-600 dark:hover:text-red-300")} aria-label="Удалить слот" title={slot.id ? "Сохранённые слоты удалить нельзя." : "Удалить слот"}>
+                                    <button type="button" onClick={() => removeLocalSlot(slot)} disabled={Boolean(slot.id) || saving} className={cn("flex h-9 w-9 items-center justify-center rounded-lg", slot.id ? "cursor-not-allowed text-gray-300 dark:text-app-muted" : "cursor-pointer text-gray-500 dark:text-app-muted hover:bg-[--error-bg] hover:text-red-600 dark:hover:text-red-300")} aria-label="Удалить слот" title={slot.id ? "Сохранённые слоты удалить нельзя." : "Удалить слот"}>
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
@@ -853,7 +860,7 @@ export function ExamAdminPanel({
                     );
                 })}
                     {exam?.status !== "published" && (
-                        <tr className="border-t border-gray-200">
+                        <tr className="border-t border-gray-200 dark:border-app-border">
                             <td colSpan={7} className="p-0">
                                 <button
                                     type="button"
@@ -871,14 +878,14 @@ export function ExamAdminPanel({
             </table>
         </div>
     ) : (
-        <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-[13px] text-app-muted">
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-app-border p-8 text-center text-[13px] text-app-muted">
             Слоты появятся здесь после генерации.
         </div>
     );
 
     return (
-        <div className="overflow-hidden rounded-[20px] border border-gray-200 bg-app-surface">
-            <header className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+        <div className="overflow-hidden rounded-[20px] border border-gray-200 dark:border-app-border bg-app-surface">
+            <header className="flex items-center justify-between border-b border-gray-200 dark:border-app-border px-5 py-4">
                 <div>
                     <button type="button" onClick={onCancel} className="mb-1 flex cursor-pointer items-center gap-1 text-[13px] text-app-muted hover:text-app-text">
                         <ChevronLeft size={14} /> Отмена
@@ -891,13 +898,13 @@ export function ExamAdminPanel({
                                 : "Создание экзамена"}
                     </h1>
                 </div>
-                <span className="rounded-full bg-gray-100 px-3 py-1 text-[12px] font-medium text-gray-600">
+                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1 text-[12px] font-medium text-gray-600 dark:text-app-muted">
                     {exam?.status === "published" ? "Опубликован" : "Черновик"}
                 </span>
             </header>
 
             <div className="grid lg:grid-cols-[220px_minmax(0,1fr)]">
-                <aside className="border-b border-gray-200 p-3 lg:border-b-0 lg:border-r">
+                <aside className="border-b border-gray-200 dark:border-app-border p-3 lg:border-b-0 lg:border-r">
                     <nav aria-label="Разделы формы экзамена" className="space-y-1">
                         {sections.map((section) => (
                             <button
@@ -909,7 +916,7 @@ export function ExamAdminPanel({
                                     "flex h-10 w-full cursor-pointer items-center justify-between rounded-[10px] px-3 text-left text-[13px] font-medium transition",
                                     activeSection === section.id
                                         ? "bg-app-text text-app-background"
-                                        : "text-gray-600 hover:bg-gray-100",
+                                        : "text-gray-600 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost",
                                 )}
                             >
                                 {section.label}
@@ -941,7 +948,7 @@ export function ExamAdminPanel({
                                                 const next = Number(event.target.value);
                                                 setPendingWorkspaceId(next === workspaceId ? null : next);
                                             }}
-                                            className="mt-1 h-10 w-full cursor-pointer rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[13px]"
+                                            className="mt-1 h-10 w-full cursor-pointer rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                                         >
                                             <option disabled value="">Выберите пространство</option>
                                             {workspaces.map((workspace) => (
@@ -949,7 +956,7 @@ export function ExamAdminPanel({
                                             ))}
                                         </select>
                                         {pendingWorkspaceId !== null && (
-                                            <div id="exam-workspace-confirmation" role="dialog" aria-label="Подтверждение смены пространства" className="absolute left-0 top-full z-30 mt-2 w-full max-w-xs rounded-xl border border-gray-200 bg-app-surface p-4 shadow-lg">
+                                            <div id="exam-workspace-confirmation" role="dialog" aria-label="Подтверждение смены пространства" className="absolute left-0 top-full z-30 mt-2 w-full max-w-xs rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-4 shadow-lg">
                                                 <p className="text-[13px] text-app-text">Название, дата и время сохранятся. Остальные поля, выбранные типы проектов и слоты будут сброшены. Продолжить?</p>
                                                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                                                     <Button ref={workspaceCancel} variant="outline" size="hug36" onClick={() => {
@@ -983,7 +990,7 @@ export function ExamAdminPanel({
                                             date.setHours(current.getHours(), current.getMinutes(), 0, 0);
                                             update("starts_at", date.toISOString());
                                         }}
-                                        className="h-10 min-w-[180px] justify-between rounded-[12px] border border-gray-200 px-3 text-[13px] hover:border-gray-300"
+                                        className="h-10 min-w-[180px] justify-between rounded-[12px] border border-gray-200 dark:border-app-border px-3 text-[13px] hover:border-gray-300 dark:hover:border-slate-500"
                                     />
                                     <Input
                                         type="time"
@@ -1006,6 +1013,22 @@ export function ExamAdminPanel({
                                     </p>
                                 )}
                             </div>
+                            <fieldset className="grid gap-3 md:col-span-2 sm:grid-cols-2">
+                                <legend className="mb-2 text-sm font-medium text-app-text">Период записи</legend>
+                                {registrationFields.map(({ key, label }) => (
+                                    <div key={key} className="min-w-0">
+                                        <Label htmlFor={key}>{label}</Label>
+                                        <Input id={key} type="datetime-local" value={localInputValue(configuration[key])}
+                                            disabled={exam?.status === "published"} error={Boolean(visibleError(key))} helperText={visibleError(key)}
+                                            onBlur={() => touch(key)}
+                                            onChange={(event) => {
+                                                const value = Date.parse(event.target.value);
+                                                update(key, Number.isFinite(value) ? new Date(value).toISOString() : null);
+                                            }} />
+                                    </div>
+                                ))}
+                                <p className="text-xs text-app-muted sm:col-span-2">Без указанных дат запись доступна с публикации до начала экзамена.</p>
+                            </fieldset>
                             <div>
                                 <Label htmlFor="exam-score">Максимальный балл</Label>
                                 <Input id="exam-score" error={Boolean(visibleError("max_score"))} helperText={visibleError("max_score")} onBlur={() => touch("max_score")} type="number" min={0.01} step="0.01" value={configuration.max_score} onChange={(event) => update("max_score", Number(event.target.value))} />
@@ -1017,7 +1040,7 @@ export function ExamAdminPanel({
                             <div className="md:col-span-2">
                                 <Label>Типы проектов *</Label>
                                 {!workspaceId ? (
-                                    <p className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-[13px] text-app-muted">
+                                    <p className="mt-2 rounded-lg bg-gray-50 dark:bg-app-ghost px-3 py-2 text-[13px] text-app-muted">
                                         Сначала выберите пространство.
                                     </p>
                                 ) : (
@@ -1044,7 +1067,7 @@ export function ExamAdminPanel({
                                                     "h-8 rounded-full border px-3 text-[13px] font-medium",
                                                     selected
                                                         ? "border-app-blue bg-app-badge-blue text-app-blue dark:text-blue-300"
-                                                        : "border-gray-200 text-gray-600 hover:border-gray-300",
+                                                        : "border-gray-200 dark:border-app-border text-gray-600 dark:text-app-muted hover:border-gray-300 dark:hover:border-slate-500",
                                                     exam?.status === "published" && "cursor-not-allowed opacity-60",
                                                 )}
                                             >
@@ -1073,7 +1096,7 @@ export function ExamAdminPanel({
                                     <p className="mt-2">Проверьте наличие вопросов, обязательные поля и уровни критериев 1–5.</p>
                                 </div>
                             )}
-                            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-[13px] text-app-text">
+                            <div className="rounded-xl border border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost p-4 text-[13px] text-app-text">
                                 <p className="font-semibold">Откуда берутся критерии</p>
                                 <div className="mt-2 space-y-1 text-app-muted">
                                     <p>{selectedTypeNames
@@ -1088,7 +1111,7 @@ export function ExamAdminPanel({
                                 </div>
                             </div>
                             {configuration.project_type_ids.length === 0 ? (
-                                <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-[13px] text-app-muted">
+                                <div className="rounded-xl border border-dashed border-gray-300 dark:border-app-border p-8 text-center text-[13px] text-app-muted">
                                     Сначала выберите хотя бы один тип проекта в разделе «Основное».
                                 </div>
                             ) : configuration.project_type_ids.map((typeId) => {
@@ -1104,7 +1127,7 @@ export function ExamAdminPanel({
                                                 typeName={type?.name ?? `Тип проекта ${typeId}`}
                                             />
                                         ) : (
-                                            <div className="rounded-xl border border-dashed border-gray-300 p-5 text-[13px] text-app-muted">
+                                            <div className="rounded-xl border border-dashed border-gray-300 dark:border-app-border p-5 text-[13px] text-app-muted">
                                                 Сохраните черновик, чтобы добавить и привязать вопросы к типу проекта.
                                             </div>
                                         )}
@@ -1161,7 +1184,7 @@ export function ExamAdminPanel({
                                 <div className="min-w-0">
                                     <Label className="block min-h-10 leading-5">Начало слотов</Label>
                                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                                        <div className="flex h-10 min-w-[180px] flex-1 items-center rounded-[12px] border border-gray-200 bg-gray-50 px-3 text-[13px] text-gray-600">
+                                        <div className="flex h-10 min-w-[180px] flex-1 items-center rounded-[12px] border border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost px-3 text-[13px] text-gray-600 dark:text-app-muted">
                                             {new Date(configuration.starts_at).toLocaleDateString("ru-RU", {
                                                 day: "numeric",
                                                 month: "long",
@@ -1189,14 +1212,14 @@ export function ExamAdminPanel({
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2 text-[12px]">
-                                <span className="rounded-full bg-gray-100 px-3 py-1.5">Всего выступлений: {localSlots.length}</span>
-                                <span className="rounded-full bg-gray-100 px-3 py-1.5">
+                                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">Всего выступлений: {localSlots.length}</span>
+                                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
                                     Окончание: {scheduleEnd(localSlots)}
                                 </span>
-                                <span className="rounded-full bg-gray-100 px-3 py-1.5">
+                                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
                                     Назначено команд: {assignedRegistrationBySlot.size} из {localSlots.length}
                                 </span>
-                                <span className="rounded-full bg-gray-100 px-3 py-1.5">
+                                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
                                     Не назначено: {Math.max(0, localSlots.length - assignedRegistrationBySlot.size)}
                                 </span>
                             </div>
@@ -1330,13 +1353,13 @@ export function ExamAdminPanel({
                                 </div>
                             )}
                             <dl className="grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Название</dt><dd className="mt-1 font-semibold">{configuration.title || "—"}</dd></div>
-                                <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Начало</dt><dd className="mt-1 font-semibold">{new Date(configuration.starts_at).toLocaleString("ru-RU")}</dd></div>
-                                <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Типы проектов</dt><dd className="mt-1 font-semibold">{configuration.project_type_ids.map((id) => projectTypes.find((type) => type.id === id)?.name).filter(Boolean).join(", ") || "Не выбраны"}</dd></div>
-                                <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Максимальный балл</dt><dd className="mt-1 font-semibold">{configuration.max_score}</dd></div>
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Название</dt><dd className="mt-1 font-semibold">{configuration.title || "—"}</dd></div>
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Начало</dt><dd className="mt-1 font-semibold">{new Date(configuration.starts_at).toLocaleString("ru-RU")}</dd></div>
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Типы проектов</dt><dd className="mt-1 font-semibold">{configuration.project_type_ids.map((id) => projectTypes.find((type) => type.id === id)?.name).filter(Boolean).join(", ") || "Не выбраны"}</dd></div>
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Максимальный балл</dt><dd className="mt-1 font-semibold">{configuration.max_score}</dd></div>
                             </dl>
                             <div className="grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-[12px] border border-gray-200 p-4">
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4">
                                     <p className="text-[13px] font-semibold text-app-text">
                                         Слоты: {localSlots.length}
                                     </p>
@@ -1348,7 +1371,7 @@ export function ExamAdminPanel({
                                         Перейти к слоту
                                     </button>
                                 </div>
-                                <div className="rounded-[12px] border border-gray-200 p-4">
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4">
                                     <p className="text-[13px] font-semibold text-app-text">Критерии и веса</p>
                                     <p className="mt-1 text-[12px] text-app-muted">
                                         Бакалавры: {configuration.weights.member}% · Магистранты: {configuration.weights.manager}% · Комиссия: {configuration.weights.teacher}%
@@ -1359,10 +1382,10 @@ export function ExamAdminPanel({
                                 </div>
                             </div>
                             {reviewAssignments.length > 0 && (
-                                <div className="rounded-[12px] border border-gray-200 p-4">
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4">
                                     <h3 className="mb-2 text-[13px] font-semibold text-app-text">Время защиты команд</h3>
                                     <Tooltip.Provider delay={100}>
-                                        <ul className="divide-y divide-gray-200 text-[13px]">
+                                        <ul className="divide-y divide-gray-200 dark:divide-app-border text-[13px]">
                                             {reviewAssignments.map(({ slot, registration }) => (
                                                 <li key={registration.id} className="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
                                                     <span>{projectById.get(registration.project_id)?.name ?? `Проект №${registration.project_id}`}</span>
@@ -1374,7 +1397,7 @@ export function ExamAdminPanel({
                                 </div>
                             )}
                             {exam && (
-                                <div className="rounded-[12px] border border-gray-200 p-4">
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4">
                                     <p className="mb-3 text-[13px] font-semibold text-app-text">История версий</p>
                                     {historyQuery.isLoading ? (
                                         <p className="text-[12px] text-app-muted">Загрузка истории...</p>
@@ -1386,7 +1409,7 @@ export function ExamAdminPanel({
                                                 .slice()
                                                 .reverse()
                                                 .map((revision) => (
-                                                    <div key={revision.version} className="flex justify-between gap-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[12px]">
+                                                    <div key={revision.version} className="flex justify-between gap-3 rounded-[10px] bg-gray-50 dark:bg-app-ghost px-3 py-2 text-[12px]">
                                                         <span className="font-medium text-app-text">Версия {revision.version}</span>
                                                         <span className="text-app-muted">
                                                             {new Date(revision.changed_at).toLocaleString("ru-RU")}
@@ -1412,7 +1435,7 @@ export function ExamAdminPanel({
             )}
             {slotScheduleWarning && <p role="status" className="px-5 pb-3 text-[13px] text-emerald-800 dark:text-emerald-300">{slotScheduleWarning}</p>}
 
-            <footer className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-gray-200 bg-app-surface px-5 py-4">
+            <footer className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-gray-200 dark:border-app-border bg-app-surface px-5 py-4">
                 {exam && (
                     <Input
                         maxLength={1000}
@@ -1489,14 +1512,14 @@ export function ExamAdminPanel({
                         {scheduleMismatch.length}{" "}
                         {scheduleMismatch.length === 1 ? "слот отличается" : "слота отличаются"} от расчёта «выступление + вопросы + переход» ({expectedSlotMinutes} мин.).
                     </p>
-                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 text-[12px]">
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-app-border text-[12px]">
                         {scheduleMismatch.map((slot) => {
                             const index = sortedLocalSlots.findIndex((item) => item.key === slot.key) + 1;
                             const actual = Math.round(
                                 (new Date(slot.ends_at).getTime() - new Date(slot.starts_at).getTime()) / 60000,
                             );
                             return (
-                                <div key={slot.key} className="flex justify-between gap-3 border-b border-gray-100 px-3 py-2 last:border-0">
+                                <div key={slot.key} className="flex justify-between gap-3 border-b border-gray-100 dark:border-app-border px-3 py-2 last:border-0">
                                     <span>Слот №{index}</span>
                                     <span>{actual} мин. вместо {expectedSlotMinutes} мин.</span>
                                 </div>

@@ -79,12 +79,12 @@ export function ExamManagementList({
                             onChange={(event) => setSearch(event.target.value)}
                             aria-label="Поиск экзаменов"
                             placeholder="Поиск экзаменов"
-                            className="h-10 w-[240px] rounded-[12px] border border-gray-200 bg-app-surface pl-9 pr-3 text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
+                            className="h-10 w-[240px] rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface pl-9 pr-3 text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
                         />
                     </div>
                     <select
                         aria-label="Статус экзамена"
-                        className="h-10 cursor-pointer rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[13px]"
+                        className="h-10 cursor-pointer rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                         value={status}
                         onChange={(event) => setStatus(event.target.value as ExamStatus | "all")}
                     >
@@ -92,11 +92,11 @@ export function ExamManagementList({
                         <option value="draft">Черновики</option>
                         <option value="published">Опубликованные</option>
                     </select>
-                    <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 bg-app-surface">
-                        <button type="button" onClick={() => setViewMode("grid")} aria-label="Карточки" aria-pressed={viewMode === "grid"} className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500"}`}>
+                    <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface">
+                        <button type="button" onClick={() => setViewMode("grid")} aria-label="Карточки" aria-pressed={viewMode === "grid"} className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}>
                             <Icon name="grid" size={16} />
                         </button>
-                        <button type="button" onClick={() => setViewMode("list")} aria-label="Таблица" aria-pressed={viewMode === "list"} className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500"}`}>
+                        <button type="button" onClick={() => setViewMode("list")} aria-label="Таблица" aria-pressed={viewMode === "list"} className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}>
                             <List size={16} />
                         </button>
                     </div>
@@ -116,7 +116,7 @@ export function ExamManagementList({
             ) : filtered.length === 0 && hasLoadError ? (
                 <p role="alert" className="py-8 text-center text-app-muted">Не удалось загрузить экзамены.</p>
             ) : filtered.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-gray-300 py-16 text-center">
+                <div className="rounded-[20px] border border-dashed border-gray-300 dark:border-app-border py-16 text-center">
                     <p className="text-[14px] font-medium text-app-text">
                         {tab === "mine" ? "У вас пока нет экзаменов" : "Экзамены не найдены"}
                     </p>
@@ -159,10 +159,10 @@ function ExamManagementCard({
     return (
         <Link
             to={paths.app.examEdit.getHref(workspaceId, exam.id)}
-            className="rounded-2xl border border-app-border bg-app-surface p-6 transition hover:border-gray-300"
+            className="rounded-2xl border border-app-border bg-app-surface p-6 transition hover:border-gray-300 dark:hover:border-slate-500"
         >
             <div className="flex justify-between gap-3">
-                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[12px] font-medium text-gray-600">
+                <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-2.5 py-1 text-[12px] font-medium text-gray-600 dark:text-app-muted">
                     {exam.status === "published" ? "Опубликован" : "Черновик"}
                 </span>
                 <span className="text-[12px] font-bold text-app-text">{formatExamDate(exam.configuration.starts_at)}</span>
@@ -186,9 +186,9 @@ function ExamManagementTable({
     exams: Exam[];
 }) {
     return (
-        <div className="overflow-x-auto rounded-[20px] border border-gray-200">
+        <div className="overflow-x-auto rounded-[20px] border border-gray-200 dark:border-app-border">
             <table className="w-full border-collapse text-left">
-                <thead className="border-b border-gray-200 bg-gray-50 text-app-text">
+                <thead className="border-b border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost text-app-text">
                     <tr>
                         <th className="h-14 px-6 text-[15px] font-semibold">Название</th>
                         <th className="h-14 px-6 text-[15px] font-semibold">Пространство</th>
@@ -199,7 +199,7 @@ function ExamManagementTable({
                 </thead>
                 <tbody>
                     {exams.map((exam) => (
-                        <tr key={exam.id} className="group border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                        <tr key={exam.id} className="group border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
                             <td className="px-6 py-4">
                                 <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} className="text-[14px] font-medium text-app-blue dark:text-blue-300 hover:underline">
                                     {exam.configuration.title}
@@ -214,10 +214,10 @@ function ExamManagementTable({
                                         `Пространство ${exam.workspace_id}`}
                                 </Link>
                             </td>
-                            <td className="px-6 py-4 text-[13px] text-gray-600">{exam.status === "published" ? "Опубликован" : "Черновик"}</td>
-                            <td className="px-6 py-4 text-[13px] text-gray-600">{formatExamDate(exam.configuration.starts_at)}</td>
+                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{exam.status === "published" ? "Опубликован" : "Черновик"}</td>
+                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
                             <td className="px-3 py-4 text-right">
-                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} aria-label="Редактировать экзамен" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
+                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} aria-label="Редактировать экзамен" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost">
                                     <Icon name="pen" size={16} />
                                 </Link>
                             </td>

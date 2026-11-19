@@ -1,3 +1,4 @@
+import type { ProjectFullResponse } from "@/types/api";
 import type { Exam, ExamConfiguration, ExamQueue, QueueItem } from "@/types/exam";
 
 export type ExamStatus =
@@ -8,6 +9,19 @@ export type ExamStatus =
     | "draft"
     | "planned"
     | "passed";
+
+export function canChangeExamRegistration(item: QueueItem) {
+    return !item.started_at && !item.attempt && item.state !== "running" && item.state !== "finished";
+}
+
+export function canPreviewExamAssessment(
+    project: Pick<ProjectFullResponse, "workspace_id" | "author_id" | "members">,
+    workspaceId: number,
+    userId?: number,
+) {
+    return userId !== undefined && project.workspace_id === workspaceId && project.author_id !== userId &&
+        !project.members.some((member) => member.user_id === userId);
+}
 
 export function isAssessmentOpen(item: QueueItem, serverNow: number) {
     const window = item.attempt?.assessment_window;
@@ -61,15 +75,15 @@ export const statusMeta: Record<ExamStatus, { label: string; className: string }
         label: "Ожидается начало",
         className: "bg-[--status-inprogress-bg] text-blue-800 dark:text-blue-300",
     },
-    finished: { label: "Завершён", className: "bg-[--status-planned-bg] text-gray-700" },
+    finished: { label: "Завершён", className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200" },
     soon: { label: "Скоро", className: "bg-app-badge-amber text-app-badge-amber-fg" },
     running: {
         label: "Идёт",
         className: "bg-[--status-completed-bg] text-green-800 dark:text-green-300",
     },
-    draft: { label: "Черновик", className: "bg-gray-100 text-gray-600" },
-    planned: { label: "Запланирован", className: "bg-app-ghost text-gray-600" },
-    passed: { label: "Экзамен прошёл", className: "bg-[--status-planned-bg] text-gray-700" },
+    draft: { label: "Черновик", className: "bg-gray-100 dark:bg-app-ghost text-gray-600 dark:text-app-muted" },
+    planned: { label: "Запланирован", className: "bg-app-ghost text-gray-600 dark:text-app-muted" },
+    passed: { label: "Экзамен прошёл", className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200" },
 };
 
 const statusPriority: Record<ExamStatus, number> = {
@@ -111,8 +125,8 @@ export const formatExamTime = (value: string) =>
 
 export function getRegistrationDeadline(configuration: ExamConfiguration) {
     return Math.min(
-        Date.parse(configuration.starts_at) - 60 * 60_000,
-        Date.parse(configuration.registration_closes_at ?? "") || Infinity,
+        Date.parse(configuration.starts_at),
+        configuration.registration_closes_at ? Date.parse(configuration.registration_closes_at) : Infinity,
     );
 }
 
@@ -120,13 +134,9 @@ export function getExamRegistrationWindow(exam: Exam) {
     return {
         opens: Math.max(
             Date.parse(exam.published_at ?? ""),
-            Date.parse(exam.configuration.registration_opens_at ?? "") || 0,
+            exam.configuration.registration_opens_at ? Date.parse(exam.configuration.registration_opens_at) : -Infinity,
         ),
         closes: getRegistrationDeadline(exam.configuration),
-        cancellationCloses: Math.min(
-            Date.parse(exam.configuration.starts_at),
-            Date.parse(exam.configuration.registration_closes_at ?? "") || Infinity,
-        ),
     };
 }
 

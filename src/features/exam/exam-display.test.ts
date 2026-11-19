@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt, Exam, ExamQueue, QueueItem } from "@/types/exam";
-import { getExamStatus, getQueueTime, isAssessmentOpen } from "./exam-display";
+import { canChangeExamRegistration, canPreviewExamAssessment, getExamStatus, getQueueTime, isAssessmentOpen, isExamRegistrationOpen } from "./exam-display";
 
 const start = Date.parse("2026-11-19T10:00:00Z");
 const exam: Exam = {
@@ -135,5 +135,51 @@ describe("exam status", () => {
         expect(getExamStatus(exam, queue({ ...team, state: "no_show" }), start + 60 * 60_000)).toBe(
             "passed",
         );
+    });
+});
+
+describe("exam registration period", () => {
+    it("leaves registration open until the server's default cutoff at the exam start", () => {
+        expect(isExamRegistrationOpen(exam, start - 1)).toBe(true);
+        expect(isExamRegistrationOpen(exam, start)).toBe(false);
+    });
+
+    it("uses the configured opening and closing times", () => {
+        const opens = start - 180_000;
+        const closes = start - 60_000;
+        const scheduled = {
+            ...exam,
+            configuration: {
+                ...exam.configuration,
+                registration_opens_at: new Date(opens).toISOString(),
+                registration_closes_at: new Date(closes).toISOString(),
+            },
+        };
+        expect(isExamRegistrationOpen(scheduled, opens - 1)).toBe(false);
+        expect(isExamRegistrationOpen(scheduled, opens)).toBe(true);
+        expect(isExamRegistrationOpen(scheduled, closes)).toBe(false);
+    });
+});
+
+describe("exam action eligibility", () => {
+    it("keeps registration management separate from management of a started attempt", () => {
+        expect(canChangeExamRegistration(team)).toBe(true);
+        expect(canChangeExamRegistration({ ...team, state: "no_show" })).toBe(true);
+        expect(canChangeExamRegistration({ ...team, state: "postponed", started_at: attempt.started_at })).toBe(false);
+        expect(canChangeExamRegistration({ ...team, state: "running", attempt })).toBe(false);
+        expect(canChangeExamRegistration({ ...team, state: "finished", attempt })).toBe(false);
+    });
+
+    it("hides the assessment preview from the project author, members, and anonymous users", () => {
+        const project = {
+            workspace_id: 4,
+            author_id: 10,
+            members: [{ id: 123, user_id: 11, name: "", role: "", contacts: "", resume_url: "", date_added: "" }],
+        };
+        expect(canPreviewExamAssessment(project, 4, 10)).toBe(false);
+        expect(canPreviewExamAssessment(project, 4, 11)).toBe(false);
+        expect(canPreviewExamAssessment(project, 4)).toBe(false);
+        expect(canPreviewExamAssessment(project, 5, 12)).toBe(false);
+        expect(canPreviewExamAssessment(project, 4, 12)).toBe(true);
     });
 });

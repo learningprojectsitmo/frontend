@@ -228,7 +228,7 @@ export const ProjectTypeQuestionsEditor = ({
             {locked && (
                 <div
                     role="status"
-                    className="space-y-1 rounded-xl border border-gray-200 bg-gray-50 p-4 text-[13px] text-app-text"
+                    className="space-y-1 rounded-xl border border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost p-4 text-[13px] text-app-text"
                 >
                     <p className="font-semibold">Критерии закреплены</p>
                     <p>
@@ -243,10 +243,10 @@ export const ProjectTypeQuestionsEditor = ({
             )}
             <fieldset
                 disabled={busy}
-                className="space-y-4 [&_input:disabled]:bg-gray-100 [&_textarea:disabled]:bg-gray-100"
+                className="space-y-4 [&_input:disabled]:bg-gray-100 dark:[&_input:disabled]:bg-app-ghost [&_textarea:disabled]:bg-gray-100 dark:[&_textarea:disabled]:bg-app-ghost"
             >
                 {!locked && (
-                    <div className="flex flex-wrap items-end gap-2 rounded-xl bg-gray-50 p-3">
+                    <div className="flex flex-wrap items-end gap-2 rounded-xl bg-gray-50 dark:bg-app-ghost p-3">
                         <label className="min-w-52 flex-1 text-sm text-app-muted">
                             Готовый шаблон
                             <select
@@ -281,7 +281,7 @@ export const ProjectTypeQuestionsEditor = ({
                 {questions.map((question, questionIndex) => (
                     <div
                         key={question.id || `new-${questionIndex}`}
-                        className="rounded-xl border border-gray-200 p-4"
+                        className="rounded-xl border border-gray-200 dark:border-app-border p-4"
                     >
                         <div className="mb-3 flex items-start justify-between gap-2">
                             <p className="font-semibold text-app-text">

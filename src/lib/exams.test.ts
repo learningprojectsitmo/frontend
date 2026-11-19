@@ -54,6 +54,24 @@ describe("exam API", () => {
         });
     });
 
+    it.each([true, false])("moves a registration with the existing route (self: %s)", async (self) => {
+        await examApi.moveRegistration(1, 2, { id: 3, version: 4 }, null, {
+            targetExamId: 5, self, reason: "Согласовали другую дату",
+        });
+        expect(api.post).toHaveBeenLastCalledWith(
+            `/workspaces/1/exams/2/registrations/3/${self ? "self-move" : "move"}`,
+            { expected_version: 4, target_exam_id: 5, target_slot_id: null, reason: "Согласовали другую дату" },
+        );
+    });
+
+    it("postpones a queued team with its registration version and reason", async () => {
+        await examApi.postponeRegistration(1, 2, 3, 4, "Техническая неполадка");
+        expect(api.post).toHaveBeenLastCalledWith("/workspaces/1/exams/2/queue/3/postpone", {
+            expected_version: 4,
+            reason: "Техническая неполадка",
+        });
+    });
+
     it("invalidates history, lists and both registration views after a mutation", async () => {
         const client = new QueryClient();
         const keys = [

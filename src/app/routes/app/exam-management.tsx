@@ -49,7 +49,7 @@ export default function ExamManagementRoute() {
                                 const next = Number(event.target.value);
                                 navigate(paths.app.examManage.getHref(next));
                             }}
-                            className="ml-2 h-10 rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[13px] text-app-text"
+                            className="ml-2 h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px] text-app-text"
                         >
                             <option value="">Все пространства</option>
                             {allAccess.manageable.map((space) => (

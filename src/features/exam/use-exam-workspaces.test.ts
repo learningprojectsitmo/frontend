@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageWorkspaceExams, canRegisterOwnProject } from "./use-exam-workspaces";
+import { canManageWorkspaceExams, canReadWorkspaceExams, canRegisterOwnProject } from "./use-exam-workspaces";
 
 describe("exam management access", () => {
     it.each([
@@ -37,4 +37,22 @@ it("allows an admin to register an owned project when their workspace role is ma
     expect(canRegisterOwnProject("admin", "manager")).toBe(true);
     expect(canRegisterOwnProject("admin", "admin")).toBe(false);
     expect(canRegisterOwnProject("admin", null)).toBe(false);
+});
+
+describe("exam role combinations", () => {
+    it.each([
+        ["admin", null, false, true, true, false],
+        ["teacher", null, false, false, false, false],
+        ["teacher", "manager", false, true, true, true],
+        ["member", "teacher", false, true, true, false],
+        ["manager", "member", false, true, false, false],
+        ["manager", "", false, true, false, true],
+        ["manager", null, true, true, false, false],
+        ["member", "member", false, true, false, false],
+        ["member", null, false, false, false, false],
+    ] as const)("maps %s / %s / workspace ownership %s", (global, local, owner, read, manage, register) => {
+        expect(canReadWorkspaceExams(global, local, owner)).toBe(read);
+        expect(canManageWorkspaceExams(global, local, owner)).toBe(manage);
+        expect(canRegisterOwnProject(global, local)).toBe(register);
+    });
 });

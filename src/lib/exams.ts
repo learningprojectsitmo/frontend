@@ -8,6 +8,7 @@ import type {
     ExamListResponse,
     ExamQueue,
     ExamSettingsHistoryResponse,
+    ExamSettingsRevision,
     ExamSlot,
     Registration,
     RegistrationListResponse,
@@ -50,6 +51,9 @@ const attemptPath = (workspaceId: number | string, examId: number | string) =>
 
 const queuePath = (workspaceId: number | string, examId: number | string) =>
     `${examPath(workspaceId, examId)}/queue`;
+
+export const isExamAccessDenied = (error: unknown) =>
+    isAxiosError(error) && [401, 403, 404].includes(error.response?.status ?? 0);
 
 export const getExamErrorCode = (error: unknown): string | null => {
     if (!isAxiosError<{ detail?: { code?: string } | string }>(error)) return null;
@@ -98,7 +102,7 @@ export const getExamErrorMessage = (error: unknown): string | null => {
         attempt_finished: "Эта защита уже завершена.",
         questions_not_ready: "Нельзя опубликовать: вопросы экзамена не готовы.",
         published_schedule_locked:
-            "Для опубликованного экзамена дату начала и типы проектов менять нельзя.",
+            "После публикации дату начала, период записи и типы проектов изменить нельзя.",
     };
     return code && Object.prototype.hasOwnProperty.call(messages, code) ? messages[code] : null;
 };
@@ -130,6 +134,8 @@ export const examApi = {
                 params: { limit: pageSize, offset },
             }),
         ),
+    settingsRevision: (workspaceId: number, examId: number, version: number) =>
+        api.get<ExamSettingsRevision>(`${examPath(workspaceId, examId)}/settings/${version}`),
     slots: (workspaceId: number, examId: number) =>
         fetchAllPages((offset) =>
             api.get<{ items: ExamSlot[]; has_more: boolean }>(
@@ -177,15 +183,16 @@ export const examApi = {
         workspaceId: number,
         examId: number,
         registration: Pick<Registration, "id" | "version">,
-        targetSlotId: number,
+        targetSlotId: number | null,
+        options?: { targetExamId: number; self?: boolean; reason: string },
     ) =>
         api.post<{ source: Registration; target: Registration }>(
-            `${examPath(workspaceId, examId)}/registrations/${registration.id}/move`,
+            `${examPath(workspaceId, examId)}/registrations/${registration.id}/${options?.self ? "self-move" : "move"}`,
             {
                 expected_version: registration.version,
-                target_exam_id: examId,
+                target_exam_id: options?.targetExamId ?? examId,
                 target_slot_id: targetSlotId,
-                reason: "Перенос команды в другой слот",
+                reason: options?.reason ?? "Перенос команды в другой слот",
             },
         ),
     queue: (workspaceId: number, examId: number) =>
@@ -200,6 +207,17 @@ export const examApi = {
         api.post<QueueMutation>(`${queuePath(workspaceId, examId)}/${registrationId}/place`, {
             expected_version,
             position,
+        }),
+    postponeRegistration: (
+        workspaceId: number,
+        examId: number,
+        registrationId: number,
+        expected_version: number,
+        reason: string,
+    ) =>
+        api.post<QueueMutation>(`${queuePath(workspaceId, examId)}/${registrationId}/postpone`, {
+            expected_version,
+            reason,
         }),
     noShow: (
         workspaceId: number,
@@ -277,6 +295,14 @@ export const useExam = (workspaceId: number, examId: number) =>
         queryKey: queryKeys.exams.detail(workspaceId, examId),
         queryFn: () => examApi.get(workspaceId, examId),
         enabled: workspaceId > 0 && examId > 0,
+    });
+
+export const useExamSettingsRevision = (workspaceId: number, examId: number, version?: number) =>
+    useQuery({
+        queryKey: [...queryKeys.exams.settings(workspaceId, examId), version],
+        queryFn: () => examApi.settingsRevision(workspaceId, examId, version ?? 0),
+        enabled: workspaceId > 0 && examId > 0 && version !== undefined,
+        staleTime: Infinity,
     });
 
 export const useExamSlots = (workspaceId: number, examId: number, enabled = true) =>

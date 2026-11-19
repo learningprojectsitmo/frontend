@@ -170,8 +170,12 @@ describe("project exam blocks", () => {
         expect(container.querySelector('a[href*="examId=2"]')).toBeTruthy();
     });
 
-    it("hides registration exactly one hour before the exam", async () => {
-        vi.setSystemTime(new Date("2026-11-18T08:00:02Z"));
+    it("hides registration at the configured deadline", async () => {
+        const deadline = "2026-11-18T08:00:02Z";
+        vi.setSystemTime(new Date(deadline));
+        vi.mocked(useExams).mockReturnValue({
+            data: { items: [{ ...exam, configuration: { ...exam.configuration, registration_closes_at: deadline } }] },
+        } as ReturnType<typeof useExams>);
         await render();
 
         expect(container.textContent).not.toContain("Запишитесь на экзамен");

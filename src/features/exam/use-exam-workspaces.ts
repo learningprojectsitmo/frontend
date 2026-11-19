@@ -1,26 +1,31 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useUser } from "@/lib/auth";
-import { getSpacesList, getWorkspaceParticipants } from "@/lib/spaces";
+import { getSpacesList, getWorkspaceDirectoryPage, getWorkspaceParticipants } from "@/lib/spaces";
 import { queryKeys } from "@/lib/query-keys";
 
 export function canManageWorkspaceExams(
     globalRole: string,
-    workspaceRole?: string,
+    workspaceRole?: string | null,
     isAuthor = false,
 ) {
-    return (
-        globalRole === "admin" ||
-        workspaceRole === "admin" ||
-        workspaceRole === "teacher" ||
-        (globalRole === "teacher" && (isAuthor || workspaceRole !== undefined))
-    );
+    return canReadWorkspaceExams(globalRole, workspaceRole, isAuthor) &&
+        (globalRole === "admin" || globalRole === "teacher" ||
+            workspaceRole === "teacher" || workspaceRole === "admin");
+}
+
+export function canReadWorkspaceExams(
+    globalRole: string,
+    workspaceRole?: string | null,
+    isAuthor = false,
+) {
+    return globalRole === "admin" || isAuthor || typeof workspaceRole === "string";
 }
 
 export function canRegisterOwnProject(
     globalRole: string,
     workspaceRole: string | null | undefined,
 ) {
-    return typeof workspaceRole === "string" && (workspaceRole || globalRole) === "manager";
+    return typeof workspaceRole === "string" && (workspaceRole === "" ? globalRole : workspaceRole) === "manager";
 }
 
 async function getWorkspaceRole(workspaceId: number, userId: number) {
@@ -50,9 +55,22 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
             return { ...first, spaces };
         },
     });
-    const spaces = menu.data?.spaces ?? [];
     const role = menu.data?.role ?? "";
     const userId = user.data?.id;
+    const adminDirectory = useQuery({
+        queryKey: [...queryKeys.workspace.list(), "exam-admin-directory", userId],
+        enabled: enabled && Boolean(userId) && role === "admin",
+        queryFn: async () => {
+            const limit = 100;
+            const spaces = [];
+            for (let page = 1; ; page += 1) {
+                const items = await getWorkspaceDirectoryPage(page, limit);
+                spaces.push(...items.map((space) => ({ id: space.id, title: space.name, author_id: space.author_id })));
+                if (items.length < limit) return spaces;
+            }
+        },
+    });
+    const spaces = (role === "admin" ? adminDirectory.data : undefined) ?? menu.data?.spaces ?? [];
     const candidates = !enabled
         ? []
         : workspaceId
@@ -65,7 +83,7 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
             enabled:
                 Boolean(userId) &&
                 (checkRegistrationRole ||
-                    !canManageWorkspaceExams(role, undefined, space.author_id === userId)),
+                    (role !== "admin" && (role !== "teacher" || space.author_id !== userId))),
             retry: false,
         })),
     });
@@ -78,11 +96,12 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
     );
     return {
         spaces,
-        canSelfRegister: checkRegistrationRole && canRegisterOwnProject(role, memberships[0]?.data),
-        isMenuLoading: user.isLoading || menu.isLoading,
+        readable: candidates.filter((space, index) =>
+            canReadWorkspaceExams(role, memberships[index]?.data, space.author_id === userId)),
+        canSelfRegister: workspaceId > 0 && checkRegistrationRole && canRegisterOwnProject(role, memberships[0]?.data),
         manageable,
         canManage:
-            workspaceId > 0 ? role === "admin" || manageable.length > 0 : manageable.length > 0,
-        isLoading: menu.isLoading || user.isLoading || memberships.some((query) => query.isLoading),
+            workspaceId > 0 ? (enabled && role === "admin") || manageable.length > 0 : manageable.length > 0,
+        isLoading: menu.isLoading || user.isLoading || adminDirectory.isLoading || memberships.some((query) => query.isLoading),
     };
 }

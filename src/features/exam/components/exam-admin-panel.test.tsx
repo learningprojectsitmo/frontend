@@ -338,7 +338,6 @@ describe("exam form", () => {
             configuration: {
                 ...exam.configuration,
                 title: "Новое название",
-                registration_closes_at: new Date(Date.parse(startsAt) - 60 * 60_000).toISOString(),
             },
         };
         const replace = vi.spyOn(examApi, "replaceSettings").mockResolvedValue(revised);

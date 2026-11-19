@@ -137,6 +137,7 @@ export function ProjectExamBlocks({
         .join(", ");
     const queuePending = queues.some((query) => query.isLoading);
     const canBook =
+        isProjectAuthor &&
         !queuePending &&
         !registered &&
         matchesType(exam) &&
@@ -158,7 +159,7 @@ export function ProjectExamBlocks({
     return (
         <section className={showCountdown ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
             {showCountdown && (
-                <div className="flex flex-wrap items-center gap-5 rounded-2xl bg-[#4338CA] p-5 text-white dark:bg-indigo-900 sm:flex-nowrap">
+                <div className="flex flex-wrap items-center gap-5 rounded-2xl bg-[#4338CA] p-5 text-white dark:bg-indigo-950 dark:ring-1 dark:ring-inset dark:ring-indigo-700/50 sm:flex-nowrap">
                     <Icon name="exam" size={40} className="shrink-0 text-white" />
                     <div
                         key={`${exam.id}-${state.status}`}
@@ -184,7 +185,7 @@ export function ProjectExamBlocks({
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-5 rounded-2xl bg-[#1E293B] p-5 text-white dark:bg-slate-900 sm:flex-nowrap">
+            <div className="flex flex-wrap items-center justify-between gap-5 rounded-2xl bg-[#1E293B] p-5 text-white dark:bg-app-surface dark:ring-1 dark:ring-inset dark:ring-app-border sm:flex-nowrap">
                 <div className="flex min-w-0 flex-1 basis-52 gap-4">
                     <span
                         aria-hidden="true"
@@ -290,7 +291,9 @@ export function ProjectExamBlocks({
                                     !freeSlots.some((slot) => slot.id === booking.slotId))
                             }
                             onClick={() => {
-                                if (!booking) return;
+                                if (!booking || booking.examId !== exam.id || !canBook ||
+                                    !slots.data || slots.isError ||
+                                    (slots.data.items.length > 0 && !freeSlots.some((slot) => slot.id === booking.slotId))) return;
                                 if (!isExamRegistrationOpen(exam, Date.now())) {
                                     toast.error("Запись на экзамен уже закрылась.");
                                     setBooking(null);

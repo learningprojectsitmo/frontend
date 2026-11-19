@@ -117,7 +117,7 @@ export function ExamSlotCompaction({
                     <p className="mt-3 text-sm text-app-muted">
                         Проверьте новое время защиты каждой команды.
                     </p>
-                    <ul className="mt-3 divide-y divide-gray-200 text-sm">
+                    <ul className="mt-3 divide-y divide-gray-200 dark:divide-app-border text-sm">
                         {preview?.map(({ registration, from, to }) => (
                             <li
                                 key={registration.id}

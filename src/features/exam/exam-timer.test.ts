@@ -4,8 +4,7 @@ import { getExamTimer } from "./exam-timer";
 
 const start = Date.parse("2026-11-19T12:00:00Z");
 const iso = (time: number) => new Date(time).toISOString();
-const defaults = { transition: 60, defense: 420, questions: 120 };
-const custom = { transition: 5, defense: 10, questions: 3 };
+const configuration = { presentation_minutes: 7, questions_minutes: 2 };
 const attempt = {
     status: "speaking",
     server_now: iso(start),
@@ -14,21 +13,31 @@ const attempt = {
 } as Attempt;
 
 describe("getExamTimer", () => {
-    it("runs all three local stages and counts up after the deadline", () => {
-        const read = (elapsed: number) => getExamTimer(attempt, custom, defaults, start, start + elapsed * 1000);
-        expect(read(0)).toMatchObject({ total: 18, remaining: 18, stage: { key: "transition" } });
-        expect(read(5)).toMatchObject({ remaining: 13, stage: { key: "defense" } });
-        expect(read(15)).toMatchObject({ remaining: 3, stage: { key: "questions" } });
-        expect(read(18).remaining).toBe(0);
-        expect(read(21).remaining).toBe(-3);
+    it("stays in the server phase when its deadline passes", () => {
+        expect(getExamTimer(attempt, configuration, start, start + 425_000)).toEqual({
+            remaining: -5,
+            total: 420,
+            stage: { label: "Защита" },
+        });
     });
 
-    it("keeps the entire slot duration frozen on the server pause", () => {
-        const paused = { ...attempt, paused_at: iso(start + 2500) };
-        expect(getExamTimer(paused, custom, defaults, start, start + 60_000, 2500)).toMatchObject({
-            remaining: 18,
-            stage: { key: "transition" },
+    it("uses the new deadline once the server switches to questions", () => {
+        const questions = {
+            ...attempt,
+            status: "questions" as const,
+            server_now: iso(start + 50_000),
+            phase_deadline: iso(start + 170_000),
+        };
+        expect(getExamTimer(questions, configuration, start, start + 3000)).toEqual({
+            remaining: 117,
+            total: 120,
+            stage: { label: "Вопросы" },
         });
+    });
+
+    it("keeps the countdown frozen at the server pause time", () => {
+        const paused = { ...attempt, paused_at: iso(start + 2500) };
+        expect(getExamTimer(paused, configuration, start, start + 60_000).remaining).toBe(418);
     });
 
     it("uses the shifted deadline when resuming", () => {
@@ -37,23 +46,6 @@ describe("getExamTimer", () => {
             server_now: iso(start + 60_000),
             phase_deadline: iso(start + 480_000),
         };
-        expect(getExamTimer(resumed, custom, defaults, start, start + 6_000)).toMatchObject({
-            remaining: 12,
-            stage: { key: "defense" },
-        });
-    });
-
-    it("keeps elapsed time when editing durations on pause", () => {
-        const paused = { ...attempt, paused_at: iso(start + 7000) };
-        const edited = { ...custom, defense: 20 };
-        expect(getExamTimer(paused, edited, defaults, start, start + 60_000)).toMatchObject({
-            total: 28,
-            remaining: 21,
-            stage: { key: "defense" },
-        });
-    });
-
-    it("skips a zero-second transition", () => {
-        expect(getExamTimer(attempt, { ...custom, transition: 0 }, defaults, start, start).stage?.key).toBe("defense");
+        expect(getExamTimer(resumed, configuration, start, start + 6000).remaining).toBe(414);
     });
 });

@@ -23,6 +23,9 @@ export const getSpacesList = async (params?: SpacesListParams): Promise<SpacesLi
     return await api.get("/workspaces/menu", { params });
 };
 
+export const getWorkspaceDirectoryPage = (page: number, limit: number) =>
+    api.get<WorkSpaceFull[]>("/workspaces/", { params: { page, limit } });
+
 export const useSpacesList = (params?: SpacesListParams) => {
     return useQuery({
         // params может содержать { page: 1, limit: 10 } и т.д.

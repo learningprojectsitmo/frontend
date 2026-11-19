@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { QueueItem } from "@/types/exam";
-import { applyWaitingOrder, reconcileExamOrder } from "./exam-queue-order";
+import { applyWaitingOrder, getPositionedIds, reconcileExamOrder } from "./exam-queue-order";
 
 function team(registration_id: number, state: QueueItem["state"], position: number | null, started_at: string | null = null): QueueItem {
     return {
@@ -31,6 +31,22 @@ describe("reconcileExamOrder", () => {
             team(8, "waiting", 1),
             team(4, "finished", null, "2026-11-19T12:00:00Z"),
         ])).toEqual([4, 2, 8]);
+    });
+
+    it("uses the new server position when a postponed team is put next", () => {
+        const items = [
+            team(2, "waiting", 2),
+            team(4, "postponed", 1, "2026-11-19T12:00:00Z"),
+            team(9, "finished", null),
+            team(8, "postponed", null),
+        ];
+        expect(getPositionedIds(items)).toEqual([4, 2]);
+        expect(reconcileExamOrder([9, 2, 4, 8], items)).toEqual([9, 4, 2, 8]);
+    });
+
+    it("keeps the returned team's position as the reference for a waiting-team swap", () => {
+        const items = [team(9, "waiting", 1), team(4, "postponed", 2), team(2, "waiting", 3)];
+        expect(applyWaitingOrder(getPositionedIds(items), [2, 9])).toEqual([2, 4, 9]);
     });
 
     it("supports queue edits and new registrations while retaining running and finished rows", () => {

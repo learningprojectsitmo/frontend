@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner/spinner";
 import { ExamAdminPanel } from "@/features/exam/components/exam-admin-panel";
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import { useProjectTypes } from "@/lib/projects";
-import { useExam } from "@/lib/exams";
+import { isExamAccessDenied, useExam } from "@/lib/exams";
 import { paths } from "@/config/paths";
 
 export default function ExamEditRoute() {
@@ -34,7 +34,7 @@ export default function ExamEditRoute() {
     if (!workspaceId || !access.canManage)
         return <Navigate to={paths.app.exams.getHref(workspaceId)} replace />;
 
-    if (!exam.data) {
+    if (!exam.data || isExamAccessDenied(exam.error)) {
         return (
             <ContentLayout title="Редактирование экзамена">
                 <div className="p-8 text-app-muted">

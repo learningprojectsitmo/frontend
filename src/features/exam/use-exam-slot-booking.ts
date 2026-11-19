@@ -14,10 +14,10 @@ import {
 import { getCreatedProjects, getProject } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
 import type { Exam, ExamSlot, Registration } from "@/types/exam";
-import { getExamRegistrationWindow, isExamRegistrationOpen } from "./exam-display";
+import { isExamRegistrationOpen } from "./exam-display";
 
 type BookingAction =
-    | { kind: "book"; slot: ExamSlot; projectId: number }
+    | { kind: "book"; slot: ExamSlot | null; projectId: number }
     | { kind: "cancel"; registration: Registration };
 
 export function useExamSlotBooking(
@@ -48,8 +48,8 @@ export function useExamSlotBooking(
     const [action, setAction] = useState<BookingAction | null>(null);
 
     const active = registrations.data?.items.filter((item) => item.status === "active") ?? [];
-    const eligible = projects.flatMap(({ data }) =>
-        data &&
+    const eligible = projects.flatMap(({ data, isSuccess }) =>
+        isSuccess && data &&
         data.author_id === user.data?.id &&
         data.workspace_id === workspaceId &&
         data.project_type_id !== null &&
@@ -57,14 +57,10 @@ export function useExamSlotBooking(
             ? [data]
             : [],
     );
-    const selected = eligible.find((project) => project.id === projectId) ?? eligible[0];
-    const registrationWindow = exam && getExamRegistrationWindow(exam);
+    const bookedIds = new Set(active.map((registration) => registration.project_id));
+    const bookableProjects = eligible.filter((project) => !bookedIds.has(project.id));
+    const selected = bookableProjects.find((project) => project.id === projectId) ?? bookableProjects[0];
     const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now));
-    const canCancelByTime =
-        exam?.status === "published" &&
-        registrationWindow &&
-        registrationWindow.opens <= now &&
-        now < registrationWindow.cancellationCloses;
     const loading =
         slots.isPending ||
         registrations.isPending ||
@@ -74,12 +70,12 @@ export function useExamSlotBooking(
         slots.isError ||
         registrations.isError ||
         myProjects.isError ||
-        projects.some((query) => query.isError);
+        (eligible.length === 0 && projects.some((query) => query.isError));
     const canBook =
-        enabled && isOpen && !loading && !error && active.length === 0 && Boolean(selected);
+        enabled && isOpen && !loading && !error && Boolean(selected);
     const canCancel = (registration: Registration) =>
         enabled &&
-        canCancelByTime &&
+        isOpen &&
         !registrations.isError &&
         !registration.started_at &&
         eligible.some((project) => project.id === registration.project_id);
@@ -88,8 +84,10 @@ export function useExamSlotBooking(
     const canConfirm =
         action?.kind === "book"
             ? inMode &&
-              eligible.some((project) => project.id === action.projectId) &&
-              available.some((slot) => slot.id === action.slot.id && slot.is_available)
+              bookableProjects.some((project) => project.id === action.projectId) &&
+              (action.slot
+                  ? available.some((slot) => slot.id === action.slot?.id && slot.is_available)
+                  : available.length === 0)
             : action?.kind === "cancel" &&
               active.some(
                   (item) =>
@@ -104,7 +102,7 @@ export function useExamSlotBooking(
                 ? examApi.register(
                       workspaceId,
                       examId,
-                      { project_id: target.projectId, slot_id: target.slot.id },
+                      { project_id: target.projectId, slot_id: target.slot?.id ?? null },
                       true,
                   )
                 : examApi.cancelRegistration(
@@ -141,6 +139,7 @@ export function useExamSlotBooking(
         active,
         available,
         eligible,
+        bookableProjects,
         selected,
         isOpen,
         loading,
@@ -157,6 +156,9 @@ export function useExamSlotBooking(
             if (inMode && selected && slot.is_available)
                 setAction({ kind: "book", slot, projectId: selected.id });
         },
+        bookWithoutSlot: () => {
+            if (inMode && selected && available.length === 0) setAction({ kind: "book", slot: null, projectId: selected.id });
+        },
         selectCancellation: (registration: Registration) =>
             setAction({ kind: "cancel", registration }),
         dismiss: () => {
@@ -164,7 +166,7 @@ export function useExamSlotBooking(
         },
         confirm: () => {
             if (!action || !canConfirm || mutation.isPending) return;
-            if (action.kind === "book" && (!exam || !isExamRegistrationOpen(exam, Date.now()))) {
+            if (!exam || !isExamRegistrationOpen(exam, Date.now())) {
                 toast.info("Запись на экзамен уже закрылась.");
                 setAction(null);
                 return;

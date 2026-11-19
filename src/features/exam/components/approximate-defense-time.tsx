@@ -21,7 +21,7 @@ export function ExamTimeHint({ message }: { message: string }) {
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                     <Tooltip.Positioner positionMethod="fixed" sideOffset={8} collisionPadding={8} className="z-[500]">
-                        <Tooltip.Popup className="w-max max-w-[min(280px,var(--available-width))] whitespace-normal rounded-xl border border-gray-200 bg-app-surface p-3 text-xs leading-5 text-app-text shadow-lg">
+                        <Tooltip.Popup className="w-max max-w-[min(280px,var(--available-width))] whitespace-normal rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-3 text-xs leading-5 text-app-text shadow-lg">
                             {message}
                         </Tooltip.Popup>
                     </Tooltip.Positioner>

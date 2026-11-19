@@ -1,8 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { Tooltip } from "@base-ui/react/tooltip";
-import { Popover } from "@base-ui/react/popover";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import {
     Ellipsis,
     GripVertical,
@@ -46,9 +45,12 @@ import { useExamWorkspaces } from "../use-exam-workspaces";
 import {
     examApi,
     getExamErrorMessage,
+    isExamAccessDenied,
     invalidateExam,
     useExam,
     useExamQueue,
+    useExamRegistrations,
+    useExamSettingsRevision,
     useExamSlots,
 } from "@/lib/exams";
 import { useProjectsList } from "@/lib/projects";
@@ -57,11 +59,13 @@ import { useExamSlotBooking } from "../use-exam-slot-booking";
 import { useExamClock } from "../use-exam-clock";
 import { getExamProjectLeader, useExamProjects } from "../use-exam-projects";
 import { paths } from "@/config/paths";
-import { formatExamDate, formatExamTime, getExamStatus, getQueueTime, isAssessmentOpen, isExamOver, statusMeta } from "../exam-display";
+import { canChangeExamRegistration, formatExamDate, formatExamTime, getExamStatus, getQueueTime, isAssessmentOpen, isExamOver, statusMeta } from "../exam-display";
 import type { ExamSlot, QueueItem, Registration } from "@/types/exam";
 import { ApproximateDefenseTime, ExamTimeHint, beforeStartEtaMessage, liveEtaMessage } from "./approximate-defense-time";
-import { defaultTimerDurations, getExamTimer, timerDuration, type TimerDurations } from "../exam-timer";
-import { applyWaitingOrder, getWaitingIds, reconcileExamOrder } from "../exam-queue-order";
+import { getExamTimer } from "../exam-timer";
+import { applyWaitingOrder, getPositionedIds, getWaitingIds, reconcileExamOrder } from "../exam-queue-order";
+import { ExamRegistrationAssign } from "./exam-registration-assign";
+import { ExamRegistrationTransfer } from "./exam-registration-transfer";
 import { ExamAssessment } from "./exam-assessment";
 import { ExamPresentation } from "./exam-presentation";
 import { planSlotCompaction } from "../exam-schedule";
@@ -120,21 +124,21 @@ function ParticipantsTooltip({ names }: { names: string[] }) {
                 {names.slice(0, 3).map((name, index) => (
                     <span
                         key={index}
-                        className="flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-200 text-[10px] font-semibold text-gray-700"
+                        className="flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-200 dark:bg-app-border text-[10px] font-semibold text-gray-700 dark:text-slate-200"
                         style={{ marginLeft: index > 0 ? -8 : 0 }}
                     >
                         {name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
                     </span>
                 ))}
                 {names.length > 3 && (
-                    <span className="-ml-2 flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-100 text-[10px] text-gray-600">
+                    <span className="-ml-2 flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-100 dark:bg-app-ghost text-[10px] text-gray-600 dark:text-app-muted">
                         +{names.length - 3}
                     </span>
                 )}
             </Tooltip.Trigger>
             <Tooltip.Portal>
                 <Tooltip.Positioner positionMethod="fixed" sideOffset={8} collisionPadding={8} className="z-[500]">
-                    <Tooltip.Popup className="max-h-[var(--available-height)] w-[220px] max-w-[var(--available-width)] overflow-auto break-words rounded-xl border border-gray-200 bg-app-surface p-3 text-[12px] leading-5 text-gray-700 shadow-lg">
+                    <Tooltip.Popup className="max-h-[var(--available-height)] w-[220px] max-w-[var(--available-width)] overflow-auto break-words rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-3 text-[12px] leading-5 text-gray-700 dark:text-slate-200 shadow-lg">
                         {names.map((name, index) => <div key={index}>{name}</div>)}
                     </Tooltip.Popup>
                 </Tooltip.Positioner>
@@ -143,30 +147,35 @@ function ParticipantsTooltip({ names }: { names: string[] }) {
     );
 }
 
-export function ExamDetail() {
+export function ExamDetail({ organizerOnly = false }: { organizerOnly?: boolean } = {}) {
     const [params] = useSearchParams();
     const workspaceId = Number(params.get("workspaceId") || 0);
     const examId = Number(params.get("examId") || 0);
-    return <ExamDetailView key={`${workspaceId}:${examId}`} workspaceId={workspaceId} examId={examId} />;
+    if (!Number.isSafeInteger(workspaceId) || workspaceId <= 0 || !Number.isSafeInteger(examId) || examId <= 0) {
+        return <Navigate to={paths.app.exams.getHref()} replace />;
+    }
+    return <ExamDetailView organizerOnly={organizerOnly} key={`${workspaceId}:${examId}`} workspaceId={workspaceId} examId={examId} />;
 }
 
 function queueDropKey(row: QueueItem | ExamSlot) {
     return "registration_id" in row ? `team-${row.registration_id}` : `slot-${row.id}`;
 }
 
-function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: number }) {
+function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: number; examId: number; organizerOnly: boolean }) {
     const navigate = useNavigate();
     const access = useExamWorkspaces(workspaceId, true, true);
-    const examQuery = useExam(workspaceId, examId);
-    const queueQuery = useExamQueue(workspaceId, examId, !!examId);
+    const canOpen = !organizerOnly || access.canManage;
+    const examQuery = useExam(workspaceId, canOpen ? examId : 0);
+    const queueQuery = useExamQueue(workspaceId, examId, canOpen && !!examQuery.data && !isExamAccessDenied(examQuery.error));
     const queryClient = useQueryClient();
     const now = useExamClock();
-    const projectsQuery = useProjectsList(String(workspaceId), { page: 1, limit: 100 });
-    const projectTypesQuery = useProjectTypes(workspaceId);
+    const dataAvailable = canOpen && !!examQuery.data && !isExamAccessDenied(examQuery.error) && !isExamAccessDenied(queueQuery.error);
+    const projectsQuery = useProjectsList(dataAvailable ? String(workspaceId) : "", { page: 1, limit: 100 });
+    const projectTypesQuery = useProjectTypes(workspaceId, dataAvailable);
 
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState<"all" | "waiting" | "no_show">("all");
-    const [editing, setEditing] = useState(false);
+    const [editingRequested, setEditing] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
     const [draggedTeam, setDraggedTeam] = useState<number | null>(null);
     const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -174,16 +183,23 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
     const previousRowOffsets = useRef(new Map<string, number>());
     const [attemptPending, setAttemptPending] = useState(false);
     const [registrationPending, setRegistrationPending] = useState(false);
+    const [postpone, setPostpone] = useState<{ item: QueueItem; title: string } | null>(null);
+    const [postponeReason, setPostponeReason] = useState("");
+    const [assignOpen, setAssignOpen] = useState(false);
+    const [transfer, setTransfer] = useState<{ registration: Registration; self: boolean } | null>(null);
     const [deleteRow, setDeleteRow] = useState<{ id: number; title: string } | null>(null);
 
-    const exam = examQuery.data;
-    const isManager = access.canManage && workspaceId > 0;
-    const showBooking = access.canSelfRegister && !isManager && exam?.status === "published";
+    const exam = isExamAccessDenied(examQuery.error) ? undefined : examQuery.data;
+    const isManager = canOpen && access.canManage && !isExamAccessDenied(queueQuery.error);
+    const editing = isManager && editingRequested;
+    const registrations = useExamRegistrations(workspaceId, examId, false, isManager && exam?.status === "published");
+    const registrationsById = new Map((isExamAccessDenied(registrations.error) ? undefined : registrations.data?.items)?.map((item) => [item.id, item]));
+    const showBooking = canOpen && access.canSelfRegister && !isExamAccessDenied(queueQuery.error) && exam?.status === "published";
     const booking = useExamSlotBooking(workspaceId, examId, exam, now, showBooking);
     const bookingAction = booking.action;
     const freeSlotCount = booking.available.filter((slot) => slot.is_available).length;
 
-    const queueItems = useMemo(() => queueQuery.data?.items ?? [], [queueQuery.data]);
+    const queueItems = useMemo(() => isExamAccessDenied(queueQuery.error) ? [] : queueQuery.data?.items ?? [], [queueQuery.data, queueQuery.error]);
     const hasStarted = queueItems.some((item) => item.attempt || item.started_at);
     const showSchedule = Boolean(queueQuery.data) && !hasStarted;
     const slotsQuery = useExamSlots(workspaceId, examId, showSchedule && Boolean(exam));
@@ -286,31 +302,10 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
     const workspace = access.spaces.find((item) => item.id === workspaceId);
     const currentTeam = queueItems.find((item) => item.state === "running");
     const activeAttempt = currentTeam?.attempt;
-    const timerStorageKey = `exam-timer:${workspaceId}:${examId}`;
-    const [teamDurations, setTeamDurations] = useState<Record<number, TimerDurations>>(() => {
-        try {
-            return JSON.parse(sessionStorage.getItem(timerStorageKey) ?? "{}") ?? {};
-        } catch {
-            return {};
-        }
-    });
-    const firstPauseStorageKey = `${timerStorageKey}:first-pause`;
-    const [firstPause, setFirstPause] = useState<{ attemptId: number; phaseStartedAt: string; delayMs: number } | null>(() => {
-        try {
-            return JSON.parse(sessionStorage.getItem(firstPauseStorageKey) ?? "null");
-        } catch {
-            return null;
-        }
-    });
-    const [preparingFirst, setPreparingFirst] = useState(false);
-    const [forwardIds, setForwardIds] = useState<number[]>([]);
-    const postponedTeams = queueItems.filter((item) => item.state === "postponed" && item.attempt?.status === "postponed");
-    const forwardTeam = postponedTeams.find((item) => item.registration_id === forwardIds[0]);
     const status = exam ? getExamStatus(exam, queueQuery.data, now, queueQuery.dataUpdatedAt) : "draft";
     const examOver = isExamOver(status);
     const serverNow = getQueueTime(queueQuery.data, now, queueQuery.dataUpdatedAt);
-    const nextTeam = queueItems.find((item) => item.state === "waiting" && item.position !== null);
-    const followingTeam = forwardTeam ?? nextTeam ?? queueItems.find((item) => item.state === "postponed");
+    const followingTeam = queueItems.find((item) => item.position !== null && (item.state === "waiting" || item.state === "postponed"));
     const remainingTeams = queueItems.filter((item) => item.state === "waiting" || item.state === "postponed");
     const canStart = isManager && exam?.status === "published" && !examOver && status !== "running" && !activeAttempt && Boolean(followingTeam);
     const currentIndex = currentTeam ? stableIds.indexOf(currentTeam.registration_id) : -1;
@@ -326,6 +321,20 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         : "среди предыдущих команд нет отложенных выступлений.";
     const canFinishExam = isManager && Boolean(activeAttempt) && remainingTeams.length === 0;
     const statusStyle = statusMeta[status];
+    const queueSnapshot = queueQuery.data;
+    const eta = queueSnapshot?.eta;
+    const queueEtaStale = queueQuery.isError || queueSnapshot?.eta_stale;
+    const lastEta = eta?.items.at(-1);
+    const lastScheduledTeam = lastEta && queueByRegistration.get(lastEta.registration_id);
+    const lastAttempt = lastScheduledTeam?.state === "postponed" ? lastScheduledTeam.attempt : null;
+    const settingsVersion = exam?.current_settings_version;
+    const queueSettingsVersion = queueQuery.data?.settings_version;
+    const activeVersion = activeAttempt?.settings_version;
+    const finalVersion = lastAttempt?.postponed_phase ? lastAttempt.settings_version : queueSettingsVersion;
+    const activeRevision = useExamSettingsRevision(workspaceId, examId,
+        isManager && activeVersion !== settingsVersion ? activeVersion : undefined);
+    const finalRevision = useExamSettingsRevision(workspaceId, examId,
+        isManager && lastEta && finalVersion !== settingsVersion ? finalVersion : undefined);
 
     const moveRow = (fromId: number, toId: number) => {
         setOrderedIds(() => {
@@ -436,12 +445,12 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         const ids = draft ?? waitingIds;
         const after = "registration_id" in row && ids.indexOf(draggedTeam) < ids.indexOf(row.registration_id);
         return after
-            ? "[&>td]:bg-[#155DFC12] [&>td]:shadow-[inset_0_-2px_#155DFC]"
-            : "[&>td]:bg-[#155DFC12] [&>td]:shadow-[inset_0_2px_#155DFC]";
+            ? "[&>td]:bg-[#155DFC12] dark:[&>td]:bg-blue-400/20 [&>td]:shadow-[inset_0_-2px_#155DFC] dark:[&>td]:shadow-[inset_0_-2px_#93C5FD]"
+            : "[&>td]:bg-[#155DFC12] dark:[&>td]:bg-blue-400/20 [&>td]:shadow-[inset_0_2px_#155DFC] dark:[&>td]:shadow-[inset_0_2px_#93C5FD]";
     }
 
     const saveOrder = async () => {
-        if (savingOrder || registrationPending || attemptPending) return;
+        if (!canReorder) return;
         if (orderedIds && !draft) {
             setOrderedIds(null);
             toast.error("Состав очереди изменился. Проверьте порядок и повторите перестановку.");
@@ -450,19 +459,24 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         if (!draft || !hasOrderChanges) return;
         setSavingOrder(true);
         try {
-            for (const [index, id] of draft.entries()) {
-                const result = await queueQuery.refetch({ throwOnError: true });
-                const items = result.data?.items ?? [];
-                const liveWaiting = getWaitingIds(items);
-                if (liveWaiting.length !== waitingSet.size || liveWaiting.some((waitingId) => !waitingSet.has(waitingId))) {
-                    throw new Error("Queue changed");
+            const initial = (await queueQuery.refetch({ throwOnError: true })).data;
+            if (!initial || initial.queue_revision !== queueQuery.data?.queue_revision) {
+                throw new Error("Queue changed before saving");
+            }
+            const target = applyWaitingOrder(getPositionedIds(initial.items), draft);
+            let snapshot = initial;
+            for (const [index, id] of target.entries()) {
+                const item = snapshot.items.find((row) => row.registration_id === id);
+                const position = index + 1;
+                if (!item || item.position === null) throw new Error("Team left the queue");
+                if (item.position === position) continue;
+                const result = await examApi.place(workspaceId, examId, id, item.registration_version, position);
+                const refreshed = (await queueQuery.refetch({ throwOnError: true })).data;
+                if (!refreshed || result.queue_revision !== snapshot.queue_revision + 1 ||
+                    refreshed.queue_revision !== result.queue_revision) {
+                    throw new Error("Queue changed while saving");
                 }
-                const item = items.find((row) => row.registration_id === id);
-                const position = items.find((row) => row.registration_id === liveWaiting[index])?.position;
-                if (!item || position == null) throw new Error("Queue changed");
-                if (item.position !== position) {
-                    await examApi.place(workspaceId, examId, id, item.registration_version, position);
-                }
+                snapshot = refreshed;
             }
             toast.success("Порядок выступлений сохранён");
         } catch (error) {
@@ -509,13 +523,13 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         }
     };
 
-    const toggleTimer = async () => {
-        if (!isManager || !activeAttempt || attemptPending) return;
+    const updatePhase = async (action: "questions" | "resume" | "pause") => {
+        if (!isManager || !activeAttempt || attemptPending || registrationPending || savingOrder) return;
         setAttemptPending(true);
         try {
-            await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, activeAttempt.paused_at ? "resume" : "pause", activeAttempt.version);
+            await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, action, activeAttempt.version);
         } catch (error) {
-            toast.error(getExamErrorMessage(error) ?? "Не удалось изменить состояние таймера");
+            toast.error(getExamErrorMessage(error) ?? (action === "questions" ? "Не удалось перейти к вопросам" : "Не удалось изменить состояние таймера"));
         } finally {
             await queueQuery.refetch();
             setAttemptPending(false);
@@ -527,15 +541,20 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         if (action === "first" && editing) return;
         if (action === "previous" && (previousUnavailable || target !== previousTeam)) return;
         setAttemptPending(true);
-        if (action === "first") setPreparingFirst(true);
         let finishedCurrent = false;
+        let postponedCurrent = false;
         let firstStarted = false;
         let compacting = false;
         let movedSlots = 0;
         try {
             if (activeAttempt) {
                 if (action === "previous") {
-                    await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, "postpone", activeAttempt.version, "Возврат к предыдущей команде");
+                    const postponed = await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, "postpone", activeAttempt.version, "Возврат к предыдущей команде");
+                    postponedCurrent = true;
+                    const newQueue = await queueQuery.refetch({ throwOnError: true });
+                    const item = newQueue.data?.items.find((row) => row.registration_id === postponed.registration_id);
+                    if (!item || item.state !== "postponed") throw new Error("Team changed after postponing");
+                    await examApi.place(workspaceId, examId, item.registration_id, item.registration_version, 1);
                 } else {
                     await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, "finish", activeAttempt.version);
                     finishedCurrent = true;
@@ -566,8 +585,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                 }
             }
             let next = action === "first"
-                ? items.find((item) => item.state === "waiting" && item.position !== null)
-                    ?? items.find((item) => item.state === "postponed")
+                ? items.find((item) => item.position !== null && (item.state === "waiting" || item.state === "postponed"))
                 : items.find((item) => item.registration_id === target.registration_id);
             if (next?.state === "postponed" && !next.attempt) {
                 await examApi.place(workspaceId, examId, next.registration_id, next.registration_version, 1);
@@ -583,26 +601,8 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
 
             if (action === "first") {
                 firstStarted = true;
-                const paused = await examApi.commandAttempt(workspaceId, examId, attempt.id, "pause", attempt.version, "Ожидание запуска таймера");
-                if (paused.paused_at) {
-                    const initial = {
-                        attemptId: paused.id,
-                        phaseStartedAt: paused.phase_started_at,
-                        delayMs: Math.max(0, Date.parse(paused.paused_at) - Date.parse(paused.phase_started_at)),
-                    };
-                    setFirstPause(initial);
-                    try {
-                        sessionStorage.setItem(firstPauseStorageKey, JSON.stringify(initial));
-                    } catch {
-                        // The current page can still account for the initial delay.
-                    }
-                }
+                await examApi.commandAttempt(workspaceId, examId, attempt.id, "pause", attempt.version, "Ожидание запуска таймера");
                 toast.success("Экзамен начат. Нажмите Play, чтобы запустить таймер.");
-            }
-            if (action === "previous" && currentTeam) {
-                setForwardIds((ids) => [currentTeam.registration_id, ...ids]);
-            } else {
-                setForwardIds((ids) => ids.filter((id) => id !== target.registration_id));
             }
         } catch (error) {
             const message = getExamErrorMessage(error) ?? "Не удалось начать выступление выбранной команды.";
@@ -613,17 +613,56 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
             } else if (firstStarted) {
                 toast.error("Экзамен начат, но сервер не подтвердил паузу. Проверьте таймер.");
             } else {
-                toast.error(finishedCurrent ? `Текущее выступление завершено. ${message}` : message);
+                toast.error(finishedCurrent ? `Текущее выступление завершено. ${message}`
+                    : postponedCurrent ? `Текущее выступление отложено. ${message}` : message);
             }
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
-            setPreparingFirst(false);
             setAttemptPending(false);
         }
     };
 
+    const postponeTeam = async () => {
+        if (!isManager || !postpone || !postponeReason.trim() || registrationPending || attemptPending || savingOrder) return;
+        const item = queueByRegistration.get(postpone.item.registration_id);
+        if (!item || item.state !== postpone.item.state ||
+            (item.state !== "waiting" && item.state !== "running")) {
+            toast.error("Состояние команды изменилось. Проверьте очередь.");
+            return;
+        }
+        setRegistrationPending(true);
+        try {
+            if (item.state === "running" && item.attempt) {
+                await examApi.commandAttempt(workspaceId, examId, item.attempt.id, "postpone", item.attempt.version, postponeReason.trim());
+            } else {
+                await examApi.postponeRegistration(workspaceId, examId, item.registration_id, item.registration_version, postponeReason.trim());
+            }
+            toast.success("Выступление отложено");
+            setPostpone(null);
+        } catch (error) {
+            toast.error(getExamErrorMessage(error) ?? "Не удалось отложить выступление");
+        } finally {
+            await queueQuery.refetch();
+            setRegistrationPending(false);
+        }
+    };
+
+    const returnTeam = async (item: QueueItem, first: boolean) => {
+        if (!isManager || registrationPending || attemptPending || savingOrder) return;
+        setRegistrationPending(true);
+        try {
+            await examApi.place(workspaceId, examId, item.registration_id, item.registration_version, first ? 1 : undefined);
+            toast.success(first ? "Команда будет выступать следующей" : "Команда возвращена в очередь");
+        } catch (error) {
+            toast.error(getExamErrorMessage(error) ?? "Не удалось изменить порядок выступлений");
+        } finally {
+            await queueQuery.refetch();
+            setRegistrationPending(false);
+        }
+    };
+
     const setNoShow = async (item: QueueItem) => {
-        if (registrationPending || savingOrder) return;
+        if (!isManager || registrationPending || savingOrder || attemptPending) return;
         const restore = item.state === "no_show";
         setRegistrationPending(true);
         try {
@@ -642,9 +681,9 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
     };
 
     const deleteRegistration = async () => {
-        if (!deleteRow || registrationPending || savingOrder) return;
+        if (!isManager || !deleteRow || registrationPending || savingOrder || attemptPending) return;
         const item = queueByRegistration.get(deleteRow.id);
-        if (!item) return;
+        if (!item || !canChangeExamRegistration(item)) return;
         setRegistrationPending(true);
         try {
             await examApi.cancelRegistration(
@@ -665,7 +704,11 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         }
     };
 
-    if (examQuery.isLoading) {
+    if (organizerOnly && !access.isLoading && !canOpen) {
+        return <Navigate to={paths.app.examView.getHref(workspaceId, examId)} replace />;
+    }
+
+    if (examQuery.isLoading || (organizerOnly && access.isLoading)) {
         return (
             <ContentLayout title="Экзамен">
                 <div className="flex h-64 items-center justify-center"><Spinner size="lg" /></div>
@@ -673,37 +716,30 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
         );
     }
 
-    if (!exam) {
+    if (!exam || isExamAccessDenied(queueQuery.error)) {
         return (
             <ContentLayout title="Экзамен не найден">
-                <div className="p-8 text-app-muted">{examQuery.isError ? "Не удалось загрузить экзамен" : "Экзамен не найден"}</div>
+                <div className="p-8 text-app-muted">{isExamAccessDenied(examQuery.error) || isExamAccessDenied(queueQuery.error) ? "Экзамен недоступен" : examQuery.isError ? "Не удалось загрузить экзамен" : "Экзамен не найден"}</div>
             </ContentLayout>
         );
     }
 
-    const defaults = defaultTimerDurations(exam.configuration);
-    const settingsTeam = currentTeam ?? followingTeam;
-    const durationsFor = (id: number) => teamDurations[id] ?? defaults;
-    const durations = settingsTeam ? durationsFor(settingsTeam.registration_id) : defaults;
-    const initialDelayMs = firstPause && activeAttempt?.id === firstPause.attemptId
-        && activeAttempt.phase_started_at === firstPause.phaseStartedAt ? firstPause.delayMs : 0;
-    const timer = getExamTimer(preparingFirst ? null : activeAttempt, durations, defaults, queueQuery.dataUpdatedAt, now, initialDelayMs);
-    const currentEndsAt = activeAttempt ? now + Math.max(0, timer.remaining) * 1000 : undefined;
-    const queueStartsAt = currentEndsAt ?? Math.max(now, Date.parse(exam.configuration.starts_at));
-    const queueEndsAt = activeAttempt || remainingTeams.length
-        ? queueStartsAt + remainingTeams.reduce((sum, item) => sum + timerDuration(durationsFor(item.registration_id)) * 1000, 0)
+    const activeTiming = activeAttempt?.settings_version === settingsVersion ? exam.configuration : activeRevision.data?.configuration;
+    const timer = getExamTimer(activeAttempt, activeTiming ?? exam.configuration, queueQuery.dataUpdatedAt, now);
+    const currentEndsAt = queueSnapshot && eta?.current && activeTiming
+        ? serverNow + (eta.current.overdue_seconds > 0 ? 0 : Math.max(0,
+            eta.current.slot_remaining_seconds - activeTiming.transition_minutes * 60 -
+                (eta.current.paused ? 0 : (serverNow - Date.parse(queueSnapshot.server_now)) / 1000),
+        )) * 1000
         : undefined;
-
-    const saveTimerDurations = (value: TimerDurations) => {
-        if (!settingsTeam || !isManager || attemptPending || (activeAttempt && !activeAttempt.paused_at)) return;
-        const updated = { ...teamDurations, [settingsTeam.registration_id]: value };
-        setTeamDurations(updated);
-        try {
-            sessionStorage.setItem(timerStorageKey, JSON.stringify(updated));
-        } catch {
-            // Keep the settings in memory when browser storage is unavailable.
-        }
-    };
+    const finalTiming = finalVersion === settingsVersion ? exam.configuration : finalRevision.data?.configuration;
+    const queueEndsAt = lastEta
+        ? finalTiming && Date.parse(lastEta.eta_at) + (
+            finalTiming.questions_minutes + (lastAttempt?.postponed_phase === "questions" ? 0 : finalTiming.presentation_minutes)
+        ) * 60_000
+        : currentEndsAt;
+    const etaLowerBound = lastEta?.certainty === "lower_bound" || Boolean(eta?.current?.overdue_seconds || eta?.current?.paused);
+    const etaStale = queueEtaStale || activeRevision.isError || finalRevision.isError;
 
     return (
         <ContentLayout title={exam.configuration.title}>
@@ -781,7 +817,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                             )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button type="button" aria-label="Действия с экзаменом" className="h-9 w-9 cursor-pointer rounded-lg p-2 hover:bg-gray-100">
+                                    <button type="button" aria-label="Действия с экзаменом" className="h-9 w-9 cursor-pointer rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-app-ghost">
                                         <Ellipsis size={18} />
                                     </button>
                                 </DropdownMenuTrigger>
@@ -813,14 +849,13 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                     number={currentTeam ? numbers.get(currentTeam.registration_id) : undefined}
                     attempt={activeAttempt}
                     timer={timer}
-                    durations={durations}
-                    settingsTeamId={settingsTeam?.registration_id}
-                    onSaveDurations={saveTimerDurations}
                     canManage={isManager}
                     pending={attemptPending || registrationPending || savingOrder}
                     previousUnavailable={previousUnavailable}
                     canGoForward={exam.status === "published" && !examOver && !canStart && Boolean(followingTeam)}
-                    onToggle={() => void toggleTimer()}
+                    onToggle={() => void updatePhase(activeAttempt?.paused_at ? "resume" : "pause")}
+                    onQuestions={() => void updatePhase("questions")}
+                    timerSettingsHref={isManager ? `${paths.app.examEdit.getHref(workspaceId, examId)}&section=queue` : undefined}
                     onPrevious={() => void switchTeam(previousTeam, "previous")}
                     onNext={() => void switchTeam(followingTeam, "next")}
                 />
@@ -832,7 +867,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                             return (
                                 <span
                                     key={typeId}
-                                    className="inline-flex h-7 items-center rounded-[8px] bg-gray-100 px-2.5 text-[12px] font-medium text-gray-900"
+                                    className="inline-flex h-7 items-center rounded-[8px] bg-gray-100 dark:bg-app-ghost px-2.5 text-[12px] font-medium text-gray-900 dark:text-app-text"
                                 >
                                     {projectType?.name ?? `Тип проекта ${typeId}`}
                                 </span>
@@ -850,6 +885,12 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                             </Button>
                         ) : (
                             <div className="flex flex-wrap items-center gap-3">
+                                {isManager && exam.status === "published" && !examOver && (
+                                    <Button variant="outline" size="hug36" disabled={attemptPending || registrationPending || savingOrder}
+                                        onClick={() => setAssignOpen(true)}>
+                                        Назначить команду
+                                    </Button>
+                                )}
                                 {booking.canBook && (
                                     <Button variant="dark" size="hug36" onClick={() => booking.setSelecting(true)}>
                                         Записаться на защиту
@@ -860,13 +901,13 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Поиск команд"
                                     aria-label="Поиск команд"
-                                    className="h-10 w-[240px] rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="h-10 w-[240px] rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
                                 />
                                 <select
                                     aria-label="Статус команды"
                                     value={filter}
                                     onChange={(event) => setFilter(event.target.value as "all" | "waiting" | "no_show")}
-                                    className="h-10 rounded-[12px] border border-gray-200 bg-app-surface px-3 text-[13px]"
+                                    className="h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                                 >
                                     <option value="all">Все команды</option>
                                     <option value="waiting">В очереди</option>
@@ -882,7 +923,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                 ) : isManager && !examOver ? (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <button type="button" aria-label="Действия над списком" className="h-10 w-10 cursor-pointer rounded-[12px] border border-gray-200 p-2 hover:bg-gray-50">
+                                            <button type="button" aria-label="Действия над списком" className="h-10 w-10 cursor-pointer rounded-[12px] border border-gray-200 dark:border-app-border p-2 hover:bg-gray-50 dark:hover:bg-app-ghost">
                                                 <Ellipsis size={18} />
                                             </button>
                                         </DropdownMenuTrigger>
@@ -915,11 +956,16 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                                 <span>Вы записаны на слот в <ApproximateDefenseTime value={time} /></span>
                                             </Tooltip.Provider>
                                         ) : <span>Вы записаны на защиту</span>}
-                                        {eta && <span>Прогноз начала: {eta.certainty === "lower_bound" && "не раньше "}<ApproximateDefenseTime value={eta.eta_at} message={etaMessage} /></span>}
+                                        {eta && <span>Прогноз начала: {queueEtaStale && "прошлый снимок, "}{eta.certainty === "lower_bound" && "не раньше "}<ApproximateDefenseTime value={eta.eta_at} message={etaMessage} /></span>}
                                         {booking.canCancel(registration) ? (
-                                            <Button variant="outline" size="hug36" disabled={booking.pending} onClick={() => booking.selectCancellation(registration)}>
-                                                Отменить запись
-                                            </Button>
+                                            <>
+                                                <Button variant="outline" size="hug36" disabled={booking.pending} onClick={() => setTransfer({ registration, self: true })}>
+                                                    Перенести запись
+                                                </Button>
+                                                <Button variant="outline" size="hug36" disabled={booking.pending} onClick={() => booking.selectCancellation(registration)}>
+                                                    Отменить запись
+                                                </Button>
+                                            </>
                                         ) : registration.started_at ? (
                                             <span>Защита уже началась. Отмена записи недоступна.</span>
                                         ) : !booking.isOpen ? (
@@ -935,29 +981,34 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                             ) : booking.loading ? (
                                 <p>Проверяем возможность записи…</p>
                             ) : !booking.active.length && !booking.isOpen ? (
-                                <p>Запись сейчас недоступна. Она закрывается за час до начала экзамена или раньше, если установлен другой срок.</p>
+                                <p>Запись сейчас недоступна. Проверьте период записи в настройках экзамена.</p>
                             ) : !booking.active.length && !booking.eligible.length ? (
                                 <p>У вас нет своего проекта подходящего типа в этом пространстве.</p>
                             ) : null}
-                            {booking.canBook && (
+                            {booking.canBook && booking.available.length > 0 && (
                                 <p>
                                     Свободно {freeSlotCount} слотов из {booking.available.length}
                                 </p>
                             )}
-                            {booking.canBook && freeSlotCount === 0 && <p>Свободных слотов нет</p>}
+                            {booking.canBook && booking.available.length > 0 && freeSlotCount === 0 && <p>Свободных слотов нет</p>}
+                            {booking.inMode && booking.available.length === 0 && (
+                                <Button variant="blue" size="hug36" disabled={booking.pending} onClick={booking.bookWithoutSlot}>
+                                    Записать команду без слота
+                                </Button>
+                            )}
                             {booking.inMode && freeSlotCount > 0 && (
                                 <p>Выберите свободный слот и нажмите «Занять место».</p>
                             )}
-                            {booking.inMode && booking.eligible.length > 1 && (
+                            {booking.inMode && booking.bookableProjects.length > 1 && (
                                 <label className="flex flex-wrap items-center gap-2">
                                     Проект
                                     <select
-                                        className="min-w-0 max-w-full rounded-lg border border-gray-200 bg-app-surface px-3 py-2 text-app-text"
+                                        className="min-w-0 max-w-full rounded-lg border border-gray-200 dark:border-app-border bg-app-surface px-3 py-2 text-app-text"
                                         value={booking.selected?.id}
                                         disabled={booking.pending}
                                         onChange={(event) => booking.setProjectId(Number(event.target.value))}
                                     >
-                                        {booking.eligible.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                                        {booking.bookableProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
                                     </select>
                                 </label>
                             )}
@@ -974,13 +1025,14 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                     </h3>
                                     <ExamTimeHint message={etaMessage} />
                                 </div>
-                                {activeAttempt?.paused_at && (
+                                {etaLowerBound && (
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-app-badge-amber px-2.5 py-1 text-xs font-medium text-app-badge-amber-fg">
                                         <Icon name="pause" size={14} />
-                                        Если продолжить сейчас
+                                        {eta?.current?.paused ? "Не раньше, если продолжить сейчас" : "Не раньше"}
                                     </span>
                                 )}
                             </div>
+                            {etaStale && <p role="status" className="mt-2 px-5 text-xs text-app-muted sm:px-7">Прогноз пока не обновился.</p>}
                             <dl className="grid grid-cols-1 px-5 pb-5 pt-4 min-[420px]:grid-cols-2 sm:px-7 sm:pb-6">
                                 {([
                                     { label: "Окончание команды", timestamp: currentEndsAt, last: false },
@@ -1015,10 +1067,10 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                         </p>
                     )}
 
-                    <div className="overflow-x-auto rounded-[20px] border border-gray-200">
+                    <div className="overflow-x-auto rounded-[20px] border border-gray-200 dark:border-app-border">
                         <Tooltip.Provider delay={100}>
                         <table className="w-full border-collapse text-left">
-                            <thead className="border-b border-gray-200 bg-gray-50 text-app-text">
+                            <thead className="border-b border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost text-app-text">
                                 <tr>
                                     {editing && <th className="h-14 w-10 px-3" />}
                                     <th className="h-14 px-6 text-[15px] font-semibold">№</th>
@@ -1026,17 +1078,17 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                     <th className="h-14 px-6 text-[15px] font-semibold">Руководитель</th>
                                     <th className="h-14 px-6 text-[15px] font-semibold">Команда</th>
                                     <th className="h-14 px-6 text-[15px] font-semibold">Начало защиты</th>
-                                    <th scope="col" aria-label="Действия" className="h-14 px-3" />
+                                    <th scope="col" className="h-14 px-3 text-right text-[15px] font-semibold">Оценка</th>
                                 </tr>
                             </thead>
                             <tbody ref={queueBody}>
-                                {booking.inMode ? booking.available.map((slot, index) => {
+                                {booking.inMode && booking.available.length > 0 ? booking.available.map((slot, index) => {
                                     const item = queueBySlot.get(slot.id);
                                     const project = item && projectById.get(item.project_id);
                                     return (
                                         <tr
                                             key={slot.id}
-                                            className={`border-b border-gray-100 last:border-0 ${item?.state === "running" ? "bg-[#155DFC12]" : item?.state === "finished" ? "bg-[#ECFDF3] dark:bg-emerald-950/35" : slot.is_available ? "bg-green-50 dark:bg-green-950/40" : "text-app-muted"}`}
+                                            className={`border-b border-gray-100 dark:border-app-border last:border-0 ${item?.state === "running" ? "bg-[#155DFC12] dark:bg-blue-400/15" : item?.state === "finished" ? "bg-[#ECFDF3] dark:bg-emerald-950/35" : slot.is_available ? "bg-green-50 dark:bg-green-950/40" : "text-app-muted"}`}
                                         >
                                             <td className="px-6 py-4 text-[13px]">{index + 1}</td>
                                             <td className="px-6 py-4 text-[13px]">
@@ -1071,7 +1123,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                     if (!("registration_id" in row)) {
                                         return (
                                             <tr key={queueDropKey(row)} data-queue-row={queueDropKey(row)} {...dropEvents(row)}
-                                                className={`border-b border-gray-100 bg-[#F5F6F8] text-app-muted last:border-0 dark:border-gray-700 dark:bg-white/5 [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${dragStyle(row)}`}>
+                                                className={`border-b border-gray-100 bg-[#F5F6F8] text-app-muted last:border-0 dark:border-app-border dark:bg-app-ghost [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${dragStyle(row)}`}>
                                                 {editing && <td />}
                                                 <td className="px-6 py-4 text-[13px]">{number}</td>
                                                 <td className="px-6 py-4">—</td>
@@ -1085,6 +1137,8 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                     const item = row;
                                     const eta = etaByRegistration.get(item.registration_id);
                                     const project = projectById.get(item.project_id);
+                                    const registration = registrationsById.get(item.registration_id);
+                                    const canChangeRegistration = canChangeExamRegistration(item);
                                     const noShow = item.state === "no_show";
                                     const assessmentWindow = item.attempt?.assessment_window;
                                     return (
@@ -1103,7 +1157,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                             }}
                                             onDragEnd={clearDrag}
                                             {...dropEvents(item)}
-                                            className={`group border-b border-gray-100 last:border-0 [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${draggedTeam === null && canReorder && waitingSet.has(item.registration_id) ? "cursor-grab active:cursor-grabbing" : ""} ${dragStyle(item)} ${item.state === "running" ? "bg-[#155DFC12]" : item.state === "finished" ? "bg-[#ECFDF3] dark:bg-emerald-950/35" : noShow ? "bg-[--error-bg] text-app-muted" : "hover:bg-gray-50"}`}
+                                            className={`group border-b border-gray-100 dark:border-app-border last:border-0 [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${draggedTeam === null && canReorder && waitingSet.has(item.registration_id) ? "cursor-grab active:cursor-grabbing" : ""} ${dragStyle(item)} ${item.state === "running" ? "bg-[#155DFC12] dark:bg-blue-400/15" : item.state === "finished" ? "bg-[#ECFDF3] dark:bg-emerald-950/35" : noShow ? "bg-[--error-bg] text-app-muted" : "hover:bg-gray-50 dark:hover:bg-app-ghost"}`}
                                         >
                                             {editing && (
                                                 <td className="px-3 py-4 text-app-muted">
@@ -1141,9 +1195,14 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                                 ) : (
                                                     <span className="text-[13px] text-app-muted">—</span>
                                                 )}
+                                                {registration && (
+                                                    <div className="mt-1 text-xs text-app-muted">
+                                                        {registration.created_source === "manager" ? "Записалась сама" : "Назначена организатором"}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="flex items-center gap-2 text-[13px] font-medium text-gray-700 dark:text-gray-200">
+                                                <span className="flex items-center gap-2 text-[13px] font-medium text-gray-700 dark:text-slate-200">
                                                     <Icon name="profile" size={16} />
                                                     {getExamProjectLeader(project) ?? "Имя не указано"}
                                                 </span>
@@ -1157,11 +1216,12 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                                     }
                                                 />
                                             </td>
-                                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-gray-300">
+                                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-slate-300">
                                                 {item.planned_start_at ? <ApproximateDefenseTime value={item.planned_start_at} /> : "—"}
+                                                {item.state === "postponed" && <div className="mt-1 text-xs text-app-muted">Отложена</div>}
                                                 {eta && (
                                                     <div className="mt-1 text-xs text-app-muted">
-                                                        Прогноз: {eta.certainty === "lower_bound" && "не раньше "}<ApproximateDefenseTime value={eta.eta_at} message={etaMessage} />
+                                                        Прогноз: {queueEtaStale && "прошлый снимок, "}{eta.certainty === "lower_bound" && "не раньше "}<ApproximateDefenseTime value={eta.eta_at} message={etaMessage} />
                                                     </div>
                                                 )}
                                             </td>
@@ -1170,17 +1230,19 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                                     {assessmentWindow && isAssessmentOpen(item, serverNow) ? (
                                                         <ExamAssessment
                                                             workspaceId={workspaceId}
+                                                            projectId={item.project_id}
                                                             typeId={assessmentWindow.project_type_id}
+                                                            remainingSeconds={Math.max(0, Math.ceil((Date.parse(assessmentWindow.closes_at) - serverNow) / 1000))}
                                                             projectName={project?.name ?? "Проект команды"}
                                                         />
                                                     ) : (examOver || item.state === "finished") && (
-                                                        <Popover.Root>
-                                                            <Popover.Trigger className="cursor-pointer rounded-lg px-2 py-2 text-[13px] font-semibold text-app-blue dark:text-blue-300">
-                                                                Оценка
-                                                            </Popover.Trigger>
-                                                            <Popover.Portal>
-                                                                <Popover.Positioner positionMethod="fixed" align="end" sideOffset={8} collisionPadding={8} className="z-50">
-                                                                    <Popover.Popup aria-label="Оценка команды" className="flex w-[360px] max-w-[var(--available-width)] rounded-xl border border-gray-200 bg-app-surface p-4 shadow-lg">
+                                                        <Tooltip.Root>
+                                                            <Tooltip.Trigger render={<span tabIndex={0} />} aria-label="Оценки пока нет. Разбивка по ролям" className="cursor-help rounded-lg px-2 py-2 text-[13px] font-semibold text-app-muted focus-visible:outline focus-visible:outline-2">
+                                                                —
+                                                            </Tooltip.Trigger>
+                                                            <Tooltip.Portal>
+                                                                <Tooltip.Positioner positionMethod="fixed" align="end" sideOffset={8} collisionPadding={8} className="z-[500]">
+                                                                    <Tooltip.Popup aria-label="Оценка команды" className="flex w-[360px] max-w-[var(--available-width)] rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-4 shadow-lg">
                                                                         {[
                                                                             { title: "Бакалавры", weight: exam.configuration.weights.member },
                                                                             { title: "Магистранты", weight: exam.configuration.weights.manager },
@@ -1188,27 +1250,42 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                                                         ].map((grade, gradeIndex) => (
                                                                             <div
                                                                                 key={grade.title}
-                                                                                className={`flex-1 px-3 text-center ${gradeIndex > 0 ? "border-l border-gray-200" : ""}`}
+                                                                                className={`flex-1 px-3 text-center ${gradeIndex > 0 ? "border-l border-gray-200 dark:border-app-border" : ""}`}
                                                                             >
                                                                                 <div className="text-[13px] font-bold text-app-blue dark:text-blue-300">—</div>
-                                                                                <div className="mt-1 text-[12px] text-gray-700">{grade.title}</div>
+                                                                                <div className="mt-1 text-[12px] text-gray-700 dark:text-slate-200">{grade.title}</div>
                                                                                 <div className="mt-0.5 text-[11px] text-app-muted">Вес {grade.weight}%</div>
                                                                             </div>
                                                                         ))}
-                                                                    </Popover.Popup>
-                                                                </Popover.Positioner>
-                                                            </Popover.Portal>
-                                                        </Popover.Root>
+                                                                    </Tooltip.Popup>
+                                                                </Tooltip.Positioner>
+                                                            </Tooltip.Portal>
+                                                        </Tooltip.Root>
                                                     )}
-                                                    {isManager && !examOver && (
+                                                    {isManager && !examOver && item.state !== "finished" && (
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
-                                                                <button type="button" aria-label="Действия с командой" disabled={registrationPending || savingOrder || attemptPending} className="h-9 w-9 cursor-pointer rounded-lg p-2 text-gray-500 hover:bg-gray-100"><Ellipsis size={16} /></button>
+                                                                <button type="button" aria-label="Действия с командой" disabled={registrationPending || savingOrder || attemptPending} className="h-9 w-9 cursor-pointer rounded-lg p-2 text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost"><Ellipsis size={16} /></button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuPortal><DropdownMenuContent align="end" className="w-[220px]">
+                                                                {(item.state === "running" || item.state === "waiting") && (
+                                                                    <DropdownMenuItem onSelect={() => {
+                                                                        setPostponeReason("");
+                                                                        setPostpone({ item, title: project?.name ?? "Команда" });
+                                                                    }}>Отложить</DropdownMenuItem>
+                                                                )}
+                                                                {item.state === "postponed" && (
+                                                                    <>
+                                                                        {item.position === null && <DropdownMenuItem onSelect={() => void returnTeam(item, false)}>Вернуть в очередь</DropdownMenuItem>}
+                                                                        {item.position !== 1 && <DropdownMenuItem onSelect={() => void returnTeam(item, true)}>Поставить следующей</DropdownMenuItem>}
+                                                                    </>
+                                                                )}
+                                                                {registration && canChangeRegistration && (
+                                                                    <DropdownMenuItem onSelect={() => setTransfer({ registration, self: false })}>Перенести в другой экзамен</DropdownMenuItem>
+                                                                )}
                                                                 {noShow && <DropdownMenuItem className="gap-3" onSelect={() => setNoShow(item)}>Отменить неявку</DropdownMenuItem>}
                                                                 {item.state === "waiting" && <DropdownMenuItem className="gap-3" onSelect={() => setNoShow(item)}>Неявка</DropdownMenuItem>}
-                                                                <DropdownMenuItem className="gap-3 text-red-600 dark:text-red-300" onSelect={() => setDeleteRow({ id: item.registration_id, title: project?.name ?? "Команда" })}><Trash2 size={16} />Удалить</DropdownMenuItem>
+                                                                {canChangeRegistration && <DropdownMenuItem className="gap-3 text-red-600 dark:text-red-300" onSelect={() => setDeleteRow({ id: item.registration_id, title: project?.name ?? "Команда" })}><Trash2 size={16} />Снять с экзамена</DropdownMenuItem>}
                                                             </DropdownMenuContent></DropdownMenuPortal>
                                                         </DropdownMenu>
                                                     )}
@@ -1219,7 +1296,7 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                                 })}
                             </tbody>
                         </table>
-                        {!booking.inMode && tableRows.length === 0 && (
+                        {(!booking.inMode || booking.available.length === 0) && tableRows.length === 0 && (
                             <div className="py-12 text-center text-sm text-app-muted">{queueQuery.isLoading ? "Загружаем список команд…" : queueQuery.isError ? "Не удалось загрузить список команд" : "Команды не найдены"}</div>
                         )}
                         </Tooltip.Provider>
@@ -1227,19 +1304,38 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                 </section>
             </div>
 
+            {isManager && assignOpen && exam.status === "published" && !examOver && (
+                <ExamRegistrationAssign
+                    exam={exam}
+                    assignedIds={new Set(queueItems.map((item) => item.project_id))}
+                    onClose={() => setAssignOpen(false)}
+                />
+            )}
+
+            {transfer && (transfer.self ? showBooking : isManager) && (
+                <ExamRegistrationTransfer
+                    registration={(transfer.self ? booking.active.find((item) => item.id === transfer.registration.id) : registrationsById.get(transfer.registration.id)) ?? transfer.registration}
+                    projectName={projectById.get(transfer.registration.project_id)?.name}
+                    self={transfer.self}
+                    sourceOpen={!transfer.self || booking.isOpen}
+                    now={now}
+                    onClose={() => setTransfer(null)}
+                />
+            )}
+
             <Dialog open={!!booking.action} onOpenChange={(open) => !open && booking.dismiss()}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
                             {bookingAction?.kind === "book"
-                                ? `Занять слот в ${formatExamTime(bookingAction.slot.starts_at)}?`
+                                ? bookingAction.slot ? `Занять слот в ${formatExamTime(bookingAction.slot.starts_at)}?` : "Записать команду на защиту?"
                                 : "Отменить запись на защиту?"}
                         </DialogTitle>
                     </DialogHeader>
                     {bookingAction?.kind === "book" && (
                         <p className="text-sm text-app-muted">
                             {booking.eligible.find((project) => project.id === bookingAction.projectId)?.name}
-                            <span className="mt-1 block">{beforeStartEtaMessage}</span>
+                            {bookingAction.slot && <span className="mt-1 block">{beforeStartEtaMessage}</span>}
                         </p>
                     )}
                     {booking.action && !booking.canConfirm && !booking.pending && (
@@ -1256,7 +1352,26 @@ function ExamDetailView({ workspaceId, examId }: { workspaceId: number; examId: 
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={!!deleteRow} onOpenChange={(open) => !open && setDeleteRow(null)}>
+            <Dialog open={isManager && !!postpone} onOpenChange={(open) => { if (!open && !registrationPending) setPostpone(null); }}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Отложить выступление?</DialogTitle></DialogHeader>
+                    <form className="mt-4 grid gap-4" onSubmit={(event) => { event.preventDefault(); void postponeTeam(); }}>
+                        <p className="text-sm text-app-muted">{postpone?.title}. Команда останется в экзамене, оценивание не откроется.</p>
+                        <label className="grid gap-1 text-sm">
+                            Причина
+                            <textarea required maxLength={1000} rows={3} value={postponeReason}
+                                onChange={(event) => setPostponeReason(event.target.value)}
+                                className="rounded-lg border border-app-border bg-app-surface p-2" />
+                        </label>
+                        <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" size="hug36" disabled={registrationPending} onClick={() => setPostpone(null)}>Отмена</Button>
+                            <Button type="submit" variant="blue" size="hug36" loading={registrationPending} disabled={!postponeReason.trim()}>Отложить</Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isManager && !!deleteRow} onOpenChange={(open) => !open && setDeleteRow(null)}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>Удалить команду?</DialogTitle></DialogHeader>
                     <p className="text-sm text-app-muted">{deleteRow?.title}</p>
