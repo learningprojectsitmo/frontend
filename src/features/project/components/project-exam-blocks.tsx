@@ -6,17 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
-import { formatExamDate } from "@/features/exam/exam-display";
+import { formatExamDate, isExamRegistrationOpen } from "@/features/exam/exam-display";
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import { examApi, getExamErrorMessage, invalidateExam, useExams, useExamSlots } from "@/lib/exams";
 import { useProjectTypes } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
 import type { Exam } from "@/types/exam";
-import {
-    formatExamCountdown,
-    getExamRegistrationWindow,
-    getProjectExamState,
-} from "./project-exam-display";
+import { formatExamCountdown, getProjectExamState } from "./project-exam-display";
 
 type Props = {
     workspaceId: number;
@@ -69,19 +65,18 @@ export function ProjectExamBlocks({
             (a, b) => Date.parse(a.configuration.starts_at) - Date.parse(b.configuration.starts_at),
         );
     const queueFor = (exam: Exam) => queues[exams.indexOf(exam)]?.data;
-    const available = (exam: Exam) => {
-        const { opens, closes } = getExamRegistrationWindow(exam);
-        return opens <= now && now < closes;
-    };
+    const available = (exam: Exam) => isExamRegistrationOpen(exam, now);
     const upcoming = byStart.filter((exam) => Date.parse(exam.configuration.starts_at) > now);
+    const openExam = upcoming.find((item) => matchesType(item) && available(item));
     const exam =
         registered ??
+        (access.canSelfRegister ? openExam : undefined) ??
         byStart.find(
             (item) =>
                 matchesType(item) &&
                 getProjectExamState(item, queueFor(item), now).status === "running",
         ) ??
-        upcoming.find((item) => matchesType(item) && available(item)) ??
+        openExam ??
         upcoming.find(matchesType) ??
         byStart.filter(matchesType).at(-1) ??
         upcoming[0] ??
@@ -295,7 +290,13 @@ export function ProjectExamBlocks({
                                     !freeSlots.some((slot) => slot.id === booking.slotId))
                             }
                             onClick={() => {
-                                if (booking) registration.mutate(booking);
+                                if (!booking) return;
+                                if (!isExamRegistrationOpen(exam, Date.now())) {
+                                    toast.error("Запись на экзамен уже закрылась.");
+                                    setBooking(null);
+                                    return;
+                                }
+                                registration.mutate(booking);
                             }}
                         >
                             Записать команду

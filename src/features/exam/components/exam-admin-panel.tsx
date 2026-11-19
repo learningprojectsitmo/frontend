@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CalendarClock, ChevronLeft, Save, ShieldCheck, Search, Trash2, GripVertical, Maximize2, Plus } from "lucide-react";
+import { Tooltip } from "@base-ui/react/tooltip";
 import { Popover } from "@base-ui/react/popover";
 import { toast } from "sonner";
 
@@ -14,12 +15,13 @@ import { cn } from "@/lib/utils";
 import { examApi, getExamErrorCode, getExamErrorMessage, invalidateExam, questionApi } from "@/lib/exams";
 import { useExamRegistrations, useExamSlots } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
-import { formatExamTime as formatTime } from "../exam-display";
-import { minute, resizeDraftSlots, slotScheduleError, slotStartAtTime, type LocalSlot } from "../exam-schedule";
+import { formatExamTime as formatTime, getRegistrationDeadline } from "../exam-display";
+import { hasEarlierFreeSlots, minute, resizeDraftSlots, slotScheduleError, slotStartAtTime, type LocalSlot } from "../exam-schedule";
 import { useProjectsList } from "@/lib/projects";
 import { getExamProjectLeader, useExamProjects } from "../use-exam-projects";
 import type { Exam, ExamConfiguration, Registration, RegistrationListResponse } from "@/types/exam";
 import type { BackendProjectType } from "@/types/api";
+import { ApproximateDefenseTime } from "./approximate-defense-time";
 import { ProjectTypeQuestionsEditor } from "./project-type-questions-editor";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -32,6 +34,7 @@ type Props = {
     workspaces?: Array<{ id: number; title: string }>;
     onWorkspaceChange?: (workspaceId: number, basics: ExamBasics) => void;
     initialBasics?: ExamBasics;
+    initialSection?: SectionId;
     exam?: Exam;
     onCancel: () => void;
     onSaved: (exam: Exam) => void;
@@ -88,6 +91,7 @@ export function ExamAdminPanel({
     workspaces = [],
     onWorkspaceChange,
     initialBasics,
+    initialSection = "main",
     exam: existingExam,
     onCancel,
     onSaved,
@@ -95,7 +99,7 @@ export function ExamAdminPanel({
     const queryClient = useQueryClient();
     const [createdExam, setCreatedExam] = useState<Exam>();
     const exam = existingExam ?? createdExam;
-    const [activeSection, setActiveSection] = useState<SectionId>("main");
+    const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
     const [configuration, setConfiguration] = useState<ExamConfiguration>(
         () => existingExam?.configuration ?? { ...defaultConfiguration(), ...initialBasics },
     );
@@ -391,6 +395,16 @@ export function ExamAdminPanel({
             return;
         }
 
+        const deadline = getRegistrationDeadline(configuration);
+        const opensAt = Date.parse(configuration.registration_opens_at ?? "");
+        // An existing opening time later than the deadline cannot be saved with an earlier close.
+        const applyDeadline = publishing && exam?.status === "draft" &&
+            (!Number.isFinite(opensAt) || opensAt < deadline) &&
+            Date.parse(configuration.registration_closes_at ?? "") !== deadline;
+        const configurationToSave = applyDeadline
+            ? { ...configuration, registration_closes_at: new Date(deadline).toISOString() }
+            : configuration;
+
         setSaving(true);
         let saved = exam;
         let stage: "settings" | "slots" | "publish" = "settings";
@@ -403,11 +417,11 @@ export function ExamAdminPanel({
             if (!saved) {
                 saved = await examApi.create(workspaceId, configuration);
                 setCreatedExam(saved);
-            } else if (configurationChanged) {
+            } else if (configurationChanged || applyDeadline) {
                 saved = await examApi.replaceSettings(workspaceId, saved.id, {
                     expected_version: saved.current_settings_version,
-                    reason: reason.trim(),
-                    configuration,
+                    reason: configurationChanged ? reason.trim() : "Установлен срок закрытия записи",
+                    configuration: configurationToSave,
                 });
             }
             await queryClient.cancelQueries({ queryKey: queryKeys.exams.detail(workspaceId, saved.id) });
@@ -542,6 +556,13 @@ export function ExamAdminPanel({
         }
         return result;
     }, [registrationsQuery.data, hiddenRegistrationId]);
+
+    const savedSlots = slotsQuery.data?.items ?? [];
+    const hasSlotGap = hasEarlierFreeSlots(savedSlots);
+    const reviewAssignments = savedSlots.flatMap((slot) => {
+        const registration = assignedRegistrationBySlot.get(slot.id);
+        return registration ? [{ slot, registration }] : [];
+    });
 
     const assignedProjectIds = useMemo(
         () =>
@@ -1299,6 +1320,15 @@ export function ExamAdminPanel({
                                     </button>
                                 </div>
                             )}
+                            {hasSlotGap && (
+                                <div className="rounded-xl border border-app-border bg-app-badge-amber p-4 text-[13px] text-app-badge-amber-fg">
+                                    <p className="font-semibold">Есть свободные слоты раньше записанных</p>
+                                    <p className="mt-1">В расписании есть паузы. При необходимости перенесите команды в более ранние слоты.</p>
+                                    <button type="button" onClick={() => setActiveSection("queue")} className="mt-3 cursor-pointer font-semibold underline underline-offset-4">
+                                        Перейти к слотам
+                                    </button>
+                                </div>
+                            )}
                             <dl className="grid gap-3 sm:grid-cols-2">
                                 <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Название</dt><dd className="mt-1 font-semibold">{configuration.title || "—"}</dd></div>
                                 <div className="rounded-[12px] border border-gray-200 p-4"><dt className="text-[12px] text-app-muted">Начало</dt><dd className="mt-1 font-semibold">{new Date(configuration.starts_at).toLocaleString("ru-RU")}</dd></div>
@@ -1328,6 +1358,21 @@ export function ExamAdminPanel({
                                     </button>
                                 </div>
                             </div>
+                            {reviewAssignments.length > 0 && (
+                                <div className="rounded-[12px] border border-gray-200 p-4">
+                                    <h3 className="mb-2 text-[13px] font-semibold text-app-text">Время защиты команд</h3>
+                                    <Tooltip.Provider delay={100}>
+                                        <ul className="divide-y divide-gray-200 text-[13px]">
+                                            {reviewAssignments.map(({ slot, registration }) => (
+                                                <li key={registration.id} className="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
+                                                    <span>{projectById.get(registration.project_id)?.name ?? `Проект №${registration.project_id}`}</span>
+                                                    <ApproximateDefenseTime value={slot.starts_at} />
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </Tooltip.Provider>
+                                </div>
+                            )}
                             {exam && (
                                 <div className="rounded-[12px] border border-gray-200 p-4">
                                     <p className="mb-3 text-[13px] font-semibold text-app-text">История версий</p>

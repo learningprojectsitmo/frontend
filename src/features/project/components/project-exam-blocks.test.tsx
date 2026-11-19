@@ -126,6 +126,7 @@ describe("project exam blocks", () => {
     });
 
     it("requires a free slot before submitting the team registration", async () => {
+        vi.setSystemTime(new Date("2026-11-18T08:00:00Z"));
         await render();
         await act(async () => {
             [...container.querySelectorAll("button")]
@@ -151,6 +152,29 @@ describe("project exam blocks", () => {
             await vi.advanceTimersByTimeAsync(0);
         });
         expect(examApi.register).toHaveBeenCalledWith(1, 2, { project_id: 7, slot_id: 8 }, true);
+    });
+
+    it("offers an open exam when another compatible exam is already running", async () => {
+        vi.setSystemTime(new Date("2026-11-18T08:00:00Z"));
+        const runningExam = {
+            ...exam,
+            id: 3,
+            configuration: { ...exam.configuration, starts_at: "2026-11-18T07:59:00Z" },
+        };
+        vi.mocked(useExams).mockReturnValue({ data: { items: [runningExam, exam] } } as ReturnType<
+            typeof useExams
+        >);
+        await render();
+
+        expect(container.textContent).toContain("Запишитесь на экзамен");
+        expect(container.querySelector('a[href*="examId=2"]')).toBeTruthy();
+    });
+
+    it("hides registration exactly one hour before the exam", async () => {
+        vi.setSystemTime(new Date("2026-11-18T08:00:02Z"));
+        await render();
+
+        expect(container.textContent).not.toContain("Запишитесь на экзамен");
     });
 
     it("prefers a registered exam even if its project type changed", async () => {

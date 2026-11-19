@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageWorkspaceExams } from "./use-exam-workspaces";
+import { canManageWorkspaceExams, canRegisterOwnProject } from "./use-exam-workspaces";
 
 describe("exam management access", () => {
     it.each([
@@ -31,4 +31,10 @@ describe("exam management access", () => {
         expect(canManageWorkspaceExams("teacher", undefined, true)).toBe(true);
         expect(canManageWorkspaceExams("manager", undefined, true)).toBe(false);
     });
+});
+
+it("allows an admin to register an owned project when their workspace role is manager", () => {
+    expect(canRegisterOwnProject("admin", "manager")).toBe(true);
+    expect(canRegisterOwnProject("admin", "admin")).toBe(false);
+    expect(canRegisterOwnProject("admin", null)).toBe(false);
 });

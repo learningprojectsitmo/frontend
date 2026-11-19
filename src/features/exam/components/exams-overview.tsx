@@ -396,13 +396,13 @@ export function ExamsOverview({
             queryFn: () => examApi.queue(exam.workspace_id, exam.id),
             refetchInterval: ({ state }) => {
                 const currentTime = Date.now();
-                if (isExamOver(getExamStatus(exam, state.data, currentTime))) return false;
+                if (isExamOver(getExamStatus(exam, state.data, currentTime, state.dataUpdatedAt))) return false;
                 return Date.parse(exam.configuration.starts_at) > currentTime ? 30_000 : 5_000;
             },
         })),
     });
     const statusByExam = new Map(
-        visibleExams.map((exam, index) => [exam.id, getExamStatus(exam, queueQueries[index]?.data, now)]),
+        visibleExams.map((exam, index) => [exam.id, getExamStatus(exam, queueQueries[index]?.data, now, queueQueries[index]?.dataUpdatedAt)]),
     );
 
     const registrationRequests = access.manageable.flatMap((space) =>

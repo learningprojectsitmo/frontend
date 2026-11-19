@@ -47,19 +47,6 @@ export function getProjectExamState(
     return { status: "finished" as const, end: lastFinish || scheduledEnd };
 }
 
-export function getExamRegistrationWindow(exam: Exam) {
-    return {
-        opens: Math.max(
-            Date.parse(exam.published_at ?? ""),
-            Date.parse(exam.configuration.registration_opens_at ?? "") || 0,
-        ),
-        closes: Math.min(
-            Date.parse(exam.configuration.starts_at),
-            Date.parse(exam.configuration.registration_closes_at ?? "") || Infinity,
-        ),
-    };
-}
-
 const pluralRules = new Intl.PluralRules("ru");
 const dayForms: Partial<Record<Intl.LDMLPluralRule, string>> = { one: "день", few: "дня" };
 const hourForms: Partial<Record<Intl.LDMLPluralRule, string>> = { one: "час", few: "часа" };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt, Exam, ExamQueue, QueueItem } from "@/types/exam";
-import { getExamStatus } from "./exam-display";
+import { getExamStatus, getQueueTime, isAssessmentOpen } from "./exam-display";
 
 const start = Date.parse("2026-11-19T10:00:00Z");
 const exam: Exam = {
@@ -101,6 +101,34 @@ describe("exam status", () => {
             "running",
         );
         expect(getExamStatus(exam, queue(finished), start)).toBe("finished");
+    });
+
+    it("keeps the last assessment open until the server deadline despite client clock skew", () => {
+        const closesAt = start + 180_000;
+        const finished: QueueItem = {
+            ...team,
+            state: "finished",
+            attempt: {
+                ...attempt,
+                status: "finished",
+                finished_at: exam.configuration.starts_at,
+                assessment_window: {
+                    opened_at: exam.configuration.starts_at,
+                    closes_at: new Date(closesAt).toISOString(),
+                    project_type_id: 1,
+                    settings_version: 1,
+                },
+            },
+        };
+        const snapshot = queue(finished);
+        const receivedAt = start + 3600_000;
+
+        expect(isAssessmentOpen(team, start)).toBe(false);
+        expect(isAssessmentOpen(finished, start - 1)).toBe(false);
+        expect(isAssessmentOpen(finished, getQueueTime(snapshot, receivedAt, receivedAt))).toBe(true);
+        expect(isAssessmentOpen(finished, closesAt)).toBe(false);
+        expect(getExamStatus(exam, snapshot, receivedAt + 179_999, receivedAt)).toBe("running");
+        expect(getExamStatus(exam, snapshot, receivedAt + 180_000, receivedAt)).toBe("finished");
     });
 
     it("marks a past exam with only no-shows as passed", () => {

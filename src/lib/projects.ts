@@ -163,6 +163,10 @@ export const updateProject = async ({
     return await api.put(`/projects/${id}`, data);
 };
 
+export const getCreatedProjects = async (): Promise<MyProjectListResponse> => {
+    return await api.get("/projects/created");
+};
+
 export const getRecentProjects = async (): Promise<MyProjectListResponse> => {
     return await api.get("/projects/my");
 };

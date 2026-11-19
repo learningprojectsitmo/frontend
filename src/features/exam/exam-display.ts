@@ -1,4 +1,4 @@
-import type { Exam, ExamQueue } from "@/types/exam";
+import type { Exam, ExamConfiguration, ExamQueue, QueueItem } from "@/types/exam";
 
 export type ExamStatus =
     | "soon"
@@ -9,12 +9,24 @@ export type ExamStatus =
     | "planned"
     | "passed";
 
-export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: number): ExamStatus {
+export function isAssessmentOpen(item: QueueItem, serverNow: number) {
+    const window = item.attempt?.assessment_window;
+    return item.state === "finished" && Boolean(window &&
+        Date.parse(window.opened_at) <= serverNow && serverNow < Date.parse(window.closes_at));
+}
+
+export function getQueueTime(queue: ExamQueue | undefined, now: number, receivedAt: number) {
+    return queue ? Date.parse(queue.server_now) + Math.max(0, now - receivedAt) : now;
+}
+
+export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: number, receivedAt?: number): ExamStatus {
     if (exam.status !== "published") return "draft";
 
     const items = queue?.items ?? [];
     const unfinished = items.some((item) => item.state === "waiting" || item.state === "postponed");
     if (items.some((item) => item.state === "running")) return "running";
+    const serverNow = receivedAt === undefined ? now : getQueueTime(queue, now, receivedAt);
+    if (items.some((item) => isAssessmentOpen(item, serverNow))) return "running";
     // The API finishes a team's defense. The whole exam ends once the last team finishes.
     if (items.some((item) => item.attempt?.finished_at)) return unfinished ? "running" : "finished";
     if (items.some((item) => item.attempt?.started_at)) return "running";
@@ -45,10 +57,16 @@ export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: num
 export const isExamOver = (status: ExamStatus) => status === "finished" || status === "passed";
 
 export const statusMeta: Record<ExamStatus, { label: string; className: string }> = {
-    waiting: { label: "Ожидается начало", className: "bg-[--status-inprogress-bg] text-blue-800 dark:text-blue-300" },
+    waiting: {
+        label: "Ожидается начало",
+        className: "bg-[--status-inprogress-bg] text-blue-800 dark:text-blue-300",
+    },
     finished: { label: "Завершён", className: "bg-[--status-planned-bg] text-gray-700" },
     soon: { label: "Скоро", className: "bg-app-badge-amber text-app-badge-amber-fg" },
-    running: { label: "Идёт", className: "bg-[--status-completed-bg] text-green-800 dark:text-green-300" },
+    running: {
+        label: "Идёт",
+        className: "bg-[--status-completed-bg] text-green-800 dark:text-green-300",
+    },
     draft: { label: "Черновик", className: "bg-gray-100 text-gray-600" },
     planned: { label: "Запланирован", className: "bg-app-ghost text-gray-600" },
     passed: { label: "Экзамен прошёл", className: "bg-[--status-planned-bg] text-gray-700" },
@@ -90,3 +108,29 @@ export function formatExamDate(value: string) {
 
 export const formatExamTime = (value: string) =>
     new Date(value).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
+export function getRegistrationDeadline(configuration: ExamConfiguration) {
+    return Math.min(
+        Date.parse(configuration.starts_at) - 60 * 60_000,
+        Date.parse(configuration.registration_closes_at ?? "") || Infinity,
+    );
+}
+
+export function getExamRegistrationWindow(exam: Exam) {
+    return {
+        opens: Math.max(
+            Date.parse(exam.published_at ?? ""),
+            Date.parse(exam.configuration.registration_opens_at ?? "") || 0,
+        ),
+        closes: getRegistrationDeadline(exam.configuration),
+        cancellationCloses: Math.min(
+            Date.parse(exam.configuration.starts_at),
+            Date.parse(exam.configuration.registration_closes_at ?? "") || Infinity,
+        ),
+    };
+}
+
+export function isExamRegistrationOpen(exam: Exam, now: number) {
+    const { opens, closes } = getExamRegistrationWindow(exam);
+    return exam.status === "published" && opens <= now && now < closes;
+}

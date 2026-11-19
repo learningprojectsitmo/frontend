@@ -1,3 +1,5 @@
+import type { ExamSlot, Registration } from "@/types/exam";
+
 export type LocalSlot = {
     key: string;
     id?: number;
@@ -56,4 +58,50 @@ export function resizeDraftSlots(slots: LocalSlot[], durationMinutes: number): L
                 ends_at: new Date(start + duration).toISOString(),
             };
         });
+}
+
+export function hasEarlierFreeSlots(slots: readonly ExamSlot[]) {
+    const lastBookedStart = slots.reduce(
+        (latest, slot) =>
+            slot.is_available ? latest : Math.max(latest, Date.parse(slot.starts_at)),
+        -Infinity,
+    );
+    return slots.some((slot) => slot.is_available && Date.parse(slot.starts_at) < lastBookedStart);
+}
+
+export function planSlotCompaction(
+    slots: readonly ExamSlot[],
+    registrations: readonly Registration[],
+    now = -Infinity,
+) {
+    const occupied = new Map(
+        registrations
+            .filter((registration) => registration.status === "active")
+            .map((registration) => [registration.slot_id, registration]),
+    );
+    const free: ExamSlot[] = [];
+    const moves: { registration: Registration; from: ExamSlot; to: ExamSlot }[] = [];
+    for (const slot of [...slots].sort(
+        (a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at),
+    )) {
+        const registration = occupied.get(slot.id);
+        if (slot.is_available && !registration) {
+            if (Date.parse(slot.ends_at) > now) free.push(slot);
+        } else if (
+            !slot.is_available &&
+            registration &&
+            !registration.started_at &&
+            !registration.queue_hold &&
+            Date.parse(slot.ends_at) > now &&
+            free.length
+        ) {
+            const to = free.shift()!;
+            moves.push({ registration, from: slot, to });
+            free.push(slot);
+        } else {
+            // Keep teams on their side of occupied slots that cannot be moved.
+            free.length = 0;
+        }
+    }
+    return moves;
 }

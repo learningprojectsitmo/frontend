@@ -335,7 +335,11 @@ describe("exam form", () => {
         const revised = {
             ...exam,
             current_settings_version: 4,
-            configuration: { ...exam.configuration, title: "Новое название" },
+            configuration: {
+                ...exam.configuration,
+                title: "Новое название",
+                registration_closes_at: new Date(Date.parse(startsAt) - 60 * 60_000).toISOString(),
+            },
         };
         const replace = vi.spyOn(examApi, "replaceSettings").mockResolvedValue(revised);
         const published = { ...revised, status: "published" as const };

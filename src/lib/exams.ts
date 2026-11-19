@@ -176,7 +176,7 @@ export const examApi = {
     moveRegistration: (
         workspaceId: number,
         examId: number,
-        registration: Registration,
+        registration: Pick<Registration, "id" | "version">,
         targetSlotId: number,
     ) =>
         api.post<{ source: Registration; target: Registration }>(
@@ -224,7 +224,7 @@ export const examApi = {
         workspaceId: number,
         examId: number,
         attemptId: number,
-        action: "questions" | "pause" | "resume" | "finish",
+        action: "questions" | "pause" | "resume" | "finish" | "postpone" | "restart",
         expected_version: number,
         reason?: string,
     ) =>
@@ -279,18 +279,18 @@ export const useExam = (workspaceId: number, examId: number) =>
         enabled: workspaceId > 0 && examId > 0,
     });
 
-export const useExamSlots = (workspaceId: number, examId: number) =>
+export const useExamSlots = (workspaceId: number, examId: number, enabled = true) =>
     useQuery({
         queryKey: queryKeys.exams.slots(workspaceId, examId),
         queryFn: () => examApi.slots(workspaceId, examId),
-        enabled: workspaceId > 0 && examId > 0,
+        enabled: enabled && workspaceId > 0 && examId > 0,
     });
 
-export const useExamRegistrations = (workspaceId: number, examId: number, self = false) =>
+export const useExamRegistrations = (workspaceId: number, examId: number, self = false, enabled = true) =>
     useQuery({
         queryKey: queryKeys.exams.registrations(workspaceId, examId, self),
         queryFn: () => examApi.registrations(workspaceId, examId, self),
-        enabled: workspaceId > 0 && examId > 0,
+        enabled: enabled && workspaceId > 0 && examId > 0,
     });
 
 export const useExamQueue = (workspaceId: number, examId: number, enabled = true) =>

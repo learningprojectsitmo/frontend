@@ -13,6 +13,7 @@ export default function ExamEditRoute() {
     const navigate = useNavigate();
     const workspaceId = Number(params.get("workspaceId") || 0);
     const examId = Number(examIdParam || 0);
+    const initialSection = params.get("section") === "queue" ? "queue" : "main";
     const access = useExamWorkspaces(workspaceId);
     const projectTypes = useProjectTypes(workspaceId, access.canManage);
     const exam = useExam(workspaceId, access.canManage ? examId : 0);
@@ -47,13 +48,17 @@ export default function ExamEditRoute() {
         <ContentLayout title="Редактирование экзамена">
             <div className="mx-auto max-w-7xl p-4 sm:p-8">
                 <ExamAdminPanel
-                    key={`${workspaceId}:${examId}`}
+                    key={`${workspaceId}:${examId}:${initialSection}`}
+                    initialSection={initialSection}
                     workspaceId={workspaceId}
                     workspaceName={workspaceName}
                     projectTypes={projectTypes.data ?? []}
                     exam={exam.data}
                     onCancel={() => navigate(paths.app.examManage.getHref(workspaceId))}
-                    onSaved={(saved) => navigate(paths.app.examEdit.getHref(workspaceId, saved.id))}
+                    onSaved={(saved) => navigate(
+                        paths.app.examEdit.getHref(workspaceId, saved.id) +
+                        (initialSection === "queue" ? "&section=queue" : ""),
+                    )}
                 />
             </div>
         </ContentLayout>

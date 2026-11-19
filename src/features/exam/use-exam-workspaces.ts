@@ -16,6 +16,13 @@ export function canManageWorkspaceExams(
     );
 }
 
+export function canRegisterOwnProject(
+    globalRole: string,
+    workspaceRole: string | null | undefined,
+) {
+    return typeof workspaceRole === "string" && (workspaceRole || globalRole) === "manager";
+}
+
 async function getWorkspaceRole(workspaceId: number, userId: number) {
     let page = 1;
     while (true) {
@@ -71,10 +78,7 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
     );
     return {
         spaces,
-        canSelfRegister:
-            checkRegistrationRole &&
-            typeof memberships[0]?.data === "string" &&
-            (memberships[0].data || role) === "manager",
+        canSelfRegister: checkRegistrationRole && canRegisterOwnProject(role, memberships[0]?.data),
         isMenuLoading: user.isLoading || menu.isLoading,
         manageable,
         canManage:
