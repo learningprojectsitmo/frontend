@@ -12,7 +12,9 @@ export default function ExamNewRoute() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
     const workspaceId = Number(params.get("workspaceId") || 0);
-    const [selection, setSelection] = useState<{ id: number; basics?: ExamBasics }>({ id: workspaceId });
+    const [selection, setSelection] = useState<{ id: number; basics?: ExamBasics }>({
+        id: workspaceId,
+    });
     const selectedWorkspaceId = selection.id;
     const access = useExamWorkspaces();
     const canCreate = selectedWorkspaceId
@@ -41,8 +43,11 @@ export default function ExamNewRoute() {
     if (projectTypes.isError && !projectTypes.data) {
         return (
             <ContentLayout title="Создание экзамена">
-                <ExamErrorState message="Не удалось загрузить типы проектов."
-                    retry={() => void projectTypes.refetch()} pending={projectTypes.isFetching} />
+                <ExamErrorState
+                    message="Не удалось загрузить типы проектов."
+                    retry={() => void projectTypes.refetch()}
+                    pending={projectTypes.isFetching}
+                />
             </ContentLayout>
         );
     }

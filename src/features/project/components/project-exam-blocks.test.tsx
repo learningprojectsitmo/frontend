@@ -179,7 +179,14 @@ describe("project exam blocks", () => {
         const deadline = "2026-11-18T08:00:02Z";
         vi.setSystemTime(new Date(deadline));
         vi.mocked(useExams).mockReturnValue({
-            data: { items: [{ ...exam, configuration: { ...exam.configuration, registration_closes_at: deadline } }] },
+            data: {
+                items: [
+                    {
+                        ...exam,
+                        configuration: { ...exam.configuration, registration_closes_at: deadline },
+                    },
+                ],
+            },
         } as ReturnType<typeof useExams>);
         await render();
 
@@ -209,9 +216,13 @@ describe("project exam blocks", () => {
             id: 3,
             configuration: { ...exam.configuration, starts_at: "2026-11-17T09:00:00Z" },
         };
-        vi.mocked(useExams).mockReturnValue({ data: { items: [exam, pastExam] } } as ReturnType<typeof useExams>);
+        vi.mocked(useExams).mockReturnValue({ data: { items: [exam, pastExam] } } as ReturnType<
+            typeof useExams
+        >);
         client.setQueryData(["exams", "queue", "1", "3"], {
-            items: [{ project_id: 7, state: "finished", attempt: { finished_at: now.toISOString() } }],
+            items: [
+                { project_id: 7, state: "finished", attempt: { finished_at: now.toISOString() } },
+            ],
         });
         await render();
         expect(container.textContent).toContain("Запись с");
@@ -225,8 +236,18 @@ describe("project exam blocks", () => {
         });
         client.setQueryData([...gradingKey(1, 2), "editions", 17], {
             items: [
-                { version: 1, published_at: now.toISOString(), final_score: "22.00", snapshot: { max_score: "25.00" } },
-                { version: 2, published_at: null, final_score: "24.00", snapshot: { max_score: "25.00" } },
+                {
+                    version: 1,
+                    published_at: now.toISOString(),
+                    final_score: "22.00",
+                    snapshot: { max_score: "25.00" },
+                },
+                {
+                    version: 2,
+                    published_at: null,
+                    final_score: "24.00",
+                    snapshot: { max_score: "25.00" },
+                },
             ],
         });
 

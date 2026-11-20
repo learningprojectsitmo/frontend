@@ -25,9 +25,21 @@ async function render(overrides: Partial<ComponentProps<typeof ExamPresentation>
     await act(async () => {
         root.render(
             <MemoryRouter>
-                <ExamPresentation canManage pending={false} canGoForward={false} canStart={false} inTransition={false}
-                    timer={timer} attempt={attempt} onToggle={vi.fn()} onQuestions={vi.fn()} onPrevious={vi.fn()}
-                    onNext={vi.fn()} timerSettingsHref="/settings" {...overrides} />
+                <ExamPresentation
+                    canManage
+                    pending={false}
+                    canGoForward={false}
+                    canStart={false}
+                    inTransition={false}
+                    timer={timer}
+                    attempt={attempt}
+                    onToggle={vi.fn()}
+                    onQuestions={vi.fn()}
+                    onPrevious={vi.fn()}
+                    onNext={vi.fn()}
+                    timerSettingsHref="/settings"
+                    {...overrides}
+                />
                 <Location />
             </MemoryRouter>,
         );
@@ -35,8 +47,9 @@ async function render(overrides: Partial<ComponentProps<typeof ExamPresentation>
 }
 
 async function click(text: string) {
-    const element = [...document.querySelectorAll<HTMLElement>("button, a")].find((item) =>
-        item.textContent?.trim() === text || item.getAttribute("aria-label") === text);
+    const element = [...document.querySelectorAll<HTMLElement>("button, a")].find(
+        (item) => item.textContent?.trim() === text || item.getAttribute("aria-label") === text,
+    );
     expect(element, text).toBeDefined();
     await act(async () => element?.click());
 }
@@ -54,8 +67,15 @@ afterEach(() => {
 
 describe("exam presentation controls", () => {
     it("shows the last defense action in the current presentation card", async () => {
-        await render({ team, finishLastDefenseAction: <button type="button">Завершить выступление последней команды</button> });
-        const card = [...container.querySelectorAll("section")].find((section) => section.querySelector("h2")?.textContent === "Текущее выступление");
+        await render({
+            team,
+            finishLastDefenseAction: (
+                <button type="button">Завершить выступление последней команды</button>
+            ),
+        });
+        const card = [...container.querySelectorAll("section")].find(
+            (section) => section.querySelector("h2")?.textContent === "Текущее выступление",
+        );
         expect(card?.textContent).toContain("Завершить выступление последней команды");
         expect(card?.textContent).not.toContain("Следующая команда");
     });
@@ -63,7 +83,10 @@ describe("exam presentation controls", () => {
     it("disables Play for the first team until the exam is prepared", async () => {
         const onToggle = vi.fn();
         await render({ attempt: undefined, timer: idleTimer, team, onToggle });
-        expect(container.querySelector<HTMLButtonElement>('[aria-label="Начать выступление"]')?.disabled).toBe(true);
+        expect(
+            container.querySelector<HTMLButtonElement>('[aria-label="Начать выступление"]')
+                ?.disabled,
+        ).toBe(true);
         await click("Начать выступление");
         expect(onToggle).not.toHaveBeenCalled();
     });
@@ -92,7 +115,9 @@ describe("exam presentation controls", () => {
         });
         expect(container.textContent).toContain("Переход между командами");
         await click("Начать выступление");
-        expect(container.textContent).toContain("Выступление начнётся автоматически после перехода.");
+        expect(container.textContent).toContain(
+            "Выступление начнётся автоматически после перехода.",
+        );
         expect(onToggle).toHaveBeenCalledOnce();
     });
 

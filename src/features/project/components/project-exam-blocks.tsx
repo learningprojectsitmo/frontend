@@ -1,15 +1,33 @@
 import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useEffect, useState } from "react";
-import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    queryOptions,
+    useMutation,
+    useQueries,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { paths } from "@/config/paths";
-import { formatExamDate, formatExamRegistrationWindow, getRegistrationDeadline, isExamRegistrationOpen } from "@/features/exam/exam-display";
+import {
+    formatExamDate,
+    formatExamRegistrationWindow,
+    getRegistrationDeadline,
+    isExamRegistrationOpen,
+} from "@/features/exam/exam-display";
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
-import { examApi, getExamErrorCode, getExamErrorMessage, invalidateExam, useExams, useExamSlots } from "@/lib/exams";
+import {
+    examApi,
+    getExamErrorCode,
+    getExamErrorMessage,
+    invalidateExam,
+    useExams,
+    useExamSlots,
+} from "@/lib/exams";
 import { examGradingApi, gradingKey } from "@/lib/exam-grading";
 import { useProjectTypes } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
@@ -39,7 +57,9 @@ export function ProjectExamBlocks({
     const projectTypes = useProjectTypes(workspaceId);
     const [now, setNow] = useState(Date.now);
     const [booking, setBooking] = useState<{ examId: number; slotId: number | null } | null>(null);
-    const checkingBookings = isProjectAuthor && access.canSelfRegister &&
+    const checkingBookings =
+        isProjectAuthor &&
+        access.canSelfRegister &&
         exams.some((exam) => isExamRegistrationOpen(exam, now));
     const queues = useQueries({
         queries: exams.map((exam) =>
@@ -49,7 +69,8 @@ export function ProjectExamBlocks({
                 structuralSharing: shareExamQueue,
                 staleTime: 30_000,
                 refetchInterval: (query) =>
-                    checkingBookings || Date.parse(exam.configuration.starts_at) > Date.now() ||
+                    checkingBookings ||
+                    Date.parse(exam.configuration.starts_at) > Date.now() ||
                     query.state.data?.items.some(
                         (item) =>
                             item.state === "waiting" ||
@@ -89,8 +110,11 @@ export function ProjectExamBlocks({
         upcoming[0] ??
         byStart.at(-1);
 
-    const defense = exam ? queueFor(exam)?.items.find((item) =>
-        item.project_id === projectId && item.state === "finished")?.attempt : null;
+    const defense = exam
+        ? queueFor(exam)?.items.find(
+              (item) => item.project_id === projectId && item.state === "finished",
+          )?.attempt
+        : null;
     const canReadGrade = isTeamMember && access.canManageResults && Boolean(exam && defense);
     const grades = useQuery({
         queryKey: [...gradingKey(workspaceId, exam?.id ?? 0), "editions", defense?.id ?? 0],
@@ -100,7 +124,10 @@ export function ProjectExamBlocks({
         staleTime: 30_000,
         refetchInterval: canReadGrade ? 30_000 : false,
     });
-    const grade = canReadGrade && grades.isSuccess ? grades.data.items.filter((item) => item.published_at).at(-1) : undefined;
+    const grade =
+        canReadGrade && grades.isSuccess
+            ? grades.data.items.filter((item) => item.published_at).at(-1)
+            : undefined;
 
     const slots = useExamSlots(workspaceId, booking?.examId ?? exam?.id ?? 0);
     const slotsEnd =
@@ -113,8 +140,10 @@ export function ProjectExamBlocks({
               booking && booking.examId !== exam.id ? 0 : slotsEnd,
           )
         : null;
-    const ticking = (exam && access.canSelfRegister && now < getRegistrationDeadline(exam.configuration)) ||
-        state?.status === "upcoming" || (state?.status === "running" && now < state.end);
+    const ticking =
+        (exam && access.canSelfRegister && now < getRegistrationDeadline(exam.configuration)) ||
+        state?.status === "upcoming" ||
+        (state?.status === "running" && now < state.end);
     const examId = exam?.id;
     useEffect(() => {
         if (!examId) return;
@@ -145,7 +174,9 @@ export function ProjectExamBlocks({
             await Promise.all([
                 invalidateExam(client, workspaceId, targetId),
                 ...(getExamErrorCode(error) === "project_already_registered"
-                    ? queues.flatMap((query, index) => exams[index]?.id === targetId ? [] : [query.refetch()])
+                    ? queues.flatMap((query, index) =>
+                          exams[index]?.id === targetId ? [] : [query.refetch()],
+                      )
                     : []),
             ]);
             setBooking(null);
@@ -192,12 +223,19 @@ export function ProjectExamBlocks({
                         </span>
                         <div className="min-w-0">
                             <h2 className="font-semibold text-app-text">Опубликованная оценка</h2>
-                            <p className="break-words text-sm text-app-muted">{exam.configuration.title}</p>
+                            <p className="break-words text-sm text-app-muted">
+                                {exam.configuration.title}
+                            </p>
                         </div>
                     </div>
                     <div className="text-right tabular-nums text-app-text">
-                        <strong className="text-2xl">{Number(grade.final_score).toLocaleString("ru-RU")}</strong>
-                        <span className="text-sm text-app-muted"> из {Number(grade.snapshot.max_score).toLocaleString("ru-RU")}</span>
+                        <strong className="text-2xl">
+                            {Number(grade.final_score).toLocaleString("ru-RU")}
+                        </strong>
+                        <span className="text-sm text-app-muted">
+                            {" "}
+                            из {Number(grade.snapshot.max_score).toLocaleString("ru-RU")}
+                        </span>
                     </div>
                 </div>
             )}
@@ -208,7 +246,10 @@ export function ProjectExamBlocks({
                         key={`${exam.id}-${state.status}`}
                         className="min-w-0 flex-1 basis-28 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300"
                     >
-                        <h2 aria-live="polite" className="text-xl font-semibold [overflow-wrap:anywhere]">
+                        <h2
+                            aria-live="polite"
+                            className="text-xl font-semibold [overflow-wrap:anywhere]"
+                        >
                             {state.status === "running" ||
                             (state.status === "finished" && registered) ? (
                                 <Link
@@ -253,7 +294,11 @@ export function ProjectExamBlocks({
                                 </>
                             )}
                         </h2>
-                        {access.canSelfRegister && <p className="mt-1 text-sm text-white/80">{formatExamRegistrationWindow(exam)}</p>}
+                        {access.canSelfRegister && (
+                            <p className="mt-1 text-sm text-white/80">
+                                {formatExamRegistrationWindow(exam)}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <Link
@@ -337,9 +382,16 @@ export function ProjectExamBlocks({
                                     !freeSlots.some((slot) => slot.id === booking.slotId))
                             }
                             onClick={() => {
-                                if (!booking || booking.examId !== exam.id || !canBook ||
-                                    !slots.data || slots.isError ||
-                                    (slots.data.items.length > 0 && !freeSlots.some((slot) => slot.id === booking.slotId))) return;
+                                if (
+                                    !booking ||
+                                    booking.examId !== exam.id ||
+                                    !canBook ||
+                                    !slots.data ||
+                                    slots.isError ||
+                                    (slots.data.items.length > 0 &&
+                                        !freeSlots.some((slot) => slot.id === booking.slotId))
+                                )
+                                    return;
                                 if (!isExamRegistrationOpen(exam, Date.now())) {
                                     toast.error("Запись на экзамен уже закрылась.");
                                     setBooking(null);

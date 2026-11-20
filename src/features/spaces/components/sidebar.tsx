@@ -120,10 +120,7 @@ export const Sidebar = memo(function Sidebar({
             staleTime: 60 * 1000,
         })),
     });
-    const examsCount = examQueries.reduce(
-        (sum, query) => sum + (query.data?.items.length ?? 0),
-        0,
-    );
+    const examsCount = examQueries.reduce((sum, query) => sum + (query.data?.items.length ?? 0), 0);
 
     return (
         <>
@@ -398,7 +395,12 @@ export const Sidebar = memo(function Sidebar({
                                                 Экзамены
                                             </span>
                                             <span className="text-[11px] text-app-muted font-medium leading-tight">
-                                                {examsCount} {examsCount === 1 ? "экзамен" : examsCount >= 2 && examsCount <= 4 ? "экзамена" : "экзаменов"}
+                                                {examsCount}{" "}
+                                                {examsCount === 1
+                                                    ? "экзамен"
+                                                    : examsCount >= 2 && examsCount <= 4
+                                                      ? "экзамена"
+                                                      : "экзаменов"}
                                             </span>
                                         </div>
                                     </NavLink>

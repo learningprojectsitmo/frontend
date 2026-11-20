@@ -16,23 +16,38 @@ afterEach(() => vi.restoreAllMocks());
 
 it("offers only projects with no active registration on a published exam", async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-    const exam = { id: 1, workspace_id: 2, status: "published", configuration: { project_type_ids: [7] } } as Exam;
+    const exam = {
+        id: 1,
+        workspace_id: 2,
+        status: "published",
+        configuration: { project_type_ids: [7] },
+    } as Exam;
     const list = vi.spyOn(examApi, "list").mockResolvedValue({
-        items: [exam, { ...exam, id: 3 }], has_more: false, limit: 100, offset: 0,
+        items: [exam, { ...exam, id: 3 }],
+        has_more: false,
+        limit: 100,
+        offset: 0,
     });
     const queue = vi.spyOn(examApi, "queue").mockResolvedValue({
         items: [{ project_id: 9, state: "finished" }],
     } as ExamQueue);
     vi.spyOn(examApi, "slots").mockResolvedValue({ items: [], has_more: false });
-    const projects = [{ id: 9, name: "Команда уже защитилась" }, { id: 10, name: "Свободная команда" }];
+    const projects = [
+        { id: 9, name: "Команда уже защитилась" },
+        { id: 10, name: "Свободная команда" },
+    ];
     vi.mocked(getProjectsList).mockResolvedValue({
-        items: projects, total_pages: 1,
+        items: projects,
+        total_pages: 1,
     } as Awaited<ReturnType<typeof getProjectsList>>);
-    vi.mocked(getProject).mockImplementation(async (id) => ({
-        ...projects.find((project) => String(project.id) === id),
-        workspace_id: 2,
-        project_type_id: 7,
-    } as ProjectFullResponse));
+    vi.mocked(getProject).mockImplementation(
+        async (id) =>
+            ({
+                ...projects.find((project) => String(project.id) === id),
+                workspace_id: 2,
+                project_type_id: 7,
+            }) as ProjectFullResponse,
+    );
 
     const container = document.body.appendChild(document.createElement("div"));
     const root = createRoot(container);
@@ -41,14 +56,23 @@ it("offers only projects with no active registration on a published exam", async
         await act(async () => {
             root.render(
                 <QueryClientProvider client={client}>
-                    <ExamRegistrationAssign exam={exam} assignedIds={new Set()} onQueue={vi.fn()} onClose={vi.fn()} />
+                    <ExamRegistrationAssign
+                        exam={exam}
+                        assignedIds={new Set()}
+                        onQueue={vi.fn()}
+                        onClose={vi.fn()}
+                    />
                 </QueryClientProvider>,
             );
         });
         let trigger: HTMLButtonElement | undefined;
         for (let index = 0; index < 4 && !trigger; index++) {
-            await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
-            trigger = [...document.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Выберите команду");
+            await act(async () => {
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            });
+            trigger = [...document.querySelectorAll("button")].find(
+                (button) => button.textContent?.trim() === "Выберите команду",
+            );
         }
         expect(list).toHaveBeenCalledWith(2, "published");
         expect(queue).toHaveBeenCalledWith(2, 3);

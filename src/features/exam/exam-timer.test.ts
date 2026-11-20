@@ -50,7 +50,6 @@ describe("getExamTimer", () => {
     });
 });
 
-
 describe("getExamTransitionTimer", () => {
     const finished = {
         attempt: { ...attempt, status: "finished", finished_at: iso(start) },
@@ -84,7 +83,12 @@ describe("automatic start after a transition", () => {
         state: "finished",
         attempt: { ...attempt, id: 10, status: "finished", finished_at: iso(start) },
     } as QueueItem;
-    const following = { registration_id: 2, position: 1, state: "waiting", attempt: null } as QueueItem;
+    const following = {
+        registration_id: 2,
+        position: 1,
+        state: "waiting",
+        attempt: null,
+    } as QueueItem;
     const plan = {
         finishedAttemptId: 10,
         registrationId: 2,
@@ -96,14 +100,23 @@ describe("automatic start after a transition", () => {
         const items = [finished, following];
         expect(getExamAutoStartState(plan, items, start + 59_999)).toBe("waiting");
         expect(getExamAutoStartState(plan, items, start + 60_000)).toBe("ready");
-        expect(getExamAutoStartState({ ...plan, deadline: start, transitionMinutes: 0 }, items, start)).toBe("ready");
+        expect(
+            getExamAutoStartState({ ...plan, deadline: start, transitionMinutes: 0 }, items, start),
+        ).toBe("ready");
     });
 
     it("cancels when another team becomes next or a different attempt has started", () => {
-        expect(getExamAutoStartState(plan, [finished, { ...following, registration_id: 3 }], start)).toBe("changed");
+        expect(
+            getExamAutoStartState(plan, [finished, { ...following, registration_id: 3 }], start),
+        ).toBe("changed");
         const running = { ...following, state: "running", position: null } satisfies QueueItem;
         expect(getExamAutoStartState(plan, [finished, following, running], start)).toBe("changed");
-        const newer = { ...finished, attempt: { ...finished.attempt!, id: 11, finished_at: iso(start + 1000) } };
-        expect(getExamAutoStartState(plan, [finished, newer, following], start + 60_000)).toBe("changed");
+        const newer = {
+            ...finished,
+            attempt: { ...finished.attempt!, id: 11, finished_at: iso(start + 1000) },
+        };
+        expect(getExamAutoStartState(plan, [finished, newer, following], start + 60_000)).toBe(
+            "changed",
+        );
     });
 });

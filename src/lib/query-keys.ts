@@ -183,13 +183,22 @@ export const queryKeys = {
         slots: (workspaceId: string | number, examId: string | number) =>
             ["exams", "slots", String(workspaceId), String(examId)] as const,
         registrations: (workspaceId: string | number, examId: string | number, self = false) =>
-            ["exams", "registrations", String(workspaceId), String(examId), self ? "self" : "all"] as const,
+            [
+                "exams",
+                "registrations",
+                String(workspaceId),
+                String(examId),
+                self ? "self" : "all",
+            ] as const,
         queue: (workspaceId: string | number, examId: string | number) =>
             ["exams", "queue", String(workspaceId), String(examId)] as const,
         currentAttempt: (workspaceId: string | number, examId: string | number) =>
             ["exams", "attempts", "current", String(workspaceId), String(examId)] as const,
-        attempt: (workspaceId: string | number, examId: string | number, attemptId: string | number) =>
-            ["exams", "attempt", String(workspaceId), String(examId), String(attemptId)] as const,
+        attempt: (
+            workspaceId: string | number,
+            examId: string | number,
+            attemptId: string | number,
+        ) => ["exams", "attempt", String(workspaceId), String(examId), String(attemptId)] as const,
     },
 };
 

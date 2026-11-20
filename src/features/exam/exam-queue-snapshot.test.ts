@@ -16,10 +16,16 @@ it("preserves the WebSocket snapshot and its clock anchor when an older REST req
         eta: { current: null, items: [] },
     };
     let complete!: (value: ExamQueue) => void;
-    const pending = new Promise<ExamQueue>((resolve) => { complete = resolve; });
+    const pending = new Promise<ExamQueue>((resolve) => {
+        complete = resolve;
+    });
     const now = vi.spyOn(Date, "now").mockReturnValue(2000);
     try {
-        const request = client.fetchQuery({ queryKey, queryFn: () => pending, structuralSharing: shareExamQueue });
+        const request = client.fetchQuery({
+            queryKey,
+            queryFn: () => pending,
+            structuralSharing: shareExamQueue,
+        });
         client.setQueryData(queryKey, saved);
         now.mockReturnValue(3000);
         complete({ ...saved, queue_revision: 1, server_now: "2026-11-20T10:00:00Z" });

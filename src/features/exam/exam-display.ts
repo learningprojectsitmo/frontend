@@ -11,24 +11,40 @@ export type ExamStatus =
     | "passed";
 
 export function canChangeExamRegistration(item: QueueItem) {
-    return !item.started_at && !item.attempt && item.state !== "running" && item.state !== "finished";
+    return (
+        !item.started_at && !item.attempt && item.state !== "running" && item.state !== "finished"
+    );
 }
 
 export function isAssessmentOpen(item: QueueItem, serverNow: number) {
     const window = item.attempt?.assessment_window;
-    return item.state === "finished" && Boolean(window &&
-        Date.parse(window.opened_at) <= serverNow && serverNow < Date.parse(window.closes_at));
+    return (
+        item.state === "finished" &&
+        Boolean(
+            window &&
+            Date.parse(window.opened_at) <= serverNow &&
+            serverNow < Date.parse(window.closes_at),
+        )
+    );
 }
 
 export function getQueueTime(queue: ExamQueue | undefined, now: number, receivedAt: number) {
-    return queue ? Date.parse(queue.server_now) + Math.max(0, now - getExamQueueReceivedAt(queue, receivedAt)) : now;
+    return queue
+        ? Date.parse(queue.server_now) +
+              Math.max(0, now - getExamQueueReceivedAt(queue, receivedAt))
+        : now;
 }
 
 export function shouldShowExamSchedule(startsAt: string, serverNow: number, hasStarted: boolean) {
     return !hasStarted && serverNow < Date.parse(startsAt);
 }
 
-export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: number, receivedAt?: number): ExamStatus {
+export function getExamStatus(
+    exam: Exam,
+    queue: ExamQueue | undefined,
+    now: number,
+    receivedAt?: number,
+): ExamStatus {
     if (exam.status !== "published") return "draft";
 
     const items = queue?.items ?? [];
@@ -41,7 +57,8 @@ export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: num
     if (items.some((item) => item.attempt?.started_at)) return "running";
 
     const startsAt = Date.parse(exam.configuration.starts_at);
-    if (serverNow < startsAt) return startsAt - serverNow <= 7 * 24 * 60 * 60 * 1000 ? "soon" : "planned";
+    if (serverNow < startsAt)
+        return startsAt - serverNow <= 7 * 24 * 60 * 60 * 1000 ? "soon" : "planned";
 
     const {
         presentation_minutes,
@@ -70,15 +87,24 @@ export const statusMeta: Record<ExamStatus, { label: string; className: string }
         label: "Ожидается начало",
         className: "bg-[--status-inprogress-bg] text-blue-800 dark:text-blue-300",
     },
-    finished: { label: "Завершён", className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200" },
+    finished: {
+        label: "Завершён",
+        className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200",
+    },
     soon: { label: "Скоро", className: "bg-app-badge-amber text-app-badge-amber-fg" },
     running: {
         label: "Идёт",
         className: "bg-[--status-completed-bg] text-green-800 dark:text-green-300",
     },
-    draft: { label: "Черновик", className: "bg-gray-100 dark:bg-app-ghost text-gray-600 dark:text-app-muted" },
+    draft: {
+        label: "Черновик",
+        className: "bg-gray-100 dark:bg-app-ghost text-gray-600 dark:text-app-muted",
+    },
     planned: { label: "Запланирован", className: "bg-app-ghost text-gray-600 dark:text-app-muted" },
-    passed: { label: "Экзамен прошёл", className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200" },
+    passed: {
+        label: "Экзамен прошёл",
+        className: "bg-[--status-planned-bg] text-gray-700 dark:text-slate-200",
+    },
 };
 
 const statusPriority: Record<ExamStatus, number> = {
@@ -121,7 +147,9 @@ export const formatExamTime = (value: string) =>
 export function getRegistrationDeadline(configuration: ExamConfiguration) {
     return Math.min(
         Date.parse(configuration.starts_at),
-        configuration.registration_closes_at ? Date.parse(configuration.registration_closes_at) : Infinity,
+        configuration.registration_closes_at
+            ? Date.parse(configuration.registration_closes_at)
+            : Infinity,
     );
 }
 
@@ -129,7 +157,9 @@ export function getExamRegistrationWindow(exam: Exam) {
     return {
         opens: Math.max(
             Date.parse(exam.published_at ?? ""),
-            exam.configuration.registration_opens_at ? Date.parse(exam.configuration.registration_opens_at) : -Infinity,
+            exam.configuration.registration_opens_at
+                ? Date.parse(exam.configuration.registration_opens_at)
+                : -Infinity,
         ),
         closes: getRegistrationDeadline(exam.configuration),
     };
@@ -137,7 +167,8 @@ export function getExamRegistrationWindow(exam: Exam) {
 
 export function formatExamRegistrationWindow(exam: Exam) {
     const { opens, closes } = getExamRegistrationWindow(exam);
-    if (!Number.isFinite(opens) || !Number.isFinite(closes) || opens >= closes) return "У этого экзамена нет доступного окна записи.";
+    if (!Number.isFinite(opens) || !Number.isFinite(closes) || opens >= closes)
+        return "У этого экзамена нет доступного окна записи.";
     return `Запись с ${formatExamDate(new Date(opens).toISOString())} до ${formatExamDate(new Date(closes).toISOString())}.`;
 }
 

@@ -380,10 +380,13 @@ const SpaceRoute = () => {
                     onShareOpen={() => setShareOpen(true)}
                     onCreateProject={() => setCreateDialogOpen(true)}
                     examsLoading={examAccess.isLoading}
-                    onExamsOpen={() => navigate(examAccess.canManage
-                        ? paths.app.examManage.getHref(spaceData.id)
-                        : paths.app.exams.getHref(spaceData.id)
-                    )}
+                    onExamsOpen={() =>
+                        navigate(
+                            examAccess.canManage
+                                ? paths.app.examManage.getHref(spaceData.id)
+                                : paths.app.exams.getHref(spaceData.id),
+                        )
+                    }
                 />
 
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

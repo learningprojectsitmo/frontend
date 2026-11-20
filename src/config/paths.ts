@@ -88,7 +88,9 @@ export const paths = {
         examStatement: {
             path: "/app/exams/vedomost",
             getHref: (workspaceId = 0) =>
-                workspaceId > 0 ? `/app/exams/vedomost?workspaceId=${encodeURIComponent(workspaceId)}` : "/app/exams/vedomost",
+                workspaceId > 0
+                    ? `/app/exams/vedomost?workspaceId=${encodeURIComponent(workspaceId)}`
+                    : "/app/exams/vedomost",
         },
         examManage: {
             path: "/app/exams/manage",

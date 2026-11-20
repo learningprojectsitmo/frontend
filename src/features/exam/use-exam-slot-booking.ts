@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
-import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    queryOptions,
+    useMutation,
+    useQueries,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useUser } from "@/lib/auth";
@@ -47,13 +53,15 @@ export function useExamSlotBooking(
     const exams = useExams(enabled ? workspaceId : 0, "published");
     const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now));
     const otherRegistrations = useQueries({
-        queries: (enabled && isOpen ? exams.data?.items ?? [] : [])
+        queries: (enabled && isOpen ? (exams.data?.items ?? []) : [])
             .filter((item) => item.id !== examId)
-            .map((item) => queryOptions({
-                queryKey: queryKeys.exams.registrations(workspaceId, item.id, true),
-                queryFn: () => examApi.registrations(workspaceId, item.id, true),
-                refetchInterval: 15_000,
-            })),
+            .map((item) =>
+                queryOptions({
+                    queryKey: queryKeys.exams.registrations(workspaceId, item.id, true),
+                    queryFn: () => examApi.registrations(workspaceId, item.id, true),
+                    refetchInterval: 15_000,
+                }),
+            ),
     });
 
     const confirming = useRef(false);
@@ -63,7 +71,8 @@ export function useExamSlotBooking(
 
     const active = registrations.data?.items.filter((item) => item.status === "active") ?? [];
     const eligible = projects.flatMap(({ data, isSuccess }) =>
-        isSuccess && data &&
+        isSuccess &&
+        data &&
         data.author_id === user.data?.id &&
         data.workspace_id === workspaceId &&
         data.project_type_id !== null &&
@@ -71,14 +80,22 @@ export function useExamSlotBooking(
             ? [data]
             : [],
     );
-    const otherBookedIds = new Set(otherRegistrations.flatMap((query) => query.data?.items ?? [])
-        .filter((registration) => registration.status === "active" || registration.started_at)
-        .map((registration) => registration.project_id));
-    const bookedIds = new Set((registrations.data?.items ?? [])
-        .filter((registration) => registration.status === "active" || registration.started_at)
-        .map((registration) => registration.project_id));
-    const bookableProjects = eligible.filter((project) => !bookedIds.has(project.id) && !otherBookedIds.has(project.id));
-    const selected = bookableProjects.find((project) => project.id === projectId) ?? bookableProjects[0];
+    const otherBookedIds = new Set(
+        otherRegistrations
+            .flatMap((query) => query.data?.items ?? [])
+            .filter((registration) => registration.status === "active" || registration.started_at)
+            .map((registration) => registration.project_id),
+    );
+    const bookedIds = new Set(
+        (registrations.data?.items ?? [])
+            .filter((registration) => registration.status === "active" || registration.started_at)
+            .map((registration) => registration.project_id),
+    );
+    const bookableProjects = eligible.filter(
+        (project) => !bookedIds.has(project.id) && !otherBookedIds.has(project.id),
+    );
+    const selected =
+        bookableProjects.find((project) => project.id === projectId) ?? bookableProjects[0];
     const loading =
         slots.isPending ||
         registrations.isPending ||
@@ -91,8 +108,7 @@ export function useExamSlotBooking(
         myProjects.isError ||
         (isOpen && (exams.isError || otherRegistrations.some((query) => query.isError))) ||
         (eligible.length === 0 && projects.some((query) => query.isError));
-    const canBook =
-        enabled && isOpen && !loading && !error && Boolean(selected);
+    const canBook = enabled && isOpen && !loading && !error && Boolean(selected);
     const canCancel = (registration: Registration) =>
         enabled &&
         isOpen &&
@@ -133,7 +149,9 @@ export function useExamSlotBooking(
                       "Команда отменила запись",
                       true,
                   ),
-        onSettled: () => { confirming.current = false; },
+        onSettled: () => {
+            confirming.current = false;
+        },
         onSuccess: async (_, target) => {
             await invalidateExam(client, workspaceId, examId);
             setSelecting(false);
@@ -184,7 +202,8 @@ export function useExamSlotBooking(
                 setAction({ kind: "book", slot, projectId: selected.id });
         },
         bookWithoutSlot: () => {
-            if (inMode && selected && available.length === 0) setAction({ kind: "book", slot: null, projectId: selected.id });
+            if (inMode && selected && available.length === 0)
+                setAction({ kind: "book", slot: null, projectId: selected.id });
         },
         selectCancellation: (registration: Registration) =>
             setAction({ kind: "cancel", registration }),

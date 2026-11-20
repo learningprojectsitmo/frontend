@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 
-export function ExamErrorState({ message, retry, pending }: {
+export function ExamErrorState({
+    message,
+    retry,
+    pending,
+}: {
     message: string;
     retry?: () => void;
     pending?: boolean;

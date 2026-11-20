@@ -108,7 +108,13 @@ describe("slot compaction", () => {
 
     it("fills the earliest free slots at start and keeps held teams in place", () => {
         const moves = planSlotCompaction(
-            [savedSlot(1, true), savedSlot(2, false), savedSlot(3, true), savedSlot(4, false), savedSlot(5, false)],
+            [
+                savedSlot(1, true),
+                savedSlot(2, false),
+                savedSlot(3, true),
+                savedSlot(4, false),
+                savedSlot(5, false),
+            ],
             [bookedTeam(10, 2), { ...bookedTeam(20, 4), queue_hold: "no_show" }, bookedTeam(30, 5)],
         );
         expect(moves.map(({ from, to }) => [from.id, to.id])).toEqual([[2, 1]]);

@@ -15,12 +15,20 @@ export function ExamTimeHint({ message }: { message: string }) {
     return (
         <Tooltip.Provider delay={100}>
             <Tooltip.Root>
-                <Tooltip.Trigger type="button" aria-label={message}
-                    className="inline-flex cursor-help items-center rounded text-app-muted focus-visible:outline focus-visible:outline-2">
+                <Tooltip.Trigger
+                    type="button"
+                    aria-label={message}
+                    className="inline-flex cursor-help items-center rounded text-app-muted focus-visible:outline focus-visible:outline-2"
+                >
                     <Icon name="info" size={16} />
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
-                    <Tooltip.Positioner positionMethod="fixed" sideOffset={8} collisionPadding={8} className="z-[500]">
+                    <Tooltip.Positioner
+                        positionMethod="fixed"
+                        sideOffset={8}
+                        collisionPadding={8}
+                        className="z-[500]"
+                    >
                         <Tooltip.Popup className="w-max max-w-[min(280px,var(--available-width))] whitespace-normal rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-3 text-xs leading-5 text-app-text shadow-lg">
                             {message}
                         </Tooltip.Popup>
@@ -31,7 +39,13 @@ export function ExamTimeHint({ message }: { message: string }) {
     );
 }
 
-export function ApproximateDefenseTime({ value, message = approximateTimeMessage }: { value: string; message?: string }) {
+export function ApproximateDefenseTime({
+    value,
+    message = approximateTimeMessage,
+}: {
+    value: string;
+    message?: string;
+}) {
     return (
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
             {formatExamTime(value)}

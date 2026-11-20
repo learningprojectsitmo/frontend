@@ -64,7 +64,13 @@ export default function ExamManagementRoute() {
                             </select>
                         </label>
                         {scoped && access.resultSpaces.length > 0 && (
-                            <Button asChild hasIconAsChild variant="outline" size="hug36" className="!h-10 !rounded-xl">
+                            <Button
+                                asChild
+                                hasIconAsChild
+                                variant="outline"
+                                size="hug36"
+                                className="!h-10 !rounded-xl"
+                            >
                                 <Link to={paths.app.examStatement.getHref(workspaceId)}>
                                     <Icon name="list" size={16} />
                                     Ведомость

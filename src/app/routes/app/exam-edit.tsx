@@ -38,10 +38,19 @@ export default function ExamEditRoute() {
     if (!exam.data || isExamAccessDenied(exam.error)) {
         return (
             <ContentLayout title="Редактирование экзамена">
-                <ExamErrorState message={isExamAccessDenied(exam.error) || !exam.isError
-                    ? "Экзамен недоступен." : "Не удалось загрузить экзамен."}
-                    retry={exam.isError && !isExamAccessDenied(exam.error) ? () => void exam.refetch() : undefined}
-                    pending={exam.isFetching} />
+                <ExamErrorState
+                    message={
+                        isExamAccessDenied(exam.error) || !exam.isError
+                            ? "Экзамен недоступен."
+                            : "Не удалось загрузить экзамен."
+                    }
+                    retry={
+                        exam.isError && !isExamAccessDenied(exam.error)
+                            ? () => void exam.refetch()
+                            : undefined
+                    }
+                    pending={exam.isFetching}
+                />
             </ContentLayout>
         );
     }
@@ -49,8 +58,11 @@ export default function ExamEditRoute() {
     if (projectTypes.isError && !projectTypes.data) {
         return (
             <ContentLayout title="Редактирование экзамена">
-                <ExamErrorState message="Не удалось загрузить типы проектов."
-                    retry={() => void projectTypes.refetch()} pending={projectTypes.isFetching} />
+                <ExamErrorState
+                    message="Не удалось загрузить типы проектов."
+                    retry={() => void projectTypes.refetch()}
+                    pending={projectTypes.isFetching}
+                />
             </ContentLayout>
         );
     }
@@ -66,10 +78,12 @@ export default function ExamEditRoute() {
                     projectTypes={projectTypes.data ?? []}
                     exam={exam.data}
                     onCancel={() => navigate(paths.app.examManage.getHref(workspaceId))}
-                    onSaved={(saved) => navigate(
-                        paths.app.examEdit.getHref(workspaceId, saved.id) +
-                        (initialSection === "queue" ? "&section=queue" : ""),
-                    )}
+                    onSaved={(saved) =>
+                        navigate(
+                            paths.app.examEdit.getHref(workspaceId, saved.id) +
+                                (initialSection === "queue" ? "&section=queue" : ""),
+                        )
+                    }
                 />
             </div>
         </ContentLayout>

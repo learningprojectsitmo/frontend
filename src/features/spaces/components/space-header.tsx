@@ -155,7 +155,7 @@ export function SpaceHeader({
                 <Button
                     variant="outline"
                     size="hug36"
-                    icon={<Icon name={"exam"}/>}
+                    icon={<Icon name={"exam"} />}
                     disabled={examsLoading}
                     onClick={onExamsOpen}
                 >

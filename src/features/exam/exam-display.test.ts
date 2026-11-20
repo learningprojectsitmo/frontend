@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt, Exam, ExamQueue, QueueItem } from "@/types/exam";
-import { canChangeExamRegistration, formatExamDate, formatExamRegistrationWindow, getExamStatus, getQueueTime, isAssessmentOpen, isExamRegistrationOpen, shouldShowExamSchedule } from "./exam-display";
+import {
+    canChangeExamRegistration,
+    formatExamDate,
+    formatExamRegistrationWindow,
+    getExamStatus,
+    getQueueTime,
+    isAssessmentOpen,
+    isExamRegistrationOpen,
+    shouldShowExamSchedule,
+} from "./exam-display";
 
 const start = Date.parse("2026-11-19T10:00:00Z");
 const exam: Exam = {
@@ -136,7 +145,9 @@ describe("exam status", () => {
 
         expect(isAssessmentOpen(team, start)).toBe(false);
         expect(isAssessmentOpen(finished, start - 1)).toBe(false);
-        expect(isAssessmentOpen(finished, getQueueTime(snapshot, receivedAt, receivedAt))).toBe(true);
+        expect(isAssessmentOpen(finished, getQueueTime(snapshot, receivedAt, receivedAt))).toBe(
+            true,
+        );
         expect(isAssessmentOpen(finished, closesAt)).toBe(false);
         expect(getExamStatus(exam, snapshot, receivedAt + 179_999, receivedAt)).toBe("running");
         expect(getExamStatus(exam, snapshot, receivedAt + 180_000, receivedAt)).toBe("finished");
@@ -157,12 +168,18 @@ describe("exam registration period", () => {
         const publishedExam: Exam = {
             ...exam,
             published_at: publishedAt,
-            configuration: { ...exam.configuration, registration_opens_at: opensAt, registration_closes_at: closesAt },
+            configuration: {
+                ...exam.configuration,
+                registration_opens_at: opensAt,
+                registration_closes_at: closesAt,
+            },
         };
         expect(formatExamRegistrationWindow(publishedExam)).toBe(
             `Запись с ${formatExamDate(publishedAt)} до ${formatExamDate(closesAt)}.`,
         );
-        expect(formatExamRegistrationWindow({ ...publishedExam, published_at: closesAt })).toContain("нет доступного окна");
+        expect(
+            formatExamRegistrationWindow({ ...publishedExam, published_at: closesAt }),
+        ).toContain("нет доступного окна");
     });
 
     it("leaves registration open until the server's default cutoff at the exam start", () => {
@@ -191,7 +208,13 @@ describe("exam action eligibility", () => {
     it("keeps registration management separate from management of a started attempt", () => {
         expect(canChangeExamRegistration(team)).toBe(true);
         expect(canChangeExamRegistration({ ...team, state: "no_show" })).toBe(true);
-        expect(canChangeExamRegistration({ ...team, state: "postponed", started_at: attempt.started_at })).toBe(false);
+        expect(
+            canChangeExamRegistration({
+                ...team,
+                state: "postponed",
+                started_at: attempt.started_at,
+            }),
+        ).toBe(false);
         expect(canChangeExamRegistration({ ...team, state: "running", attempt })).toBe(false);
         expect(canChangeExamRegistration({ ...team, state: "finished", attempt })).toBe(false);
     });

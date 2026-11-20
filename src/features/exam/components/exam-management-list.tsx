@@ -36,29 +36,30 @@ export function ExamManagementList({
                       queryFn: () => examApi.list(workspace.id),
                   })),
     });
-    const examsItems = workspaceId > 0
-        ? selectedQuery.data?.items ?? []
-        : allQueries.flatMap((query) => query.data?.items ?? []);
+    const examsItems =
+        workspaceId > 0
+            ? (selectedQuery.data?.items ?? [])
+            : allQueries.flatMap((query) => query.data?.items ?? []);
     const isLoading =
         workspaceId > 0 ? selectedQuery.isLoading : allQueries.some((query) => query.isLoading);
-    const hasLoadError = workspaceId > 0 ? selectedQuery.isError : allQueries.some((query) => query.isError);
+    const hasLoadError =
+        workspaceId > 0 ? selectedQuery.isError : allQueries.some((query) => query.isError);
     const [tab, setTab] = useState<"all" | "mine">("all");
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState<ExamStatus | "all">("all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const filtered = examsItems
-            .filter((exam) => tab !== "mine" || exam.created_by === user?.id)
-            .filter((exam) => status === "all" || exam.status === status)
-            .filter((exam) =>
-                exam.configuration.title.toLowerCase().includes(search.trim().toLowerCase()),
-            )
-            .sort(
-                (a, b) =>
-                    new Date(a.configuration.starts_at).getTime() -
-                    new Date(b.configuration.starts_at).getTime(),
-            );
-
+        .filter((exam) => tab !== "mine" || exam.created_by === user?.id)
+        .filter((exam) => status === "all" || exam.status === status)
+        .filter((exam) =>
+            exam.configuration.title.toLowerCase().includes(search.trim().toLowerCase()),
+        )
+        .sort(
+            (a, b) =>
+                new Date(a.configuration.starts_at).getTime() -
+                new Date(b.configuration.starts_at).getTime(),
+        );
 
     return (
         <div className="flex flex-col gap-5">
@@ -74,7 +75,10 @@ export function ExamManagementList({
                 />
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted"
+                        />
                         <input
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
@@ -94,10 +98,22 @@ export function ExamManagementList({
                         <option value="published">Опубликованные</option>
                     </select>
                     <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface">
-                        <button type="button" onClick={() => setViewMode("grid")} aria-label="Карточки" aria-pressed={viewMode === "grid"} className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("grid")}
+                            aria-label="Карточки"
+                            aria-pressed={viewMode === "grid"}
+                            className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
+                        >
                             <Icon name="grid" size={16} />
                         </button>
-                        <button type="button" onClick={() => setViewMode("list")} aria-label="Таблица" aria-pressed={viewMode === "list"} className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("list")}
+                            aria-label="Таблица"
+                            aria-pressed={viewMode === "list"}
+                            className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
+                        >
                             <List size={16} />
                         </button>
                     </div>
@@ -112,24 +128,40 @@ export function ExamManagementList({
                 </div>
             </div>
 
-            {hasLoadError && <ExamErrorState message="Не удалось загрузить все экзамены."
-                retry={() => {
-                    if (workspaceId > 0) void selectedQuery.refetch();
-                    else allQueries.filter((query) => query.isError).forEach((query) => void query.refetch());
-                }}
-                pending={workspaceId > 0 ? selectedQuery.isFetching : allQueries.some((query) => query.isFetching)}
-            />}
+            {hasLoadError && (
+                <ExamErrorState
+                    message="Не удалось загрузить все экзамены."
+                    retry={() => {
+                        if (workspaceId > 0) void selectedQuery.refetch();
+                        else
+                            allQueries
+                                .filter((query) => query.isError)
+                                .forEach((query) => void query.refetch());
+                    }}
+                    pending={
+                        workspaceId > 0
+                            ? selectedQuery.isFetching
+                            : allQueries.some((query) => query.isFetching)
+                    }
+                />
+            )}
             {isLoading ? (
-                <div className="flex h-48 items-center justify-center"><Spinner /></div>
-            ) : filtered.length === 0 ? (hasLoadError ? null :
-                <div className="rounded-[20px] border border-dashed border-gray-300 dark:border-app-border py-16 text-center">
-                    <p className="text-[14px] font-medium text-app-text">
-                        {tab === "mine" ? "У вас пока нет экзаменов" : "Экзамены не найдены"}
-                    </p>
-                    <p className="mt-1 text-[13px] text-app-muted">
-                        {tab === "mine" ? "Создайте первый экзамен для своей дисциплины." : "Измените поиск или создайте новый экзамен."}
-                    </p>
+                <div className="flex h-48 items-center justify-center">
+                    <Spinner />
                 </div>
+            ) : filtered.length === 0 ? (
+                hasLoadError ? null : (
+                    <div className="rounded-[20px] border border-dashed border-gray-300 dark:border-app-border py-16 text-center">
+                        <p className="text-[14px] font-medium text-app-text">
+                            {tab === "mine" ? "У вас пока нет экзаменов" : "Экзамены не найдены"}
+                        </p>
+                        <p className="mt-1 text-[13px] text-app-muted">
+                            {tab === "mine"
+                                ? "Создайте первый экзамен для своей дисциплины."
+                                : "Измените поиск или создайте новый экзамен."}
+                        </p>
+                    </div>
+                )
             ) : viewMode === "grid" ? (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))]">
                     {filtered.map((exam) => (
@@ -138,16 +170,14 @@ export function ExamManagementList({
                             workspaceId={exam.workspace_id}
                             exam={exam}
                             workspaceName={
-                                workspaces.find((workspace) => workspace.id === exam.workspace_id)?.title
+                                workspaces.find((workspace) => workspace.id === exam.workspace_id)
+                                    ?.title
                             }
                         />
                     ))}
                 </div>
             ) : (
-                <ExamManagementTable
-                    workspaces={workspaces}
-                    exams={filtered}
-                />
+                <ExamManagementTable workspaces={workspaces} exams={filtered} />
             )}
         </div>
     );
@@ -168,22 +198,42 @@ function ExamManagementCard({
                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-2.5 py-1 text-[12px] font-medium text-gray-600 dark:text-app-muted">
                     {exam.status === "published" ? "Опубликован" : "Черновик"}
                 </span>
-                <span className="text-[12px] font-bold text-app-text">{formatExamDate(exam.configuration.starts_at)}</span>
+                <span className="text-[12px] font-bold text-app-text">
+                    {formatExamDate(exam.configuration.starts_at)}
+                </span>
             </div>
-            <h3 title={exam.configuration.title} className="mt-5 line-clamp-2 text-[17px] font-bold text-app-text [overflow-wrap:anywhere]">
-                <Link to={paths.app.examEdit.getHref(workspaceId, exam.id)} className="after:absolute after:inset-0">
+            <h3
+                title={exam.configuration.title}
+                className="mt-5 line-clamp-2 text-[17px] font-bold text-app-text [overflow-wrap:anywhere]"
+            >
+                <Link
+                    to={paths.app.examEdit.getHref(workspaceId, exam.id)}
+                    className="after:absolute after:inset-0"
+                >
                     {exam.configuration.title}
                 </Link>
             </h3>
             {workspaceName && (
-                <p title={workspaceName} className="mt-2 truncate text-[12px] font-medium text-app-blue dark:text-blue-300">{workspaceName}</p>
+                <p
+                    title={workspaceName}
+                    className="mt-2 truncate text-[12px] font-medium text-app-blue dark:text-blue-300"
+                >
+                    {workspaceName}
+                </p>
             )}
             {exam.configuration.description && (
-                <p title={exam.configuration.description} className="mt-2 line-clamp-2 text-[13px] text-app-muted [overflow-wrap:anywhere]">{exam.configuration.description}</p>
+                <p
+                    title={exam.configuration.description}
+                    className="mt-2 line-clamp-2 text-[13px] text-app-muted [overflow-wrap:anywhere]"
+                >
+                    {exam.configuration.description}
+                </p>
             )}
             {exam.status === "published" && (
-                <Link to={paths.app.examView.getHref(workspaceId, exam.id)}
-                    className="relative z-10 mt-4 inline-flex rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300">
+                <Link
+                    to={paths.app.examView.getHref(workspaceId, exam.id)}
+                    className="relative z-10 mt-4 inline-flex rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300"
+                >
                     Перейти на страницу экзамена
                 </Link>
             )}
@@ -212,32 +262,54 @@ function ExamManagementTable({
                 </thead>
                 <tbody>
                     {exams.map((exam) => (
-                        <tr key={exam.id} className="group border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
+                        <tr
+                            key={exam.id}
+                            className="group border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost"
+                        >
                             <td className="px-6 py-4">
-                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} title={exam.configuration.title} className="block max-w-64 truncate text-[14px] font-medium text-app-blue hover:underline dark:text-blue-300">
+                                <Link
+                                    to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)}
+                                    title={exam.configuration.title}
+                                    className="block max-w-64 truncate text-[14px] font-medium text-app-blue hover:underline dark:text-blue-300"
+                                >
                                     {exam.configuration.title}
                                 </Link>
                             </td>
                             <td className="px-6 py-4">
                                 <Link
                                     to={`/app/space?id=${exam.workspace_id}`}
-                                    title={workspaces.find((workspace) => workspace.id === exam.workspace_id)?.title}
+                                    title={
+                                        workspaces.find(
+                                            (workspace) => workspace.id === exam.workspace_id,
+                                        )?.title
+                                    }
                                     className="block max-w-52 truncate text-[13px] font-medium text-app-blue hover:underline dark:text-blue-300"
                                 >
-                                    {workspaces.find((workspace) => workspace.id === exam.workspace_id)?.title ??
-                                        `Пространство ${exam.workspace_id}`}
+                                    {workspaces.find(
+                                        (workspace) => workspace.id === exam.workspace_id,
+                                    )?.title ?? `Пространство ${exam.workspace_id}`}
                                 </Link>
                             </td>
-                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{exam.status === "published" ? "Опубликован" : "Черновик"}</td>
-                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
+                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
+                                {exam.status === "published" ? "Опубликован" : "Черновик"}
+                            </td>
+                            <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
+                                {formatExamDate(exam.configuration.starts_at)}
+                            </td>
                             <td className="px-3 py-4 text-right">
                                 {exam.status === "published" && (
-                                    <Link to={paths.app.examView.getHref(exam.workspace_id, exam.id)}
-                                        className="mr-2 inline-flex whitespace-nowrap rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300">
+                                    <Link
+                                        to={paths.app.examView.getHref(exam.workspace_id, exam.id)}
+                                        className="mr-2 inline-flex whitespace-nowrap rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300"
+                                    >
                                         Перейти на страницу экзамена
                                     </Link>
                                 )}
-                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} aria-label="Редактировать экзамен" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost">
+                                <Link
+                                    to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)}
+                                    aria-label="Редактировать экзамен"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost"
+                                >
                                     <Icon name="pen" size={16} />
                                 </Link>
                             </td>

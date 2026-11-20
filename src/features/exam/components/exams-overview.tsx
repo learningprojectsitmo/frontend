@@ -38,7 +38,14 @@ import { useExamClock } from "../use-exam-clock";
 import { examApi } from "@/lib/exams";
 import type { Exam } from "@/types/exam";
 
-import { formatExamDate, getExamStatus, isExamOver, sortExamsByRelevance, statusMeta, type ExamStatus } from "../exam-display";
+import {
+    formatExamDate,
+    getExamStatus,
+    isExamOver,
+    sortExamsByRelevance,
+    statusMeta,
+    type ExamStatus,
+} from "../exam-display";
 
 export function ExamHeader({
     disciplineCount,
@@ -90,24 +97,30 @@ export function ExamHeader({
                         Создать экзамен
                     </Button>
                 )}
-                {canManage && <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            aria-label="Дополнительные действия"
-                            className="w-9 h-9 cursor-pointer p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 dark:hover:bg-app-ghost transition-colors"
-                        >
-                            <MoreHorizontal size={18} />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuPortal><DropdownMenuContent align="end" className="w-[220px]">
-                        {canManage && (
-                            <DropdownMenuItem asChild>
-                                <Link to={paths.app.examManage.getHref(manageWorkspaceId)}>Управление экзаменами</Link>
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent></DropdownMenuPortal>
-                </DropdownMenu>}
+                {canManage && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                aria-label="Дополнительные действия"
+                                className="w-9 h-9 cursor-pointer p-2 rounded-lg flex justify-center items-center hover:bg-gray-100 dark:hover:bg-app-ghost transition-colors"
+                            >
+                                <MoreHorizontal size={18} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuContent align="end" className="w-[220px]">
+                                {canManage && (
+                                    <DropdownMenuItem asChild>
+                                        <Link to={paths.app.examManage.getHref(manageWorkspaceId)}>
+                                            Управление экзаменами
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenuPortal>
+                    </DropdownMenu>
+                )}
             </div>
         </div>
     );
@@ -129,13 +142,12 @@ function ExamCard({
     const meta = statusMeta[status];
 
     return (
-        <Link
-            to={paths.app.examView.getHref(workspaceId, exam.id)}
-            className="block h-full"
-        >
+        <Link to={paths.app.examView.getHref(workspaceId, exam.id)} className="block h-full">
             <article className="h-full rounded-2xl border border-app-border bg-app-surface p-6 flex flex-col">
                 <div className="flex justify-between items-start gap-4">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${meta.className}`}>
+                    <span
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${meta.className}`}
+                    >
                         {meta.label}
                     </span>
                     <span className="shrink-0 rounded-lg border border-app-border px-1 py-2 text-[11px] font-bold text-app-text">
@@ -144,11 +156,17 @@ function ExamCard({
                 </div>
 
                 <div className="mt-6">
-                    <h3 title={exam.configuration.title} className="line-clamp-2 text-[17px] font-bold leading-6 text-app-text [overflow-wrap:anywhere]">
+                    <h3
+                        title={exam.configuration.title}
+                        className="line-clamp-2 text-[17px] font-bold leading-6 text-app-text [overflow-wrap:anywhere]"
+                    >
                         {exam.configuration.title}
                     </h3>
                     {exam.configuration.description && (
-                        <p title={exam.configuration.description} className="mt-2 line-clamp-2 text-[13px] leading-5 text-app-muted [overflow-wrap:anywhere]">
+                        <p
+                            title={exam.configuration.description}
+                            className="mt-2 line-clamp-2 text-[13px] leading-5 text-app-muted [overflow-wrap:anywhere]"
+                        >
                             {exam.configuration.description}
                         </p>
                     )}
@@ -187,12 +205,24 @@ function ExamTable({
             <table className="w-full border-collapse text-left">
                 <thead className="border-b border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost text-app-text">
                     <tr>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Статус</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Название</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Дисциплина</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Дата/время</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Проекты</th>
-                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">Команды</th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Статус
+                        </th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Название
+                        </th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Дисциплина
+                        </th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Дата/время
+                        </th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Проекты
+                        </th>
+                        <th className="h-14 whitespace-nowrap px-6 text-[15px] font-sans font-semibold">
+                            Команды
+                        </th>
                         <th className="h-14 w-14 px-3" />
                     </tr>
                 </thead>
@@ -201,9 +231,14 @@ function ExamTable({
                         const status = statusMeta[statusByExam.get(exam.id) ?? "draft"];
                         const counts = registrationByExam.get(exam.id) ?? { projects: 0, teams: 0 };
                         return (
-                            <tr key={exam.id} className="group border-b border-gray-100 dark:border-app-border transition-colors last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
+                            <tr
+                                key={exam.id}
+                                className="group border-b border-gray-100 dark:border-app-border transition-colors last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost"
+                            >
                                 <td className="px-6 py-4">
-                                    <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-medium leading-none ${status.className}`}>
+                                    <span
+                                        className={`inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-medium leading-none ${status.className}`}
+                                    >
                                         {status.label}
                                     </span>
                                 </td>
@@ -216,8 +251,17 @@ function ExamTable({
                                         {exam.configuration.title}
                                     </Link>
                                 </td>
-                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted"><span title={disciplineName} className="block max-w-52 truncate">{disciplineName}</span></td>
-                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
+                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
+                                    <span
+                                        title={disciplineName}
+                                        className="block max-w-52 truncate"
+                                    >
+                                        {disciplineName}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
+                                    {formatExamDate(exam.configuration.starts_at)}
+                                </td>
                                 <td className="px-6 py-4">
                                     <span className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-app-muted">
                                         <Icon name="project" size={14} />
@@ -233,16 +277,28 @@ function ExamTable({
                                 <td className="px-3 py-4 text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <button type="button" aria-label="Действия с экзаменом" className="cursor-pointer rounded-lg p-2 text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost">
+                                            <button
+                                                type="button"
+                                                aria-label="Действия с экзаменом"
+                                                className="cursor-pointer rounded-lg p-2 text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost"
+                                            >
                                                 <Ellipsis size={16} />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuPortal><DropdownMenuContent align="end" className="w-[220px]">
-                                            <DropdownMenuItem asChild>
-                                                <Link to={paths.app.examView.getHref(workspaceId, exam.id)}>Открыть экзамен</Link>
-                                            </DropdownMenuItem>
-                                            
-                                        </DropdownMenuContent></DropdownMenuPortal>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuContent align="end" className="w-[220px]">
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        to={paths.app.examView.getHref(
+                                                            workspaceId,
+                                                            exam.id,
+                                                        )}
+                                                    >
+                                                        Открыть экзамен
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenuPortal>
                                     </DropdownMenu>
                                 </td>
                             </tr>
@@ -272,12 +328,15 @@ function DisciplineExamList({
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const filtered = sortExamsByRelevance(
-        exams.filter((exam) => exam.status === "published")
-        .filter((exam) => {
-            const matchesSearch = exam.configuration.title.toLowerCase().includes(search.trim().toLowerCase());
-            const matchesStatus = status === "all" || statusByExam.get(exam.id) === status;
-            return matchesSearch && matchesStatus;
-        }),
+        exams
+            .filter((exam) => exam.status === "published")
+            .filter((exam) => {
+                const matchesSearch = exam.configuration.title
+                    .toLowerCase()
+                    .includes(search.trim().toLowerCase());
+                const matchesStatus = status === "all" || statusByExam.get(exam.id) === status;
+                return matchesSearch && matchesStatus;
+            }),
         statusByExam,
     );
 
@@ -287,10 +346,14 @@ function DisciplineExamList({
                 <h2 className="text-lg font-semibold text-app-text">{title}</h2>
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted"
+                        />
                         <input
                             type="text"
-                            aria-label="Поиск экзаменов" placeholder="Поиск экзаменов"
+                            aria-label="Поиск экзаменов"
+                            placeholder="Поиск экзаменов"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             className="h-10 w-[240px] pl-9 pr-3 bg-app-surface border border-gray-200 dark:border-app-border rounded-[12px] text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
@@ -313,7 +376,8 @@ function DisciplineExamList({
                         <button
                             type="button"
                             onClick={() => setViewMode("grid")}
-                            aria-label="Карточки" aria-pressed={viewMode === "grid"}
+                            aria-label="Карточки"
+                            aria-pressed={viewMode === "grid"}
                             className={`h-full cursor-pointer px-3 ${viewMode === "grid" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
                         >
                             <Icon name="grid" size={16} />
@@ -321,7 +385,8 @@ function DisciplineExamList({
                         <button
                             type="button"
                             onClick={() => setViewMode("list")}
-                            aria-label="Таблица" aria-pressed={viewMode === "list"}
+                            aria-label="Таблица"
+                            aria-pressed={viewMode === "list"}
                             className={`h-full cursor-pointer px-3 ${viewMode === "list" ? "bg-app-text text-app-background" : "text-gray-500 dark:text-app-muted"}`}
                         >
                             <List size={16} />
@@ -387,19 +452,29 @@ export function ExamsOverview({
     const now = useExamClock();
     const visibleExams = Array.from(examsByWorkspace.values()).flat();
     const queueQueries = useQueries({
-        queries: visibleExams.map((exam) => queryOptions({
-            queryKey: queryKeys.exams.queue(exam.workspace_id, exam.id),
-            queryFn: () => examApi.queue(exam.workspace_id, exam.id),
-            structuralSharing: shareExamQueue,
-            refetchInterval: ({ state }) => {
-                const currentTime = Date.now();
-                if (isExamOver(getExamStatus(exam, state.data, currentTime, state.dataUpdatedAt))) return false;
-                return Date.parse(exam.configuration.starts_at) > currentTime ? 30_000 : 5_000;
-            },
-        })),
+        queries: visibleExams.map((exam) =>
+            queryOptions({
+                queryKey: queryKeys.exams.queue(exam.workspace_id, exam.id),
+                queryFn: () => examApi.queue(exam.workspace_id, exam.id),
+                structuralSharing: shareExamQueue,
+                refetchInterval: ({ state }) => {
+                    const currentTime = Date.now();
+                    if (
+                        isExamOver(
+                            getExamStatus(exam, state.data, currentTime, state.dataUpdatedAt),
+                        )
+                    )
+                        return false;
+                    return Date.parse(exam.configuration.starts_at) > currentTime ? 30_000 : 5_000;
+                },
+            }),
+        ),
     });
     const statusByExam = new Map(
-        visibleExams.map((exam, index) => [exam.id, getExamStatus(exam, queueQueries[index]?.data, now, queueQueries[index]?.dataUpdatedAt)]),
+        visibleExams.map((exam, index) => [
+            exam.id,
+            getExamStatus(exam, queueQueries[index]?.data, now, queueQueries[index]?.dataUpdatedAt),
+        ]),
     );
 
     const registrationRequests = access.manageable.flatMap((space) =>
@@ -414,10 +489,18 @@ export function ExamsOverview({
     });
 
     const registrationByExam = (() => {
-        const result = new Map(visibleExams.map((exam, index) => {
-            const items = queueQueries[index]?.data?.items ?? [];
-            return [exam.id, { projects: new Set(items.map((item) => item.project_id)).size, teams: items.length }] as const;
-        }));
+        const result = new Map(
+            visibleExams.map((exam, index) => {
+                const items = queueQueries[index]?.data?.items ?? [];
+                return [
+                    exam.id,
+                    {
+                        projects: new Set(items.map((item) => item.project_id)).size,
+                        teams: items.length,
+                    },
+                ] as const;
+            }),
+        );
         registrationRequests.forEach(({ exam }, index) => {
             const items = registrationQueries[index]?.data?.items;
             if (!items) return;
@@ -454,7 +537,10 @@ export function ExamsOverview({
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link to="/app" className="font-sans font-medium text-[16px] text-app-muted">
+                                <Link
+                                    to="/app"
+                                    className="font-sans font-medium text-[16px] text-app-muted"
+                                >
                                     Все пространства
                                 </Link>
                             </BreadcrumbLink>
@@ -491,7 +577,11 @@ export function ExamsOverview({
                                     Все пространства
                                 </SelectItem>
                                 {access.spaces.map((space) => (
-                                    <SelectItem key={space.id} value={String(space.id)} className="cursor-pointer">
+                                    <SelectItem
+                                        key={space.id}
+                                        value={String(space.id)}
+                                        className="cursor-pointer"
+                                    >
                                         {space.title}
                                     </SelectItem>
                                 ))}
@@ -506,19 +596,31 @@ export function ExamsOverview({
 
                 {spaces.map((space, index) => {
                     const query = examQueries[index];
-                    if (query?.isError && !query.data) return (
-                        <ExamErrorState key={space.id} message={`Не удалось загрузить экзамены пространства «${space.title}».`}
-                            retry={() => void query.refetch()} pending={query.isFetching} />
+                    if (query?.isError && !query.data)
+                        return (
+                            <ExamErrorState
+                                key={space.id}
+                                message={`Не удалось загрузить экзамены пространства «${space.title}».`}
+                                retry={() => void query.refetch()}
+                                pending={query.isFetching}
+                            />
+                        );
+                    if (query?.isLoading)
+                        return (
+                            <div key={space.id} className="flex justify-center py-6">
+                                <Spinner />
+                            </div>
+                        );
+                    return (
+                        <DisciplineExamList
+                            key={space.id}
+                            workspaceId={space.id}
+                            title={space.title}
+                            exams={examsByWorkspace.get(space.id) ?? []}
+                            statusByExam={statusByExam}
+                            registrationByExam={registrationByExam}
+                        />
                     );
-                    if (query?.isLoading) return <div key={space.id} className="flex justify-center py-6"><Spinner /></div>;
-                    return <DisciplineExamList
-                        key={space.id}
-                        workspaceId={space.id}
-                        title={space.title}
-                        exams={examsByWorkspace.get(space.id) ?? []}
-                        statusByExam={statusByExam}
-                        registrationByExam={registrationByExam}
-                    />;
                 })}
             </div>
         </ContentLayout>

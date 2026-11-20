@@ -79,7 +79,9 @@ export const getExamErrorMessage = (error: unknown): string | null => {
         return "Сервер не успел ответить. Обновите данные перед повтором.";
     }
     if (isExamAccessDenied(error)) return "Действие недоступно для вашей роли или этого экзамена.";
-    return code && Object.prototype.hasOwnProperty.call(examErrorMessages, code) ? examErrorMessages[code] : null;
+    return code && Object.prototype.hasOwnProperty.call(examErrorMessages, code)
+        ? examErrorMessages[code]
+        : null;
 };
 
 const examErrorMessages: Record<string, string> = {
@@ -91,8 +93,7 @@ const examErrorMessages: Record<string, string> = {
     slot_unavailable: "Выбранный слот уже занят. Обновите список и выберите другой.",
     questions_locked:
         "По этому типу проектов уже начинали выставлять оценки на экзамене. Критерии закреплены, чтобы сохранить правила, по которым оценивали команды.",
-    settings_version_conflict:
-        "Настройки уже изменились. Обновите страницу и повторите действие.",
+    settings_version_conflict: "Настройки уже изменились. Обновите страницу и повторите действие.",
     slot_schedule_closed: "Добавлять слоты нельзя: время начала экзамена уже наступило.",
     slot_overlap: "Слоты пересекаются. Укажите непересекающиеся интервалы.",
     slot_before_exam: "Слот не может начинаться раньше начала экзамена.",
@@ -111,8 +112,7 @@ const examErrorMessages: Record<string, string> = {
     attempt_not_postponed: "Эту защиту нельзя возобновить из текущего состояния.",
     attempt_paused: "Сначала снимите защиту с паузы.",
     attempt_postponed: "Эта защита отложена.",
-    queue_position_conflict:
-        "Это место в очереди занято. Обновите очередь и повторите действие.",
+    queue_position_conflict: "Это место в очереди занято. Обновите очередь и повторите действие.",
     slot_schedule_conflict: "Начало экзамена должно быть раньше первого сохранённого слота.",
     attempt_running: "Сейчас уже идёт защита.",
     attempt_finished: "Эта защита уже завершена.",
@@ -340,7 +340,12 @@ export const useExamSlots = (workspaceId: number, examId: number, enabled = true
         enabled: enabled && workspaceId > 0 && examId > 0,
     });
 
-export const useExamRegistrations = (workspaceId: number, examId: number, self = false, enabled = true) =>
+export const useExamRegistrations = (
+    workspaceId: number,
+    examId: number,
+    self = false,
+    enabled = true,
+) =>
     useQuery({
         queryKey: queryKeys.exams.registrations(workspaceId, examId, self),
         queryFn: () => examApi.registrations(workspaceId, examId, self),

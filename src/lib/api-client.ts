@@ -146,7 +146,8 @@ const axiosInstance = Axios.create({
 
 export const api = axiosInstance as unknown as ApiClient;
 
-const examRequestPath = /\/workspaces\/\d+\/(?:exams|project-types\/\d+\/questions)(?:\/|$)|\/assessment\/question-templates(?:\/|$)/;
+const examRequestPath =
+    /\/workspaces\/\d+\/(?:exams|project-types\/\d+\/questions)(?:\/|$)|\/assessment\/question-templates(?:\/|$)/;
 const examRequestTimeoutMs = 20_000;
 
 api.interceptors.request.use((config) => {
