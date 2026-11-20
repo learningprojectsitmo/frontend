@@ -29,6 +29,7 @@ export type User = Entity<{
     vk_nickname?: string | null;
     show_my_contacts?: boolean;
     show_decorations?: boolean;
+    permissions?: string[];
 }>;
 
 export type UserUpdate = {

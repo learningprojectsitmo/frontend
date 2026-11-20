@@ -1,3 +1,5 @@
+import { paths } from "@/config/paths";
+import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import { ContentLayout } from "@/components/layouts";
 import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router";
@@ -75,6 +77,7 @@ const SpaceRoute = () => {
     const [shareOpen, setShareOpen] = useState(false);
 
     const spaceData = dataSpaces?.spaces.find((space) => String(space.id) === urlId);
+    const examAccess = useExamWorkspaces(Number(urlId) || 0, Boolean(spaceData));
     const isAuthor = spaceData?.author_id === user?.id;
 
     const createProjectMutation = useCreateProject();
@@ -376,6 +379,14 @@ const SpaceRoute = () => {
                     onSettingsOpen={() => navigate(`/app/space/settings?id=${spaceData.id}`)}
                     onShareOpen={() => setShareOpen(true)}
                     onCreateProject={() => setCreateDialogOpen(true)}
+                    examsLoading={examAccess.isLoading}
+                    onExamsOpen={() =>
+                        navigate(
+                            examAccess.canManage
+                                ? paths.app.examManage.getHref(spaceData.id)
+                                : paths.app.exams.getHref(spaceData.id),
+                        )
+                    }
                 />
 
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

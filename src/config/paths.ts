@@ -78,6 +78,45 @@ export const paths = {
             path: "/app/project",
             getHref: (id: number) => `/app/project?id=${encodeURIComponent(id)}`,
         },
+        exams: {
+            path: "/app/exams",
+            getHref: (workspaceId = 0) =>
+                workspaceId > 0
+                    ? `/app/exams?workspaceId=${encodeURIComponent(workspaceId)}`
+                    : "/app/exams",
+        },
+        examStatement: {
+            path: "/app/exams/vedomost",
+            getHref: (workspaceId = 0) =>
+                workspaceId > 0
+                    ? `/app/exams/vedomost?workspaceId=${encodeURIComponent(workspaceId)}`
+                    : "/app/exams/vedomost",
+        },
+        examManage: {
+            path: "/app/exams/manage",
+            getHref: (workspaceId: number) =>
+                `/app/exams/manage?workspaceId=${encodeURIComponent(workspaceId)}`,
+        },
+        examNew: {
+            path: "/app/exams/new",
+            getHref: (workspaceId: number) =>
+                `/app/exams/new?workspaceId=${encodeURIComponent(workspaceId)}`,
+        },
+        examEdit: {
+            path: "/app/exams/:examId/edit",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/${encodeURIComponent(examId)}/edit?workspaceId=${encodeURIComponent(workspaceId)}`,
+        },
+        examView: {
+            path: "/app/exams/view",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/view?workspaceId=${encodeURIComponent(workspaceId)}&examId=${encodeURIComponent(examId)}`,
+        },
+        examConduct: {
+            path: "/app/exams/conduct",
+            getHref: (workspaceId: number, examId: number) =>
+                `/app/exams/conduct?workspaceId=${encodeURIComponent(workspaceId)}&examId=${encodeURIComponent(examId)}`,
+        },
         applications: {
             path: "/app/applications",
             getHref: () => "/app/applications",

@@ -59,6 +59,7 @@ export default defineConfig({
             "/v1": {
                 target: "http://localhost:8000",
                 changeOrigin: true,
+                ws: true,
             },
             "/api": {
                 target: "http://localhost:9090",
@@ -82,7 +83,7 @@ export default defineConfig({
         // Алиас выше не применяется к внешним (не обработанным Vite)
         // зависимостям: их резолвит Node. `react-i18next` должен попасть в
         // конвейер Vite, иначе импорт shim снова упадёт.
-        server: { deps: { inline: ["react-i18next"] } },
+        server: { deps: { inline: ["react-i18next", "@base-ui/react", "@base-ui/utils"] } },
     },
     optimizeDeps: { exclude: ["fsevents"] },
     build: {
