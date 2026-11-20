@@ -319,12 +319,12 @@ export const useExamRegistrations = (workspaceId: number, examId: number, self =
         enabled: enabled && workspaceId > 0 && examId > 0,
     });
 
-export const useExamQueue = (workspaceId: number, examId: number, enabled = true) =>
+export const useExamQueue = (workspaceId: number, examId: number, enabled = true, live = false) =>
     useQuery({
         queryKey: queryKeys.exams.queue(workspaceId, examId),
         queryFn: () => examApi.queue(workspaceId, examId),
         enabled: enabled && workspaceId > 0 && examId > 0,
-        refetchInterval: 5000,
+        refetchInterval: live ? false : 5000,
     });
 
 export const useCurrentAttempt = (workspaceId: number, examId: number, enabled = true) =>

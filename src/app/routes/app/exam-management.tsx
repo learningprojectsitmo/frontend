@@ -2,6 +2,8 @@ import { useSearchParams, Link, useNavigate, Navigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
 
 import { ContentLayout } from "@/components/layouts";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import { paths } from "@/config/paths";
@@ -11,7 +13,8 @@ export default function ExamManagementRoute() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
     const workspaceId = Number(params.get("workspaceId") || 0);
-    const access = useExamWorkspaces(workspaceId);
+    const scoped = workspaceId > 0;
+    const access = useExamWorkspaces(workspaceId, true, false, scoped);
     const allAccess = useExamWorkspaces(0, !workspaceId || access.canManage);
 
     if (access.isLoading) {
@@ -41,24 +44,34 @@ export default function ExamManagementRoute() {
                     <h1 className="text-[26px] font-bold text-app-text sm:text-[32px]">
                         Управление экзаменами
                     </h1>
-                    <label className="text-[12px] font-medium text-app-muted">
-                        Пространство
-                        <select
-                            value={workspaceId || ""}
-                            onChange={(event) => {
-                                const next = Number(event.target.value);
-                                navigate(paths.app.examManage.getHref(next));
-                            }}
-                            className="ml-2 h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px] text-app-text"
-                        >
-                            <option value="">Все пространства</option>
-                            {allAccess.manageable.map((space) => (
-                                <option key={space.id} value={space.id}>
-                                    {space.title}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <label className="text-[12px] font-medium text-app-muted">
+                            Пространство
+                            <select
+                                value={workspaceId || ""}
+                                onChange={(event) => {
+                                    const next = Number(event.target.value);
+                                    navigate(paths.app.examManage.getHref(next));
+                                }}
+                                className="ml-2 h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px] text-app-text"
+                            >
+                                <option value="">Все пространства</option>
+                                {allAccess.manageable.map((space) => (
+                                    <option key={space.id} value={space.id}>
+                                        {space.title}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        {scoped && access.resultSpaces.length > 0 && (
+                            <Button asChild hasIconAsChild variant="outline" size="hug36" className="!h-10 !rounded-xl">
+                                <Link to={paths.app.examStatement.getHref(workspaceId)}>
+                                    <Icon name="list" size={16} />
+                                    Ведомость
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <ExamManagementList
                     workspaceId={workspaceId}

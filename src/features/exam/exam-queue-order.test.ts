@@ -44,6 +44,27 @@ describe("reconcileExamOrder", () => {
         expect(reconcileExamOrder([9, 2, 4, 8], items)).toEqual([9, 4, 2, 8]);
     });
 
+    it("places restored teams after finished and running teams even if stored earlier", () => {
+        const historicalOrder = [4, 9, 2, 8, 7];
+        const snapshot = [
+            team(9, "finished", null),
+            team(2, "running", null),
+            team(8, "waiting", 1),
+            team(7, "waiting", 2),
+        ];
+        expect(reconcileExamOrder(historicalOrder, [
+            ...snapshot,
+            team(4, "waiting", 3),
+        ])).toEqual([9, 2, 8, 7, 4]);
+        expect(reconcileExamOrder(historicalOrder, [
+            snapshot[0],
+            snapshot[1],
+            team(4, "postponed", 1, "2026-11-19T11:00:00Z"),
+            team(8, "waiting", 2),
+            team(7, "waiting", 3),
+        ])).toEqual([9, 2, 4, 8, 7]);
+    });
+
     it("keeps the returned team's position as the reference for a waiting-team swap", () => {
         const items = [team(9, "waiting", 1), team(4, "postponed", 2), team(2, "waiting", 3)];
         expect(applyWaitingOrder(getPositionedIds(items), [2, 9])).toEqual([2, 4, 9]);

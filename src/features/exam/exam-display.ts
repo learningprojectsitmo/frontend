@@ -1,4 +1,3 @@
-import type { ProjectFullResponse } from "@/types/api";
 import type { Exam, ExamConfiguration, ExamQueue, QueueItem } from "@/types/exam";
 
 export type ExamStatus =
@@ -14,15 +13,6 @@ export function canChangeExamRegistration(item: QueueItem) {
     return !item.started_at && !item.attempt && item.state !== "running" && item.state !== "finished";
 }
 
-export function canPreviewExamAssessment(
-    project: Pick<ProjectFullResponse, "workspace_id" | "author_id" | "members">,
-    workspaceId: number,
-    userId?: number,
-) {
-    return userId !== undefined && project.workspace_id === workspaceId && project.author_id !== userId &&
-        !project.members.some((member) => member.user_id === userId);
-}
-
 export function isAssessmentOpen(item: QueueItem, serverNow: number) {
     const window = item.attempt?.assessment_window;
     return item.state === "finished" && Boolean(window &&
@@ -31,6 +21,10 @@ export function isAssessmentOpen(item: QueueItem, serverNow: number) {
 
 export function getQueueTime(queue: ExamQueue | undefined, now: number, receivedAt: number) {
     return queue ? Date.parse(queue.server_now) + Math.max(0, now - receivedAt) : now;
+}
+
+export function shouldShowExamSchedule(startsAt: string, serverNow: number, hasStarted: boolean) {
+    return !hasStarted && serverNow < Date.parse(startsAt);
 }
 
 export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: number, receivedAt?: number): ExamStatus {
@@ -46,7 +40,7 @@ export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: num
     if (items.some((item) => item.attempt?.started_at)) return "running";
 
     const startsAt = Date.parse(exam.configuration.starts_at);
-    if (now < startsAt) return startsAt - now <= 7 * 24 * 60 * 60 * 1000 ? "soon" : "planned";
+    if (serverNow < startsAt) return startsAt - serverNow <= 7 * 24 * 60 * 60 * 1000 ? "soon" : "planned";
 
     const {
         presentation_minutes,
@@ -65,7 +59,7 @@ export function getExamStatus(exam: Exam, queue: ExamQueue | undefined, now: num
         (end, item) => Math.max(end, Date.parse(item.planned_end_at ?? "") || 0),
         estimatedEnd,
     );
-    return items.length > 0 && !unfinished && now >= scheduledEnd ? "passed" : "waiting";
+    return items.length > 0 && !unfinished && serverNow >= scheduledEnd ? "passed" : "waiting";
 }
 
 export const isExamOver = (status: ExamStatus) => status === "finished" || status === "passed";
@@ -138,6 +132,12 @@ export function getExamRegistrationWindow(exam: Exam) {
         ),
         closes: getRegistrationDeadline(exam.configuration),
     };
+}
+
+export function formatExamRegistrationWindow(exam: Exam) {
+    const { opens, closes } = getExamRegistrationWindow(exam);
+    if (!Number.isFinite(opens) || !Number.isFinite(closes) || opens >= closes) return "У этого экзамена нет доступного окна записи.";
+    return `Запись с ${formatExamDate(new Date(opens).toISOString())} до ${formatExamDate(new Date(closes).toISOString())}.`;
 }
 
 export function isExamRegistrationOpen(exam: Exam, now: number) {

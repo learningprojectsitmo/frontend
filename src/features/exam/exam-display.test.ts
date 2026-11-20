@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Attempt, Exam, ExamQueue, QueueItem } from "@/types/exam";
-import { canChangeExamRegistration, canPreviewExamAssessment, getExamStatus, getQueueTime, isAssessmentOpen, isExamRegistrationOpen } from "./exam-display";
+import { canChangeExamRegistration, formatExamDate, formatExamRegistrationWindow, getExamStatus, getQueueTime, isAssessmentOpen, isExamRegistrationOpen, shouldShowExamSchedule } from "./exam-display";
 
 const start = Date.parse("2026-11-19T10:00:00Z");
 const exam: Exam = {
@@ -78,6 +78,17 @@ const queue = (...items: QueueItem[]): ExamQueue => ({
     eta: { current: null, items: [] },
 });
 
+describe("exam schedule display", () => {
+    it("hides empty schedule rows at the planned time even before the first attempt", () => {
+        expect(shouldShowExamSchedule(exam.configuration.starts_at, start - 1, false)).toBe(true);
+        expect(shouldShowExamSchedule(exam.configuration.starts_at, start, false)).toBe(false);
+    });
+
+    it("hides the schedule when the first team starts early", () => {
+        expect(shouldShowExamSchedule(exam.configuration.starts_at, start - 1, true)).toBe(false);
+    });
+});
+
 describe("exam status", () => {
     it("waits for the teacher when the scheduled start arrives or passes", () => {
         expect(getExamStatus(exam, queue(team), start - 1)).toBe("soon");
@@ -139,6 +150,21 @@ describe("exam status", () => {
 });
 
 describe("exam registration period", () => {
+    it("prints the effective registration interval rather than the raw configuration", () => {
+        const opensAt = new Date(start - 60_000).toISOString();
+        const publishedAt = new Date(start - 30_000).toISOString();
+        const closesAt = new Date(start - 5_000).toISOString();
+        const publishedExam: Exam = {
+            ...exam,
+            published_at: publishedAt,
+            configuration: { ...exam.configuration, registration_opens_at: opensAt, registration_closes_at: closesAt },
+        };
+        expect(formatExamRegistrationWindow(publishedExam)).toBe(
+            `Запись с ${formatExamDate(publishedAt)} до ${formatExamDate(closesAt)}.`,
+        );
+        expect(formatExamRegistrationWindow({ ...publishedExam, published_at: closesAt })).toContain("нет доступного окна");
+    });
+
     it("leaves registration open until the server's default cutoff at the exam start", () => {
         expect(isExamRegistrationOpen(exam, start - 1)).toBe(true);
         expect(isExamRegistrationOpen(exam, start)).toBe(false);
@@ -168,18 +194,5 @@ describe("exam action eligibility", () => {
         expect(canChangeExamRegistration({ ...team, state: "postponed", started_at: attempt.started_at })).toBe(false);
         expect(canChangeExamRegistration({ ...team, state: "running", attempt })).toBe(false);
         expect(canChangeExamRegistration({ ...team, state: "finished", attempt })).toBe(false);
-    });
-
-    it("hides the assessment preview from the project author, members, and anonymous users", () => {
-        const project = {
-            workspace_id: 4,
-            author_id: 10,
-            members: [{ id: 123, user_id: 11, name: "", role: "", contacts: "", resume_url: "", date_added: "" }],
-        };
-        expect(canPreviewExamAssessment(project, 4, 10)).toBe(false);
-        expect(canPreviewExamAssessment(project, 4, 11)).toBe(false);
-        expect(canPreviewExamAssessment(project, 4)).toBe(false);
-        expect(canPreviewExamAssessment(project, 5, 12)).toBe(false);
-        expect(canPreviewExamAssessment(project, 4, 12)).toBe(true);
     });
 });

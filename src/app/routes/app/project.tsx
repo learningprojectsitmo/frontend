@@ -1542,6 +1542,7 @@ const SpaceRoute = () => {
                         workspaceId={dataProject.workspace_id}
                         projectId={dataProject.id}
                         isProjectAuthor={isCreator}
+                        isTeamMember={isTeamMember}
                         projectTypeId={dataProject.project_type_id}
                     />
                 )}

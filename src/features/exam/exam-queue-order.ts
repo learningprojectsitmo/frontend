@@ -25,13 +25,29 @@ export function reconcileExamOrder(previous: number[], items: QueueItem[]) {
     const positioned = new Set(positionedIds);
     const newcomers = items.filter((item) => !known.has(item.registration_id));
     const startedAt = (item: QueueItem) => item.started_at ?? item.attempt?.started_at;
-    const started = newcomers.filter((item) => !positioned.has(item.registration_id) && startedAt(item)).sort((a, b) =>
+    const wasStarted = (item: QueueItem) => Boolean(startedAt(item)) || item.state === "running" || item.state === "finished";
+    const started = newcomers.filter((item) => !positioned.has(item.registration_id) && wasStarted(item)).sort((a, b) =>
+        Number(a.state === "running") - Number(b.state === "running") ||
         Date.parse(startedAt(a) ?? "") - Date.parse(startedAt(b) ?? "") || a.registration_id - b.registration_id);
-    const unstarted = newcomers.filter((item) => !startedAt(item) && !positioned.has(item.registration_id));
-    return applyWaitingOrder([
+    const unstarted = newcomers.filter((item) => !wasStarted(item) && !positioned.has(item.registration_id));
+    const history = [
         ...retained,
         ...started.map((item) => item.registration_id),
-        ...positionedIds.filter((id) => !known.has(id)),
-        ...unstarted.map((item) => item.registration_id),
-    ], positionedIds);
+    ];
+    const protectedIds = new Set(items.filter((item) => item.state === "finished" || item.state === "running")
+        .map((item) => item.registration_id));
+    // Positions apply only to future defenses. A restored row can have a historical
+    // index before the current defense in session storage.
+    const lastProtected = history.reduce((last, id, index) => protectedIds.has(id) ? index : last, -1);
+    const prefix = history.slice(0, lastProtected + 1).filter((id) => !positioned.has(id));
+    const tail = history.slice(lastProtected + 1);
+    const tailIds = new Set(tail);
+    return [
+        ...prefix,
+        ...applyWaitingOrder([
+            ...tail,
+            ...positionedIds.filter((id) => !tailIds.has(id)),
+            ...unstarted.map((item) => item.registration_id),
+        ], positionedIds),
+    ];
 }

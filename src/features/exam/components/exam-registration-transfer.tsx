@@ -1,15 +1,23 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { Textarea } from "@/components/ui/textarea/textarea";
 import { examApi, getExamErrorMessage, invalidateExam, useExams, useExamSlots } from "@/lib/exams";
-import type { Registration } from "@/types/exam";
+import { useProject } from "@/lib/projects";
+import type { Exam, Registration } from "@/types/exam";
 import { formatExamDate, isExamRegistrationOpen } from "../exam-display";
+
+const selectTriggerClass = "min-w-0 gap-2 rounded-[12px] border-app-border text-app-text [&>svg]:shrink-0";
+const selectContentClass = "z-[400] w-[var(--radix-select-trigger-width)] max-h-[var(--radix-select-content-available-height)] rounded-[12px] border-app-border text-app-text [&>[data-radix-select-viewport]]:h-auto";
 
 type Props = {
     registration: Registration;
+    sourceExam: Exam;
     projectName?: string;
     self: boolean;
     sourceOpen: boolean;
@@ -17,25 +25,29 @@ type Props = {
     onClose: () => void;
 };
 
-export function ExamRegistrationTransfer({ registration, projectName, self, sourceOpen, now, onClose }: Props) {
+export function ExamRegistrationTransfer({ registration, sourceExam, projectName, self, sourceOpen, now, onClose }: Props) {
+    const fieldId = useId();
     const { workspace_id: workspaceId, exam_id: examId } = registration;
     const exams = useExams(workspaceId, "published");
-    const [targetId, setTargetId] = useState(0);
+    const project = useProject(String(registration.project_id));
+    const projectType = project.data?.project_type_id;
+    const [targetId, setTargetId] = useState(examId);
     const [slotId, setSlotId] = useState(0);
     const [reason, setReason] = useState("");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string>();
     const client = useQueryClient();
-    const eligible = exams.data?.items.filter((exam) =>
-        (self || exam.id !== examId) &&
-        exam.configuration.project_type_ids.includes(registration.project_type_id_at_registration) &&
+    const destinations = exams.data?.items.filter((exam) =>
+        exam.id !== examId &&
+        projectType != null && exam.configuration.project_type_ids.includes(projectType) &&
         (!self || isExamRegistrationOpen(exam, now)),
     ) ?? [];
-    const target = eligible.find((exam) => exam.id === targetId);
+    const target = targetId === examId ? sourceExam : destinations.find((exam) => exam.id === targetId);
+    const validType = projectType != null && sourceExam.configuration.project_type_ids.includes(projectType);
     const slots = useExamSlots(workspaceId, target?.id ?? 0);
     const freeSlots = slots.data?.items.filter((slot) => slot.is_available &&
         (targetId !== examId || slot.id !== registration.slot_id)) ?? [];
-    const canSubmit = sourceOpen && !registration.started_at && registration.status === "active" && target && slots.data && !slots.isError && reason.trim() &&
+    const canSubmit = sourceOpen && validType && !project.isError && !registration.started_at && registration.status === "active" && target && slots.data && !slots.isError && reason.trim() &&
         (slots.data.items.length ? freeSlots.some((slot) => slot.id === slotId) : targetId !== examId);
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -68,51 +80,65 @@ export function ExamRegistrationTransfer({ registration, projectName, self, sour
                 <DialogHeader><DialogTitle>Перенести запись</DialogTitle></DialogHeader>
                 <form className="mt-4 grid gap-4" onSubmit={submit}>
                     {projectName && <p className="text-sm text-app-muted">{projectName}</p>}
-                    {exams.isLoading ? <p role="status" className="text-sm text-app-muted">Загружаем экзамены…</p>
-                        : exams.isError ? <p role="alert" className="text-sm text-app-muted">Не удалось загрузить экзамены.</p>
-                        : !eligible.length ? <p className="text-sm text-app-muted">Нет доступных экзаменов для переноса.</p>
-                        : (
-                            <label className="grid gap-1 text-sm">
-                                Экзамен
-                                <select value={targetId} disabled={pending} onChange={(event) => {
-                                    setTargetId(Number(event.target.value));
-                                    setSlotId(0);
-                                    setError(undefined);
-                                }} className="min-w-0 rounded-lg border border-app-border bg-app-surface p-2">
-                                    <option value={0} disabled>Выберите экзамен</option>
-                                    {eligible.map((exam) => (
-                                        <option key={exam.id} value={exam.id}>
-                                            {exam.configuration.title} · {formatExamDate(exam.configuration.starts_at)}
-                                            {exam.id === examId ? " (текущий)" : ""}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        )}
+
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor={`${fieldId}-exam`}>Куда перенести</Label>
+                        <Select value={target ? String(targetId) : ""} disabled={pending} onValueChange={(value) => {
+                            setTargetId(Number(value));
+                            setSlotId(0);
+                            setError(undefined);
+                        }}>
+                            <SelectTrigger id={`${fieldId}-exam`} className={selectTriggerClass}>
+                                <span className="min-w-0 truncate"><SelectValue placeholder="Выберите экзамен" /></span>
+                            </SelectTrigger>
+                            <SelectContent className={selectContentClass}>
+                                {[sourceExam, ...destinations].map((exam) => (
+                                    <SelectItem key={exam.id} value={String(exam.id)} className="break-words">
+                                        {exam.configuration.title} · {formatExamDate(exam.configuration.starts_at)}
+                                        {exam.id === examId ? " (текущий)" : ""}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {project.isLoading && <p role="status" className="text-sm text-app-muted">Проверяем тип проекта…</p>}
+                    {project.isError && <p role="alert" className="text-sm text-app-muted">Не удалось проверить тип проекта.</p>}
+                    {project.isSuccess && !validType && <p role="status" className="text-sm text-app-muted">Тип проекта больше не подходит для исходного экзамена.</p>}
+                    {exams.isLoading && <p role="status" className="text-sm text-app-muted">Загружаем другие экзамены…</p>}
+                    {exams.isError && <p role="alert" className="text-sm text-app-muted">Не удалось загрузить другие экзамены.</p>}
                     {target && (
                         slots.isLoading ? <p role="status" className="text-sm text-app-muted">Проверяем слоты…</p>
                             : slots.isError ? <p role="alert" className="text-sm text-app-muted">Не удалось загрузить слоты.</p>
                             : !slots.data?.items.length ? <p className="text-sm text-app-muted">
-                                {targetId === examId ? "В этом экзамене нет слотов для переноса." : "Команда будет добавлена в очередь без места в расписании."}
+                                {targetId === examId ? "В текущем экзамене слотов нет. Чтобы перенести запись, выберите другой экзамен." : "Команда будет добавлена в очередь без места в расписании."}
                             </p>
                             : freeSlots.length ? (
-                                <label className="grid gap-1 text-sm">
-                                    Свободный слот
-                                    <select value={slotId} disabled={pending} onChange={(event) => setSlotId(Number(event.target.value))}
-                                        className="rounded-lg border border-app-border bg-app-surface p-2">
-                                        <option value={0} disabled>Выберите время</option>
-                                        {freeSlots.map((slot) => <option key={slot.id} value={slot.id}>{formatExamDate(slot.starts_at)}</option>)}
-                                    </select>
-                                </label>
+                                <div className="grid min-w-0 gap-1.5">
+                                    <Label htmlFor={`${fieldId}-slot`}>Новое время защиты</Label>
+                                    <Select value={freeSlots.some((slot) => slot.id === slotId) ? String(slotId) : ""}
+                                        disabled={pending} onValueChange={(value) => {
+                                            setSlotId(Number(value));
+                                            setError(undefined);
+                                        }}>
+                                        <SelectTrigger id={`${fieldId}-slot`} className={selectTriggerClass}>
+                                            <span className="min-w-0 truncate"><SelectValue placeholder="Выберите время" /></span>
+                                        </SelectTrigger>
+                                        <SelectContent className={selectContentClass}>
+                                            {freeSlots.map((slot) => (
+                                                <SelectItem key={slot.id} value={String(slot.id)}>{formatExamDate(slot.starts_at)}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             ) : <p className="text-sm text-app-muted">Свободных слотов нет.</p>
                     )}
-                    {target && (
-                        <label className="grid gap-1 text-sm">
-                            Причина переноса
-                            <textarea required maxLength={1000} rows={2} value={reason} disabled={pending}
-                                onChange={(event) => setReason(event.target.value)}
-                                className="rounded-lg border border-app-border bg-app-surface p-2" />
-                        </label>
+                    {target && (targetId !== examId || freeSlots.length > 0) && (
+                        <div className="grid gap-1.5">
+                            <Label htmlFor={`${fieldId}-reason`}>Причина переноса</Label>
+                            <Textarea id={`${fieldId}-reason`} required maxLength={1000} rows={3} value={reason}
+                                disabled={pending} onChange={(event) => setReason(event.target.value)}
+                                className="min-h-24 resize-y" />
+                        </div>
                     )}
                     {!sourceOpen && <p role="status" className="text-sm text-app-muted">Период записи исходного экзамена закончился.</p>}
                     {error && <p role="alert" className="text-sm text-red-600 dark:text-red-300">{error}</p>}

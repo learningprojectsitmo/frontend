@@ -4,6 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { gradingKey } from "@/lib/exam-grading";
 import { examApi, useExams } from "@/lib/exams";
 import type { Exam, ExamSlot } from "@/types/exam";
 import { ProjectExamBlocks } from "./project-exam-blocks";
@@ -22,6 +23,7 @@ vi.mock("@/features/exam/use-exam-workspaces", () => ({
     useExamWorkspaces: () => ({
         spaces: [{ id: 1, title: "Управление проектами" }],
         canSelfRegister: true,
+        canManageResults,
     }),
 }));
 vi.mock("@/lib/projects", () => ({
@@ -68,10 +70,12 @@ const slot: ExamSlot = {
 let container: HTMLDivElement;
 let root: Root;
 let client: QueryClient;
+let canManageResults: boolean;
 
 beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
+    canManageResults = false;
     vi.setSystemTime(now);
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -88,7 +92,7 @@ afterEach(() => {
     vi.useRealTimers();
 });
 
-async function render() {
+async function render(isTeamMember = true) {
     await act(async () => {
         root.render(
             <QueryClientProvider client={client}>
@@ -98,6 +102,7 @@ async function render() {
                         projectId={7}
                         projectTypeId={4}
                         isProjectAuthor
+                        isTeamMember={isTeamMember}
                     />
                 </MemoryRouter>
             </QueryClientProvider>,
@@ -196,6 +201,44 @@ describe("project exam blocks", () => {
         expect(container.textContent).toContain("Экзамен для студентов дисциплины");
         expect(container.querySelector('a[href*="examId=3"]')).toBeTruthy();
         expect(container.textContent).not.toContain("Запишитесь на экзамен");
+    });
+
+    it("shows the registration interval and hides booking after a defense at another exam", async () => {
+        const pastExam: Exam = {
+            ...exam,
+            id: 3,
+            configuration: { ...exam.configuration, starts_at: "2026-11-17T09:00:00Z" },
+        };
+        vi.mocked(useExams).mockReturnValue({ data: { items: [exam, pastExam] } } as ReturnType<typeof useExams>);
+        client.setQueryData(["exams", "queue", "1", "3"], {
+            items: [{ project_id: 7, state: "finished", attempt: { finished_at: now.toISOString() } }],
+        });
+        await render();
+        expect(container.textContent).toContain("Запись с");
+        expect(container.textContent).not.toContain("Запишитесь на экзамен");
+    });
+
+    it("shows only published grades to project members with results access", async () => {
+        const finished = { id: 17, finished_at: now.toISOString(), assessment_window: null };
+        client.setQueryData(["exams", "queue", "1", "2"], {
+            items: [{ project_id: 7, state: "finished", attempt: finished }],
+        });
+        client.setQueryData([...gradingKey(1, 2), "editions", 17], {
+            items: [
+                { version: 1, published_at: now.toISOString(), final_score: "22.00", snapshot: { max_score: "25.00" } },
+                { version: 2, published_at: null, final_score: "24.00", snapshot: { max_score: "25.00" } },
+            ],
+        });
+
+        await render();
+        expect(container.textContent).not.toContain("Опубликованная оценка");
+        canManageResults = true;
+        await render(false);
+        expect(container.textContent).not.toContain("Опубликованная оценка");
+        await render();
+        expect(container.textContent).toContain("Опубликованная оценка");
+        expect(container.textContent).toContain("22 из 25");
+        expect(container.textContent).not.toContain("24 из 25");
     });
 
     it("uses a compact countdown for several days", () => {

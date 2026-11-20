@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, CalendarClock, ChevronLeft, Save, ShieldCheck, Search, Trash2, GripVertical, Maximize2, Plus } from "lucide-react";
+import { AlertCircle, CalendarClock, ChevronLeft, Save, ShieldCheck, Trash2, GripVertical, Maximize2, Plus } from "lucide-react";
 import { Tooltip } from "@base-ui/react/tooltip";
-import { Popover } from "@base-ui/react/popover";
+import { ExamProjectSelect } from "./exam-project-select";
+import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { Textarea } from "@/components/ui/textarea/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker, DatePickerClearButton } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { paths } from "@/config/paths";
 import { cn } from "@/lib/utils";
 import { examApi, getExamErrorCode, getExamErrorMessage, invalidateExam, questionApi } from "@/lib/exams";
 import { useExamRegistrations, useExamSlots } from "@/lib/exams";
@@ -83,12 +85,6 @@ const registrationFields = [
     { key: "registration_opens_at", label: "Открытие записи" },
     { key: "registration_closes_at", label: "Закрытие записи" },
 ] as const;
-
-const localInputValue = (value: string | null) => {
-    if (!value) return "";
-    const date = new Date(value);
-    return new Date(date.getTime() - date.getTimezoneOffset() * minute).toISOString().slice(0, 16);
-};
 
 const localDate = (iso: string) => {
     const date = new Date(iso);
@@ -384,6 +380,11 @@ export function ExamAdminPanel({
         if (!workspaceId) {
             toast.error("Выберите пространство");
             setActiveSection("main");
+            return;
+        }
+        if (draftSlots.length && Date.now() >= Date.parse(configuration.starts_at)) {
+            toast.error("Время начала уже наступило. Удалите несохранённые слоты или измените дату начала.");
+            setActiveSection("queue");
             return;
         }
         const checkSchedule = draftSlots.length > 0 || publishing || exam?.configuration.starts_at !== configuration.starts_at;
@@ -814,37 +815,21 @@ export function ExamAdminPanel({
                             <td className="px-3 py-3">
                                 <div className="flex w-max max-w-[144px] flex-wrap justify-end gap-1 sm:max-w-none">
                                     {exam?.status === "published" && slot.id && !registration?.started_at && (
-                                        <Popover.Root
+                                        <ExamProjectSelect
                                             open={assignOpenKey === slot.key}
                                             onOpenChange={(open) => {
                                                 setAssignOpenKey((current) => open ? slot.key : current === slot.key ? null : current);
                                                 if (open) setProjectSearch("");
                                             }}
-                                        >
-                                            <Popover.Trigger render={<Button variant="outline" size="hug36" />} disabled={pendingSlotId !== null || saving}>
-                                                {registration ? "Заменить" : "Назначить"}
-                                            </Popover.Trigger>
-                                            <Popover.Portal container={queueExpanded ? queueDialogRef : undefined}>
-                                            <Popover.Positioner positionMethod="fixed" align="end" sideOffset={8} collisionPadding={8} className="z-50">
-                                            <Popover.Popup aria-label="Выбор команды" className="w-[300px] max-w-[var(--available-width)] rounded-[16px] border border-gray-200 dark:border-app-border bg-app-surface p-2 text-left shadow-lg">
-                                                    <div className="relative mb-2">
-                                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-                                                        <input value={projectSearch} onChange={(event) => setProjectSearch(event.target.value)} aria-label="Поиск команды" placeholder="Поиск команды" className="h-9 w-full rounded-[10px] border border-app-border bg-app-surface pl-8 pr-3 text-[13px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring" />
-                                                    </div>
-                                                    <div className="max-h-52 overflow-y-auto">
-                                                        {availableProjects.length === 0 ? (
-                                                            <p className="px-3 py-4 text-center text-[12px] text-app-muted">Нет доступных команд</p>
-                                                        ) : availableProjects.map((item) => (
-                                                            <button key={item.id} type="button" className="flex w-full cursor-pointer items-center justify-between rounded-[8px] px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-app-ghost" onClick={() => changeSlotAssignment(slot, item.id)}>
-                                                                <span>{item.name}</span>
-                                                                {item.id === project?.id && <span className="text-[11px] text-app-muted">текущая</span>}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                            </Popover.Popup>
-                                            </Popover.Positioner>
-                                            </Popover.Portal>
-                                        </Popover.Root>
+                                            label={registration ? "Заменить" : "Назначить"}
+                                            disabled={pendingSlotId !== null || saving}
+                                            container={queueExpanded ? queueDialogRef : undefined}
+                                            search={projectSearch}
+                                            onSearch={setProjectSearch}
+                                            projects={availableProjects}
+                                            selectedId={project?.id}
+                                            onSelect={(id) => void changeSlotAssignment(slot, id)}
+                                        />
                                     )}
                                     {registration && !registration.started_at && slot.id && (
                                         <Button variant="ghost" size="hug36" disabled={pendingSlotId !== null || saving} onClick={() => changeSlotAssignment(slot)}>
@@ -1015,18 +1000,41 @@ export function ExamAdminPanel({
                             </div>
                             <fieldset className="grid gap-3 md:col-span-2 sm:grid-cols-2">
                                 <legend className="mb-2 text-sm font-medium text-app-text">Период записи</legend>
-                                {registrationFields.map(({ key, label }) => (
-                                    <div key={key} className="min-w-0">
-                                        <Label htmlFor={key}>{label}</Label>
-                                        <Input id={key} type="datetime-local" value={localInputValue(configuration[key])}
-                                            disabled={exam?.status === "published"} error={Boolean(visibleError(key))} helperText={visibleError(key)}
-                                            onBlur={() => touch(key)}
-                                            onChange={(event) => {
-                                                const value = Date.parse(event.target.value);
-                                                update(key, Number.isFinite(value) ? new Date(value).toISOString() : null);
-                                            }} />
-                                    </div>
-                                ))}
+                                {registrationFields.map(({ key, label }) => {
+                                    const value = configuration[key];
+                                    const date = value ? new Date(value) : null;
+                                    const error = visibleError(key);
+                                    const disabled = exam?.status === "published";
+                                    const change = (next: string | null) => {
+                                        update(key, next);
+                                        touch(key);
+                                    };
+                                    return (
+                                        <div key={key} className="min-w-0" role="group" aria-label={label}>
+                                            <Label htmlFor={key}>{label}</Label>
+                                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <DatePicker value={date} disabled={disabled} placeholder="Выберите дату"
+                                                    className="h-10 min-w-[180px] justify-between rounded-[12px] border border-app-border px-3"
+                                                    onChange={(next) => {
+                                                        next.setHours(date?.getHours() ?? 0, date?.getMinutes() ?? 0, 0, 0);
+                                                        change(next.toISOString());
+                                                    }} />
+                                                <Input id={key} type="time" disabled={disabled || !date}
+                                                    aria-label={`Время: ${label.toLowerCase()}`}
+                                                    className="h-10 w-[112px] rounded-[12px] px-3 text-[13px]"
+                                                    value={date?.toTimeString().slice(0, 5) ?? ""}
+                                                    onChange={(event) => {
+                                                        if (!date || !event.target.value) return;
+                                                        const [hours, minutes] = event.target.value.split(":").map(Number);
+                                                        date.setHours(hours, minutes, 0, 0);
+                                                        change(date.toISOString());
+                                                    }} />
+                                                {date && !disabled && <DatePickerClearButton onClick={() => change(null)} />}
+                                            </div>
+                                            {error && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{error}</p>}
+                                        </div>
+                                    );
+                                })}
                                 <p className="text-xs text-app-muted sm:col-span-2">Без указанных дат запись доступна с публикации до начала экзамена.</p>
                             </fieldset>
                             <div>
@@ -1302,12 +1310,9 @@ export function ExamAdminPanel({
                             <div className="rounded-xl border border-app-border bg-app-badge-blue p-4 text-[13px] text-app-text">
                                 <p className="font-semibold">Как считается оценка</p>
                                 <div className="mt-2 space-y-1.5">
-                                    <p>Каждый эксперт оценивает 5 критериев от 1 до 5. Максимум за лист — <strong>25 баллов</strong>.</p>
-                                    <p>Сначала считают средний балл отдельно для преподавателей, менеджеров и участников. Затем средние умножают на веса групп и складывают.</p>
-                                    <p><strong>Пример:</strong> 20 × 0,6 + 15 × 0,3 + 25 × 0,1 = 19 из 25.</p>
-                                    <p>Если максимум — 100, балл умножают на 100 и делят на 25. Для другого максимума используют его вместо 100.</p>
-                                    <p>Когда подведение итогов станет доступно, преподаватель или администратор сможет принять расчёт или ввести балл вручную. Для итогов предусмотрено хранение обоих баллов, автора, времени, причины и версии.</p>
-                                    <p>В расчёт входят группы с оценками и ненулевым весом. Их веса пересчитывают до 100%. Если таких групп нет, результат — «Нет учитываемых оценок».</p>
+                                    <p>За каждый критерий ставят от 1 до 5 баллов. Чтобы узнать максимум за лист, умножьте число критериев на 5.</p>
+                                    <p>Средние баллы комиссии, магистрантов и бакалавров объединяют с учётом весов. В расчёт входят группы с отправленными оценками и весом больше нуля. Их веса пропорционально пересчитывают до 100%.</p>
+                                    <p>Чтобы получить итог, балл делят на максимум за лист и умножают на максимум экзамена. Если подходящих оценок нет, итог не рассчитывается.</p>
                                 </div>
                             </div>
                         </div>
@@ -1315,6 +1320,12 @@ export function ExamAdminPanel({
 
                     {activeSection === "review" && (
                         <div className="space-y-4">
+                            {exam?.status === "published" && (
+                                <Link to={paths.app.examView.getHref(workspaceId, exam.id)}
+                                    className="inline-flex rounded-lg border border-app-border px-3 py-2 text-sm font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300">
+                                    Перейти на страницу экзамена
+                                </Link>
+                            )}
                             {Object.keys(errors).length === 0 ? (
                                 <div className="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-[--status-completed-bg] p-4 text-[13px] text-emerald-800 dark:text-emerald-300">
                                     Основные настройки заполнены. Перед публикацией проверьте вопросы и слоты.
@@ -1346,7 +1357,7 @@ export function ExamAdminPanel({
                             {hasSlotGap && (
                                 <div className="rounded-xl border border-app-border bg-app-badge-amber p-4 text-[13px] text-app-badge-amber-fg">
                                     <p className="font-semibold">Есть свободные слоты раньше записанных</p>
-                                    <p className="mt-1">В расписании есть паузы. При необходимости перенесите команды в более ранние слоты.</p>
+                                    <p className="mt-1">К плановому началу экзамена пустые слоты автоматически скроются в очереди. Переносите команды только если нужно изменить время их записи.</p>
                                     <button type="button" onClick={() => setActiveSection("queue")} className="mt-3 cursor-pointer font-semibold underline underline-offset-4">
                                         Перейти к слотам
                                     </button>

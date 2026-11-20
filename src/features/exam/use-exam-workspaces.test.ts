@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageWorkspaceExams, canReadWorkspaceExams, canRegisterOwnProject } from "./use-exam-workspaces";
+import { canManageExamResults, canManageWorkspaceExams, canReadWorkspaceExams, canRegisterOwnProject } from "./use-exam-workspaces";
 
 describe("exam management access", () => {
     it.each([
@@ -55,4 +55,15 @@ describe("exam role combinations", () => {
         expect(canManageWorkspaceExams(global, local, owner)).toBe(manage);
         expect(canRegisterOwnProject(global, local)).toBe(register);
     });
+});
+
+it.each([
+    ["admin", null, false],
+    ["teacher", "member", false],
+    ["teacher", "manager", false],
+    ["teacher", "", true],
+    ["member", "teacher", true],
+    ["manager", "admin", true],
+] as const)("uses the effective workspace role for result access (%s, %s)", (global, local, allowed) => {
+    expect(canManageExamResults(global, local)).toBe(allowed);
 });

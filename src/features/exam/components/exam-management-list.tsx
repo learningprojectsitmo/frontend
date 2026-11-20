@@ -157,24 +157,31 @@ function ExamManagementCard({
     workspaceName?: string;
 }) {
     return (
-        <Link
-            to={paths.app.examEdit.getHref(workspaceId, exam.id)}
-            className="rounded-2xl border border-app-border bg-app-surface p-6 transition hover:border-gray-300 dark:hover:border-slate-500"
-        >
+        <article className="relative rounded-2xl border border-app-border bg-app-surface p-6 transition hover:border-gray-300 dark:hover:border-slate-500">
             <div className="flex justify-between gap-3">
                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-2.5 py-1 text-[12px] font-medium text-gray-600 dark:text-app-muted">
                     {exam.status === "published" ? "Опубликован" : "Черновик"}
                 </span>
                 <span className="text-[12px] font-bold text-app-text">{formatExamDate(exam.configuration.starts_at)}</span>
             </div>
-            <h3 className="mt-5 text-[17px] font-bold text-app-text">{exam.configuration.title}</h3>
+            <h3 className="mt-5 text-[17px] font-bold text-app-text">
+                <Link to={paths.app.examEdit.getHref(workspaceId, exam.id)} className="after:absolute after:inset-0">
+                    {exam.configuration.title}
+                </Link>
+            </h3>
             {workspaceName && (
                 <p className="mt-2 text-[12px] font-medium text-app-blue dark:text-blue-300">{workspaceName}</p>
             )}
             {exam.configuration.description && (
                 <p className="mt-2 line-clamp-2 text-[13px] text-app-muted">{exam.configuration.description}</p>
             )}
-        </Link>
+            {exam.status === "published" && (
+                <Link to={paths.app.examView.getHref(workspaceId, exam.id)}
+                    className="relative z-10 mt-4 inline-flex rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300">
+                    Перейти на страницу экзамена
+                </Link>
+            )}
+        </article>
     );
 }
 
@@ -217,6 +224,12 @@ function ExamManagementTable({
                             <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{exam.status === "published" ? "Опубликован" : "Черновик"}</td>
                             <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
                             <td className="px-3 py-4 text-right">
+                                {exam.status === "published" && (
+                                    <Link to={paths.app.examView.getHref(exam.workspace_id, exam.id)}
+                                        className="mr-2 inline-flex whitespace-nowrap rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300">
+                                        Перейти на страницу экзамена
+                                    </Link>
+                                )}
                                 <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} aria-label="Редактировать экзамен" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost">
                                     <Icon name="pen" size={16} />
                                 </Link>

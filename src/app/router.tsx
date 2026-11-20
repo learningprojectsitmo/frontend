@@ -125,6 +125,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
+                    path: paths.app.examStatement.path,
+                    lazy: () => import("./routes/app/exam-statement").then(convert(queryClient)),
+                    hydrateFallbackElement: <LoadingFallback />,
+                },
+                {
                     path: paths.app.examManage.path,
                     lazy: () => import("./routes/app/exam-management").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,

@@ -133,3 +133,4 @@ Our contacts:
 
 - Afanasiev Anton, orderkworinaa@gmail.com
 - Karagulov Mansur, mrkaragulov@itmo.ru
+- Moskalets Danila, damoskaletc@itmo.ru

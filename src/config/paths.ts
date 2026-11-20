@@ -85,6 +85,11 @@ export const paths = {
                     ? `/app/exams?workspaceId=${encodeURIComponent(workspaceId)}`
                     : "/app/exams",
         },
+        examStatement: {
+            path: "/app/exams/vedomost",
+            getHref: (workspaceId = 0) =>
+                workspaceId > 0 ? `/app/exams/vedomost?workspaceId=${encodeURIComponent(workspaceId)}` : "/app/exams/vedomost",
+        },
         examManage: {
             path: "/app/exams/manage",
             getHref: (workspaceId: number) =>

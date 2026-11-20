@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useUser } from "@/lib/auth";
@@ -9,6 +9,7 @@ import {
     getExamErrorMessage,
     invalidateExam,
     useExamRegistrations,
+    useExams,
     useExamSlots,
 } from "@/lib/exams";
 import { getCreatedProjects, getProject } from "@/lib/projects";
@@ -43,6 +44,18 @@ export function useExamSlotBooking(
         })),
     });
 
+    const exams = useExams(enabled ? workspaceId : 0, "published");
+    const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now));
+    const otherRegistrations = useQueries({
+        queries: (enabled && isOpen ? exams.data?.items ?? [] : [])
+            .filter((item) => item.id !== examId)
+            .map((item) => queryOptions({
+                queryKey: queryKeys.exams.registrations(workspaceId, item.id, true),
+                queryFn: () => examApi.registrations(workspaceId, item.id, true),
+                refetchInterval: 15_000,
+            })),
+    });
+
     const [selecting, setSelecting] = useState(false);
     const [projectId, setProjectId] = useState<number>();
     const [action, setAction] = useState<BookingAction | null>(null);
@@ -57,19 +70,25 @@ export function useExamSlotBooking(
             ? [data]
             : [],
     );
-    const bookedIds = new Set(active.map((registration) => registration.project_id));
-    const bookableProjects = eligible.filter((project) => !bookedIds.has(project.id));
+    const otherBookedIds = new Set(otherRegistrations.flatMap((query) => query.data?.items ?? [])
+        .filter((registration) => registration.status === "active" || registration.started_at)
+        .map((registration) => registration.project_id));
+    const bookedIds = new Set((registrations.data?.items ?? [])
+        .filter((registration) => registration.status === "active" || registration.started_at)
+        .map((registration) => registration.project_id));
+    const bookableProjects = eligible.filter((project) => !bookedIds.has(project.id) && !otherBookedIds.has(project.id));
     const selected = bookableProjects.find((project) => project.id === projectId) ?? bookableProjects[0];
-    const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now));
     const loading =
         slots.isPending ||
         registrations.isPending ||
         myProjects.isPending ||
+        (isOpen && (exams.isPending || otherRegistrations.some((query) => query.isPending))) ||
         projects.some((query) => query.isPending);
     const error =
         slots.isError ||
         registrations.isError ||
         myProjects.isError ||
+        (isOpen && (exams.isError || otherRegistrations.some((query) => query.isError))) ||
         (eligible.length === 0 && projects.some((query) => query.isError));
     const canBook =
         enabled && isOpen && !loading && !error && Boolean(selected);
@@ -130,7 +149,12 @@ export function useExamSlotBooking(
                               ? "Не удалось записаться на защиту. Попробуйте ещё раз."
                               : "Не удалось отменить запись. Попробуйте ещё раз.")),
             );
-            await invalidateExam(client, workspaceId, examId);
+            await Promise.all([
+                invalidateExam(client, workspaceId, examId),
+                ...(getExamErrorCode(failure) === "project_already_registered"
+                    ? otherRegistrations.map((query) => query.refetch())
+                    : []),
+            ]);
             setAction(null);
         },
     });
@@ -140,6 +164,7 @@ export function useExamSlotBooking(
         available,
         eligible,
         bookableProjects,
+        hasOtherBooking: eligible.some((project) => otherBookedIds.has(project.id)),
         selected,
         isOpen,
         loading,
@@ -166,11 +191,6 @@ export function useExamSlotBooking(
         },
         confirm: () => {
             if (!action || !canConfirm || mutation.isPending) return;
-            if (!exam || !isExamRegistrationOpen(exam, Date.now())) {
-                toast.info("Запись на экзамен уже закрылась.");
-                setAction(null);
-                return;
-            }
             mutation.mutate(action);
         },
     };

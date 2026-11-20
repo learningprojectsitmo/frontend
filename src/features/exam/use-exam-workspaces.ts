@@ -28,6 +28,11 @@ export function canRegisterOwnProject(
     return typeof workspaceRole === "string" && (workspaceRole === "" ? globalRole : workspaceRole) === "manager";
 }
 
+export function canManageExamResults(globalRole: string, workspaceRole?: string | null) {
+    const effectiveRole = workspaceRole === "" ? globalRole : workspaceRole;
+    return effectiveRole === "teacher" || effectiveRole === "admin";
+}
+
 async function getWorkspaceRole(workspaceId: number, userId: number) {
     let page = 1;
     while (true) {
@@ -39,7 +44,7 @@ async function getWorkspaceRole(workspaceId: number, userId: number) {
     }
 }
 
-export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistrationRole = false) {
+export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistrationRole = false, checkResultAccess = false) {
     const user = useUser();
     const menu = useQuery({
         queryKey: [...queryKeys.workspace.list(), "exam-spaces", user.data?.id],
@@ -82,7 +87,7 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
             queryFn: () => (userId ? getWorkspaceRole(space.id, userId) : Promise.resolve(null)),
             enabled:
                 Boolean(userId) &&
-                (checkRegistrationRole ||
+                (checkRegistrationRole || checkResultAccess ||
                     (role !== "admin" && (role !== "teacher" || space.author_id !== userId))),
             retry: false,
         })),
@@ -94,10 +99,16 @@ export function useExamWorkspaces(workspaceId = 0, enabled = true, checkRegistra
             space.author_id === userId,
         ),
     );
+    const workspaceRole = memberships[0]?.data;
     return {
         spaces,
+        resultSpaces: candidates.filter((_, index) =>
+            memberships[index]?.isSuccess && canManageExamResults(role, memberships[index].data)),
+        resultAccessError: user.isError || menu.isError || adminDirectory.isError ||
+            memberships.some((query) => query.isError),
         readable: candidates.filter((space, index) =>
             canReadWorkspaceExams(role, memberships[index]?.data, space.author_id === userId)),
+        canManageResults: workspaceId > 0 && canManageExamResults(role, workspaceRole),
         canSelfRegister: workspaceId > 0 && checkRegistrationRole && canRegisterOwnProject(role, memberships[0]?.data),
         manageable,
         canManage:

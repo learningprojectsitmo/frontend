@@ -316,6 +316,29 @@ describe("exam form", () => {
         });
     });
 
+    it("saves edits for a draft with a past start and no new slots", async () => {
+        const pastExam = {
+            ...exam,
+            configuration: { ...exam.configuration, starts_at: "2020-01-01T10:00:00Z" },
+        };
+        const revised = {
+            ...pastExam,
+            current_settings_version: 4,
+            configuration: { ...pastExam.configuration, title: "Прошедший экзамен" },
+        };
+        const replace = vi.spyOn(examApi, "replaceSettings").mockResolvedValue(revised);
+        await render(pastExam);
+        fill("#exam-title", revised.configuration.title);
+        fill('[aria-label="Причина изменения"]', "Уточнили название");
+        await click("Сохранить");
+
+        expect(replace).toHaveBeenCalledWith(1, 2, {
+            expected_version: 3,
+            reason: "Уточнили название",
+            configuration: revised.configuration,
+        });
+    });
+
     it("does not save an unchanged exam", async () => {
         const replace = vi.spyOn(examApi, "replaceSettings");
         const addSlots = vi.spyOn(examApi, "addSlots");
