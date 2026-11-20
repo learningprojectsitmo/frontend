@@ -1,3 +1,5 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
+import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { queryKeys } from "@/lib/query-keys";
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
@@ -37,11 +39,6 @@ import { examApi } from "@/lib/exams";
 import type { Exam } from "@/types/exam";
 
 import { formatExamDate, getExamStatus, isExamOver, sortExamsByRelevance, statusMeta, type ExamStatus } from "../exam-display";
-
-function truncateDescription(value: string | null, limit = 96) {
-    if (!value) return "";
-    return value.length > limit ? `${value.slice(0, limit).trim()}...` : value;
-}
 
 export function ExamHeader({
     disciplineCount,
@@ -147,12 +144,12 @@ function ExamCard({
                 </div>
 
                 <div className="mt-6">
-                    <h3 className="text-[17px] font-bold text-app-text leading-6">
+                    <h3 title={exam.configuration.title} className="line-clamp-2 text-[17px] font-bold leading-6 text-app-text [overflow-wrap:anywhere]">
                         {exam.configuration.title}
                     </h3>
                     {exam.configuration.description && (
-                        <p className="mt-2 text-[13px] leading-5 text-app-muted">
-                            {truncateDescription(exam.configuration.description)}
+                        <p title={exam.configuration.description} className="mt-2 line-clamp-2 text-[13px] leading-5 text-app-muted [overflow-wrap:anywhere]">
+                            {exam.configuration.description}
                         </p>
                     )}
                 </div>
@@ -213,12 +210,13 @@ function ExamTable({
                                 <td className="px-6 py-4">
                                     <Link
                                         to={paths.app.examView.getHref(workspaceId, exam.id)}
-                                        className="cursor-pointer text-[14px] font-medium text-app-blue dark:text-blue-300 transition-colors hover:underline"
+                                        title={exam.configuration.title}
+                                        className="block max-w-64 cursor-pointer truncate text-[14px] font-medium text-app-blue transition-colors hover:underline dark:text-blue-300"
                                     >
                                         {exam.configuration.title}
                                     </Link>
                                 </td>
-                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{disciplineName}</td>
+                                <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted"><span title={disciplineName} className="block max-w-52 truncate">{disciplineName}</span></td>
                                 <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">{formatExamDate(exam.configuration.starts_at)}</td>
                                 <td className="px-6 py-4">
                                     <span className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-app-muted">
@@ -392,6 +390,7 @@ export function ExamsOverview({
         queries: visibleExams.map((exam) => queryOptions({
             queryKey: queryKeys.exams.queue(exam.workspace_id, exam.id),
             queryFn: () => examApi.queue(exam.workspace_id, exam.id),
+            structuralSharing: shareExamQueue,
             refetchInterval: ({ state }) => {
                 const currentTime = Date.now();
                 if (isExamOver(getExamStatus(exam, state.data, currentTime, state.dataUpdatedAt))) return false;
@@ -505,16 +504,22 @@ export function ExamsOverview({
                     <p className="text-sm text-app-muted">Пространство недоступно.</p>
                 )}
 
-                {spaces.map((space) => (
-                    <DisciplineExamList
+                {spaces.map((space, index) => {
+                    const query = examQueries[index];
+                    if (query?.isError && !query.data) return (
+                        <ExamErrorState key={space.id} message={`Не удалось загрузить экзамены пространства «${space.title}».`}
+                            retry={() => void query.refetch()} pending={query.isFetching} />
+                    );
+                    if (query?.isLoading) return <div key={space.id} className="flex justify-center py-6"><Spinner /></div>;
+                    return <DisciplineExamList
                         key={space.id}
                         workspaceId={space.id}
                         title={space.title}
                         exams={examsByWorkspace.get(space.id) ?? []}
                         statusByExam={statusByExam}
                         registrationByExam={registrationByExam}
-                    />
-                ))}
+                    />;
+                })}
             </div>
         </ContentLayout>
     );

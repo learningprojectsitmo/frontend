@@ -1,3 +1,4 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useRef, useState, type FormEvent } from "react";
 import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ export function ExamRegistrationAssign({ exam, assignedIds, onQueue, onClose }: 
         queries: (exams.data?.items ?? []).filter((item) => item.id !== examId).map((item) => queryOptions({
             queryKey: queryKeys.exams.queue(workspaceId, item.id),
             queryFn: () => examApi.queue(workspaceId, item.id),
+            structuralSharing: shareExamQueue,
             refetchOnMount: "always",
             refetchInterval: 15_000,
         })),

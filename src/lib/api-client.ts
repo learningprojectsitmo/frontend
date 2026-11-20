@@ -146,7 +146,15 @@ const axiosInstance = Axios.create({
 
 export const api = axiosInstance as unknown as ApiClient;
 
-api.interceptors.request.use(authRequestInterceptor);
+const examRequestPath = /\/workspaces\/\d+\/(?:exams|project-types\/\d+\/questions)(?:\/|$)|\/assessment\/question-templates(?:\/|$)/;
+const examRequestTimeoutMs = 20_000;
+
+api.interceptors.request.use((config) => {
+    if (!config.timeout && examRequestPath.test(config.url?.split("?")[0] ?? "")) {
+        config.timeout = examRequestTimeoutMs;
+    }
+    return authRequestInterceptor(config);
+});
 
 api.interceptors.response.use(
     (response) => response.data,
@@ -232,6 +240,7 @@ api.interceptors.response.use(
 
 const refreshApi = Axios.create({
     baseURL: env.API_URL,
+    timeout: 20_000,
 }) as unknown as ApiClient;
 
 refreshApi.interceptors.request.use((config) => {

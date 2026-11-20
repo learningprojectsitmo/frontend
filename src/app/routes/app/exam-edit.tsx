@@ -1,3 +1,4 @@
+import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { useParams, useNavigate, useSearchParams, Navigate } from "react-router";
 import { ContentLayout } from "@/components/layouts";
 import { Spinner } from "@/components/ui/spinner/spinner";
@@ -21,7 +22,7 @@ export default function ExamEditRoute() {
         access.spaces.find((item) => item.id === workspaceId)?.title ??
         `Пространство ${workspaceId}`;
 
-    if (access.isLoading || exam.isLoading) {
+    if (access.isLoading || exam.isLoading || projectTypes.isLoading) {
         return (
             <ContentLayout title="Редактирование экзамена">
                 <div className="flex h-64 items-center justify-center">
@@ -37,9 +38,19 @@ export default function ExamEditRoute() {
     if (!exam.data || isExamAccessDenied(exam.error)) {
         return (
             <ContentLayout title="Редактирование экзамена">
-                <div className="p-8 text-app-muted">
-                    {exam.isError ? "Не удалось загрузить экзамен." : "Экзамен не найден."}
-                </div>
+                <ExamErrorState message={isExamAccessDenied(exam.error) || !exam.isError
+                    ? "Экзамен недоступен." : "Не удалось загрузить экзамен."}
+                    retry={exam.isError && !isExamAccessDenied(exam.error) ? () => void exam.refetch() : undefined}
+                    pending={exam.isFetching} />
+            </ContentLayout>
+        );
+    }
+
+    if (projectTypes.isError && !projectTypes.data) {
+        return (
+            <ContentLayout title="Редактирование экзамена">
+                <ExamErrorState message="Не удалось загрузить типы проектов."
+                    retry={() => void projectTypes.refetch()} pending={projectTypes.isFetching} />
             </ContentLayout>
         );
     }

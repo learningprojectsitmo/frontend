@@ -1,3 +1,4 @@
+import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { useNavigate, useSearchParams, Navigate } from "react-router";
 import { useState } from "react";
 import { ContentLayout } from "@/components/layouts";
@@ -25,7 +26,7 @@ export default function ExamNewRoute() {
         access.manageable.find((item) => item.id === selectedWorkspaceId)?.title ??
         (selectedWorkspaceId ? `Пространство ${selectedWorkspaceId}` : "");
 
-    if (access.isLoading) {
+    if (access.isLoading || projectTypes.isLoading) {
         return (
             <ContentLayout title="Создание экзамена">
                 <div className="flex h-64 items-center justify-center">
@@ -36,6 +37,15 @@ export default function ExamNewRoute() {
     }
 
     if (!canCreate) return <Navigate to={paths.app.exams.getHref(selectedWorkspaceId)} replace />;
+
+    if (projectTypes.isError && !projectTypes.data) {
+        return (
+            <ContentLayout title="Создание экзамена">
+                <ExamErrorState message="Не удалось загрузить типы проектов."
+                    retry={() => void projectTypes.refetch()} pending={projectTypes.isFetching} />
+            </ContentLayout>
+        );
+    }
 
     return (
         <ContentLayout title="Создание экзамена">

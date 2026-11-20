@@ -1,3 +1,4 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useEffect, useState } from "react";
 import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -45,6 +46,7 @@ export function ProjectExamBlocks({
             queryOptions({
                 queryKey: queryKeys.exams.queue(workspaceId, exam.id),
                 queryFn: () => examApi.queue(workspaceId, exam.id),
+                structuralSharing: shareExamQueue,
                 staleTime: 30_000,
                 refetchInterval: (query) =>
                     checkingBookings || Date.parse(exam.configuration.starts_at) > Date.now() ||
@@ -185,7 +187,7 @@ export function ProjectExamBlocks({
             {grade && (
                 <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-app-border bg-app-surface p-5 lg:col-span-full">
                     <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-app-badge-blue text-app-blue">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-app-badge-blue text-app-blue dark:text-blue-300">
                             <Icon name="exam" size={22} />
                         </span>
                         <div className="min-w-0">
@@ -206,7 +208,7 @@ export function ProjectExamBlocks({
                         key={`${exam.id}-${state.status}`}
                         className="min-w-0 flex-1 basis-28 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300"
                     >
-                        <h2 aria-live="polite" className="text-xl font-semibold">
+                        <h2 aria-live="polite" className="text-xl font-semibold [overflow-wrap:anywhere]">
                             {state.status === "running" ||
                             (state.status === "finished" && registered) ? (
                                 <Link

@@ -1,3 +1,4 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CalendarClock, ChevronLeft, Save, ShieldCheck, Trash2, GripVertical, Maximize2, Plus } from "lucide-react";
 import { Tooltip } from "@base-ui/react/tooltip";
@@ -112,6 +113,7 @@ export function ExamAdminPanel({
     );
     const [reason, setReason] = useState("");
     const [saving, setSaving] = useState(false);
+    const writeInProgress = useRef(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [touched, setTouched] = useState<
         Set<keyof ExamConfiguration | "weights" | "durations">
@@ -142,6 +144,7 @@ export function ExamAdminPanel({
     const assessmentQueue = useQuery({
         queryKey: queryKeys.exams.queue(workspaceId, exam?.id ?? 0),
         queryFn: () => examApi.queue(workspaceId, exam?.id ?? 0),
+        structuralSharing: shareExamQueue,
         enabled: activeSection === "questions" && exam?.status === "published",
     });
     const assessedTypes = new Set(
@@ -368,7 +371,7 @@ export function ExamAdminPanel({
     };
 
     const saveExam = async (action: "save" | "publish", ignoreDurationWarning = false) => {
-        if (saving || pendingSlotId !== null || pendingTiming) return;
+        if (writeInProgress.current || pendingTiming) return;
         const publishing = action === "publish";
         const configurationChanged = exam && (Object.keys(configuration) as Array<keyof ExamConfiguration>)
             .some((key) => JSON.stringify(exam.configuration[key]) !== JSON.stringify(configuration[key]));
@@ -413,6 +416,7 @@ export function ExamAdminPanel({
             return;
         }
 
+        writeInProgress.current = true;
         setSaving(true);
         let saved = exam;
         let stage: "settings" | "slots" | "publish" = "settings";
@@ -463,6 +467,7 @@ export function ExamAdminPanel({
             toast.error(stage === "slots" ? `Настройки сохранены. ${message}` : message);
         } finally {
             if (saved) await invalidateExam(queryClient, workspaceId, saved.id);
+            writeInProgress.current = false;
             setSaving(false);
         }
     };
@@ -607,8 +612,9 @@ export function ExamAdminPanel({
     const moveTeam = async (fromId: number, toId: number) => {
         const registration = assignedRegistrationBySlot.get(fromId);
         if (!exam || !registration || registration.started_at ||
-            assignedRegistrationBySlot.has(toId) || pendingSlotId !== null || saving) return;
+            assignedRegistrationBySlot.has(toId) || writeInProgress.current) return;
         setAssignOpenKey(null);
+        writeInProgress.current = true;
         setPendingSlotId(toId);
         try {
             const result = await examApi.moveRegistration(workspaceId, exam.id, registration, toId);
@@ -618,15 +624,17 @@ export function ExamAdminPanel({
             toast.error(getExamErrorMessage(error) ?? "Не удалось перенести команду");
         } finally {
             await invalidateExam(queryClient, workspaceId, exam.id);
+            writeInProgress.current = false;
             setPendingSlotId(null);
         }
     };
 
     const changeSlotAssignment = async (slot: LocalSlot, projectId?: number) => {
-        if (!exam || !slot.id || pendingSlotId !== null || saving) return;
+        if (!exam || !slot.id || writeInProgress.current) return;
         const existing = assignedRegistrationBySlot.get(slot.id);
         setAssignOpenKey(null);
         if (existing?.started_at || existing?.project_id === projectId) return;
+        writeInProgress.current = true;
         setPendingSlotId(slot.id);
         if (existing) setHiddenRegistrationId(existing.id);
         let previousRegistrationCancelled = false;
@@ -664,6 +672,7 @@ export function ExamAdminPanel({
         } finally {
             await invalidateExam(queryClient, workspaceId, exam.id);
             setHiddenRegistrationId(null);
+            writeInProgress.current = false;
             setPendingSlotId(null);
         }
     };
@@ -872,10 +881,10 @@ export function ExamAdminPanel({
         <div className="overflow-hidden rounded-[20px] border border-gray-200 dark:border-app-border bg-app-surface">
             <header className="flex items-center justify-between border-b border-gray-200 dark:border-app-border px-5 py-4">
                 <div>
-                    <button type="button" onClick={onCancel} className="mb-1 flex cursor-pointer items-center gap-1 text-[13px] text-app-muted hover:text-app-text">
+                    <button type="button" onClick={onCancel} disabled={saving || pendingSlotId !== null} className="mb-1 flex cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 items-center gap-1 text-[13px] text-app-muted hover:text-app-text">
                         <ChevronLeft size={14} /> Отмена
                     </button>
-                    <h1 className="text-[22px] font-bold text-app-text">
+                    <h1 className="text-[22px] font-bold text-app-text [overflow-wrap:anywhere]">
                         {exam
                             ? `Редактирование экзамена · ${workspaceName}`
                             : workspaceId
@@ -1364,7 +1373,7 @@ export function ExamAdminPanel({
                                 </div>
                             )}
                             <dl className="grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Название</dt><dd className="mt-1 font-semibold">{configuration.title || "—"}</dd></div>
+                                <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Название</dt><dd className="mt-1 font-semibold [overflow-wrap:anywhere]">{configuration.title || "—"}</dd></div>
                                 <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Начало</dt><dd className="mt-1 font-semibold">{new Date(configuration.starts_at).toLocaleString("ru-RU")}</dd></div>
                                 <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Типы проектов</dt><dd className="mt-1 font-semibold">{configuration.project_type_ids.map((id) => projectTypes.find((type) => type.id === id)?.name).filter(Boolean).join(", ") || "Не выбраны"}</dd></div>
                                 <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4"><dt className="text-[12px] text-app-muted">Максимальный балл</dt><dd className="mt-1 font-semibold">{configuration.max_score}</dd></div>
@@ -1458,7 +1467,7 @@ export function ExamAdminPanel({
                         className="max-w-64"
                     />
                 )}
-                <Button variant="outline" size="hug36" onClick={onCancel}>Отмена</Button>
+                <Button variant="outline" size="hug36" disabled={saving || pendingSlotId !== null} onClick={onCancel}>Отмена</Button>
                 <Button variant="outline" size="hug36" icon={<Save size={16} />} disabled={pendingSlotId !== null || Boolean(pendingTiming)} loading={saving} onClick={() => void saveExam("save")}>
                     {exam ? "Сохранить" : "Сохранить черновик"}
                 </Button>

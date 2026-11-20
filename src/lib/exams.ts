@@ -1,3 +1,4 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
@@ -64,47 +65,74 @@ export const getExamErrorCode = (error: unknown): string | null => {
         : null;
 };
 
+const loggedExamErrors = new WeakSet<object>();
+
 export const getExamErrorMessage = (error: unknown): string | null => {
+    if (!isAxiosError(error)) return null;
     const code = getExamErrorCode(error);
-    const messages: Record<string, string> = {
-        exam_not_published: "Нельзя назначить проект: сначала опубликуйте экзамен.",
-        registration_closed: "Запись на этот экзамен сейчас закрыта.",
-        project_type_not_allowed: "Тип выбранного проекта не включён в этот экзамен.",
-        project_already_registered: "Этот проект уже записан на экзамен.",
-        slot_required: "Для записи нужно выбрать свободный слот.",
-        slot_unavailable: "Выбранный слот уже занят. Обновите список и выберите другой.",
-        questions_locked:
-            "По этому типу проектов уже начинали выставлять оценки на экзамене. Критерии закреплены, чтобы сохранить правила, по которым оценивали команды.",
-        settings_version_conflict:
-            "Настройки уже изменились. Обновите страницу и повторите действие.",
-        slot_schedule_closed: "Добавлять слоты нельзя: время начала экзамена уже наступило.",
-        slot_overlap: "Слоты пересекаются. Укажите непересекающиеся интервалы.",
-        slot_before_exam: "Слот не может начинаться раньше начала экзамена.",
-        slot_schedule_locked: "Расписание слотов уже заблокировано после назначения команд.",
-        registration_not_active:
-            "Нельзя изменить команду на этом слоте: регистрация команды неактивна. Проверьте статус команды или регистрации.",
-        defense_already_started: "Защита команды уже началась. Изменить запись или явку нельзя.",
-        registration_version_conflict:
-            "Запись команды изменилась. Повторите действие после обновления списка.",
-        registration_not_queued: "Команда уже вне очереди.",
-        queue_position_out_of_range:
-            "Очередь изменилась. Проверьте порядок команд и повторите действие.",
-        another_defense_active: "Сначала завершите текущую защиту.",
-        attempt_version_conflict:
-            "Состояние защиты изменилось. Обновите страницу и повторите действие.",
-        attempt_not_postponed: "Эту защиту нельзя возобновить из текущего состояния.",
-        attempt_paused: "Сначала снимите защиту с паузы.",
-        attempt_postponed: "Эта защита отложена.",
-        queue_position_conflict:
-            "Это место в очереди занято. Обновите очередь и повторите действие.",
-        slot_schedule_conflict: "Начало экзамена должно быть раньше первого сохранённого слота.",
-        attempt_running: "Сейчас уже идёт защита.",
-        attempt_finished: "Эта защита уже завершена.",
-        questions_not_ready: "Нельзя опубликовать: вопросы экзамена не готовы.",
-        published_schedule_locked:
-            "После публикации дату начала, период записи и типы проектов изменить нельзя.",
-    };
-    return code && Object.prototype.hasOwnProperty.call(messages, code) ? messages[code] : null;
+    if (code && !loggedExamErrors.has(error)) {
+        loggedExamErrors.add(error);
+        // eslint-disable-next-line no-console
+        console.warn("Запрос экзамена завершился ошибкой", code);
+    }
+    if (["ECONNABORTED", "ETIMEDOUT"].includes(error.code ?? "")) {
+        return "Сервер не успел ответить. Обновите данные перед повтором.";
+    }
+    if (isExamAccessDenied(error)) return "Действие недоступно для вашей роли или этого экзамена.";
+    return code && Object.prototype.hasOwnProperty.call(examErrorMessages, code) ? examErrorMessages[code] : null;
+};
+
+const examErrorMessages: Record<string, string> = {
+    exam_not_published: "Нельзя назначить проект: сначала опубликуйте экзамен.",
+    registration_closed: "Запись на этот экзамен сейчас закрыта.",
+    project_type_not_allowed: "Тип выбранного проекта не включён в этот экзамен.",
+    project_already_registered: "Этот проект уже записан на экзамен.",
+    slot_required: "Для записи нужно выбрать свободный слот.",
+    slot_unavailable: "Выбранный слот уже занят. Обновите список и выберите другой.",
+    questions_locked:
+        "По этому типу проектов уже начинали выставлять оценки на экзамене. Критерии закреплены, чтобы сохранить правила, по которым оценивали команды.",
+    settings_version_conflict:
+        "Настройки уже изменились. Обновите страницу и повторите действие.",
+    slot_schedule_closed: "Добавлять слоты нельзя: время начала экзамена уже наступило.",
+    slot_overlap: "Слоты пересекаются. Укажите непересекающиеся интервалы.",
+    slot_before_exam: "Слот не может начинаться раньше начала экзамена.",
+    slot_schedule_locked: "Расписание слотов уже заблокировано после назначения команд.",
+    registration_not_active:
+        "Нельзя изменить команду на этом слоте: регистрация команды неактивна. Проверьте статус команды или регистрации.",
+    defense_already_started: "Защита команды уже началась. Изменить запись или явку нельзя.",
+    registration_version_conflict:
+        "Запись команды изменилась. Повторите действие после обновления списка.",
+    registration_not_queued: "Команда уже вне очереди.",
+    queue_position_out_of_range:
+        "Очередь изменилась. Проверьте порядок команд и повторите действие.",
+    another_defense_active: "Сначала завершите текущую защиту.",
+    attempt_version_conflict:
+        "Состояние защиты изменилось. Обновите страницу и повторите действие.",
+    attempt_not_postponed: "Эту защиту нельзя возобновить из текущего состояния.",
+    attempt_paused: "Сначала снимите защиту с паузы.",
+    attempt_postponed: "Эта защита отложена.",
+    queue_position_conflict:
+        "Это место в очереди занято. Обновите очередь и повторите действие.",
+    slot_schedule_conflict: "Начало экзамена должно быть раньше первого сохранённого слота.",
+    attempt_running: "Сейчас уже идёт защита.",
+    attempt_finished: "Эта защита уже завершена.",
+    questions_not_ready: "Нельзя опубликовать: вопросы экзамена не готовы.",
+    published_schedule_locked:
+        "После публикации дату начала, период записи и типы проектов изменить нельзя.",
+    assessment_window_closed: "Время оценивания истекло.",
+    assessment_window_open: "Принять итог можно после закрытия оценивания.",
+    assessment_window_missing: "Для этой защиты не открывали оценивание.",
+    audience_snapshot_unavailable: "Для этой защиты не сохранён список оценщиков.",
+    incomplete_sheet: "Выберите балл по каждому критерию.",
+    result_version_conflict: "Итог уже изменился. Проверьте новую редакцию.",
+    result_not_accepted: "Сначала утвердите итог.",
+    no_calculation: "Нет учитываемых оценок. Можно ввести итог вручную.",
+    final_score_out_of_range: "Балл выходит за допустимый диапазон.",
+    attempt_not_finished: "Сначала завершите защиту.",
+    questions_missing: "Для защиты не сохранены критерии оценивания.",
+    invalid_sheet_data: "Не удалось рассчитать итог по сохранённым оценкам.",
+    csv_export_limit_exceeded: "Отчёт слишком большой для выгрузки.",
+    sheet_source_not_configured: "Источник листов оценивания для выгрузки не настроен.",
 };
 
 export type CreateExamInput = ExamConfiguration;
@@ -323,6 +351,7 @@ export const useExamQueue = (workspaceId: number, examId: number, enabled = true
     useQuery({
         queryKey: queryKeys.exams.queue(workspaceId, examId),
         queryFn: () => examApi.queue(workspaceId, examId),
+        structuralSharing: shareExamQueue,
         enabled: enabled && workspaceId > 0 && examId > 0,
         refetchInterval: live ? false : 5000,
     });

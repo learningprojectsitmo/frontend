@@ -1,5 +1,5 @@
 import { api } from "@/lib/api-client";
-import { getExamErrorCode, isExamAccessDenied } from "@/lib/exams";
+import { getExamErrorMessage } from "@/lib/exams";
 import type { ExamWeights, ProjectTypeQuestion } from "@/types/exam";
 
 type Decimal = string | number;
@@ -76,15 +76,5 @@ export const examGradingApi = {
 export const roleTitles: Record<Role, string> = { teacher: "Комиссия", manager: "Магистранты", member: "Бакалавры" };
 
 export function getGradingError(error: unknown) {
-    if (isExamAccessDenied(error)) return "Действие недоступно для вашей роли или этого экзамена.";
-    const messages: Record<string, string> = {
-        assessment_window_closed: "Время оценивания истекло.",
-        assessment_window_open: "Принять итог можно после закрытия оценивания.",
-        audience_snapshot_unavailable: "Для этой защиты не сохранён список оценщиков.",
-        incomplete_sheet: "Выберите балл по каждому критерию.",
-        result_version_conflict: "Итог уже изменился. Проверьте новую редакцию.",
-        no_calculation: "Нет учитываемых оценок. Можно ввести итог вручную.",
-        final_score_out_of_range: "Балл выходит за допустимый диапазон.",
-    };
-    return messages[getExamErrorCode(error) ?? ""] ?? "Не удалось выполнить действие. Попробуйте ещё раз.";
+    return getExamErrorMessage(error) ?? "Не удалось выполнить действие. Попробуйте ещё раз.";
 }

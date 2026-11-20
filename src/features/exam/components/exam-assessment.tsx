@@ -1,3 +1,4 @@
+import { ExamErrorState } from "./exam-error-state";
 import { Tooltip } from "@base-ui/react/tooltip";
 import { Ban } from "lucide-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -52,7 +53,7 @@ function AssessmentToast({ deadline, onDismiss }: { deadline: number; onDismiss:
                 <p className="font-semibold">Оцените команду в таблице</p>
                 <AssessmentCountdown seconds={seconds} />
             </div>
-            <button type="button" aria-label="Закрыть уведомление" className="rounded-lg p-1 text-app-muted hover:bg-app-ghost" onClick={onDismiss}>
+            <button type="button" aria-label="Закрыть уведомление" className="pointer-events-auto cursor-pointer rounded-lg p-1 text-app-muted hover:bg-app-ghost" onClick={onDismiss}>
                 <Icon name="cross" size={18} />
             </button>
         </div>
@@ -73,6 +74,7 @@ export function ExamAssessmentNotification(props: AssessmentTarget & { closesAt:
             id: `assessment-${workspaceId}-${examId}-${attemptId}`,
             duration: Infinity,
             position: "bottom-right",
+            style: { pointerEvents: "none" },
             dismissible: false,
             closeButton: false,
         });
@@ -87,9 +89,8 @@ export function ExamAssessment(props: ExamAssessmentProps) {
 
     if (isExamAccessDenied(form.error) || form.data?.assessor.excluded) return null;
     if (!form.data && windowOpen) return form.isError ? (
-        <button type="button" onClick={() => void form.refetch()} className="text-xs text-app-muted underline"
-            title={getGradingError(form.error)}>Повторить загрузку формы</button>
-    ) : null;
+        <ExamErrorState message={getGradingError(form.error)} retry={() => void form.refetch()} pending={form.isFetching} />
+    ) : <span role="status" className="text-xs text-app-muted">Загружаем оценивание…</span>;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -246,7 +247,9 @@ function AssessmentContent({ workspaceId, examId, attemptId, projectName, remain
                                                                 <Tooltip.Arrow className="data-[side=top]:-bottom-[5px] data-[side=bottom]:-top-[5px] data-[side=left]:-right-[5px] data-[side=right]:-left-[5px]">
                                                                     <span className="block size-2 rotate-45 bg-white dark:bg-app-surface" />
                                                                 </Tooltip.Arrow>
-                                                                {level.description}
+                                                                <div className="max-h-[min(12rem,var(--available-height))] overflow-auto [overflow-wrap:anywhere]">
+                                                                    {level.description}
+                                                                </div>
                                                             </Tooltip.Popup>
                                                         </Tooltip.Positioner>
                                                     </Tooltip.Portal>
@@ -291,7 +294,7 @@ function AssessmentContent({ workspaceId, examId, attemptId, projectName, remain
                             className="rounded-lg border border-app-border px-3 py-2 text-sm text-app-text">Повторить сохранение</button>}
                         <button type="button" disabled={lockFields || !answers.length || answers.some((answer) => answer.score === null) ||
                             Boolean(submission && !isPending && !dirty && !submission.has_unsubmitted_changes)}
-                            onClick={submitAssessment} className="rounded-lg bg-[#155DFC] px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
+                            onClick={submitAssessment} className="cursor-pointer rounded-lg bg-[#155DFC] px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
                             {sending ? "Отправляем…" : submission ? "Отправить правки" : "Отправить оценку"}
                         </button>
                     </div>

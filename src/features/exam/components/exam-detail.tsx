@@ -1,3 +1,5 @@
+import { getExamQueueReceivedAt } from "../exam-queue-snapshot";
+import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { Tooltip } from "@base-ui/react/tooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -180,7 +182,9 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         enabled: resultAccess,
         refetchInterval: resultAccess ? 10_000 : false,
     });
-    const resultsByAttempt = new Map(resultAccess && results.isSuccess ? results.data.map((item) => [item.attempt_id, item]) : []);
+    const resultsByAttempt = useMemo(() => new Map(
+        resultAccess && results.isSuccess ? results.data.map((item) => [item.attempt_id, item]) : [],
+    ), [resultAccess, results.isSuccess, results.data]);
     const queryClient = useQueryClient();
     const now = useExamClock();
     const dataAvailable = canOpen && !!examQuery.data && !isExamAccessDenied(examQuery.error) && !isExamAccessDenied(queueQuery.error);
@@ -209,6 +213,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
     }, [hash, dataAvailable]);
     const queueBody = useRef<HTMLTableSectionElement>(null);
     const previousRowOffsets = useRef(new Map<string, number>());
+    const mutationLock = useRef(false);
     const [attemptPending, setAttemptPending] = useState(false);
     const [registrationPending, setRegistrationPending] = useState(false);
     const [postpone, setPostpone] = useState<{ item: QueueItem; title: string } | null>(null);
@@ -233,11 +238,13 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
     const showSchedule = Boolean(queueQuery.data && exam &&
         shouldShowExamSchedule(exam.configuration.starts_at, serverNow, hasStarted));
     const slotsQuery = useExamSlots(workspaceId, examId, (showSchedule || isManager || showBooking) && Boolean(exam));
-    const etaByRegistration = new Map(queueQuery.data?.eta.items.map((item) => [item.registration_id, item]));
+    const etaByRegistration = useMemo(() => new Map(
+        queueQuery.data?.eta.items.map((item) => [item.registration_id, item]),
+    ), [queueQuery.data?.eta.items]);
     const etaMessage = showSchedule ? beforeStartEtaMessage : liveEtaMessage;
-    const queueBySlot = new Map(queueItems.flatMap((item) =>
+    const queueBySlot = useMemo(() => new Map(queueItems.flatMap((item) =>
         item.slot_id === null ? [] : [[item.slot_id, item] as const],
-    ));
+    )), [queueItems]);
     const [orderedIds, setOrderedIds] = useState<number[] | null>(null);
     const orderStorageKey = `exam-presentation-order:${workspaceId}:${examId}`;
     const [savedOrder, setSavedOrder] = useState<number[]>(() => {
@@ -260,8 +267,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         }
     }, [orderStorageKey, queueQuery.data, savedOrder, stableIds]);
 
-    const waitingIds = getWaitingIds(queueItems);
-    const waitingSet = new Set(waitingIds);
+    const waitingIds = useMemo(() => getWaitingIds(queueItems), [queueItems]);
+    const waitingSet = useMemo(() => new Set(waitingIds), [waitingIds]);
     const draftIsCurrent = orderedIds?.length === waitingIds.length && orderedIds.every((id) => waitingSet.has(id));
     const draft = draftIsCurrent ? orderedIds : null;
     const hasOrderChanges = draft?.some((id, index) => id !== waitingIds[index]) ?? false;
@@ -336,7 +343,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
     const examOver = isExamOver(status);
     const followingTeam = queueItems.find((item) => item.position === 1 && (item.state === "waiting" || item.state === "postponed"));
     const remainingTeams = queueItems.filter((item) => item.state === "waiting" || item.state === "postponed");
-    const canStartDefense = isManager && exam?.status === "published" && !examOver && !currentTeam && Boolean(followingTeam);
+    const canStartDefense = isManager && !queueQuery.isError && exam?.status === "published" && !examOver && !currentTeam && Boolean(followingTeam);
     const canPrepareExam = canStartDefense && !hasStarted && !examPrepared;
     const presentedTeam = currentTeam ?? (exam?.status === "published" && !examOver ? followingTeam : undefined);
     const transition = !currentTeam && presentedTeam && exam
@@ -412,6 +419,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         );
         const position = teamsAhead.length + 1;
         let moved: Registration | undefined;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setRegistrationPending(true);
         try {
             const result = await examApi.moveRegistration(workspaceId, examId, {
@@ -441,6 +450,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(detail ? `${message} ${detail}` : message);
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
             setRegistrationPending(false);
         }
     };
@@ -504,6 +514,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             return;
         }
         if (!draft || !hasOrderChanges) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setSavingOrder(true);
         try {
             const initial = (await queueQuery.refetch({ throwOnError: true })).data;
@@ -532,6 +544,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             await queueQuery.refetch();
             setOrderedIds(null);
             setEditing(false);
+            mutationLock.current = false;
             setSavingOrder(false);
         }
     };
@@ -547,6 +560,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
 
     const finishLastDefense = async () => {
         if (!isManager || !activeAttempt || attemptPending || registrationPending || savingOrder) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setAttemptPending(true);
         try {
             const latest = await queueQuery.refetch({ throwOnError: true });
@@ -566,12 +581,15 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось завершить выступление");
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
             setAttemptPending(false);
         }
     };
 
     const updatePhase = async (action: "questions" | "resume" | "pause") => {
         if (!isManager || !activeAttempt || attemptPending || registrationPending || savingOrder) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setAttemptPending(true);
         try {
             await examApi.commandAttempt(workspaceId, examId, activeAttempt.id, action, activeAttempt.version);
@@ -579,12 +597,15 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? (action === "questions" ? "Не удалось перейти к вопросам" : "Не удалось изменить состояние таймера"));
         } finally {
             await queueQuery.refetch();
+            mutationLock.current = false;
             setAttemptPending(false);
         }
     };
 
     const { refetch: refetchQueue } = queueQuery;
     const startDefense = useCallback(async (registrationId: number, plan?: ExamAutoStart) => {
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setAttemptPending(true);
         try {
             const queue = (await refetchQueue({ throwOnError: true })).data;
@@ -609,6 +630,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось начать выступление команды.");
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
             setAttemptPending(false);
         }
     }, [queryClient, workspaceId, examId, refetchQueue]);
@@ -630,6 +652,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         const target = direction === "previous" ? previousTeam : followingTeam;
         if (!target || !activeAttempt || !isManager || exam?.status !== "published" || examOver ||
             attemptPending || savingOrder || registrationPending || editing || (direction === "previous" && previousUnavailable)) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setAttemptPending(true);
         let postponedCurrent = false;
         try {
@@ -674,6 +698,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(postponedCurrent ? `Текущее выступление отложено. ${message}` : message);
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
             setAttemptPending(false);
         }
     };
@@ -686,6 +711,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error("Состояние команды изменилось. Проверьте очередь.");
             return;
         }
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setRegistrationPending(true);
         try {
             if (item.state === "running" && item.attempt) {
@@ -699,12 +726,15 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось отложить выступление");
         } finally {
             await queueQuery.refetch();
+            mutationLock.current = false;
             setRegistrationPending(false);
         }
     };
 
     const returnTeam = async (item: QueueItem, first: boolean) => {
         if (!isManager || registrationPending || attemptPending || savingOrder) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setRegistrationPending(true);
         try {
             await examApi.place(workspaceId, examId, item.registration_id, item.registration_version, first ? 1 : undefined);
@@ -713,6 +743,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось изменить порядок выступлений");
         } finally {
             await queueQuery.refetch();
+            mutationLock.current = false;
             setRegistrationPending(false);
         }
     };
@@ -720,6 +751,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
     const setNoShow = async (item: QueueItem) => {
         if (!isManager || registrationPending || savingOrder || attemptPending) return;
         const restore = item.state === "no_show";
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setRegistrationPending(true);
         try {
             if (restore) {
@@ -732,6 +765,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось изменить явку команды");
         } finally {
             await queueQuery.refetch();
+            mutationLock.current = false;
             setRegistrationPending(false);
         }
     };
@@ -740,6 +774,8 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         if (!isManager || !deleteRow || registrationPending || savingOrder || attemptPending) return;
         const item = queueByRegistration.get(deleteRow.id);
         if (!item || !canChangeExamRegistration(item)) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setRegistrationPending(true);
         try {
             await examApi.cancelRegistration(
@@ -756,6 +792,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
             toast.error(getExamErrorMessage(error) ?? "Не удалось удалить команду");
             await queueQuery.refetch();
         } finally {
+            mutationLock.current = false;
             setRegistrationPending(false);
         }
     };
@@ -772,16 +809,25 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
         );
     }
 
-    if (!exam || isExamAccessDenied(queueQuery.error)) {
+    if (!exam || isExamAccessDenied(examQuery.error) || isExamAccessDenied(queueQuery.error)) {
         return (
-            <ContentLayout title="Экзамен не найден">
-                <div className="p-8 text-app-muted">{isExamAccessDenied(examQuery.error) || isExamAccessDenied(queueQuery.error) ? "Экзамен недоступен" : examQuery.isError ? "Не удалось загрузить экзамен" : "Экзамен не найден"}</div>
+            <ContentLayout title="Экзамен">
+                <ExamErrorState
+                    message={isExamAccessDenied(examQuery.error) || isExamAccessDenied(queueQuery.error)
+                        ? "Экзамен недоступен."
+                        : "Не удалось загрузить экзамен."}
+                    retry={examQuery.isError && !isExamAccessDenied(examQuery.error) ? () => void examQuery.refetch() : undefined}
+                    pending={examQuery.isFetching}
+                />
+                <Link className="block text-center text-app-blue dark:text-blue-300" to={paths.app.exams.getHref(workspaceId)}>
+                    К списку экзаменов
+                </Link>
             </ContentLayout>
         );
     }
 
     const activeTiming = activeAttempt?.settings_version === settingsVersion ? exam.configuration : activeRevision.data?.configuration;
-    const timer = transition ?? getExamTimer(activeAttempt, activeTiming ?? exam.configuration, queueQuery.dataUpdatedAt, now);
+    const timer = transition ?? getExamTimer(activeAttempt, activeTiming ?? exam.configuration, getExamQueueReceivedAt(queueSnapshot, queueQuery.dataUpdatedAt), now);
     const currentEndsAt = queueSnapshot && eta?.current && activeTiming
         ? serverNow + (eta.current.overdue_seconds > 0 ? 0 : Math.max(0,
             eta.current.slot_remaining_seconds - activeTiming.transition_minutes * 60 -
@@ -814,7 +860,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
                         <BreadcrumbSeparator />
                         <BreadcrumbItem><BreadcrumbLink asChild><Link to="/app/exams" className="text-[16px] font-medium text-app-muted">Экзамены</Link></BreadcrumbLink></BreadcrumbItem>
                         <BreadcrumbSeparator />
-                        <BreadcrumbItem><BreadcrumbPage className="text-[16px] font-medium">{exam.configuration.title}</BreadcrumbPage></BreadcrumbItem>
+                        <BreadcrumbItem><BreadcrumbPage title={exam.configuration.title} className="block max-w-[min(65vw,30rem)] truncate text-[16px] font-medium">{exam.configuration.title}</BreadcrumbPage></BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
 
@@ -823,9 +869,9 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
                         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#4338CA] text-white">
                             <Icon name="exam" size={32} />
                         </div>
-                        <div>
+                        <div className="min-w-0 [overflow-wrap:anywhere]">
                             <div className="flex flex-wrap items-center gap-3">
-                                <h1 className="text-[26px] font-bold leading-[1.2] text-app-text sm:text-[40px]">
+                                <h1 title={exam.configuration.title} className="line-clamp-3 text-[26px] font-bold leading-[1.2] text-app-text sm:line-clamp-none sm:text-[40px]">
                                     {exam.configuration.title}
                                 </h1>
                                 <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-medium ${statusStyle.className}`}>
@@ -912,7 +958,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
                 <section>
                     <h2 className="text-[20px] font-bold text-app-text">Описание экзамена</h2>
                     <p className="mt-2.5 text-[17px] leading-7 text-app-muted">
-                        {exam.configuration.description || "Описание не указано"}
+                        <span className="whitespace-pre-wrap [overflow-wrap:anywhere]">{exam.configuration.description || "Описание не указано"}</span>
                     </p>
                 </section>
 
@@ -1405,8 +1451,12 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
                                 })}
                             </tbody>
                         </table>
-                        {(!booking.inMode || booking.available.length === 0) && tableRows.length === 0 && (
-                            <div className="py-12 text-center text-sm text-app-muted">{queueQuery.isLoading ? "Загружаем список команд…" : queueQuery.isError ? "Не удалось загрузить список команд" : "Команды не найдены"}</div>
+                        {queueQuery.isError && (
+                            <ExamErrorState message="Не удалось обновить очередь выступлений."
+                                retry={() => void queueQuery.refetch()} pending={queueQuery.isFetching} />
+                        )}
+                        {!queueQuery.isError && (!booking.inMode || booking.available.length === 0) && tableRows.length === 0 && (
+                            <div className="py-12 text-center text-sm text-app-muted">{queueQuery.isLoading ? "Загружаем список команд…" : "Команды не найдены"}</div>
                         )}
                         </Tooltip.Provider>
                     </div>
@@ -1415,7 +1465,7 @@ function ExamDetailView({ workspaceId, examId, organizerOnly }: { workspaceId: n
                     <ExamResultsRegistry workspaceId={workspaceId} examId={examId} items={results.data} canDownload={status === "finished" && !queueEtaStale} onOpen={setResultItem} />
                 )}
                 {resultAccess && results.isError && !isExamAccessDenied(results.error) && (
-                    <p role="alert" className="text-sm text-app-muted">{getGradingError(results.error)}</p>
+                    <ExamErrorState message={getGradingError(results.error)} retry={() => void results.refetch()} pending={results.isFetching} />
                 )}
             </div>
 

@@ -1,3 +1,4 @@
+import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { queryKeys } from "@/lib/query-keys";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -111,11 +112,16 @@ export function ExamManagementList({
                 </div>
             </div>
 
+            {hasLoadError && <ExamErrorState message="Не удалось загрузить все экзамены."
+                retry={() => {
+                    if (workspaceId > 0) void selectedQuery.refetch();
+                    else allQueries.filter((query) => query.isError).forEach((query) => void query.refetch());
+                }}
+                pending={workspaceId > 0 ? selectedQuery.isFetching : allQueries.some((query) => query.isFetching)}
+            />}
             {isLoading ? (
                 <div className="flex h-48 items-center justify-center"><Spinner /></div>
-            ) : filtered.length === 0 && hasLoadError ? (
-                <p role="alert" className="py-8 text-center text-app-muted">Не удалось загрузить экзамены.</p>
-            ) : filtered.length === 0 ? (
+            ) : filtered.length === 0 ? (hasLoadError ? null :
                 <div className="rounded-[20px] border border-dashed border-gray-300 dark:border-app-border py-16 text-center">
                     <p className="text-[14px] font-medium text-app-text">
                         {tab === "mine" ? "У вас пока нет экзаменов" : "Экзамены не найдены"}
@@ -164,16 +170,16 @@ function ExamManagementCard({
                 </span>
                 <span className="text-[12px] font-bold text-app-text">{formatExamDate(exam.configuration.starts_at)}</span>
             </div>
-            <h3 className="mt-5 text-[17px] font-bold text-app-text">
+            <h3 title={exam.configuration.title} className="mt-5 line-clamp-2 text-[17px] font-bold text-app-text [overflow-wrap:anywhere]">
                 <Link to={paths.app.examEdit.getHref(workspaceId, exam.id)} className="after:absolute after:inset-0">
                     {exam.configuration.title}
                 </Link>
             </h3>
             {workspaceName && (
-                <p className="mt-2 text-[12px] font-medium text-app-blue dark:text-blue-300">{workspaceName}</p>
+                <p title={workspaceName} className="mt-2 truncate text-[12px] font-medium text-app-blue dark:text-blue-300">{workspaceName}</p>
             )}
             {exam.configuration.description && (
-                <p className="mt-2 line-clamp-2 text-[13px] text-app-muted">{exam.configuration.description}</p>
+                <p title={exam.configuration.description} className="mt-2 line-clamp-2 text-[13px] text-app-muted [overflow-wrap:anywhere]">{exam.configuration.description}</p>
             )}
             {exam.status === "published" && (
                 <Link to={paths.app.examView.getHref(workspaceId, exam.id)}
@@ -208,14 +214,15 @@ function ExamManagementTable({
                     {exams.map((exam) => (
                         <tr key={exam.id} className="group border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
                             <td className="px-6 py-4">
-                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} className="text-[14px] font-medium text-app-blue dark:text-blue-300 hover:underline">
+                                <Link to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)} title={exam.configuration.title} className="block max-w-64 truncate text-[14px] font-medium text-app-blue hover:underline dark:text-blue-300">
                                     {exam.configuration.title}
                                 </Link>
                             </td>
                             <td className="px-6 py-4">
                                 <Link
                                     to={`/app/space?id=${exam.workspace_id}`}
-                                    className="text-[13px] font-medium text-app-blue dark:text-blue-300 hover:underline"
+                                    title={workspaces.find((workspace) => workspace.id === exam.workspace_id)?.title}
+                                    className="block max-w-52 truncate text-[13px] font-medium text-app-blue hover:underline dark:text-blue-300"
                                 >
                                     {workspaces.find((workspace) => workspace.id === exam.workspace_id)?.title ??
                                         `Пространство ${exam.workspace_id}`}

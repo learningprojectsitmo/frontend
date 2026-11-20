@@ -1,3 +1,4 @@
+import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router";
@@ -30,6 +31,7 @@ function StatementExam({ exam, spaceTitle, now }: { exam: Exam; spaceTitle: stri
     const queue = useQuery({
         queryKey: queryKeys.exams.queue(workspaceId, examId),
         queryFn: () => examApi.queue(workspaceId, examId),
+        structuralSharing: shareExamQueue,
         retry: false,
     });
 

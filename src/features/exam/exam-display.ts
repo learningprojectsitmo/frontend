@@ -1,3 +1,4 @@
+import { getExamQueueReceivedAt } from "./exam-queue-snapshot";
 import type { Exam, ExamConfiguration, ExamQueue, QueueItem } from "@/types/exam";
 
 export type ExamStatus =
@@ -20,7 +21,7 @@ export function isAssessmentOpen(item: QueueItem, serverNow: number) {
 }
 
 export function getQueueTime(queue: ExamQueue | undefined, now: number, receivedAt: number) {
-    return queue ? Date.parse(queue.server_now) + Math.max(0, now - receivedAt) : now;
+    return queue ? Date.parse(queue.server_now) + Math.max(0, now - getExamQueueReceivedAt(queue, receivedAt)) : now;
 }
 
 export function shouldShowExamSchedule(startsAt: string, serverNow: number, hasStarted: boolean) {

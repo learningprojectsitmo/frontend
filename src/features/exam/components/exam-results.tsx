@@ -167,7 +167,7 @@ export function ExamResultsRegistry({ workspaceId, examId, items, canDownload, o
                                     return (
                                         <tr key={item.attempt_id} className="border-b border-app-border transition-colors last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost">
                                             <td className="min-w-44 px-6 py-4 font-medium">
-                                                <Link to={paths.app.project.getHref(item.project_id)} className="text-app-blue hover:underline dark:text-blue-300">{item.project_name}</Link>
+                                                <Link to={paths.app.project.getHref(item.project_id)} title={item.project_name} className="block max-w-64 truncate text-app-blue hover:underline dark:text-blue-300">{item.project_name}</Link>
                                             </td>
                                             {standalone && (
                                                 <td className="min-w-44 px-4 py-4">
@@ -315,7 +315,7 @@ export function ExamResultDialog({ workspaceId, examId, item, onClose, windowOpe
     return (
         <Dialog open onOpenChange={(open) => { if (!open && !mutation.isPending) onClose(); }}>
             <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto">
-                <DialogHeader><DialogTitle>{item.project_name}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="min-w-0 [overflow-wrap:anywhere]">{item.project_name}</DialogTitle></DialogHeader>
                 {denied ? <p role="alert" className="mt-4 text-sm text-app-muted">Итоги недоступны для вашей роли.</p> : (
                     <div className="mt-4 grid gap-4 text-sm text-app-text">
                         {result.isError && <p role="alert">{getGradingError(result.error)}</p>}
@@ -325,6 +325,29 @@ export function ExamResultDialog({ workspaceId, examId, item, onClose, windowOpe
                             <span>Принятый итог <strong className="block text-xl">{scoreText(edition?.final_score)}</strong></span>
                             {preliminary && <span className="text-app-muted">Максимум {scoreText(max)}</span>}
                             {edition && <span className="text-app-muted">Редакция {version} · {edition.published_at ? "Опубликован" : "Принят"}</span>}
+                            {preliminary && (
+                                <div className="col-span-2 border-t border-app-border pt-3">
+                                    <h3 className="mb-2 font-medium">Средние оценки по группам</h3>
+                                    <dl className="grid gap-2 sm:grid-cols-3">
+                                        {tooltipRoles.map((role) => {
+                                            const group = preliminary.roles.find((entry) => entry.role === role);
+                                            return (
+                                                <div key={role} className="rounded-lg bg-app-surface px-3 py-2">
+                                                    <dt className="text-app-muted">{roleTitles[role]}</dt>
+                                                    <dd className="font-semibold tabular-nums">
+                                                        {group?.average == null ? "Нет оценок" : `${tooltipScore.format(Number(group.average))} / ${preliminary.snapshot.sheet_max}`}
+                                                    </dd>
+                                                    {group && (
+                                                        <dd className="text-xs text-app-muted">
+                                                            Вес {group.weight}%{group.average != null && !group.counted && " · Не учтена"}
+                                                        </dd>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </dl>
+                                </div>
+                            )}
                         </div>
                         {result.data?.outdated && <p>Расчёт изменился с момента принятия итога.</p>}
                         {windowOpen ? <p>Принять итог можно после закрытия оценивания.</p> : result.isSuccess && (

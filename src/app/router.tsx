@@ -1,3 +1,4 @@
+import { ExamRouteError } from "@/features/exam/components/exam-error-state";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { createBrowserRouter } from "react-router";
@@ -121,36 +122,43 @@ export const createAppRouter = (queryClient: QueryClient) =>
                 },
                 {
                     path: paths.app.exams.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exams").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examStatement.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-statement").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examManage.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-management").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examNew.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-new").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examEdit.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-edit").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examView.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-view").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },
                 {
                     path: paths.app.examConduct.path,
+                    ErrorBoundary: ExamRouteError,
                     lazy: () => import("./routes/app/exam-conduct").then(convert(queryClient)),
                     hydrateFallbackElement: <LoadingFallback />,
                 },

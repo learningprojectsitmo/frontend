@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { queryOptions, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -56,6 +56,7 @@ export function useExamSlotBooking(
             })),
     });
 
+    const confirming = useRef(false);
     const [selecting, setSelecting] = useState(false);
     const [projectId, setProjectId] = useState<number>();
     const [action, setAction] = useState<BookingAction | null>(null);
@@ -132,6 +133,7 @@ export function useExamSlotBooking(
                       "Команда отменила запись",
                       true,
                   ),
+        onSettled: () => { confirming.current = false; },
         onSuccess: async (_, target) => {
             await invalidateExam(client, workspaceId, examId);
             setSelecting(false);
@@ -190,7 +192,8 @@ export function useExamSlotBooking(
             if (!mutation.isPending) setAction(null);
         },
         confirm: () => {
-            if (!action || !canConfirm || mutation.isPending) return;
+            if (!action || !canConfirm || confirming.current) return;
+            confirming.current = true;
             mutation.mutate(action);
         },
     };
