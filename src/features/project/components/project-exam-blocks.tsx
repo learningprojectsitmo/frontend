@@ -203,6 +203,7 @@ export function ProjectExamBlocks({
     const title = {
         upcoming: "Экзамен начнётся через",
         running: "Экзамен идёт",
+        awaiting_completion: "Ожидается завершение экзамена",
         finished: "Экзамен завершён",
     }[state.status];
     const time =
@@ -251,7 +252,9 @@ export function ProjectExamBlocks({
                             className="text-xl font-semibold [overflow-wrap:anywhere]"
                         >
                             {state.status === "running" ||
-                            (state.status === "finished" && registered) ? (
+                            ((state.status === "finished" ||
+                                state.status === "awaiting_completion") &&
+                                registered) ? (
                                 <Link
                                     to={href}
                                     className="hover:underline hover:underline-offset-4"

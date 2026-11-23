@@ -14,7 +14,7 @@ type Message =
           stream_seq: number;
           stale: boolean;
           queue: ExamQueue;
-          exam?: Pick<Exam, "status">;
+          exam?: Pick<Exam, "status" | "completed_at" | "archived_at">;
       }
     | { type: "heartbeat"; contract_version: number; stream_seq: number; stale: boolean }
     | { type: "error"; code: string };
@@ -110,16 +110,22 @@ export function useExamLive(workspaceId: number, examId: number, enabled: boolea
                     if (!previous || !isOlderExamQueue(snapshot, previous))
                         client.setQueryData(key, snapshot);
                     const exam = client.getQueryData<Exam>(examKey);
+                    const lifecycleChanged =
+                        exam &&
+                        message.exam &&
+                        (exam.status !== message.exam.status ||
+                            (exam.completed_at ?? null) !== (message.exam.completed_at ?? null) ||
+                            (exam.archived_at ?? null) !== (message.exam.archived_at ?? null));
                     if (
                         exam &&
                         (exam.current_settings_version !== snapshot.settings_version ||
-                            (message.exam && exam.status !== message.exam.status))
+                            lifecycleChanged)
                     ) {
                         void client.invalidateQueries(
                             { queryKey: examKey },
                             { cancelRefetch: false },
                         );
-                        if (message.exam && exam.status !== message.exam.status) {
+                        if (lifecycleChanged) {
                             void client.invalidateQueries(
                                 {
                                     queryKey: queryKeys.exams.list(workspaceId).slice(0, 3),

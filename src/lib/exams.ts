@@ -123,6 +123,7 @@ const examErrorMessages: Record<string, string> = {
     assessment_window_open: "Принять итог можно после закрытия оценивания.",
     assessment_window_missing: "Для этой защиты не открывали оценивание.",
     audience_snapshot_unavailable: "Для этой защиты не сохранён список оценщиков.",
+    exam_queue_unresolved: "Сначала обработайте все команды в очереди.",
     incomplete_sheet: "Выберите балл по каждому критерию.",
     result_version_conflict: "Итог уже изменился. Проверьте новую редакцию.",
     result_not_accepted: "Сначала утвердите итог.",
@@ -156,6 +157,8 @@ export const examApi = {
         api.put<Exam>(`${examPath(workspaceId, examId)}/settings`, data),
     publish: (workspaceId: number, examId: number, expected_version: number) =>
         api.post<Exam>(`${examPath(workspaceId, examId)}/publish`, { expected_version }),
+    complete: (workspaceId: number, examId: number) =>
+        api.post<Exam>(`${examPath(workspaceId, examId)}/complete`),
     settings: (workspaceId: number, examId: number) =>
         fetchAllPages((offset) =>
             api.get<ExamSettingsHistoryResponse>(`${examPath(workspaceId, examId)}/settings`, {

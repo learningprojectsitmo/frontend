@@ -35,6 +35,8 @@ export type Exam = {
     created_at: string;
     published_by: number | null;
     published_at: string | null;
+    completed_at?: string | null;
+    archived_at?: string | null;
 };
 
 export type ExamListResponse = {

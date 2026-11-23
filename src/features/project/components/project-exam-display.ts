@@ -6,6 +6,9 @@ export function getProjectExamState(
     now: number,
     slotsEnd = 0,
 ) {
+    const closedAt = exam.completed_at ?? exam.archived_at;
+    if (closedAt) return { status: "finished" as const, end: Date.parse(closedAt) };
+
     const startsAt = Date.parse(exam.configuration.starts_at);
     const items = queue?.items ?? [];
     const {
@@ -34,7 +37,7 @@ export function getProjectExamState(
         lastFinish &&
         items.every((item) => item.state === "finished" || item.state === "no_show")
     ) {
-        return { status: "finished" as const, end: lastFinish };
+        return { status: "awaiting_completion" as const, end: lastFinish };
     }
     if (now < startsAt) return { status: "upcoming" as const, end: startsAt };
     if (
@@ -44,7 +47,7 @@ export function getProjectExamState(
     ) {
         return { status: "running" as const, end: scheduledEnd };
     }
-    return { status: "finished" as const, end: lastFinish || scheduledEnd };
+    return { status: "awaiting_completion" as const, end: lastFinish || scheduledEnd };
 }
 
 const pluralRules = new Intl.PluralRules("ru");

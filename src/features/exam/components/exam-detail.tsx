@@ -1,3 +1,5 @@
+import { queryKeys } from "@/lib/query-keys";
+
 import { getExamQueueReceivedAt } from "../exam-queue-snapshot";
 import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import {
@@ -559,18 +561,32 @@ function ExamDetailView({
                 : "среди предыдущих команд нет отложенных выступлений.";
     const canFinishLastDefense = isManager && Boolean(activeAttempt) && remainingTeams.length === 0;
     const assessmentOpen = queueItems.some((item) => isAssessmentOpen(item, serverNow));
-    const finishExamNotice =
-        queueQuery.isPending || queueQuery.isError
-            ? "Не удалось проверить состояние выступлений. Обновите страницу и попробуйте снова."
-            : currentTeam
-              ? canFinishLastDefense
-                  ? "Сейчас идёт последнее выступление. Завершите его в блоке «Текущее выступление»."
-                  : "Сейчас идёт выступление. Экзамен завершится после всех защит и закрытия оценивания."
-              : remainingTeams.length
-                ? "Ещё есть команды, которые не выступили. Сначала завершите их защиты."
-                : assessmentOpen
-                  ? "Защиты закончились. Экзамен завершится автоматически после закрытия оценивания."
-                  : "Экзамен завершится автоматически после всех защит и закрытия оценивания.";
+    const canCompleteExam =
+        queueQuery.isSuccess &&
+        !currentTeam &&
+        remainingTeams.length === 0 &&
+        !queueItems.some((item) => item.state === "running");
+    const finishExamNotice = !queueQuery.isSuccess
+        ? "Не удалось проверить состояние очереди."
+        : !canCompleteExam
+          ? "Сначала завершите текущую защиту и обработайте остальные команды в очереди."
+          : assessmentOpen
+            ? "Экзамен завершится. Открытые окна оценивания будут действовать до своего срока."
+            : "Экзамен завершится. Утвердить итоги команд можно в ведомости.";
+    const completeExam = async () => {
+        if (!canCompleteExam || attemptPending) return;
+        setAttemptPending(true);
+        try {
+            const completed = await examApi.complete(workspaceId, examId);
+            queryClient.setQueryData(queryKeys.exams.detail(workspaceId, examId), completed);
+            toast.success("Экзамен завершён");
+        } catch (error) {
+            toast.error(getExamErrorMessage(error) ?? "Не удалось завершить экзамен");
+        } finally {
+            await invalidateExam(queryClient, workspaceId, examId);
+            setAttemptPending(false);
+        }
+    };
     const statusStyle = statusMeta[status];
     const queueSnapshot = queueQuery.data;
     const eta = queueSnapshot?.eta;
@@ -1430,9 +1446,16 @@ function ExamDetailView({
                                         <div className="flex justify-end">
                                             <DialogClose asChild>
                                                 <Button variant="outline" size="hug36">
-                                                    Понятно
+                                                    Закрыть
                                                 </Button>
                                             </DialogClose>
+                                            <Button
+                                                size="hug36"
+                                                disabled={!canCompleteExam || attemptPending}
+                                                onClick={() => void completeExam()}
+                                            >
+                                                Подтвердить завершение
+                                            </Button>
                                         </div>
                                     </DialogContent>
                                 </Dialog>
@@ -2550,7 +2573,7 @@ function ExamDetailView({
                         workspaceId={workspaceId}
                         examId={examId}
                         items={results.data}
-                        canDownload={status === "finished" && !queueEtaStale}
+                        canDownload={status === "finished" && !queueEtaStale && !assessmentOpen}
                         onOpen={setResultItem}
                     />
                 )}
