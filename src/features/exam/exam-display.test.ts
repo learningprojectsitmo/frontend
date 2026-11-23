@@ -111,7 +111,7 @@ describe("exam status", () => {
         ).toBe("running");
     });
 
-    it("ends the exam after the last defense and keeps it running between teams", () => {
+    it("keeps the exam running until the organizer completes it", () => {
         const finished: QueueItem = {
             ...team,
             state: "finished",
@@ -120,7 +120,14 @@ describe("exam status", () => {
         expect(getExamStatus(exam, queue(finished, { ...team, registration_id: 2 }), start)).toBe(
             "running",
         );
-        expect(getExamStatus(exam, queue(finished), start)).toBe("finished");
+        expect(getExamStatus(exam, queue(finished), start)).toBe("running");
+        expect(
+            getExamStatus(
+                { ...exam, completed_at: new Date(start).toISOString() },
+                queue(finished),
+                start,
+            ),
+        ).toBe("finished");
     });
 
     it("keeps the last assessment open until the server deadline despite client clock skew", () => {
@@ -150,12 +157,12 @@ describe("exam status", () => {
         );
         expect(isAssessmentOpen(finished, closesAt)).toBe(false);
         expect(getExamStatus(exam, snapshot, receivedAt + 179_999, receivedAt)).toBe("running");
-        expect(getExamStatus(exam, snapshot, receivedAt + 180_000, receivedAt)).toBe("finished");
+        expect(getExamStatus(exam, snapshot, receivedAt + 180_000, receivedAt)).toBe("running");
     });
 
-    it("marks a past exam with only no-shows as passed", () => {
+    it("waits for explicit completion when all teams are no-shows", () => {
         expect(getExamStatus(exam, queue({ ...team, state: "no_show" }), start + 60 * 60_000)).toBe(
-            "passed",
+            "waiting",
         );
     });
 });

@@ -47,37 +47,17 @@ export function getExamStatus(
 ): ExamStatus {
     if (exam.status !== "published") return "draft";
 
-    const items = queue?.items ?? [];
-    const unfinished = items.some((item) => item.state === "waiting" || item.state === "postponed");
-    if (items.some((item) => item.state === "running")) return "running";
-    const serverNow = receivedAt === undefined ? now : getQueueTime(queue, now, receivedAt);
-    if (items.some((item) => isAssessmentOpen(item, serverNow))) return "running";
-    // The API finishes a team's defense. The whole exam ends once the last team finishes.
-    if (items.some((item) => item.attempt?.finished_at)) return unfinished ? "running" : "finished";
-    if (items.some((item) => item.attempt?.started_at)) return "running";
+    if (exam.completed_at || exam.archived_at) return "finished";
 
+    const items = queue?.items ?? [];
+    const serverNow = receivedAt === undefined ? now : getQueueTime(queue, now, receivedAt);
+    if (items.some((item) => item.state === "running" || item.attempt?.started_at)) {
+        return "running";
+    }
     const startsAt = Date.parse(exam.configuration.starts_at);
     if (serverNow < startsAt)
         return startsAt - serverNow <= 7 * 24 * 60 * 60 * 1000 ? "soon" : "planned";
-
-    const {
-        presentation_minutes,
-        questions_minutes,
-        transition_minutes,
-        assessment_window_minutes,
-    } = exam.configuration;
-    const estimatedEnd =
-        startsAt +
-        60_000 *
-            (presentation_minutes +
-                questions_minutes +
-                transition_minutes +
-                assessment_window_minutes);
-    const scheduledEnd = items.reduce(
-        (end, item) => Math.max(end, Date.parse(item.planned_end_at ?? "") || 0),
-        estimatedEnd,
-    );
-    return items.length > 0 && !unfinished && serverNow >= scheduledEnd ? "passed" : "waiting";
+    return "waiting";
 }
 
 export const isExamOver = (status: ExamStatus) => status === "finished" || status === "passed";
@@ -174,5 +154,11 @@ export function formatExamRegistrationWindow(exam: Exam) {
 
 export function isExamRegistrationOpen(exam: Exam, now: number) {
     const { opens, closes } = getExamRegistrationWindow(exam);
-    return exam.status === "published" && opens <= now && now < closes;
+    return (
+        exam.status === "published" &&
+        !exam.completed_at &&
+        !exam.archived_at &&
+        opens <= now &&
+        now < closes
+    );
 }

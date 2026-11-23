@@ -85,6 +85,25 @@ afterEach(() => {
 });
 
 describe("assessment window", () => {
+    it("shows the maximum of a three-point sheet", async () => {
+        const questions = Array.from({ length: 5 }, (_, id) => ({
+            ...form.questions[0],
+            id,
+            levels: ([1, 2, 3] as const).map((score) => ({ score, description: String(score) })),
+        }));
+        vi.mocked(examGradingApi.form).mockResolvedValue({
+            ...form,
+            questions,
+            draft: {
+                ...form.draft,
+                answers: questions.map((q) => ({ question_id: q.id, score: 3, comment: null })),
+            },
+        });
+        await render(assessment(22));
+        await click("Оценить");
+        expect(document.body.textContent).toContain("15 из 15");
+    });
+
     it("replaces criteria with the closing message when time runs out", async () => {
         await render(assessment(22));
         await click("Оценить");
