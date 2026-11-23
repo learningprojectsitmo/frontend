@@ -77,11 +77,11 @@ export type ProjectTypeQuestions = {
     project_type_id: number;
     questions: ProjectTypeQuestion[];
     min_score: 1;
-    max_score: 5;
+    max_score: 3 | 5;
 };
 
 export type QuestionTemplate = {
-    code: "product" | "technical_integration" | "research";
+    code: "product" | "technical_integration" | "research" | "project_defense";
     name: string;
     questions: Omit<ProjectTypeQuestion, "id" | "position">[];
 };

@@ -24,12 +24,12 @@ type Props = {
 
 const scores = [1, 2, 3, 4, 5] as const;
 
-const emptyQuestion = (): ProjectTypeQuestion => ({
+const emptyQuestion = (maxScore: 3 | 5): ProjectTypeQuestion => ({
     id: 0,
     text: "",
     description: null,
     position: 0,
-    levels: scores.map((score) => ({ score, description: "" })),
+    levels: scores.slice(0, maxScore).map((score) => ({ score, description: "" })),
 });
 
 type SaveError = { message: string; questionIndex?: number };
@@ -71,7 +71,7 @@ function getQuestionSaveErrors(error: unknown, questions: ProjectTypeQuestion[])
                         : undefined;
                 message = score
                     ? `Укажите описание уровня ${score} длиной от 1 до 4000 символов.`
-                    : "Заполните описания всех пяти уровней.";
+                    : "Заполните описания всех уровней.";
             }
             messages.push({ questionIndex: index, message });
         }
@@ -99,6 +99,7 @@ export const ProjectTypeQuestionsEditor = ({
     const [draftQuestions, setDraftQuestions] = useState<ProjectTypeQuestion[] | null>(null);
     const lockKey = queryKeys.projectTypeQuestions.lock(workspaceId, typeId);
     const lock = useQuery<boolean>({ queryKey: lockKey, enabled: false, gcTime: Infinity });
+    const maxScore = questionsQuery.data?.max_score ?? 5;
     const locked = assessmentOpened || lock.data === true;
     const questions = (locked ? null : draftQuestions) ?? questionsQuery.data?.questions ?? [];
 
@@ -162,14 +163,14 @@ export const ProjectTypeQuestionsEditor = ({
         if (
             questions.some(
                 (question) =>
-                    question.levels.length !== 5 ||
+                    question.levels.length !== maxScore ||
                     question.levels.some(
                         (level) =>
                             !level.description.trim() || level.description.trim().length > 4000,
                     ),
             )
         ) {
-            return "Для каждого критерия заполните непустые описания уровней 1–5";
+            return `Для каждого критерия заполните непустые описания уровней 1–${maxScore}`;
         }
         return null;
     };
@@ -328,7 +329,9 @@ export const ProjectTypeQuestionsEditor = ({
                                 updateQuestion(questionIndex, { description: event.target.value })
                             }
                         />
-                        <div className="mt-3 grid gap-2 md:grid-cols-5">
+                        <div
+                            className={`mt-3 grid gap-2 ${maxScore === 3 ? "md:grid-cols-3" : "md:grid-cols-5"}`}
+                        >
                             {question.levels.map((level: QuestionLevel) => (
                                 <label key={level.score} className="text-xs text-app-muted">
                                     Уровень {level.score}
@@ -368,7 +371,7 @@ export const ProjectTypeQuestionsEditor = ({
                             onClick={() =>
                                 setQuestions((current) => [
                                     ...current,
-                                    { ...emptyQuestion(), position: current.length },
+                                    { ...emptyQuestion(maxScore), position: current.length },
                                 ])
                             }
                         >

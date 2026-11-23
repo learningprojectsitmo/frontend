@@ -302,7 +302,10 @@ function AssessmentContent({
         );
     };
     const points = answers.reduce((sum, answer) => sum + (answer.score ?? 0), 0);
-    const maximum = form.questions.length * 5;
+    const maximum = form.questions.reduce(
+        (sum, question) => sum + Math.max(0, ...question.levels.map((level) => level.score)),
+        0,
+    );
     const submitAssessment = () => {
         if (sendRequested.current) return;
         sendRequested.current = true;
@@ -369,7 +372,7 @@ function AssessmentContent({
                                             {question.description}
                                         </p>
                                     )}
-                                    <div className="mt-3 grid grid-cols-5 divide-x divide-[#0000001A] dark:divide-app-border overflow-hidden rounded-xl border border-[#CFCFCF] dark:border-app-border bg-[#F9FAFB] dark:bg-app-ghost">
+                                    <div className="mt-3 grid grid-flow-col auto-cols-fr divide-x divide-[#0000001A] dark:divide-app-border overflow-hidden rounded-xl border border-[#CFCFCF] dark:border-app-border bg-[#F9FAFB] dark:bg-app-ghost">
                                         {question.levels.map((level) => (
                                             <Tooltip.Root
                                                 key={level.score}

@@ -495,18 +495,20 @@ describe("exam form", () => {
         expect(container.textContent).toContain("Первая команда");
     });
 
-    it("uses server-assigned question IDs on the next save", async () => {
+    it.each([3, 5] as const)("preserves question IDs on scale %i", async (scale) => {
         const question = {
             id: 0,
             position: 1,
             text: "Вопрос",
             description: null,
-            levels: ([1, 2, 3, 4, 5] as const).map((score) => ({ score, description: "Критерий" })),
+            levels: ([1, 2, 3, 4, 5] as const)
+                .slice(0, scale)
+                .map((score) => ({ score, description: "Критерий" })),
         };
         const data = {
             project_type_id: 5,
             min_score: 1 as const,
-            max_score: 5 as const,
+            max_score: scale,
             questions: [question],
         };
         client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
