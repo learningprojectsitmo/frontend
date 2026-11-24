@@ -118,11 +118,16 @@ export function formatExamDate(value: string) {
         month: "long",
         hour: "2-digit",
         minute: "2-digit",
+        hourCycle: "h23",
     });
 }
 
 export const formatExamTime = (value: string) =>
-    new Date(value).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    new Date(value).toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    });
 
 export function getRegistrationDeadline(configuration: ExamConfiguration) {
     return Math.min(

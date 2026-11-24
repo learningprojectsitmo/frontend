@@ -55,6 +55,10 @@ export default function ExamEditRoute() {
         );
     }
 
+    if (exam.data.archived_at) {
+        return <Navigate to={paths.app.examView.getHref(workspaceId, examId)} replace />;
+    }
+
     if (projectTypes.isError && !projectTypes.data) {
         return (
             <ContentLayout title="Редактирование экзамена">

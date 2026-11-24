@@ -1,4 +1,5 @@
 export type ExamStatus = "draft" | "published";
+export type ExamListStatus = ExamStatus | "archived";
 export type RegistrationStatus = "active" | "cancelled" | "moved";
 export type QueueState = "waiting" | "running" | "postponed" | "no_show" | "finished";
 export type AttemptStatus = "speaking" | "questions" | "postponed" | "finished";
@@ -75,16 +76,19 @@ export type ProjectTypeQuestion = {
     levels: QuestionLevel[];
 };
 
+export type QuestionScale = 3 | 5;
+
 export type ProjectTypeQuestions = {
     project_type_id: number;
     questions: ProjectTypeQuestion[];
     min_score: 1;
-    max_score: 3 | 5;
+    max_score: QuestionScale;
 };
 
 export type QuestionTemplate = {
     code: "product" | "technical_integration" | "research" | "project_defense";
     name: string;
+    max_score: QuestionScale;
     questions: Omit<ProjectTypeQuestion, "id" | "position">[];
 };
 
@@ -94,6 +98,9 @@ export type ExamSlot = {
     exam_id: number;
     starts_at: string;
     ends_at: string;
+    kind?: "defense" | "break";
+    can_edit?: boolean;
+    can_delete?: boolean;
     is_available: boolean;
 };
 

@@ -344,19 +344,24 @@ function AssessmentContent({
                 }}
                 className="fixed left-1/2 top-1/2 z-[300] flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-white dark:border dark:border-app-border dark:bg-app-surface p-4 shadow-xl sm:p-6"
             >
-                <button
-                    type="button"
-                    onClick={requestClose}
-                    disabled={isPending}
-                    aria-label="Закрыть"
-                    className="absolute right-3 top-3 z-10 grid size-8 place-items-center rounded-lg text-[#4A5565] dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-app-ghost"
-                >
-                    <Icon name="cross" size={20} />
-                </button>
-                <div className="min-h-0 overflow-y-auto overscroll-contain px-1 pb-1">
-                    <DialogTitle className="break-words pr-4 text-[28px] font-semibold leading-tight text-[#0A0A0A] dark:text-app-text">
+                <div className="flex shrink-0 items-start justify-between gap-3">
+                    <DialogTitle
+                        title={projectName}
+                        className="min-w-0 line-clamp-2 text-[28px] font-semibold leading-tight text-[#0A0A0A] dark:text-app-text [overflow-wrap:anywhere]"
+                    >
                         {projectName}
                     </DialogTitle>
+                    <button
+                        type="button"
+                        onClick={requestClose}
+                        disabled={isPending}
+                        aria-label="Закрыть"
+                        className="grid size-8 shrink-0 place-items-center rounded-lg text-[#4A5565] dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-app-ghost"
+                    >
+                        <Icon name="cross" size={20} />
+                    </button>
+                </div>
+                <div className="mt-2 min-h-0 overflow-y-auto overscroll-contain px-1 pb-1">
                     <DialogPrimitive.Description className="mb-3 mt-3 text-[17px] text-[#4A5565] dark:text-slate-300">
                         Оцените команду по критериям ниже
                     </DialogPrimitive.Description>

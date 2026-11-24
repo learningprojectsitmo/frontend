@@ -16,6 +16,7 @@ import { Tooltip } from "@base-ui/react/tooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
+    ChevronDown,
     Ellipsis,
     GripVertical,
     Link as LinkIcon,
@@ -85,6 +86,7 @@ import {
     statusMeta,
 } from "../exam-display";
 import type { ExamSlot, QueueItem, Registration } from "@/types/exam";
+import { formatScheduleTime } from "../exam-schedule";
 import {
     ApproximateDefenseTime,
     ExamTimeHint,
@@ -110,6 +112,7 @@ import { useExamLive } from "../use-exam-live";
 import { ExamResultDialog, ExamResultsRegistry, ExamScore, ExamScoreStatus } from "./exam-results";
 import { ExamAssessment, ExamAssessmentNotification } from "./exam-assessment";
 import { ExamPresentation } from "./exam-presentation";
+import { ExamRemovalDialog, examRemovalLabel } from "./exam-removal-dialog";
 
 function ConfirmExamAction({
     label,
@@ -330,6 +333,7 @@ function ExamDetailView({
     const [postpone, setPostpone] = useState<{ item: QueueItem; title: string } | null>(null);
     const [postponeReason, setPostponeReason] = useState("");
     const [assignOpen, setAssignOpen] = useState(false);
+    const [removalOpen, setRemovalOpen] = useState(false);
     const [transfer, setTransfer] = useState<{ registration: Registration; self: boolean } | null>(
         null,
     );
@@ -473,8 +477,12 @@ function ExamDetailView({
         queueBySlot.has(slot.id) ? (orderedTeams[teamIndex++] ?? slot) : slot,
     );
     const allTableRows = [...scheduleRows, ...orderedTeams.slice(teamIndex)];
+    let defenseNumber = 0;
     const tableRows = allTableRows
-        .map((row, index) => ({ row, number: index + 1 }))
+        .map((row) => ({
+            row,
+            number: "kind" in row && row.kind === "break" ? "—" : ++defenseNumber,
+        }))
         .filter(({ row }) => !("registration_id" in row) || visibleTeams.has(row.registration_id));
 
     useLayoutEffect(() => {
@@ -507,7 +515,8 @@ function ExamDetailView({
     const status = exam
         ? getExamStatus(exam, queueQuery.data, now, queueQuery.dataUpdatedAt)
         : "draft";
-    const examOver = isExamOver(status);
+    const examOver = Boolean(exam?.archived_at) || isExamOver(status);
+    const canRemove = access.canRemove && !exam?.archived_at;
     const followingTeam = queueItems.find(
         (item) => item.position === 1 && (item.state === "waiting" || item.state === "postponed"),
     );
@@ -587,7 +596,9 @@ function ExamDetailView({
             setAttemptPending(false);
         }
     };
-    const statusStyle = statusMeta[status];
+    const statusStyle = exam?.archived_at
+        ? { ...statusMeta.finished, label: "В архиве" }
+        : statusMeta[status];
     const queueSnapshot = queueQuery.data;
     const eta = queueSnapshot?.eta;
     const queueEtaStale = queueQuery.isError || queueSnapshot?.eta_stale;
@@ -1409,7 +1420,7 @@ function ExamDetailView({
                         </div>
                     </div>
 
-                    {!examOver && (
+                    {(!examOver || canRemove) && (
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                             {canPrepareExam && (
                                 <Button
@@ -1427,7 +1438,7 @@ function ExamDetailView({
                                     Начать экзамен
                                 </Button>
                             )}
-                            {isManager && exam.status === "published" && (
+                            {isManager && exam.status === "published" && !examOver && (
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <Button
@@ -1460,7 +1471,7 @@ function ExamDetailView({
                                     </DialogContent>
                                 </Dialog>
                             )}
-                            {exam.configuration.connection_url && (
+                            {!examOver && exam.configuration.connection_url && (
                                 <Button
                                     variant="dark"
                                     size="hug36"
@@ -1492,7 +1503,7 @@ function ExamDetailView({
                                             <Share2 size={16} />
                                             Поделиться
                                         </DropdownMenuItem>
-                                        {isManager && (
+                                        {isManager && !examOver && (
                                             <>
                                                 <DropdownMenuItem
                                                     className="gap-3"
@@ -1510,12 +1521,31 @@ function ExamDetailView({
                                                 </DropdownMenuItem>
                                             </>
                                         )}
+                                        {canRemove && (
+                                            <DropdownMenuItem
+                                                className="gap-3"
+                                                onSelect={() => setRemovalOpen(true)}
+                                            >
+                                                <Trash2 size={16} />
+                                                {examRemovalLabel(exam)}
+                                            </DropdownMenuItem>
+                                        )}
                                     </DropdownMenuContent>
                                 </DropdownMenuPortal>
                             </DropdownMenu>
                         </div>
                     )}
                 </div>
+
+                {canRemove && removalOpen && (
+                    <ExamRemovalDialog
+                        exam={exam}
+                        onClose={() => setRemovalOpen(false)}
+                        onRemoved={() =>
+                            navigate(paths.app.examManage.getHref(workspaceId), { replace: true })
+                        }
+                    />
+                )}
 
                 <section>
                     <h2 className="text-[20px] font-bold text-app-text">Описание экзамена</h2>
@@ -1546,7 +1576,7 @@ function ExamDetailView({
                     number={presentedTeam ? numbers.get(presentedTeam.registration_id) : undefined}
                     attempt={activeAttempt}
                     timer={timer}
-                    canManage={isManager}
+                    canManage={isManager && !exam.archived_at}
                     pending={attemptPending || registrationPending || savingOrder}
                     previousUnavailable={
                         editing ? "завершите редактирование очереди." : previousUnavailable
@@ -1583,7 +1613,7 @@ function ExamDetailView({
                     }}
                     onQuestions={() => void updatePhase("questions")}
                     timerSettingsHref={
-                        isManager
+                        isManager && !exam.archived_at
                             ? `${paths.app.examEdit.getHref(workspaceId, examId)}&section=queue`
                             : undefined
                     }
@@ -1672,20 +1702,27 @@ function ExamDetailView({
                                     aria-label="Поиск команд"
                                     className="h-10 w-[240px] rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[14px] outline-none placeholder:text-app-muted focus-visible:ring-2 focus-visible:ring-ring"
                                 />
-                                <select
-                                    aria-label="Статус команды"
-                                    value={filter}
-                                    onChange={(event) =>
-                                        setFilter(
-                                            event.target.value as "all" | "waiting" | "no_show",
-                                        )
-                                    }
-                                    className="h-10 rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
-                                >
-                                    <option value="all">Все команды</option>
-                                    <option value="waiting">В очереди</option>
-                                    <option value="no_show">Неявка</option>
-                                </select>
+                                <div className="relative inline-flex">
+                                    <select
+                                        aria-label="Статус команды"
+                                        value={filter}
+                                        onChange={(event) =>
+                                            setFilter(
+                                                event.target.value as "all" | "waiting" | "no_show",
+                                            )
+                                        }
+                                        className="h-10 appearance-none rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface pl-3 pr-9 text-[13px]"
+                                    >
+                                        <option value="all">Все команды</option>
+                                        <option value="waiting">В очереди</option>
+                                        <option value="no_show">Неявка</option>
+                                    </select>
+                                    <ChevronDown
+                                        aria-hidden="true"
+                                        size={16}
+                                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-app-muted"
+                                    />
+                                </div>
                                 {editing && !examOver ? (
                                     <>
                                         <Button
@@ -1770,7 +1807,10 @@ function ExamDetailView({
                                             <Tooltip.Provider delay={100}>
                                                 <span>
                                                     Вы записаны на слот в{" "}
-                                                    <ApproximateDefenseTime value={time} />
+                                                    <ApproximateDefenseTime
+                                                        value={time}
+                                                        examStart={exam.configuration.starts_at}
+                                                    />
                                                 </span>
                                             </Tooltip.Provider>
                                         ) : (
@@ -1783,6 +1823,7 @@ function ExamDetailView({
                                                 {eta.certainty === "lower_bound" && "не раньше "}
                                                 <ApproximateDefenseTime
                                                     value={eta.eta_at}
+                                                    examStart={exam.configuration.starts_at}
                                                     message={etaMessage}
                                                 />
                                             </span>
@@ -2059,6 +2100,9 @@ function ExamDetailView({
                                                       <td className="px-6 py-4 text-[13px]">
                                                           <ApproximateDefenseTime
                                                               value={slot.starts_at}
+                                                              examStart={
+                                                                  exam.configuration.starts_at
+                                                              }
                                                           />
                                                       </td>
                                                       <td className="px-3 py-4 text-right">
@@ -2068,7 +2112,7 @@ function ExamDetailView({
                                                                   size="hug36"
                                                                   className="cursor-pointer motion-reduce:transition-none"
                                                                   disabled={booking.pending}
-                                                                  aria-label={`Занять место в ${formatExamTime(slot.starts_at)}`}
+                                                                  aria-label={`Занять место в ${formatScheduleTime(slot.starts_at, exam.configuration.starts_at)}`}
                                                                   onClick={() =>
                                                                       booking.selectSlot(slot)
                                                                   }
@@ -2082,22 +2126,30 @@ function ExamDetailView({
                                           })
                                         : tableRows.map(({ row, number }) => {
                                               if (!("registration_id" in row)) {
+                                                  const isBreak = row.kind === "break";
                                                   return (
                                                       <tr
                                                           key={queueDropKey(row)}
                                                           data-queue-row={queueDropKey(row)}
-                                                          {...dropEvents(row)}
+                                                          {...(isBreak ? {} : dropEvents(row))}
                                                           className={`border-b border-gray-100 bg-[#F5F6F8] text-app-muted last:border-0 dark:border-app-border dark:bg-app-ghost [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${dragStyle(row)}`}
                                                       >
                                                           {editing && <td />}
                                                           <td className="px-6 py-4 text-[13px]">
                                                               {number}
                                                           </td>
-                                                          <td className="px-6 py-4">—</td>
+                                                          <td className="px-6 py-4">
+                                                              {isBreak ? "Перерыв" : "—"}
+                                                          </td>
                                                           <td className="px-6 py-4">—</td>
                                                           <td className="px-6 py-4">—</td>
                                                           <td className="px-6 py-4 text-[13px] text-app-text">
-                                                              {formatExamTime(row.starts_at)}
+                                                              {formatScheduleTime(
+                                                                  row.starts_at,
+                                                                  exam.configuration.starts_at,
+                                                              )}
+                                                              {isBreak &&
+                                                                  ` – ${formatScheduleTime(row.ends_at, exam.configuration.starts_at)}`}
                                                           </td>
                                                           <td />
                                                       </tr>
@@ -2287,13 +2339,19 @@ function ExamDetailView({
                                                                       "lower_bound" && "Не раньше "}
                                                                   <ApproximateDefenseTime
                                                                       value={eta.eta_at}
+                                                                      examStart={
+                                                                          exam.configuration
+                                                                              .starts_at
+                                                                      }
                                                                       message={etaMessage}
                                                                   />
                                                                   {item.planned_start_at && (
                                                                       <div className="mt-1 text-xs text-app-muted">
                                                                           Слот:{" "}
-                                                                          {formatExamTime(
+                                                                          {formatScheduleTime(
                                                                               item.planned_start_at,
+                                                                              exam.configuration
+                                                                                  .starts_at,
                                                                           )}
                                                                       </div>
                                                                   )}
@@ -2303,8 +2361,9 @@ function ExamDetailView({
                                                           ) : item.planned_start_at ? (
                                                               <span className="text-app-muted">
                                                                   Слот:{" "}
-                                                                  {formatExamTime(
+                                                                  {formatScheduleTime(
                                                                       item.planned_start_at,
+                                                                      exam.configuration.starts_at,
                                                                   )}
                                                               </span>
                                                           ) : (
@@ -2645,7 +2704,7 @@ function ExamDetailView({
                         <DialogTitle>
                             {bookingAction?.kind === "book"
                                 ? bookingAction.slot
-                                    ? `Занять слот в ${formatExamTime(bookingAction.slot.starts_at)}?`
+                                    ? `Занять слот в ${formatScheduleTime(bookingAction.slot.starts_at, exam.configuration.starts_at)}?`
                                     : "Записать команду на защиту?"
                                 : "Отменить запись на защиту?"}
                         </DialogTitle>

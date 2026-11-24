@@ -85,24 +85,44 @@ afterEach(() => {
 });
 
 describe("assessment window", () => {
-    it("shows the maximum of a three-point sheet", async () => {
-        const questions = Array.from({ length: 5 }, (_, id) => ({
-            ...form.questions[0],
-            id,
-            levels: ([1, 2, 3] as const).map((score) => ({ score, description: String(score) })),
-        }));
-        vi.mocked(examGradingApi.form).mockResolvedValue({
-            ...form,
-            questions,
-            draft: {
-                ...form.draft,
-                answers: questions.map((q) => ({ question_id: q.id, score: 3, comment: null })),
-            },
-        });
-        await render(assessment(22));
-        await click("Оценить");
-        expect(document.body.textContent).toContain("15 из 15");
-    });
+    it.each([
+        [3, 15],
+        [5, 25],
+    ] as const)(
+        "shows %i levels per criterion and %i as the sheet maximum",
+        async (scale, maximum) => {
+            const scores = ([1, 2, 3, 4, 5] as const).slice(0, scale);
+            const questions = Array.from({ length: 5 }, (_, id) => ({
+                ...form.questions[0],
+                id,
+                levels: scores.map((score) => ({ score, description: String(score) })),
+            }));
+            vi.mocked(examGradingApi.form).mockResolvedValue({
+                ...form,
+                questions,
+                draft: {
+                    ...form.draft,
+                    answers: questions.map((q) => ({
+                        question_id: q.id,
+                        score: scale,
+                        comment: null,
+                    })),
+                },
+            });
+            await render(assessment(22));
+            await click("Оценить");
+
+            const criteria = [...document.querySelectorAll('[role="dialog"] fieldset')].filter(
+                (fieldset) => fieldset.querySelector("legend"),
+            );
+            expect(criteria).toHaveLength(5);
+            for (const criterion of criteria) {
+                const levels = [...criterion.querySelectorAll("button[aria-pressed]")];
+                expect(levels.map((level) => Number(level.textContent))).toEqual(scores);
+            }
+            expect(document.body.textContent).toContain(`${maximum} из ${maximum}`);
+        },
+    );
 
     it("replaces criteria with the closing message when time runs out", async () => {
         await render(assessment(22));

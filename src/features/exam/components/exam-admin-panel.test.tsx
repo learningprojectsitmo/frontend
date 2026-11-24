@@ -88,7 +88,30 @@ let root: Root;
 let client: QueryClient;
 
 const onSaved = vi.fn();
-const projectTypes = [{ id: 5, name: "Продуктовый" }] as BackendProjectType[];
+const projectTypes = [
+    { id: 5, name: "Продуктовый" },
+    { id: 6, name: "Исследовательский" },
+] as BackendProjectType[];
+
+const criterion = (scale: 3 | 5) => ({
+    id: 10,
+    position: 0,
+    text: "Вопрос",
+    description: null,
+    levels: ([1, 2, 3, 4, 5] as const)
+        .slice(0, scale)
+        .map((score) => ({ score, description: `Описание ${score}` })),
+});
+
+async function renderCriteria() {
+    await act(async () => {
+        root.render(
+            <QueryClientProvider client={client}>
+                <ProjectTypeQuestionsEditor workspaceId={1} typeId={5} typeName="Продуктовый" />
+            </QueryClientProvider>,
+        );
+    });
+}
 
 async function render(value?: Exam, onWorkspaceChange?: (id: number) => void) {
     await act(async () => {
@@ -217,11 +240,48 @@ describe("exam form", () => {
         expect(container.textContent).toContain("Укажите название");
     });
 
+    it.each(["", "   "])("creates an exam with an optional description (%j)", async (value) => {
+        const saved = { ...exam, configuration: { ...exam.configuration, description: null } };
+        const create = vi.spyOn(examApi, "create").mockResolvedValue(saved);
+        await render();
+        fill("#exam-title", exam.configuration.title);
+        fill("#exam-description", value);
+        await click("Продуктовый");
+        expect(container.querySelector('label[for="exam-description"]')?.textContent).toBe(
+            "Описание",
+        );
+
+        await click("Сохранить черновик");
+
+        expect(create).toHaveBeenCalledWith(1, expect.objectContaining({ description: null }));
+        expect(onSaved).toHaveBeenCalledWith(saved);
+    });
+
+    it("clears the description in the saved revision", async () => {
+        const saved = {
+            ...exam,
+            current_settings_version: 4,
+            configuration: { ...exam.configuration, description: null },
+        };
+        const replace = vi.spyOn(examApi, "replaceSettings").mockResolvedValue(saved);
+        await render(exam);
+        fill("#exam-description", "   ");
+        fill('[aria-label="Причина изменения"]', "Очистили описание");
+
+        await click("Сохранить");
+
+        expect(replace).toHaveBeenCalledWith(1, 2, {
+            expected_version: 3,
+            reason: "Очистили описание",
+            configuration: saved.configuration,
+        });
+    });
+
     it("generates the configured duration including the transition and sends the batch with the draft", async () => {
         vi.setSystemTime(new Date(Date.parse(startsAt) - 7 * 24 * 60 * 60 * 1000));
         const saved = { ...exam, configuration: { ...exam.configuration, transition_minutes: 6 } };
         const create = vi.spyOn(examApi, "create").mockResolvedValue(saved);
-        const addSlots = vi.spyOn(examApi, "addSlots").mockResolvedValue([slot]);
+        const replaceSlots = vi.spyOn(examApi, "replaceSlots").mockResolvedValue([slot]);
         await render();
         fill("#exam-title", exam.configuration.title);
         fill("#exam-description", exam.configuration.description ?? "");
@@ -257,16 +317,21 @@ describe("exam form", () => {
         expect(container.textContent).toContain("Окончание: 10:40");
         await click("Сохранить черновик");
         expect(create).toHaveBeenCalledWith(1, saved.configuration);
-        expect(addSlots).toHaveBeenCalledWith(1, 2, [
-            {
-                starts_at: startsAt,
-                ends_at: new Date(Date.parse(startsAt) + 20 * 60_000).toISOString(),
-            },
-            {
-                starts_at: new Date(Date.parse(startsAt) + 20 * 60_000).toISOString(),
-                ends_at: new Date(Date.parse(startsAt) + 40 * 60_000).toISOString(),
-            },
-        ]);
+        expect(replaceSlots).toHaveBeenCalledWith(1, 2, {
+            expected_slots: [],
+            slots: [
+                {
+                    starts_at: startsAt,
+                    ends_at: new Date(Date.parse(startsAt) + 20 * 60_000).toISOString(),
+                    kind: "defense",
+                },
+                {
+                    starts_at: new Date(Date.parse(startsAt) + 20 * 60_000).toISOString(),
+                    ends_at: new Date(Date.parse(startsAt) + 40 * 60_000).toISOString(),
+                    kind: "defense",
+                },
+            ],
+        });
         expect(onSaved).toHaveBeenCalledWith(saved);
     });
 
@@ -341,7 +406,7 @@ describe("exam form", () => {
 
     it("does not save an unchanged exam", async () => {
         const replace = vi.spyOn(examApi, "replaceSettings");
-        const addSlots = vi.spyOn(examApi, "addSlots");
+        const replaceSlots = vi.spyOn(examApi, "replaceSlots");
         vi.mocked(toast.success).mockClear();
         await render(exam);
 
@@ -350,8 +415,59 @@ describe("exam form", () => {
         expect(toast.info).toHaveBeenCalledWith("Нет изменений для сохранения");
         expect(toast.success).not.toHaveBeenCalled();
         expect(replace).not.toHaveBeenCalled();
-        expect(addSlots).not.toHaveBeenCalled();
+        expect(replaceSlots).not.toHaveBeenCalled();
         expect(onSaved).not.toHaveBeenCalled();
+    });
+
+    it.each([[3], [5], [3, 5]] as Array<Array<3 | 5>>)(
+        "publishes a draft without a description using its project types’ scales (%j, %j)",
+        async (...scales) => {
+            const draft = {
+                ...exam,
+                configuration: {
+                    ...exam.configuration,
+                    description: null,
+                    project_type_ids: scales.map((_, index) => 5 + index),
+                },
+            };
+            const published = { ...draft, status: "published" as const };
+            vi.spyOn(questionApi, "get").mockImplementation(async (_, id) => ({
+                project_type_id: id,
+                min_score: 1,
+                max_score: scales[id - 5],
+                questions: [criterion(scales[id - 5])],
+            }));
+            const publish = vi.spyOn(examApi, "publish").mockResolvedValue(published);
+
+            await render(draft);
+            await click("Опубликовать");
+            await click("Опубликовать экзамен");
+
+            expect(publish).toHaveBeenCalledWith(1, 2, 3);
+            expect(onSaved).toHaveBeenCalledWith(published);
+        },
+    );
+
+    it("reports the selected scale for an invalid criteria list", async () => {
+        vi.spyOn(questionApi, "get").mockResolvedValue({
+            project_type_id: 5,
+            min_score: 1,
+            max_score: 3,
+            questions: [],
+        });
+        const publish = vi.spyOn(examApi, "publish");
+        await render(exam);
+
+        await click("Опубликовать");
+        await click("Опубликовать экзамен");
+
+        expect(container.textContent).toContain("Нельзя опубликовать экзамен");
+        const error = [...container.querySelectorAll("li")].find((item) =>
+            item.textContent?.includes("Проверьте вопросы типа"),
+        );
+        expect(error?.textContent).toContain("1–3");
+        expect(error?.textContent).not.toContain("1–5");
+        expect(publish).not.toHaveBeenCalled();
     });
 
     it("publishes the saved revision and clears its reason", async () => {
@@ -495,6 +611,83 @@ describe("exam form", () => {
         expect(container.textContent).toContain("Первая команда");
     });
 
+    it("asks before removing levels and saves the selected scale with retained IDs", async () => {
+        const question = criterion(5);
+        const data = {
+            project_type_id: 5,
+            min_score: 1 as const,
+            max_score: 5 as const,
+            questions: [question],
+        };
+        const narrowed = { ...data, max_score: 3 as const, questions: [criterion(3)] };
+        client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
+        client.setQueryData(queryKeys.projectTypeQuestions.templates(), []);
+        const save = vi.spyOn(questionApi, "replace").mockResolvedValue(narrowed);
+        await renderCriteria();
+
+        const select = container.querySelector<HTMLSelectElement>(
+            'select[aria-label="Шкала оценивания"]',
+        );
+        expect(select?.value).toBe("5");
+        const choose = async () => {
+            await act(async () => {
+                select!.value = "3";
+                select!.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+        };
+        await choose();
+        expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Уровни 4 и 5");
+        expect(container.textContent).toContain("Уровень 5");
+        expect(save).not.toHaveBeenCalled();
+        await click("Отмена");
+        expect(select?.value).toBe("5");
+
+        await choose();
+        await click("Изменить шкалу");
+        expect(select?.value).toBe("3");
+        expect(container.textContent).not.toContain("Уровень 4");
+        expect(save).not.toHaveBeenCalled();
+
+        await click("Сохранить вопросы");
+        expect(save).toHaveBeenCalledWith(1, 5, [criterion(3)], 3);
+        await click("Добавить критерий");
+        expect(
+            [...container.querySelectorAll("label")].filter((label) =>
+                label.textContent?.startsWith("Уровень "),
+            ),
+        ).toHaveLength(6);
+    });
+
+    it("shows templates for the selected scale and confirms replacing existing criteria", async () => {
+        const data = {
+            project_type_id: 5,
+            min_score: 1 as const,
+            max_score: 3 as const,
+            questions: [criterion(3)],
+        };
+        client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
+        client.setQueryData(queryKeys.projectTypeQuestions.templates(), [
+            { code: "product", name: "Продуктовый", max_score: 5, questions: [] },
+            { code: "project_defense", name: "Защита проекта", max_score: 3, questions: [] },
+        ]);
+        const apply = vi.spyOn(questionApi, "applyTemplate").mockResolvedValue(data);
+        await renderCriteria();
+
+        const options = [...container.querySelectorAll<HTMLSelectElement>("select")][1]?.options;
+        expect([...options].map((option) => option.textContent)).toEqual(["Защита проекта · 1–3"]);
+
+        await click("Заменить вопросы шаблоном");
+        expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
+            "заменит все критерии",
+        );
+        expect(apply).not.toHaveBeenCalled();
+        await click("Отмена");
+        await click("Заменить вопросы шаблоном");
+        await click("Применить шаблон");
+
+        expect(apply).toHaveBeenCalledWith(1, 5, "project_defense");
+    });
+
     it.each([3, 5] as const)("preserves question IDs on scale %i", async (scale) => {
         const question = {
             id: 0,
@@ -549,8 +742,8 @@ describe("exam form", () => {
         expect(container.querySelector('[role="alert"]')).toBeNull();
         await click("Сохранить вопросы");
 
-        expect(save).toHaveBeenNthCalledWith(2, 1, 5, [question]);
-        expect(save).toHaveBeenNthCalledWith(3, 1, 5, [savedQuestion]);
+        expect(save).toHaveBeenNthCalledWith(2, 1, 5, [question], scale);
+        expect(save).toHaveBeenNthCalledWith(3, 1, 5, [savedQuestion], scale);
 
         const lock = new AxiosError("Request failed");
         Object.assign(lock, { response: { data: { detail: { code: "questions_locked" } } } });

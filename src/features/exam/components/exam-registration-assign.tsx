@@ -119,20 +119,21 @@ export function ExamRegistrationAssign({
     const selected = teams.find((team) => team.id === projectId);
     const term = search.trim().toLocaleLowerCase();
     const candidates = teams.filter((team) => team.name.toLocaleLowerCase().includes(term));
-    const freeSlots = slots.data?.items.filter((slot) => slot.is_available) ?? [];
+    const defenseSlots = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
+    const freeSlots = defenseSlots.filter((slot) => slot.is_available);
     const canAssign =
         exam.status === "published" &&
         Boolean(selected) &&
         !loading &&
         !loadFailed &&
         slots.isSuccess &&
-        (slots.data.items.length === 0 || freeSlots.some((slot) => slot.id === slotId));
+        (defenseSlots.length === 0 || freeSlots.some((slot) => slot.id === slotId));
 
     const assign = useMutation({
         mutationFn: () =>
             examApi.register(workspaceId, examId, {
                 project_id: projectId,
-                slot_id: slots.data?.items.length ? slotId : null,
+                slot_id: defenseSlots.length ? slotId : null,
             }),
         onSuccess: async () => {
             await invalidateExam(client, workspaceId, examId);
@@ -197,7 +198,7 @@ export function ExamRegistrationAssign({
                     <p role="status" className="mt-4 text-sm text-app-muted">
                         Проверяем, какие команды можно назначить…
                     </p>
-                ) : !teams.length || (slots.data?.items.length && !freeSlots.length) ? (
+                ) : !teams.length || (defenseSlots.length && !freeSlots.length) ? (
                     <div className="mt-4 grid gap-4">
                         <p role="status" className="text-sm text-app-muted">
                             {teams.length
@@ -237,7 +238,7 @@ export function ExamRegistrationAssign({
                             />
                         </div>
                         {slots.isSuccess &&
-                            (slots.data.items.length === 0 ? (
+                            (defenseSlots.length === 0 ? (
                                 <p className="text-sm text-app-muted">
                                     Команда будет добавлена в очередь без места в расписании.
                                 </p>

@@ -1,8 +1,9 @@
 import { isAxiosError } from "axios";
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useId, useState } from "react";
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Save, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import {
@@ -12,7 +13,12 @@ import {
     useProjectTypeQuestions,
 } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
-import type { ProjectTypeQuestion, QuestionLevel, QuestionTemplate } from "@/types/exam";
+import type {
+    ProjectTypeQuestion,
+    QuestionLevel,
+    QuestionScale,
+    QuestionTemplate,
+} from "@/types/exam";
 import { toast } from "sonner";
 
 type Props = {
@@ -24,7 +30,7 @@ type Props = {
 
 const scores = [1, 2, 3, 4, 5] as const;
 
-const emptyQuestion = (maxScore: 3 | 5): ProjectTypeQuestion => ({
+const emptyQuestion = (maxScore: QuestionScale): ProjectTypeQuestion => ({
     id: 0,
     text: "",
     description: null,
@@ -33,6 +39,9 @@ const emptyQuestion = (maxScore: 3 | 5): ProjectTypeQuestion => ({
 });
 
 type SaveError = { message: string; questionIndex?: number };
+type PendingChange =
+    | { kind: "scale"; maxScore: QuestionScale }
+    | { kind: "template"; template: QuestionTemplate };
 
 function getQuestionSaveErrors(error: unknown, questions: ProjectTypeQuestion[]): SaveError[] {
     const detail = isAxiosError<{ detail?: unknown }>(error) ? error.response?.data?.detail : null;
@@ -97,11 +106,15 @@ export const ProjectTypeQuestionsEditor = ({
     const questionsQuery = useProjectTypeQuestions(workspaceId, typeId);
     const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
     const [draftQuestions, setDraftQuestions] = useState<ProjectTypeQuestion[] | null>(null);
+    const [draftScale, setDraftScale] = useState<QuestionScale | null>(null);
+    const [pendingChange, setPendingChange] = useState<PendingChange | null>(null);
+    const confirmationDescriptionId = useId();
     const lockKey = queryKeys.projectTypeQuestions.lock(workspaceId, typeId);
-    const lock = useQuery<boolean>({ queryKey: lockKey, enabled: false, gcTime: Infinity });
-    const maxScore = questionsQuery.data?.max_score ?? 5;
+    const lock = useQuery<boolean>({ queryKey: lockKey, queryFn: skipToken, gcTime: Infinity });
     const locked = assessmentOpened || lock.data === true;
+    const maxScore = (locked ? null : draftScale) ?? questionsQuery.data?.max_score ?? 5;
     const questions = (locked ? null : draftQuestions) ?? questionsQuery.data?.questions ?? [];
+    const hasCriteria = questions.length > 0 || Boolean(questionsQuery.data?.questions.length);
 
     const handleLock = (error: unknown) => {
         if (getExamErrorCode(error) !== "questions_locked") return false;
@@ -112,7 +125,7 @@ export const ProjectTypeQuestionsEditor = ({
         setSaveErrors([]);
         setDraftQuestions((current) => update(current ?? questionsQuery.data?.questions ?? []));
     };
-    const [templateCode, setTemplateCode] = useState<QuestionTemplate["code"]>("product");
+    const [templateCode, setTemplateCode] = useState<QuestionTemplate["code"]>();
     const [saving, setSaving] = useState(false);
     const [applying, setApplying] = useState(false);
 
@@ -121,9 +134,34 @@ export const ProjectTypeQuestionsEditor = ({
         queryFn: questionApi.templates,
         enabled: !locked,
     });
-    const templates = templatesQuery.data ?? [];
+    const templates =
+        templatesQuery.data?.filter((template) => template.max_score === maxScore) ?? [];
+    const selectedTemplate =
+        templates.find((template) => template.code === templateCode) ?? templates[0];
     const busy = saving || applying || locked;
     const questionKey = queryKeys.projectTypeQuestions.detail(workspaceId, typeId);
+
+    const changeScale = (nextScale: QuestionScale) => {
+        setDraftScale(nextScale);
+        setQuestions((current) =>
+            current.map((question) => ({
+                ...question,
+                levels: scores.slice(0, nextScale).map(
+                    (score) =>
+                        question.levels.find((level) => level.score === score) ?? {
+                            score,
+                            description: "",
+                        },
+                ),
+            })),
+        );
+    };
+
+    const requestScaleChange = (nextScale: QuestionScale) => {
+        if (busy || maxScore === nextScale) return;
+        if (hasCriteria) setPendingChange({ kind: "scale", maxScore: nextScale });
+        else changeScale(nextScale);
+    };
 
     const updateQuestion = (index: number, patch: Partial<ProjectTypeQuestion>) => {
         setQuestions((current) =>
@@ -186,9 +224,10 @@ export const ProjectTypeQuestionsEditor = ({
         setSaving(true);
         try {
             await queryClient.cancelQueries({ queryKey: questionKey });
-            const result = await questionApi.replace(workspaceId, typeId, questions);
+            const result = await questionApi.replace(workspaceId, typeId, questions, maxScore);
             queryClient.setQueryData(questionKey, result);
             setDraftQuestions(null);
+            setDraftScale(null);
             toast.success(`Критерии типа «${typeName}» сохранены`);
         } catch (requestError) {
             if (!handleLock(requestError))
@@ -198,15 +237,16 @@ export const ProjectTypeQuestionsEditor = ({
         }
     };
 
-    const applyTemplate = async () => {
-        if (busy || !templates.some((template) => template.code === templateCode)) return;
+    const applyTemplate = async (code: QuestionTemplate["code"]) => {
+        if (busy) return;
         setSaveErrors([]);
         setApplying(true);
         try {
             await queryClient.cancelQueries({ queryKey: questionKey });
-            const result = await questionApi.applyTemplate(workspaceId, typeId, templateCode);
+            const result = await questionApi.applyTemplate(workspaceId, typeId, code);
             queryClient.setQueryData(questionKey, result);
             setDraftQuestions(null);
+            setDraftScale(null);
             toast.success("Шаблон вопросов применён");
         } catch (error) {
             if (!handleLock(error))
@@ -214,6 +254,19 @@ export const ProjectTypeQuestionsEditor = ({
         } finally {
             setApplying(false);
         }
+    };
+
+    const requestTemplate = () => {
+        if (busy || !selectedTemplate) return;
+        if (hasCriteria) setPendingChange({ kind: "template", template: selectedTemplate });
+        else void applyTemplate(selectedTemplate.code);
+    };
+
+    const confirmChange = () => {
+        if (busy || !pendingChange) return;
+        setPendingChange(null);
+        if (pendingChange.kind === "scale") changeScale(pendingChange.maxScore);
+        else void applyTemplate(pendingChange.template.code);
     };
 
     if (questionsQuery.isLoading) return <Spinner />;
@@ -246,39 +299,57 @@ export const ProjectTypeQuestionsEditor = ({
                 disabled={busy}
                 className="space-y-4 [&_input:disabled]:bg-gray-100 dark:[&_input:disabled]:bg-app-ghost [&_textarea:disabled]:bg-gray-100 dark:[&_textarea:disabled]:bg-app-ghost"
             >
-                {!locked && (
-                    <div className="flex flex-wrap items-end gap-2 rounded-xl bg-gray-50 dark:bg-app-ghost p-3">
-                        <label className="min-w-52 flex-1 text-sm text-app-muted">
-                            Готовый шаблон
-                            <select
-                                className="mt-1 h-10 w-full rounded-md border bg-app-surface px-3 text-sm text-app-text"
-                                value={templateCode}
-                                onChange={(event) =>
-                                    setTemplateCode(event.target.value as QuestionTemplate["code"])
-                                }
-                            >
-                                {templates.map((template) => (
-                                    <option key={template.code} value={template.code}>
-                                        {template.name}
-                                    </option>
-                                ))}
-                                {templates.length === 0 && (
-                                    <option value={templateCode}>Шаблоны недоступны</option>
-                                )}
-                            </select>
-                        </label>
-                        <Button
-                            variant="outline"
-                            size="hug36"
-                            icon={<WandSparkles className="size-4" />}
-                            loading={applying}
-                            disabled={busy || templates.length === 0}
-                            onClick={applyTemplate}
+                <div className="flex flex-wrap items-end gap-2 rounded-xl bg-gray-50 dark:bg-app-ghost p-3">
+                    <label className="text-sm text-app-muted">
+                        Шкала оценивания
+                        <select
+                            aria-label="Шкала оценивания"
+                            className="mt-1 block h-10 min-w-28 rounded-md border bg-app-surface px-3 text-sm text-app-text"
+                            value={maxScore}
+                            onChange={(event) =>
+                                requestScaleChange(event.target.value === "3" ? 3 : 5)
+                            }
                         >
-                            Заменить вопросы шаблоном
-                        </Button>
-                    </div>
-                )}
+                            <option value={3}>1–3</option>
+                            <option value={5}>1–5</option>
+                        </select>
+                    </label>
+                    {!locked && (
+                        <>
+                            <label className="min-w-52 flex-1 text-sm text-app-muted">
+                                Готовый шаблон
+                                <select
+                                    className="mt-1 h-10 w-full rounded-md border bg-app-surface px-3 text-sm text-app-text"
+                                    value={selectedTemplate?.code ?? ""}
+                                    onChange={(event) =>
+                                        setTemplateCode(
+                                            event.target.value as QuestionTemplate["code"],
+                                        )
+                                    }
+                                >
+                                    {templates.map((template) => (
+                                        <option key={template.code} value={template.code}>
+                                            {template.name} · 1–{template.max_score}
+                                        </option>
+                                    ))}
+                                    {!selectedTemplate && (
+                                        <option value="">Шаблоны недоступны</option>
+                                    )}
+                                </select>
+                            </label>
+                            <Button
+                                variant="outline"
+                                size="hug36"
+                                icon={<WandSparkles className="size-4" />}
+                                loading={applying}
+                                disabled={busy || !selectedTemplate}
+                                onClick={requestTemplate}
+                            >
+                                {hasCriteria ? "Заменить вопросы шаблоном" : "Применить шаблон"}
+                            </Button>
+                        </>
+                    )}
+                </div>
                 {questions.map((question, questionIndex) => (
                     <div
                         key={question.id || `new-${questionIndex}`}
@@ -390,6 +461,47 @@ export const ProjectTypeQuestionsEditor = ({
                     </div>
                 )}
             </fieldset>
+            <Dialog
+                open={Boolean(pendingChange) && !locked}
+                onOpenChange={(open) => {
+                    if (!open) setPendingChange(null);
+                }}
+            >
+                <DialogContent
+                    aria-describedby={confirmationDescriptionId}
+                    className="grid w-[calc(100%-2rem)] max-w-[440px] gap-4"
+                >
+                    <DialogHeader>
+                        <DialogTitle>
+                            {pendingChange?.kind === "scale"
+                                ? `Изменить шкалу на 1–${pendingChange.maxScore}?`
+                                : "Заменить критерии шаблоном?"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p id={confirmationDescriptionId} className="text-[13px] text-app-muted">
+                        {pendingChange?.kind === "scale"
+                            ? pendingChange.maxScore === 3
+                                ? "Уровни 4 и 5 и их описания будут удалены из критериев после сохранения."
+                                : "К каждому критерию добавятся уровни 4 и 5. Заполните их описания перед сохранением."
+                            : `Шаблон «${pendingChange?.template.name ?? ""}» заменит все критерии этого типа проекта сразу, включая несохранённые правки.`}{" "}
+                        Изменение затронет все экзамены с типом «{typeName}».
+                    </p>
+                    <div className="flex flex-wrap justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            size="hug36"
+                            onClick={() => setPendingChange(null)}
+                        >
+                            Отмена
+                        </Button>
+                        <Button variant="blue" size="hug36" onClick={confirmChange} disabled={busy}>
+                            {pendingChange?.kind === "scale"
+                                ? "Изменить шкалу"
+                                : "Применить шаблон"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

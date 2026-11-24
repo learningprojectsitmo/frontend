@@ -104,10 +104,7 @@ export function useExamWorkspaces(
             queryKey: [...queryKeys.workspace.participants(space.id), "exam-role", userId],
             queryFn: () => (userId ? getWorkspaceRole(space.id, userId) : Promise.resolve(null)),
             enabled:
-                Boolean(userId) &&
-                (checkRegistrationRole ||
-                    checkResultAccess ||
-                    (role !== "admin" && (role !== "teacher" || space.author_id !== userId))),
+                Boolean(userId) && (checkRegistrationRole || checkResultAccess || role !== "admin"),
             retry: false,
         })),
     });
@@ -140,6 +137,10 @@ export function useExamWorkspaces(
             checkRegistrationRole &&
             canRegisterOwnProject(role, memberships[0]?.data),
         manageable,
+        removable: candidates.filter(
+            (_, index) => role === "admin" || memberships[index]?.data === "admin",
+        ),
+        canRemove: enabled && workspaceId > 0 && (role === "admin" || workspaceRole === "admin"),
         canManage:
             workspaceId > 0
                 ? (enabled && role === "admin") || manageable.length > 0

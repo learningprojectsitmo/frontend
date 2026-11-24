@@ -15,7 +15,8 @@ import {
 import { Textarea } from "@/components/ui/textarea/textarea";
 import { examApi, getExamErrorMessage, invalidateExam, useExams, useExamSlots } from "@/lib/exams";
 import { useProject } from "@/lib/projects";
-import type { Exam, Registration } from "@/types/exam";
+import type { Exam, ExamSlot, Registration } from "@/types/exam";
+import { canBookExamSlot } from "../exam-schedule";
 import { formatExamDate, isExamRegistrationOpen } from "../exam-display";
 
 const selectTriggerClass =
@@ -48,7 +49,7 @@ export function ExamRegistrationTransfer({
     const project = useProject(String(registration.project_id));
     const projectType = project.data?.project_type_id;
     const [targetId, setTargetId] = useState(examId);
-    const [slotId, setSlotId] = useState(0);
+    const [selectedSlot, setSelectedSlot] = useState<ExamSlot>();
     const [reason, setReason] = useState("");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string>();
@@ -66,11 +67,12 @@ export function ExamRegistrationTransfer({
     const validType =
         projectType != null && sourceExam.configuration.project_type_ids.includes(projectType);
     const slots = useExamSlots(workspaceId, target?.id ?? 0);
-    const freeSlots =
-        slots.data?.items.filter(
-            (slot) =>
-                slot.is_available && (targetId !== examId || slot.id !== registration.slot_id),
-        ) ?? [];
+    const defenseSlots = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
+    const freeSlots = defenseSlots.filter(
+        (slot) => slot.is_available && (targetId !== examId || slot.id !== registration.slot_id),
+    );
+    const targetSlot =
+        selectedSlot && freeSlots.find((slot) => canBookExamSlot(slot, selectedSlot));
     const canSubmit =
         sourceOpen &&
         validType &&
@@ -81,9 +83,7 @@ export function ExamRegistrationTransfer({
         slots.data &&
         !slots.isError &&
         reason.trim() &&
-        (slots.data.items.length
-            ? freeSlots.some((slot) => slot.id === slotId)
-            : targetId !== examId);
+        (defenseSlots.length ? Boolean(targetSlot) : targetId !== examId);
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -91,11 +91,21 @@ export function ExamRegistrationTransfer({
         setPending(true);
         setError(undefined);
         try {
-            await examApi.moveRegistration(workspaceId, examId, registration, slotId || null, {
-                targetExamId: target.id,
-                self,
-                reason: reason.trim(),
-            });
+            await examApi.moveRegistration(
+                workspaceId,
+                examId,
+                registration,
+                targetSlot?.id ?? null,
+                {
+                    targetExamId: target.id,
+                    self,
+                    reason: reason.trim(),
+                    expectedSlot: targetSlot && {
+                        starts_at: targetSlot.starts_at,
+                        ends_at: targetSlot.ends_at,
+                    },
+                },
+            );
             toast.success("Запись перенесена");
             onClose();
         } catch (failure) {
@@ -133,7 +143,7 @@ export function ExamRegistrationTransfer({
                             disabled={pending}
                             onValueChange={(value) => {
                                 setTargetId(Number(value));
-                                setSlotId(0);
+                                setSelectedSlot(undefined);
                                 setError(undefined);
                             }}
                         >
@@ -191,7 +201,7 @@ export function ExamRegistrationTransfer({
                             <p role="alert" className="text-sm text-app-muted">
                                 Не удалось загрузить слоты.
                             </p>
-                        ) : !slots.data?.items.length ? (
+                        ) : !defenseSlots.length ? (
                             <p className="text-sm text-app-muted">
                                 {targetId === examId
                                     ? "В текущем экзамене слотов нет. Чтобы перенести запись, выберите другой экзамен."
@@ -201,14 +211,12 @@ export function ExamRegistrationTransfer({
                             <div className="grid min-w-0 gap-1.5">
                                 <Label htmlFor={`${fieldId}-slot`}>Новое время защиты</Label>
                                 <Select
-                                    value={
-                                        freeSlots.some((slot) => slot.id === slotId)
-                                            ? String(slotId)
-                                            : ""
-                                    }
+                                    value={targetSlot ? String(targetSlot.id) : ""}
                                     disabled={pending}
                                     onValueChange={(value) => {
-                                        setSlotId(Number(value));
+                                        setSelectedSlot(
+                                            freeSlots.find((slot) => slot.id === Number(value)),
+                                        );
                                         setError(undefined);
                                     }}
                                 >

@@ -7,6 +7,7 @@ import type {
     Exam,
     ExamConfiguration,
     ExamListResponse,
+    ExamListStatus,
     ExamQueue,
     ExamSettingsHistoryResponse,
     ExamSettingsRevision,
@@ -16,6 +17,7 @@ import type {
     QueueItem,
     ProjectTypeQuestions,
     QuestionTemplate,
+    QuestionScale,
 } from "@/types/exam";
 import { isAxiosError } from "axios";
 
@@ -94,10 +96,15 @@ const examErrorMessages: Record<string, string> = {
     questions_locked:
         "По этому типу проектов уже начинали выставлять оценки на экзамене. Критерии закреплены, чтобы сохранить правила, по которым оценивали команды.",
     settings_version_conflict: "Настройки уже изменились. Обновите страницу и повторите действие.",
-    slot_schedule_closed: "Добавлять слоты нельзя: время начала экзамена уже наступило.",
+    slot_schedule_closed: "Нельзя добавить или перенести строку расписания на прошедшее время.",
+    slot_schedule_stale:
+        "Расписание изменилось. Сбросьте правки, чтобы загрузить актуальное расписание.",
+    slot_has_registrations: "У слота есть записи команд или история. Его нельзя удалить.",
+    slot_time_changed: "Время слота изменилось. Выберите время заново.",
+    slot_is_break: "На перерыв нельзя назначить команду.",
     slot_overlap: "Слоты пересекаются. Укажите непересекающиеся интервалы.",
     slot_before_exam: "Слот не может начинаться раньше начала экзамена.",
-    slot_schedule_locked: "Расписание слотов уже заблокировано после назначения команд.",
+    slot_schedule_locked: "Нельзя изменить защищённую часть расписания.",
     registration_not_active:
         "Нельзя изменить команду на этом слоте: регистрация команды неактивна. Проверьте статус команды или регистрации.",
     defense_already_started: "Защита команды уже началась. Изменить запись или явку нельзя.",
@@ -144,13 +151,14 @@ export type ReplaceExamSettingsInput = {
 };
 
 export const examApi = {
-    list: (workspaceId: number, status?: "draft" | "published") =>
+    list: (workspaceId: number, status?: ExamListStatus) =>
         fetchAllPages((offset) =>
             api.get<ExamListResponse>(examPath(workspaceId), {
                 params: { status, limit: pageSize, offset },
             }),
         ),
     get: (workspaceId: number, examId: number) => api.get<Exam>(examPath(workspaceId, examId)),
+    remove: (workspaceId: number, examId: number) => api.delete(examPath(workspaceId, examId)),
     create: (workspaceId: number, data: CreateExamInput) =>
         api.post<Exam>(examPath(workspaceId), data),
     replaceSettings: (workspaceId: number, examId: number, data: ReplaceExamSettingsInput) =>
@@ -181,6 +189,14 @@ export const examApi = {
         examId: number,
         slots: { starts_at: string; ends_at: string }[],
     ) => api.post<ExamSlot[]>(`${examPath(workspaceId, examId)}/slots`, { slots }),
+    replaceSlots: (
+        workspaceId: number,
+        examId: number,
+        data: {
+            expected_slots: Pick<ExamSlot, "id" | "starts_at" | "ends_at" | "kind">[];
+            slots: (Pick<ExamSlot, "starts_at" | "ends_at" | "kind"> & { id?: number })[];
+        },
+    ) => api.put<ExamSlot[]>(`${examPath(workspaceId, examId)}/slots`, data),
     registrations: (workspaceId: number, examId: number, self = false) =>
         fetchAllPages((offset) =>
             api.get<RegistrationListResponse>(
@@ -191,7 +207,11 @@ export const examApi = {
     register: (
         workspaceId: number,
         examId: number,
-        data: { project_id: number; slot_id?: number | null },
+        data: {
+            project_id: number;
+            slot_id?: number | null;
+            expected_slot?: Pick<ExamSlot, "starts_at" | "ends_at">;
+        },
         self = false,
     ) =>
         api.post<Registration>(
@@ -215,7 +235,12 @@ export const examApi = {
         examId: number,
         registration: Pick<Registration, "id" | "version">,
         targetSlotId: number | null,
-        options?: { targetExamId: number; self?: boolean; reason: string },
+        options?: {
+            targetExamId: number;
+            self?: boolean;
+            reason: string;
+            expectedSlot?: Pick<ExamSlot, "starts_at" | "ends_at">;
+        },
     ) =>
         api.post<{ source: Registration; target: Registration }>(
             `${examPath(workspaceId, examId)}/registrations/${registration.id}/${options?.self ? "self-move" : "move"}`,
@@ -223,6 +248,7 @@ export const examApi = {
                 expected_version: registration.version,
                 target_exam_id: options?.targetExamId ?? examId,
                 target_slot_id: targetSlotId,
+                ...(options?.expectedSlot && { expected_slot: options.expectedSlot }),
                 reason: options?.reason ?? "Перенос команды в другой слот",
             },
         ),
@@ -288,10 +314,16 @@ export const questionApi = {
         api.get<ProjectTypeQuestions>(
             `/workspaces/${workspaceId}/project-types/${typeId}/questions`,
         ),
-    replace: (workspaceId: number, typeId: number, questions: ProjectTypeQuestions["questions"]) =>
+    replace: (
+        workspaceId: number,
+        typeId: number,
+        questions: ProjectTypeQuestions["questions"],
+        maxScore: QuestionScale,
+    ) =>
         api.put<ProjectTypeQuestions>(
             `/workspaces/${workspaceId}/project-types/${typeId}/questions`,
             {
+                max_score: maxScore,
                 questions: questions.map(({ id, position: _position, ...question }) => ({
                     ...(id > 0 ? { id } : {}),
                     ...question,
@@ -314,7 +346,7 @@ export const useProjectTypeQuestions = (workspaceId: number, typeId: number, ena
         enabled: enabled && workspaceId > 0 && typeId > 0,
     });
 
-export const useExams = (workspaceId: number, status?: "draft" | "published") =>
+export const useExams = (workspaceId: number, status?: ExamListStatus) =>
     useQuery({
         queryKey: queryKeys.exams.list(workspaceId, status),
         queryFn: () => examApi.list(workspaceId, status),

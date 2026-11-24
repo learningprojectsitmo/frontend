@@ -1,3 +1,4 @@
+import { canBookExamSlot } from "./exam-schedule";
 import { useRef, useState } from "react";
 import {
     queryOptions,
@@ -115,15 +116,16 @@ export function useExamSlotBooking(
         !registrations.isError &&
         !registration.started_at &&
         eligible.some((project) => project.id === registration.project_id);
-    const available = slots.data?.items ?? [];
+    const available = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
     const inMode = selecting && canBook;
+    const selectedSlot = action?.kind === "book" ? action.slot : null;
+    const selectedSlotCurrent =
+        selectedSlot && available.some((slot) => canBookExamSlot(slot, selectedSlot));
     const canConfirm =
         action?.kind === "book"
             ? inMode &&
               bookableProjects.some((project) => project.id === action.projectId) &&
-              (action.slot
-                  ? available.some((slot) => slot.id === action.slot?.id && slot.is_available)
-                  : available.length === 0)
+              (action.slot ? selectedSlotCurrent : available.length === 0)
             : action?.kind === "cancel" &&
               active.some(
                   (item) =>
@@ -138,7 +140,16 @@ export function useExamSlotBooking(
                 ? examApi.register(
                       workspaceId,
                       examId,
-                      { project_id: target.projectId, slot_id: target.slot?.id ?? null },
+                      {
+                          project_id: target.projectId,
+                          slot_id: target.slot?.id ?? null,
+                          ...(target.slot && {
+                              expected_slot: {
+                                  starts_at: target.slot.starts_at,
+                                  ends_at: target.slot.ends_at,
+                              },
+                          }),
+                      },
                       true,
                   )
                 : examApi.cancelRegistration(

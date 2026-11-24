@@ -1,39 +1,51 @@
 import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { queryKeys } from "@/lib/query-keys";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { List, Plus, Search } from "lucide-react";
+import { Ellipsis, List, Plus, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuPortal,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/spinner/spinner";
 import { Tabs } from "@/components/ui/tabs/tabs";
 import { paths } from "@/config/paths";
 import { useUser } from "@/lib/auth";
 import { examApi, useExams } from "@/lib/exams";
-import type { Exam, ExamStatus } from "@/types/exam";
+import type { Exam, ExamListStatus } from "@/types/exam";
 
 import { formatExamDate } from "../exam-display";
+import { ExamRemovalDialog, examRemovalLabel } from "./exam-removal-dialog";
 
 export function ExamManagementList({
     workspaceId,
     workspaces = [],
+    removableWorkspaceIds = [],
 }: {
     workspaceId: number;
+    removableWorkspaceIds?: number[];
     workspaces?: Array<{ id: number; title: string }>;
 }) {
     const navigate = useNavigate();
     const { data: user } = useUser();
-    const selectedQuery = useExams(workspaceId);
+    const [status, setStatus] = useState<ExamListStatus | "all">("all");
+    const archive = status === "archived" ? status : undefined;
+    const selectedQuery = useExams(workspaceId, archive);
     const allQueries = useQueries({
         queries:
             workspaceId > 0
                 ? []
                 : workspaces.map((workspace) => ({
-                      queryKey: queryKeys.exams.list(workspace.id),
-                      queryFn: () => examApi.list(workspace.id),
+                      queryKey: queryKeys.exams.list(workspace.id, archive),
+                      queryFn: () => examApi.list(workspace.id, archive),
                   })),
     });
     const examsItems =
@@ -46,12 +58,16 @@ export function ExamManagementList({
         workspaceId > 0 ? selectedQuery.isError : allQueries.some((query) => query.isError);
     const [tab, setTab] = useState<"all" | "mine">("all");
     const [search, setSearch] = useState("");
-    const [status, setStatus] = useState<ExamStatus | "all">("all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+    const [removalTarget, setRemovalTarget] = useState<Exam | null>(null);
+    const removeAction = (exam: Exam) =>
+        !exam.archived_at && removableWorkspaceIds.includes(exam.workspace_id) ? (
+            <ExamRemovalMenu exam={exam} onSelect={() => setRemovalTarget(exam)} />
+        ) : null;
     const filtered = examsItems
         .filter((exam) => tab !== "mine" || exam.created_by === user?.id)
-        .filter((exam) => status === "all" || exam.status === status)
+        .filter((exam) => status === "all" || status === "archived" || exam.status === status)
         .filter((exam) =>
             exam.configuration.title.toLowerCase().includes(search.trim().toLowerCase()),
         )
@@ -91,11 +107,14 @@ export function ExamManagementList({
                         aria-label="Статус экзамена"
                         className="h-10 cursor-pointer rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                         value={status}
-                        onChange={(event) => setStatus(event.target.value as ExamStatus | "all")}
+                        onChange={(event) =>
+                            setStatus(event.target.value as ExamListStatus | "all")
+                        }
                     >
                         <option value="all">Все статусы</option>
                         <option value="draft">Черновики</option>
                         <option value="published">Опубликованные</option>
+                        <option value="archived">Архив</option>
                     </select>
                     <div className="flex h-10 items-center overflow-hidden rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface">
                         <button
@@ -169,6 +188,7 @@ export function ExamManagementList({
                             key={`${exam.workspace_id}-${exam.id}`}
                             workspaceId={exam.workspace_id}
                             exam={exam}
+                            removalMenu={removeAction(exam)}
                             workspaceName={
                                 workspaces.find((workspace) => workspace.id === exam.workspace_id)
                                     ?.title
@@ -177,7 +197,14 @@ export function ExamManagementList({
                     ))}
                 </div>
             ) : (
-                <ExamManagementTable workspaces={workspaces} exams={filtered} />
+                <ExamManagementTable
+                    workspaces={workspaces}
+                    exams={filtered}
+                    removeAction={removeAction}
+                />
+            )}
+            {removalTarget && (
+                <ExamRemovalDialog exam={removalTarget} onClose={() => setRemovalTarget(null)} />
             )}
         </div>
     );
@@ -187,29 +214,31 @@ function ExamManagementCard({
     workspaceId,
     exam,
     workspaceName,
+    removalMenu,
 }: {
     workspaceId: number;
     exam: Exam;
     workspaceName?: string;
+    removalMenu: ReactNode;
 }) {
     return (
         <article className="relative rounded-2xl border border-app-border bg-app-surface p-6 transition hover:border-gray-300 dark:hover:border-slate-500">
             <div className="flex justify-between gap-3">
                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-2.5 py-1 text-[12px] font-medium text-gray-600 dark:text-app-muted">
-                    {exam.status === "published" ? "Опубликован" : "Черновик"}
+                    {examStatusLabel(exam)}
                 </span>
-                <span className="text-[12px] font-bold text-app-text">
-                    {formatExamDate(exam.configuration.starts_at)}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-bold text-app-text">
+                        {formatExamDate(exam.configuration.starts_at)}
+                    </span>
+                    {removalMenu}
+                </div>
             </div>
             <h3
                 title={exam.configuration.title}
                 className="mt-5 line-clamp-2 text-[17px] font-bold text-app-text [overflow-wrap:anywhere]"
             >
-                <Link
-                    to={paths.app.examEdit.getHref(workspaceId, exam.id)}
-                    className="after:absolute after:inset-0"
-                >
+                <Link to={examManagementHref(exam)} className="after:absolute after:inset-0">
                     {exam.configuration.title}
                 </Link>
             </h3>
@@ -229,7 +258,7 @@ function ExamManagementCard({
                     {exam.configuration.description}
                 </p>
             )}
-            {exam.status === "published" && (
+            {exam.status === "published" && !exam.archived_at && (
                 <Link
                     to={paths.app.examView.getHref(workspaceId, exam.id)}
                     className="relative z-10 mt-4 inline-flex rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300"
@@ -244,9 +273,11 @@ function ExamManagementCard({
 function ExamManagementTable({
     workspaces,
     exams,
+    removeAction,
 }: {
     workspaces: Array<{ id: number; title: string }>;
     exams: Exam[];
+    removeAction: (exam: Exam) => ReactNode;
 }) {
     return (
         <div className="overflow-x-auto rounded-[20px] border border-gray-200 dark:border-app-border">
@@ -268,7 +299,7 @@ function ExamManagementTable({
                         >
                             <td className="px-6 py-4">
                                 <Link
-                                    to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)}
+                                    to={examManagementHref(exam)}
                                     title={exam.configuration.title}
                                     className="block max-w-64 truncate text-[14px] font-medium text-app-blue hover:underline dark:text-blue-300"
                                 >
@@ -291,13 +322,13 @@ function ExamManagementTable({
                                 </Link>
                             </td>
                             <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
-                                {exam.status === "published" ? "Опубликован" : "Черновик"}
+                                {examStatusLabel(exam)}
                             </td>
                             <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-app-muted">
                                 {formatExamDate(exam.configuration.starts_at)}
                             </td>
                             <td className="px-3 py-4 text-right">
-                                {exam.status === "published" && (
+                                {exam.status === "published" && !exam.archived_at && (
                                     <Link
                                         to={paths.app.examView.getHref(exam.workspace_id, exam.id)}
                                         className="mr-2 inline-flex whitespace-nowrap rounded-lg border border-app-border px-3 py-1.5 text-xs font-medium text-app-blue hover:bg-app-ghost dark:text-blue-300"
@@ -305,18 +336,56 @@ function ExamManagementTable({
                                         Перейти на страницу экзамена
                                     </Link>
                                 )}
-                                <Link
-                                    to={paths.app.examEdit.getHref(exam.workspace_id, exam.id)}
-                                    aria-label="Редактировать экзамен"
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost"
-                                >
-                                    <Icon name="pen" size={16} />
-                                </Link>
+                                {!exam.archived_at && (
+                                    <Link
+                                        to={examManagementHref(exam)}
+                                        aria-label="Редактировать экзамен"
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-app-muted hover:bg-gray-100 dark:hover:bg-app-ghost"
+                                    >
+                                        <Icon name="pen" size={16} />
+                                    </Link>
+                                )}
+                                {removeAction(exam)}
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
+    );
+}
+
+function examManagementHref(exam: Exam) {
+    return exam.archived_at
+        ? paths.app.examView.getHref(exam.workspace_id, exam.id)
+        : paths.app.examEdit.getHref(exam.workspace_id, exam.id);
+}
+
+function examStatusLabel(exam: Exam) {
+    if (exam.archived_at) return "Архив";
+    return exam.status === "published" ? "Опубликован" : "Черновик";
+}
+
+function ExamRemovalMenu({ exam, onSelect }: { exam: Exam; onSelect: () => void }) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    type="button"
+                    aria-label="Действия с экзаменом"
+                    className="relative z-10 inline-grid size-9 shrink-0 cursor-pointer place-items-center rounded-lg text-app-muted hover:bg-app-ghost"
+                >
+                    <Ellipsis size={16} />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuItem className="gap-3" onSelect={onSelect}>
+                        <Trash2 size={16} />
+                        {examRemovalLabel(exam)}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenuPortal>
+        </DropdownMenu>
     );
 }

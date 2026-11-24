@@ -1,3 +1,4 @@
+import type { ExamListStatus } from "@/types/exam";
 import type { SpacesListParams } from "@/types/api";
 
 type WorkspaceParticipantsParams = {
@@ -174,7 +175,7 @@ export const queryKeys = {
     search: (q: string, scope: "default" | "extended" = "default") => ["search", scope, q] as const,
 
     exams: {
-        list: (workspaceId: string | number, status?: "draft" | "published") =>
+        list: (workspaceId: string | number, status?: ExamListStatus) =>
             ["exams", "list", String(workspaceId), status ?? "all"] as const,
         detail: (workspaceId: string | number, examId: string | number) =>
             ["exams", "detail", String(workspaceId), String(examId)] as const,

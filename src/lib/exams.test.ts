@@ -29,18 +29,28 @@ describe("exam API", () => {
         expect(getExamErrorMessage(new Error("Request failed"))).toBeNull();
     });
 
-    it("sends a missing optional criterion description as null", async () => {
-        await questionApi.replace(1, 2, [
-            {
-                id: 0,
-                position: 1,
-                text: "Критерий",
-                description: "  ",
-                levels: [],
-            },
-        ]);
+    it("sends the selected scale and a missing optional criterion description as null", async () => {
+        const levels = ([1, 2, 3] as const).map((score) => ({
+            score,
+            description: `Уровень ${score}`,
+        }));
+        await questionApi.replace(
+            1,
+            2,
+            [
+                {
+                    id: 0,
+                    position: 1,
+                    text: "Критерий",
+                    description: "  ",
+                    levels,
+                },
+            ],
+            3,
+        );
         expect(api.put).toHaveBeenCalledWith("/workspaces/1/project-types/2/questions", {
-            questions: [{ text: "Критерий", description: null, levels: [] }],
+            max_score: 3,
+            questions: [{ text: "Критерий", description: null, levels }],
         });
     });
 
