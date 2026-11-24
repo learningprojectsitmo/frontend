@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { ProjectListItemResponse } from "@/types/api";
 import type { Attempt, QueueItem } from "@/types/exam";
 import { ExamPresentation } from "./exam-presentation";
 
@@ -12,7 +13,7 @@ vi.mock("@/lib/projects", () => ({ useProject: () => ({}) }));
 const attempt = { id: 1, version: 1, status: "speaking", paused_at: null } as Attempt;
 const timer = { remaining: 45, total: 60, stage: { label: "Защита" } };
 const idleTimer = { remaining: 60, total: 60, stage: null };
-const team = { project_id: 1 } as QueueItem;
+const team = { project_id: 1, registration_id: 1 } as QueueItem;
 
 let container: HTMLDivElement;
 let root: Root;
@@ -152,5 +153,60 @@ describe("exam presentation controls", () => {
         expect(document.body.textContent).toContain("Перейти на страницу настроек?");
         await click("Открыть настройки");
         expect(container.querySelector("output")?.textContent).toBe("/settings");
+    });
+});
+
+describe("project description in a presentation", () => {
+    const longProject = (id: number): ProjectListItemResponse => ({
+        id,
+        name: `Проект ${id}`,
+        description: "Длинное описание проекта. ".repeat(30),
+        status: null,
+        deadline: null,
+        theme: null,
+        participants_count: 0,
+        progress: 0,
+        tags: [],
+        participants_preview: [],
+        author_id: 7,
+        current_stage_id: null,
+        current_stage_name: null,
+    });
+
+    it("shows the full description on demand and starts collapsed for each team", async () => {
+        const height = vi
+            .spyOn(HTMLElement.prototype, "scrollHeight", "get")
+            .mockImplementation(function (this: HTMLElement) {
+                return (this.textContent?.length ?? 0) > 100 ? 240 : 20;
+            });
+        const clientHeight = vi
+            .spyOn(HTMLElement.prototype, "clientHeight", "get")
+            .mockReturnValue(60);
+        try {
+            await render({ team, project: longProject(1) });
+            await click("Показать полностью");
+            expect(container.textContent).toContain("Свернуть");
+            await click("Свернуть");
+            await click("Показать полностью");
+
+            await render({
+                team: { ...team, project_id: 2, registration_id: 2 },
+                project: longProject(2),
+            });
+            expect(container.textContent).toContain("Показать полностью");
+            expect(container.textContent).not.toContain("Свернуть");
+        } finally {
+            height.mockRestore();
+            clientHeight.mockRestore();
+        }
+    });
+
+    it("leaves a short description in full without a disclosure button", async () => {
+        await render({
+            team,
+            project: { ...longProject(1), description: "Короткое описание." },
+        });
+        expect(container.textContent).toContain("Короткое описание.");
+        expect(container.textContent).not.toContain("Показать полностью");
     });
 });

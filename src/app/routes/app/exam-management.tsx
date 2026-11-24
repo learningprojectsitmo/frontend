@@ -29,6 +29,10 @@ export default function ExamManagementRoute() {
 
     if (!access.canManage) return <Navigate to={paths.app.exams.getHref(workspaceId)} replace />;
 
+    const removableWorkspaceIds = scoped
+        ? access.removable.map((space) => space.id)
+        : allAccess.removable.map((space) => space.id);
+
     return (
         <ContentLayout title="Управление экзаменами">
             <div className="mx-auto max-w-7xl p-4 sm:p-8">
@@ -81,6 +85,7 @@ export default function ExamManagementRoute() {
                 </div>
                 <ExamManagementList
                     workspaceId={workspaceId}
+                    removableWorkspaceIds={removableWorkspaceIds}
                     workspaces={allAccess.manageable.map((space) => ({
                         id: space.id,
                         title: space.title,

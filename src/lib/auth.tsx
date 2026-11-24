@@ -328,7 +328,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }): Rea
             });
             clearSessionExpired();
         }
-        return <Navigate to={paths.auth.login.getHref(location.pathname)} replace />;
+        const returnTo = location.pathname + location.search + location.hash;
+        return <Navigate to={paths.auth.login.getHref(returnTo)} replace />;
     }
 
     return <>{children}</>;

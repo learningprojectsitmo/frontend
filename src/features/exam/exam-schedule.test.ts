@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ExamSlot, Registration } from "@/types/exam";
 import {
+    canBookExamSlot,
+    formatScheduleTime,
     hasEarlierFreeSlots,
+    insertScheduleBreak,
+    moveScheduleBreak,
+    removeScheduleSlot,
+    updateScheduleSlot,
     planSlotCompaction,
     slotScheduleError,
     slotStartAtTime,
@@ -35,10 +41,53 @@ describe("exam slot schedule", () => {
         );
     });
 
-    it("rejects a batch that crosses midnight", () => {
-        expect(slotScheduleError([slot("1", time(23, 50), time(0, 5, 2))], start)).toContain(
-            "день экзамена",
-        );
+    it("accepts midnight and displays the next date", () => {
+        expect(slotScheduleError([slot("1", time(23, 50), time(0, 5, 2))], start)).toBeNull();
+        expect(formatScheduleTime(time(0, 5, 2), start)).toMatch(/02\.01\.2026.*00:05/);
+    });
+
+    const source = Array.from({ length: 25 }, (_, index) => ({
+        ...slot(String(index + 1), time(14, index * 15), time(14, (index + 1) * 15)),
+        id: index + 1,
+    }));
+
+    it("keeps the first eight slots and shifts the remaining slots after editing slot nine", () => {
+        const edited = updateScheduleSlot(source, "9", time(16, 5))!;
+        expect(edited.slice(0, 8)).toEqual(source.slice(0, 8));
+        expect(edited[9]).toMatchObject({ id: 10, starts_at: time(16, 20) });
+        expect(edited.at(-1)?.ends_at).toBe(time(20, 20));
+    });
+
+    it("reuses the removed interval and preserves successor IDs", () => {
+        const edited = removeScheduleSlot(source, "9")!;
+        expect(edited.slice(0, 8)).toEqual(source.slice(0, 8));
+        expect(edited[8]).toMatchObject({ id: 10, starts_at: time(16) });
+        expect(edited.at(-1)?.ends_at).toBe(time(20));
+    });
+
+    it("inserts, moves and removes a break without changing the number of defenses", () => {
+        const added = insertScheduleBreak(source, 8, "break", 10)!;
+        expect(added[8]).toMatchObject({
+            starts_at: time(16),
+            ends_at: time(16, 10),
+            kind: "break",
+        });
+        expect(added[9]).toMatchObject({ id: 9, starts_at: time(16, 10) });
+        const shifted = moveScheduleBreak(added, "break", 1)!;
+        expect(shifted[8]).toMatchObject({ id: 9, starts_at: time(16) });
+        expect(shifted[9]).toMatchObject({
+            starts_at: time(16, 15),
+            ends_at: time(16, 25),
+            kind: "break",
+        });
+        expect(shifted.at(-1)?.ends_at).toBe(time(20, 25));
+        expect(removeScheduleSlot(shifted, "break")).toEqual(source);
+    });
+
+    it("blocks reflow that would move a locked defense", () => {
+        const locked = source.map((row) => (row.id === 10 ? { ...row, can_edit: false } : row));
+        expect(updateScheduleSlot(locked, "9", time(16, 5))).toBeNull();
+        expect(removeScheduleSlot(locked, "9")).toBeNull();
     });
 
     it("rejects overlap with an already saved slot", () => {
@@ -90,6 +139,23 @@ describe("slot compaction", () => {
     it("detects an early gap even when the slots arrive out of order", () => {
         expect(hasEarlierFreeSlots([savedSlot(3, false), savedSlot(1, true)])).toBe(true);
         expect(hasEarlierFreeSlots([savedSlot(2, true), savedSlot(1, false)])).toBe(false);
+    });
+
+    it("does not suggest compaction across a break", () => {
+        const slots = [
+            savedSlot(1, true),
+            { ...savedSlot(2, false), kind: "break" as const },
+            savedSlot(3, false),
+        ];
+        expect(hasEarlierFreeSlots(slots)).toBe(false);
+        expect(planSlotCompaction(slots, [bookedTeam(30, 3)])).toEqual([]);
+    });
+
+    it("requires a new selection if the available slot kept its ID but its interval changed", () => {
+        const selected = savedSlot(1, true);
+        expect(canBookExamSlot(selected, selected)).toBe(true);
+        expect(canBookExamSlot({ ...selected, starts_at: time(10, 1) }, selected)).toBe(false);
+        expect(canBookExamSlot({ ...selected, kind: "break" }, selected)).toBe(false);
     });
 
     it("plans moves from left to right, reusing slots freed by earlier moves", () => {

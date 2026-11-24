@@ -1,6 +1,7 @@
 import { Tooltip } from "@base-ui/react/tooltip";
 import { Icon } from "@/components/ui/icons";
 import { formatExamTime } from "../exam-display";
+import { formatScheduleTime } from "../exam-schedule";
 
 export const approximateTimeMessage =
     "Время ориентировочное и может измениться по решению преподавателя";
@@ -41,14 +42,16 @@ export function ExamTimeHint({ message }: { message: string }) {
 
 export function ApproximateDefenseTime({
     value,
+    examStart,
     message = approximateTimeMessage,
 }: {
     value: string;
+    examStart?: string;
     message?: string;
 }) {
     return (
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            {formatExamTime(value)}
+            {examStart ? formatScheduleTime(value, examStart) : formatExamTime(value)}
             <ExamTimeHint message={message} />
         </span>
     );

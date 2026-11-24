@@ -1,6 +1,6 @@
 import { Popover } from "@base-ui/react/popover";
 import { Tooltip } from "@base-ui/react/tooltip";
-import { useMemo, useState, type ReactNode, type Ref } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,62 @@ function projectDescriptionText(description?: string | null) {
         .querySelectorAll("p, div, li, h1, h2, h3, h4, h5, h6, br")
         .forEach((element) => element.after("\n"));
     return template.content.textContent?.trim() ?? "";
+}
+
+function ProjectDescription({ text }: { text: string }) {
+    const descriptionId = useId();
+    const [expanded, setExpanded] = useState(false);
+    const [hasOverflow, setHasOverflow] = useState(false);
+    const visible = useRef<HTMLParagraphElement>(null);
+    const full = useRef<HTMLParagraphElement>(null);
+
+    useLayoutEffect(() => {
+        const visibleText = visible.current;
+        const fullText = full.current;
+        if (!visibleText || !fullText || expanded) return;
+        const measure = () => setHasOverflow(fullText.scrollHeight > visibleText.clientHeight + 1);
+        measure();
+        if (typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(measure);
+        observer.observe(visibleText);
+        observer.observe(fullText);
+        return () => observer.disconnect();
+    }, [expanded, text]);
+
+    const textClass =
+        "whitespace-pre-line text-[15px] text-[#6D7585] dark:text-app-muted [overflow-wrap:anywhere]";
+    return (
+        <div className="relative mt-1">
+            <p
+                id={descriptionId}
+                ref={visible}
+                className={cn(textClass, !expanded && "line-clamp-3")}
+            >
+                {text || "Описание проекта не указано"}
+            </p>
+            {text && !expanded && (
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none invisible absolute inset-0 overflow-hidden"
+                >
+                    <p ref={full} className={textClass}>
+                        {text}
+                    </p>
+                </div>
+            )}
+            {text && (hasOverflow || expanded) && (
+                <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={descriptionId}
+                    className="mt-1 text-left text-[13px] font-medium text-app-blue hover:underline"
+                    onClick={() => setExpanded((current) => !current)}
+                >
+                    {expanded ? "Свернуть" : "Показать полностью"}
+                </button>
+            )}
+        </div>
+    );
 }
 
 function formatTimerSeconds(seconds: number) {
@@ -309,9 +365,10 @@ export function ExamPresentation({
                                         <h3 className="break-words text-xl text-[#0A0A0A] dark:text-app-text">
                                             {shownProject?.name ?? "Проект команды"}
                                         </h3>
-                                        <p className="mt-1 whitespace-pre-line break-words text-[15px] text-[#6D7585] dark:text-app-muted">
-                                            {description || "Описание проекта не указано"}
-                                        </p>
+                                        <ProjectDescription
+                                            key={team.project_id}
+                                            text={description}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -383,7 +440,7 @@ export function ExamPresentation({
                         </div>
                     )}
                 </section>
-                <section className={cardClass}>
+                <section className={cn(cardClass, "self-start")}>
                     <h2 className="text-xl font-semibold text-[#0A0A0A] dark:text-app-text">
                         Таймер
                     </h2>

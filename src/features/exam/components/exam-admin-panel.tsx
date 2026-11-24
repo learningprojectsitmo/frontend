@@ -2,8 +2,11 @@ import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     AlertCircle,
+    ArrowDown,
+    ArrowUp,
     CalendarClock,
     ChevronLeft,
+    Coffee,
     Save,
     ShieldCheck,
     Trash2,
@@ -40,18 +43,28 @@ import {
 } from "@/lib/exams";
 import { useExamRegistrations, useExamSlots } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
-import { formatExamTime as formatTime } from "../exam-display";
 import {
+    formatScheduleTime,
     hasEarlierFreeSlots,
+    insertScheduleBreak,
     minute,
+    moveScheduleBreak,
+    removeScheduleSlot,
     resizeDraftSlots,
     slotScheduleError,
     slotStartAtTime,
+    updateScheduleSlot,
     type LocalSlot,
 } from "../exam-schedule";
 import { useProjectsList } from "@/lib/projects";
 import { getExamProjectLeader, useExamProjects } from "../use-exam-projects";
-import type { Exam, ExamConfiguration, Registration, RegistrationListResponse } from "@/types/exam";
+import type {
+    Exam,
+    ExamConfiguration,
+    ExamSlot,
+    Registration,
+    RegistrationListResponse,
+} from "@/types/exam";
 import type { BackendProjectType } from "@/types/api";
 import { ApproximateDefenseTime } from "./approximate-defense-time";
 import { ProjectTypeQuestionsEditor } from "./project-type-questions-editor";
@@ -92,16 +105,17 @@ type SlotTiming = Record<(typeof slotFields)[number][0], number>;
 const slotMinutes = (timing: SlotTiming) =>
     timing.presentation_minutes + timing.questions_minutes + timing.transition_minutes;
 
-const scheduleEnd = (slots: LocalSlot[]) =>
+const scheduleEnd = (slots: LocalSlot[], examStart: string) =>
     slots.length
-        ? formatTime(
+        ? formatScheduleTime(
               new Date(Math.max(...slots.map((slot) => Date.parse(slot.ends_at)))).toISOString(),
+              examStart,
           )
         : "—";
 
 const defaultConfiguration = (): ExamConfiguration => ({
     title: "",
-    description: "",
+    description: null,
     starts_at: new Date(
         Math.floor(Date.now() / minute) * minute + 7 * 24 * 60 * minute,
     ).toISOString(),
@@ -160,7 +174,10 @@ export function ExamAdminPanel({
     const workspaceField = useRef<HTMLDivElement>(null);
     const workspaceCancel = useRef<HTMLButtonElement>(null);
     const [slotCount, setSlotCount] = useState(1);
-    const [draftSlots, setLocalSlots] = useState<LocalSlot[]>([]);
+    const [scheduleEdit, setScheduleEdit] = useState<{
+        base: ExamSlot[];
+        rows: LocalSlot[];
+    } | null>(null);
     const nextDraftSlotKey = useRef(0);
     const [assignOpenKey, setAssignOpenKey] = useState<string | null>(null);
     const [projectSearch, setProjectSearch] = useState("");
@@ -190,16 +207,23 @@ export function ExamAdminPanel({
         ),
     );
     const slotsQuery = useExamSlots(workspaceId, exam?.id ?? 0);
+    const serverSlots = slotsQuery.data?.items;
     const localSlots = useMemo(
-        () => [
-            ...(slotsQuery.data?.items ?? []).map((slot) => ({
+        () =>
+            scheduleEdit?.rows ??
+            (serverSlots ?? []).map((slot) => ({
                 ...slot,
                 key: `server-${slot.id}`,
             })),
-            ...draftSlots,
-        ],
-        [slotsQuery.data, draftSlots],
+        [serverSlots, scheduleEdit],
     );
+    const draftSlots = useMemo(() => localSlots.filter((slot) => !slot.id), [localSlots]);
+    const defenseSlots = useMemo(
+        () => localSlots.filter((slot) => slot.kind !== "break"),
+        [localSlots],
+    );
+    const stageSchedule = (rows: LocalSlot[]) =>
+        setScheduleEdit((edit) => ({ base: edit?.base ?? serverSlots ?? [], rows }));
     const registrationsQuery = useExamRegistrations(workspaceId, exam?.id ?? 0);
     const projectsQuery = useProjectsList(String(workspaceId), { page: 1, limit: 100 });
     const projectById = useExamProjects(
@@ -251,12 +275,16 @@ export function ExamAdminPanel({
         if (!Number.isNaN(previous) && !Number.isNaN(next) && previous !== next) {
             const delta = next - previous;
             setSlotStart((current) => new Date(Date.parse(current) + delta).toISOString());
-            setLocalSlots((current) =>
-                current.map((slot) => ({
-                    ...slot,
-                    starts_at: new Date(Date.parse(slot.starts_at) + delta).toISOString(),
-                    ends_at: new Date(Date.parse(slot.ends_at) + delta).toISOString(),
-                })),
+            setScheduleEdit(
+                (current) =>
+                    current && {
+                        ...current,
+                        rows: current.rows.map((slot) => ({
+                            ...slot,
+                            starts_at: new Date(Date.parse(slot.starts_at) + delta).toISOString(),
+                            ends_at: new Date(Date.parse(slot.ends_at) + delta).toISOString(),
+                        })),
+                    },
             );
             if (draftSlots.length)
                 setSlotScheduleWarning("Несохранённые слоты сдвинуты вместе с экзаменом.");
@@ -288,7 +316,6 @@ export function ExamAdminPanel({
         if (!configuration.title.trim()) result.title = "Укажите название";
         if (configuration.title.trim().length > 200)
             result.title = "Название должно быть не длиннее 200 символов.";
-        if (!configuration.description?.trim()) result.description = "Добавьте описание";
         if ((configuration.description?.trim().length ?? 0) > 5000)
             result.description = "Описание должно быть не длиннее 5000 символов.";
         const maxScore = Number(configuration.max_score);
@@ -432,39 +459,53 @@ export function ExamAdminPanel({
 
     const scheduleMismatch = useMemo(
         () =>
-            localSlots.filter((slot) => {
+            defenseSlots.filter((slot) => {
                 const minutes =
                     (new Date(slot.ends_at).getTime() - new Date(slot.starts_at).getTime()) / 60000;
                 return Math.abs(minutes - expectedSlotMinutes) > 0.01;
             }),
-        [expectedSlotMinutes, localSlots],
+        [expectedSlotMinutes, defenseSlots],
     );
 
     const syncLocalSlots = async (savedExam: Exam) => {
-        if (draftSlots.length === 0) return;
-        const payload = draftSlots.map(({ starts_at, ends_at }) => ({ starts_at, ends_at }));
-        const created = await examApi.addSlots(workspaceId, savedExam.id, payload);
-        queryClient.setQueryData<{ items: typeof created; has_more: boolean }>(
-            queryKeys.exams.slots(workspaceId, savedExam.id),
-            (current) => ({
-                ...current,
-                has_more: current?.has_more ?? false,
-                items: [...(current?.items ?? []), ...created],
+        if (!scheduleEdit) return;
+        const interval = ({ starts_at, ends_at, kind = "defense" }: LocalSlot) => ({
+            starts_at,
+            ends_at,
+            kind,
+        });
+        const queryKey = queryKeys.exams.slots(workspaceId, savedExam.id);
+        const expected_slots = scheduleEdit.base.map(
+            ({ id, starts_at, ends_at, kind = "defense" }) => ({
+                id,
+                starts_at,
+                ends_at,
+                kind,
             }),
         );
-        setLocalSlots([]);
+        const slots = scheduleEdit.rows.map((row) => ({ id: row.id, ...interval(row) }));
+        const items = await examApi.replaceSlots(workspaceId, savedExam.id, {
+            expected_slots,
+            slots,
+        });
+        await queryClient.cancelQueries({ queryKey });
+        queryClient.setQueryData(queryKey, { items, has_more: false });
+        setScheduleEdit(null);
     };
 
     const saveExam = async (action: "save" | "publish", ignoreDurationWarning = false) => {
         if (writeInProgress.current || pendingTiming) return;
         const publishing = action === "publish";
+        const settings = {
+            ...configuration,
+            description: configuration.description?.trim() || null,
+        };
         const configurationChanged =
             exam &&
-            (Object.keys(configuration) as Array<keyof ExamConfiguration>).some(
-                (key) =>
-                    JSON.stringify(exam.configuration[key]) !== JSON.stringify(configuration[key]),
+            (Object.keys(settings) as Array<keyof ExamConfiguration>).some(
+                (key) => JSON.stringify(exam.configuration[key]) !== JSON.stringify(settings[key]),
             );
-        if (!publishing && exam && !configurationChanged && draftSlots.length === 0) {
+        if (!publishing && exam && !configurationChanged && !scheduleEdit) {
             toast.info("Нет изменений для сохранения");
             return;
         }
@@ -474,15 +515,8 @@ export function ExamAdminPanel({
             setActiveSection("main");
             return;
         }
-        if (draftSlots.length && Date.now() >= Date.parse(configuration.starts_at)) {
-            toast.error(
-                "Время начала уже наступило. Удалите несохранённые слоты или измените дату начала.",
-            );
-            setActiveSection("queue");
-            return;
-        }
         const checkSchedule =
-            draftSlots.length > 0 ||
+            Boolean(scheduleEdit) ||
             publishing ||
             exam?.configuration.starts_at !== configuration.starts_at;
         const scheduleError =
@@ -510,7 +544,7 @@ export function ExamAdminPanel({
                 exam.configuration.transition_minutes !== configuration.transition_minutes);
         if (
             !ignoreDurationWarning &&
-            (publishing || draftSlots.length > 0 || timingsChanged) &&
+            (publishing || scheduleEdit || timingsChanged) &&
             scheduleMismatch.length > 0
         ) {
             setDurationWarningAction(action);
@@ -532,13 +566,13 @@ export function ExamAdminPanel({
                 return;
             }
             if (!saved) {
-                saved = await examApi.create(workspaceId, configuration);
+                saved = await examApi.create(workspaceId, settings);
                 setCreatedExam(saved);
             } else if (configurationChanged) {
                 saved = await examApi.replaceSettings(workspaceId, saved.id, {
                     expected_version: saved.current_settings_version,
                     reason: reason.trim(),
-                    configuration,
+                    configuration: settings,
                 });
             }
             await queryClient.cancelQueries({
@@ -578,7 +612,7 @@ export function ExamAdminPanel({
             };
             const message = getExamErrorMessage(error) ?? fallback[stage];
             if (code === "questions_not_ready") {
-                setQuestionErrors([message]);
+                if (await validateQuestions()) setQuestionErrors([message]);
                 setActiveSection("questions");
             }
             toast.error(stage === "slots" ? `Настройки сохранены. ${message}` : message);
@@ -598,16 +632,26 @@ export function ExamAdminPanel({
             configuration.project_type_ids.map(async (typeId) => {
                 try {
                     const data = await questionApi.get(workspaceId, typeId);
+                    const expectedScores = Array.from(
+                        { length: data.max_score },
+                        (_, index) => index + data.min_score,
+                    );
                     const invalid =
                         data.questions.length === 0 ||
                         data.questions.some(
                             (question) =>
                                 !question.text.trim() ||
-                                question.levels.length !== 5 ||
-                                question.levels.some((level) => !level.description.trim()),
+                                question.levels.length !== expectedScores.length ||
+                                expectedScores.some(
+                                    (score) =>
+                                        !question.levels.some(
+                                            (level) =>
+                                                level.score === score && level.description.trim(),
+                                        ),
+                                ),
                         );
                     return invalid
-                        ? `Проверьте вопросы типа «${projectTypes.find((type) => type.id === typeId)?.name ?? typeId}»: добавьте вопросы и заполните обязательные поля.`
+                        ? `Проверьте вопросы типа «${projectTypes.find((type) => type.id === typeId)?.name ?? typeId}»: добавьте вопросы и заполните описания уровней ${data.min_score}–${data.max_score}.`
                         : null;
                 } catch {
                     return "Не удалось проверить вопросы. Откройте раздел «Вопросы» и убедитесь, что обязательные поля заполнены.";
@@ -622,15 +666,15 @@ export function ExamAdminPanel({
     const canAddSlots =
         !saving &&
         !pendingTiming &&
-        exam?.status !== "published" &&
+        !exam?.archived_at &&
+        !exam?.completed_at &&
         !slotsQuery.isLoading &&
         !slotsQuery.isError;
 
     const addSlots = (start: number, count: number) => {
         if (!canAddSlots) return;
-        const examStart = Date.parse(configuration.starts_at);
-        if (Date.now() >= examStart) {
-            toast.error("Добавлять слоты нельзя: время начала экзамена уже наступило.");
+        if (Date.now() >= start) {
+            toast.error("Нельзя добавить слот на прошедшее время.");
             return;
         }
         if (
@@ -639,15 +683,9 @@ export function ExamAdminPanel({
             expectedSlotMinutes < 1 ||
             !Number.isInteger(count) ||
             count < 1 ||
-            draftSlots.length + count > 100
+            count > 100
         ) {
-            toast.error(
-                "Проверьте время и длительность. За раз можно сохранить до 100 новых слотов.",
-            );
-            return;
-        }
-        if (expectedSlotMinutes * count > 24 * 60) {
-            toast.error("Все слоты должны помещаться в один день.");
+            toast.error("Проверьте время и длительность. За раз можно создать до 100 слотов.");
             return;
         }
         const duration = expectedSlotMinutes * minute;
@@ -665,7 +703,7 @@ export function ExamAdminPanel({
             return;
         }
         nextDraftSlotKey.current += count;
-        setLocalSlots([...draftSlots, ...candidates]);
+        stageSchedule([...localSlots, ...candidates]);
         toast.success(count === 1 ? "Слот добавлен" : "Слоты добавлены в форму");
     };
 
@@ -676,19 +714,25 @@ export function ExamAdminPanel({
         addSlots(start, 1);
     };
 
-    const updateLocalSlot = (key: string, patch: Pick<LocalSlot, "starts_at" | "ends_at">) => {
-        const changed = localSlots.map((slot) => (slot.key === key ? { ...slot, ...patch } : slot));
-        const error = slotScheduleError(changed, configuration.starts_at);
+    const applySchedule = (rows: LocalSlot[] | null) => {
+        if (!rows) {
+            toast.error("Изменение затрагивает защищённую строку расписания.");
+            return false;
+        }
+        const error = slotScheduleError(rows, configuration.starts_at);
         if (error) {
             toast.error(error);
             return false;
         }
-        setLocalSlots(changed.filter((slot) => !slot.id));
+        stageSchedule(rows);
         return true;
     };
 
-    const removeLocalSlot = (slot: LocalSlot) => {
-        setLocalSlots((current) => current.filter((item) => item.key !== slot.key));
+    const addBreak = (index: number) => {
+        const key = `new-${nextDraftSlotKey.current}`;
+        if (applySchedule(insertScheduleBreak(sortedLocalSlots, index, key, 10, slotStart))) {
+            nextDraftSlotKey.current++;
+        }
     };
 
     const assignedRegistrationBySlot = useMemo(() => {
@@ -768,7 +812,8 @@ export function ExamAdminPanel({
     };
 
     const changeSlotAssignment = async (slot: LocalSlot, projectId?: number) => {
-        if (!exam || !slot.id || writeInProgress.current) return;
+        if (!exam || !slot.id || slot.kind === "break" || scheduleEdit || writeInProgress.current)
+            return;
         const existing = assignedRegistrationBySlot.get(slot.id);
         setAssignOpenKey(null);
         if (existing?.started_at || existing?.project_id === projectId) return;
@@ -833,8 +878,7 @@ export function ExamAdminPanel({
     };
 
     const startsDate = localDate(configuration.starts_at);
-    // Existing slots are immutable in the available contract, so changing the exam start
-    // is disabled once they are saved; unsaved draft slots still move with the exam.
+    // Changing the exam date moves unsaved rows. Saved slots have their own editor.
     const canChangeExamStart =
         !saving &&
         exam?.status !== "published" &&
@@ -844,15 +888,16 @@ export function ExamAdminPanel({
         );
 
     const resetAllSlots = () => {
-        setLocalSlots([]);
+        setScheduleEdit(null);
         setSlotScheduleWarning("");
         setAssignOpenKey(null);
         setResetSlotsOpen(false);
         toast.success("Несохранённые слоты сброшены");
     };
 
-    const renderQueueTable = () =>
-        localSlots.length > 0 || exam?.status !== "published" ? (
+    const renderQueueTable = () => {
+        let defenseNumber = 0;
+        return localSlots.length > 0 || canAddSlots ? (
             <div
                 className={cn(
                     "min-h-0 overflow-auto rounded-[12px] border border-gray-200 dark:border-app-border",
@@ -873,6 +918,12 @@ export function ExamAdminPanel({
                     </thead>
                     <tbody>
                         {sortedLocalSlots.map((slot, slotIndex) => {
+                            const isBreak = slot.kind === "break";
+                            const number = isBreak ? null : ++defenseNumber;
+                            const canEditRow = canAddSlots && slot.can_edit !== false;
+                            const rowDate = new Date(slot.starts_at);
+                            const canDeleteRow = canAddSlots && slot.can_delete !== false;
+                            const label = isBreak ? "перерыва" : `слота ${number}`;
                             const registration = slot.id
                                 ? assignedRegistrationBySlot.get(slot.id)
                                 : undefined;
@@ -881,7 +932,8 @@ export function ExamAdminPanel({
                                 registration &&
                                 !registration.started_at &&
                                 pendingSlotId === null &&
-                                !saving,
+                                !saving &&
+                                !scheduleEdit,
                             );
                             const project = registration
                                 ? projectById.get(registration.project_id)
@@ -906,12 +958,23 @@ export function ExamAdminPanel({
                                     key={slot.key}
                                     className="border-b border-gray-100 dark:border-app-border last:border-0 hover:bg-gray-50 dark:hover:bg-app-ghost"
                                     onDragOver={(event) => {
-                                        if (slot.id && !registration && draggedSlotId.current)
+                                        if (
+                                            !isBreak &&
+                                            slot.id &&
+                                            !registration &&
+                                            draggedSlotId.current &&
+                                            !scheduleEdit
+                                        )
                                             event.preventDefault();
                                     }}
                                     onDrop={(event) => {
                                         event.preventDefault();
-                                        if (slot.id && draggedSlotId.current)
+                                        if (
+                                            !isBreak &&
+                                            slot.id &&
+                                            draggedSlotId.current &&
+                                            !scheduleEdit
+                                        )
                                             void moveTeam(draggedSlotId.current, slot.id);
                                         draggedSlotId.current = null;
                                     }}
@@ -923,7 +986,7 @@ export function ExamAdminPanel({
                                                     type="button"
                                                     draggable={canMove}
                                                     disabled={!canMove}
-                                                    aria-label={`Перенести команду из слота ${slotIndex + 1}. Используйте стрелки вверх и вниз.`}
+                                                    aria-label={`Перенести команду из слота ${number}. Используйте стрелки вверх и вниз.`}
                                                     className="cursor-grab text-app-muted active:cursor-grabbing disabled:cursor-default"
                                                     onDragStart={(event) => {
                                                         if (!slot.id) return;
@@ -956,6 +1019,7 @@ export function ExamAdminPanel({
                                                         const target = candidates.find(
                                                             (item) =>
                                                                 item.id &&
+                                                                item.kind !== "break" &&
                                                                 !assignedRegistrationBySlot.has(
                                                                     item.id,
                                                                 ),
@@ -967,58 +1031,140 @@ export function ExamAdminPanel({
                                                     <GripVertical size={16} />
                                                 </button>
                                             )}
-                                            {slotIndex + 1}
+                                            {number ?? "—"}
                                         </div>
                                     </td>
                                     <td className="px-3 py-3">
                                         <div className="text-[13px] font-semibold text-app-text">
-                                            {formatTime(slot.starts_at)}
+                                            {formatScheduleTime(
+                                                slot.starts_at,
+                                                configuration.starts_at,
+                                            )}
                                         </div>
-                                        {!slot.id && (
-                                            <Input
-                                                type="time"
-                                                min={new Date(configuration.starts_at)
-                                                    .toTimeString()
-                                                    .slice(0, 5)}
-                                                className="mt-2 h-9 w-[112px] rounded-[10px] px-2 text-[12px]"
-                                                key={slot.starts_at}
-                                                aria-label={`Начало слота ${slotIndex + 1}`}
-                                                defaultValue={new Date(slot.starts_at)
-                                                    .toTimeString()
-                                                    .slice(0, 5)}
-                                                onBlur={(event) => {
-                                                    const input = event.currentTarget;
-                                                    if (input.value === input.defaultValue) return;
-                                                    if (!input.value) {
-                                                        input.value = input.defaultValue;
-                                                        return;
-                                                    }
-                                                    const start = slotStartAtTime(
-                                                        configuration.starts_at,
-                                                        input.value,
-                                                    );
-                                                    const duration =
-                                                        Date.parse(slot.ends_at) -
-                                                        Date.parse(slot.starts_at);
-                                                    const updated = updateLocalSlot(slot.key, {
-                                                        starts_at: start.toISOString(),
-                                                        ends_at: new Date(
-                                                            start.getTime() + duration,
-                                                        ).toISOString(),
-                                                    });
-                                                    if (!updated) input.value = input.defaultValue;
-                                                }}
-                                            />
+                                        {canEditRow && (
+                                            <div className="mt-2 flex flex-wrap gap-1">
+                                                <Input
+                                                    type="date"
+                                                    className="h-9 w-[131px] rounded-[10px] px-2 text-[12px]"
+                                                    key={`date-${slot.starts_at}`}
+                                                    aria-label={`Дата ${label}`}
+                                                    defaultValue={rowDate.toLocaleDateString(
+                                                        "sv-SE",
+                                                    )}
+                                                    onBlur={(event) => {
+                                                        const input = event.currentTarget;
+                                                        if (!input.value)
+                                                            input.value = input.defaultValue;
+                                                        if (input.value === input.defaultValue)
+                                                            return;
+                                                        const [year, month, day] = input.value
+                                                            .split("-")
+                                                            .map(Number);
+                                                        const date = new Date(rowDate);
+                                                        date.setFullYear(year, month - 1, day);
+                                                        if (
+                                                            !applySchedule(
+                                                                updateScheduleSlot(
+                                                                    sortedLocalSlots,
+                                                                    slot.key,
+                                                                    date.toISOString(),
+                                                                ),
+                                                            )
+                                                        ) {
+                                                            input.value = input.defaultValue;
+                                                        }
+                                                    }}
+                                                />
+                                                <Input
+                                                    type="time"
+                                                    className="h-9 w-[103px] rounded-[10px] px-2 text-[12px]"
+                                                    key={`time-${slot.starts_at}`}
+                                                    aria-label={`Начало ${label}`}
+                                                    defaultValue={rowDate
+                                                        .toTimeString()
+                                                        .slice(0, 5)}
+                                                    onBlur={(event) => {
+                                                        const input = event.currentTarget;
+                                                        if (!input.value)
+                                                            input.value = input.defaultValue;
+                                                        if (input.value === input.defaultValue)
+                                                            return;
+                                                        const start = slotStartAtTime(
+                                                            slot.starts_at,
+                                                            input.value,
+                                                        );
+                                                        if (
+                                                            !applySchedule(
+                                                                updateScheduleSlot(
+                                                                    sortedLocalSlots,
+                                                                    slot.key,
+                                                                    start.toISOString(),
+                                                                ),
+                                                            )
+                                                        ) {
+                                                            input.value = input.defaultValue;
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
                                         )}
                                     </td>
                                     <td className="px-3 py-3 text-[13px] text-gray-600 dark:text-app-muted">
-                                        {durationMinutes} мин.
+                                        {isBreak && canEditRow ? (
+                                            <Input
+                                                key={slot.ends_at}
+                                                type="number"
+                                                min={1}
+                                                max={1440}
+                                                className="h-9 w-20 px-2 text-[12px]"
+                                                aria-label="Длительность перерыва, минут"
+                                                defaultValue={durationMinutes}
+                                                onBlur={(event) => {
+                                                    const input = event.currentTarget;
+                                                    if (input.value === input.defaultValue) return;
+                                                    const duration = input.valueAsNumber;
+                                                    if (
+                                                        !Number.isInteger(duration) ||
+                                                        duration < 1 ||
+                                                        duration > 1440
+                                                    ) {
+                                                        toast.error(
+                                                            "Укажите длительность перерыва от 1 до 1440 минут.",
+                                                        );
+                                                        input.value = input.defaultValue;
+                                                        return;
+                                                    }
+                                                    if (
+                                                        !applySchedule(
+                                                            updateScheduleSlot(
+                                                                sortedLocalSlots,
+                                                                slot.key,
+                                                                slot.starts_at,
+                                                                duration * minute,
+                                                            ),
+                                                        )
+                                                    ) {
+                                                        input.value = input.defaultValue;
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            `${durationMinutes} мин.`
+                                        )}
                                         <span className="block text-[11px] text-app-muted">
-                                            до {formatTime(slot.ends_at)}
+                                            до{" "}
+                                            {formatScheduleTime(
+                                                slot.ends_at,
+                                                configuration.starts_at,
+                                            )}
                                         </span>
                                     </td>
                                     <td className="px-3 py-3">
-                                        {project ? (
+                                        {isBreak ? (
+                                            <span className="font-medium text-app-text">
+                                                Перерыв
+                                            </span>
+                                        ) : project ? (
                                             <span className="font-medium text-app-text">
                                                 {project.name}
                                             </span>
@@ -1044,12 +1190,17 @@ export function ExamAdminPanel({
                                                     : "bg-gray-100 dark:bg-app-ghost text-gray-600 dark:text-app-muted",
                                             )}
                                         >
-                                            {registration ? "Назначена" : "Не назначена"}
+                                            {isBreak
+                                                ? "—"
+                                                : registration
+                                                  ? "Назначена"
+                                                  : "Не назначена"}
                                         </span>
                                     </td>
                                     <td className="px-3 py-3">
                                         <div className="flex w-max max-w-[144px] flex-wrap justify-end gap-1 sm:max-w-none">
-                                            {exam?.status === "published" &&
+                                            {!isBreak &&
+                                                exam?.status === "published" &&
                                                 slot.id &&
                                                 !registration?.started_at && (
                                                     <ExamProjectSelect
@@ -1067,7 +1218,11 @@ export function ExamAdminPanel({
                                                         label={
                                                             registration ? "Заменить" : "Назначить"
                                                         }
-                                                        disabled={pendingSlotId !== null || saving}
+                                                        disabled={
+                                                            pendingSlotId !== null ||
+                                                            saving ||
+                                                            Boolean(scheduleEdit)
+                                                        }
                                                         container={
                                                             queueExpanded
                                                                 ? queueDialogRef
@@ -1088,27 +1243,78 @@ export function ExamAdminPanel({
                                                     <Button
                                                         variant="ghost"
                                                         size="hug36"
-                                                        disabled={pendingSlotId !== null || saving}
+                                                        disabled={
+                                                            pendingSlotId !== null ||
+                                                            saving ||
+                                                            Boolean(scheduleEdit)
+                                                        }
                                                         onClick={() => changeSlotAssignment(slot)}
                                                     >
                                                         Убрать
                                                     </Button>
                                                 )}
+                                            {isBreak ? (
+                                                (
+                                                    [
+                                                        [-1, "Выше", ArrowUp],
+                                                        [1, "Ниже", ArrowDown],
+                                                    ] as const
+                                                ).map(([direction, title, Icon]) => (
+                                                    <Button
+                                                        key={direction}
+                                                        variant="ghost"
+                                                        size="hug36"
+                                                        icon={<Icon size={16} />}
+                                                        aria-label={`Переместить перерыв ${title.toLowerCase()}`}
+                                                        disabled={
+                                                            !canEditRow ||
+                                                            !sortedLocalSlots[
+                                                                slotIndex + direction
+                                                            ] ||
+                                                            sortedLocalSlots[slotIndex + direction]
+                                                                .can_edit === false
+                                                        }
+                                                        onClick={() =>
+                                                            applySchedule(
+                                                                moveScheduleBreak(
+                                                                    sortedLocalSlots,
+                                                                    slot.key,
+                                                                    direction,
+                                                                ),
+                                                            )
+                                                        }
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="hug36"
+                                                    disabled={!canEditRow}
+                                                    icon={<Coffee size={16} />}
+                                                    aria-label="Перерыв до слота"
+                                                    title="Вставить перерыв перед слотом"
+                                                    onClick={() => addBreak(slotIndex)}
+                                                />
+                                            )}
                                             <button
                                                 type="button"
-                                                onClick={() => removeLocalSlot(slot)}
-                                                disabled={Boolean(slot.id) || saving}
-                                                className={cn(
-                                                    "flex h-9 w-9 items-center justify-center rounded-lg",
-                                                    slot.id
-                                                        ? "cursor-not-allowed text-gray-300 dark:text-app-muted"
-                                                        : "cursor-pointer text-gray-500 dark:text-app-muted hover:bg-[--error-bg] hover:text-red-600 dark:hover:text-red-300",
-                                                )}
-                                                aria-label="Удалить слот"
+                                                onClick={() =>
+                                                    applySchedule(
+                                                        removeScheduleSlot(
+                                                            sortedLocalSlots,
+                                                            slot.key,
+                                                        ),
+                                                    )
+                                                }
+                                                disabled={!canDeleteRow}
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg text-app-muted hover:bg-[--error-bg] hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                                aria-label={
+                                                    isBreak ? "Удалить перерыв" : "Удалить слот"
+                                                }
                                                 title={
-                                                    slot.id
-                                                        ? "Сохранённые слоты удалить нельзя."
-                                                        : "Удалить слот"
+                                                    canDeleteRow
+                                                        ? undefined
+                                                        : "Строка защищена или имеет историю записей"
                                                 }
                                             >
                                                 <Trash2 size={16} />
@@ -1118,7 +1324,7 @@ export function ExamAdminPanel({
                                 </tr>
                             );
                         })}
-                        {exam?.status !== "published" && (
+                        {canAddSlots && (
                             <tr className="border-t border-gray-200 dark:border-app-border">
                                 <td colSpan={7} className="p-0">
                                     <button
@@ -1130,6 +1336,13 @@ export function ExamAdminPanel({
                                         <Plus aria-hidden="true" size={16} />
                                         Добавить слот
                                     </button>
+                                    <Button
+                                        variant="ghost"
+                                        size="hug36"
+                                        onClick={() => addBreak(sortedLocalSlots.length)}
+                                    >
+                                        Добавить перерыв
+                                    </Button>
                                 </td>
                             </tr>
                         )}
@@ -1141,6 +1354,7 @@ export function ExamAdminPanel({
                 Слоты появятся здесь после генерации.
             </div>
         );
+    };
 
     return (
         <div className="overflow-hidden rounded-[20px] border border-gray-200 dark:border-app-border bg-app-surface">
@@ -1443,7 +1657,7 @@ export function ExamAdminPanel({
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <Label htmlFor="exam-description">Описание *</Label>
+                                <Label htmlFor="exam-description">Описание</Label>
                                 <Textarea
                                     id="exam-description"
                                     rows={4}
@@ -1527,10 +1741,6 @@ export function ExamAdminPanel({
                                             <li key={error}>{error}</li>
                                         ))}
                                     </ul>
-                                    <p className="mt-2">
-                                        Проверьте наличие вопросов, обязательные поля и уровни
-                                        критериев 1–5.
-                                    </p>
                                 </div>
                             )}
                             <div className="rounded-xl border border-gray-200 dark:border-app-border bg-gray-50 dark:bg-app-ghost p-4 text-[13px] text-app-text">
@@ -1631,7 +1841,7 @@ export function ExamAdminPanel({
                                             ? "Проверьте время на команду: укажите целые минуты, выступление не короче минуты."
                                             : timingError ||
                                               (proposedSchedule && draftSlots.length
-                                                  ? `Будут пересчитаны несохранённые слоты: ${draftSlots.length}. Длительность — ${nextSlotMinutes} мин., новое время окончания — ${scheduleEnd(proposedSchedule)}.`
+                                                  ? `Будут пересчитаны несохранённые слоты: ${draftSlots.length}. Длительность — ${nextSlotMinutes} мин., новое время окончания — ${scheduleEnd(proposedSchedule, configuration.starts_at)}.`
                                                   : `Новая длительность слота — ${nextSlotMinutes} мин.`)}
                                     </p>
                                     {localSlots.some((slot) => slot.id) && (
@@ -1644,7 +1854,8 @@ export function ExamAdminPanel({
                                             disabled={!proposedSlots || Boolean(timingError)}
                                             onClick={() => {
                                                 if (!proposedSlots || timingError) return;
-                                                setLocalSlots(proposedSlots);
+                                                if (proposedSchedule && draftSlots.length)
+                                                    stageSchedule(proposedSchedule);
                                                 applyTiming(pendingTiming);
                                                 setSlotScheduleWarning(
                                                     draftSlots.length
@@ -1688,10 +1899,7 @@ export function ExamAdminPanel({
                                         </div>
                                         <Input
                                             type="time"
-                                            min={new Date(configuration.starts_at)
-                                                .toTimeString()
-                                                .slice(0, 5)}
-                                            disabled={exam?.status === "published"}
+                                            disabled={!canAddSlots}
                                             className="h-10 w-[112px] rounded-[12px] px-3 text-[13px]"
                                             aria-label="Начало слотов"
                                             value={new Date(slotStart).toTimeString().slice(0, 5)}
@@ -1713,7 +1921,7 @@ export function ExamAdminPanel({
                                         type="number"
                                         min={1}
                                         max={100}
-                                        disabled={exam?.status === "published"}
+                                        disabled={!canAddSlots}
                                         value={slotCount}
                                         onChange={(event) =>
                                             setSlotCount(Number(event.target.value))
@@ -1723,20 +1931,20 @@ export function ExamAdminPanel({
                             </div>
                             <div className="flex flex-wrap gap-2 text-[12px]">
                                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
-                                    Всего выступлений: {localSlots.length}
+                                    Всего выступлений: {defenseSlots.length}
                                 </span>
                                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
-                                    Окончание: {scheduleEnd(localSlots)}
+                                    Окончание: {scheduleEnd(localSlots, configuration.starts_at)}
                                 </span>
                                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
                                     Назначено команд: {assignedRegistrationBySlot.size} из{" "}
-                                    {localSlots.length}
+                                    {defenseSlots.length}
                                 </span>
                                 <span className="rounded-full bg-gray-100 dark:bg-app-ghost px-3 py-1.5">
                                     Не назначено:{" "}
                                     {Math.max(
                                         0,
-                                        localSlots.length - assignedRegistrationBySlot.size,
+                                        defenseSlots.length - assignedRegistrationBySlot.size,
                                     )}
                                 </span>
                             </div>
@@ -1750,15 +1958,15 @@ export function ExamAdminPanel({
                                 >
                                     Сгенерировать слоты
                                 </Button>
-                                {exam?.status !== "published" && (
+                                {scheduleEdit && (
                                     <Button
                                         variant="outline"
                                         size="hug36"
-                                        disabled={draftSlots.length === 0 || saving}
+                                        disabled={saving}
                                         onClick={() => setResetSlotsOpen(true)}
                                     >
                                         {slotsQuery.data?.items.length
-                                            ? "Сбросить несохранённые слоты"
+                                            ? "Сбросить изменения расписания"
                                             : "Сбросить все слоты"}
                                     </Button>
                                 )}
@@ -1922,7 +2130,7 @@ export function ExamAdminPanel({
                                 Расчёт на команду: {timing.presentation_minutes} +{" "}
                                 {timing.questions_minutes} + {timing.transition_minutes} ={" "}
                                 {expectedSlotMinutes} мин. Окончание по расписанию:{" "}
-                                {scheduleEnd(localSlots)}.
+                                {scheduleEnd(localSlots, configuration.starts_at)}.
                             </p>
                             {scheduleMismatch.length > 0 && (
                                 <div className="rounded-xl border border-app-border bg-app-badge-amber p-4 text-[13px] text-app-badge-amber-fg">
@@ -2001,13 +2209,13 @@ export function ExamAdminPanel({
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="rounded-[12px] border border-gray-200 dark:border-app-border p-4">
                                     <p className="text-[13px] font-semibold text-app-text">
-                                        Слоты: {localSlots.length}
+                                        Слоты: {defenseSlots.length}
                                     </p>
                                     <p className="mt-1 text-[12px] text-app-muted">
                                         Назначено: {assignedRegistrationBySlot.size} · Не назначено:{" "}
                                         {Math.max(
                                             0,
-                                            localSlots.filter((slot) => slot.id).length -
+                                            defenseSlots.filter((slot) => slot.id).length -
                                                 assignedRegistrationBySlot.size,
                                         )}
                                     </p>
@@ -2208,10 +2416,11 @@ export function ExamAdminPanel({
             <Dialog open={resetSlotsOpen} onOpenChange={setResetSlotsOpen}>
                 <DialogContent className="grid w-[calc(100%-2rem)] max-w-[440px] gap-4">
                     <DialogHeader>
-                        <DialogTitle>Сбросить несохранённые слоты?</DialogTitle>
+                        <DialogTitle>Сбросить изменения расписания?</DialogTitle>
                     </DialogHeader>
                     <p className="text-[13px] leading-relaxed text-app-muted">
-                        Сброс удалит все слоты, добавленные после последнего сохранения.
+                        Сброс отменит изменения с последнего сохранения и покажет актуальное
+                        расписание.
                     </p>
                     <div className="flex flex-wrap justify-end gap-2 pt-1">
                         <Button
@@ -2223,7 +2432,7 @@ export function ExamAdminPanel({
                         </Button>
                         <Button variant="blue" size="hug36" onClick={resetAllSlots}>
                             {slotsQuery.data?.items.length
-                                ? "Сбросить несохранённые слоты"
+                                ? "Сбросить изменения расписания"
                                 : "Сбросить все слоты"}
                         </Button>
                     </div>
