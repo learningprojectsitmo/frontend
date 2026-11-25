@@ -19,6 +19,7 @@ import {
     getRegistrationDeadline,
     isExamRegistrationOpen,
 } from "@/features/exam/exam-display";
+import { canBookExamSlot, getSlotInterval } from "@/features/exam/exam-schedule";
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import {
     examApi,
@@ -31,7 +32,7 @@ import {
 import { examGradingApi, gradingKey } from "@/lib/exam-grading";
 import { useProjectTypes } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
-import type { Exam } from "@/types/exam";
+import type { Exam, ExamSlot } from "@/types/exam";
 import { formatExamCountdown, getProjectExamState } from "./project-exam-display";
 
 type Props = {
@@ -56,7 +57,7 @@ export function ProjectExamBlocks({
     const access = useExamWorkspaces(workspaceId, isTeamMember, isTeamMember);
     const projectTypes = useProjectTypes(workspaceId);
     const [now, setNow] = useState(Date.now);
-    const [booking, setBooking] = useState<{ examId: number; slotId: number | null } | null>(null);
+    const [booking, setBooking] = useState<{ examId: number; slot: ExamSlot | null } | null>(null);
     const checkingBookings =
         isProjectAuthor &&
         access.canSelfRegister &&
@@ -129,7 +130,12 @@ export function ProjectExamBlocks({
             ? grades.data.items.filter((item) => item.published_at).at(-1)
             : undefined;
 
-    const slots = useExamSlots(workspaceId, booking?.examId ?? exam?.id ?? 0);
+    const slots = useExamSlots(
+        workspaceId,
+        booking?.examId ?? exam?.id ?? 0,
+        true,
+        booking ? 5000 : undefined,
+    );
     const slotsEnd =
         slots.data?.items.reduce((end, slot) => Math.max(end, Date.parse(slot.ends_at)), 0) ?? 0;
     const state = exam
@@ -154,11 +160,15 @@ export function ProjectExamBlocks({
     }, [examId, ticking]);
 
     const registration = useMutation({
-        mutationFn: ({ examId: targetId, slotId }: NonNullable<typeof booking>) =>
+        mutationFn: ({ examId: targetId, slot }: NonNullable<typeof booking>) =>
             examApi.register(
                 workspaceId,
                 targetId,
-                { project_id: projectId, slot_id: slotId },
+                {
+                    project_id: projectId,
+                    slot_id: slot?.id ?? null,
+                    ...(slot && { expected_slot: getSlotInterval(slot) }),
+                },
                 true,
             ),
         onSuccess: async (_, { examId: targetId }) => {
@@ -212,7 +222,17 @@ export function ProjectExamBlocks({
             : state.status === "finished"
               ? dateLabel(state.end)
               : "—";
-    const freeSlots = slots.data?.items.filter((slot) => slot.is_available) ?? [];
+    const defenseSlots = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
+    const freeSlots = defenseSlots.filter((slot) => slot.is_available);
+    const chosenSlot = booking?.slot;
+    const currentSlot = chosenSlot && freeSlots.find((slot) => canBookExamSlot(slot, chosenSlot));
+    const canConfirm = Boolean(
+        booking?.examId === exam.id &&
+        canBook &&
+        slots.data &&
+        !slots.isError &&
+        (chosenSlot ? currentSlot : defenseSlots.length === 0),
+    );
 
     return (
         <section className={showCountdown ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
@@ -283,7 +303,7 @@ export function ProjectExamBlocks({
                             {canBook ? (
                                 <button
                                     type="button"
-                                    onClick={() => setBooking({ examId: exam.id, slotId: null })}
+                                    onClick={() => setBooking({ examId: exam.id, slot: null })}
                                     className="cursor-pointer text-left underline-offset-4 hover:underline"
                                 >
                                     Запишитесь на экзамен
@@ -333,14 +353,18 @@ export function ProjectExamBlocks({
                             Время выступления
                             <select
                                 className="h-10 rounded-lg border border-app-border bg-app-surface px-3 text-app-text"
-                                value={booking?.slotId ?? ""}
+                                value={currentSlot?.id ?? ""}
                                 disabled={registration.isPending}
                                 onChange={(event) =>
                                     setBooking(
                                         (current) =>
                                             current && {
                                                 ...current,
-                                                slotId: Number(event.target.value),
+                                                slot:
+                                                    freeSlots.find(
+                                                        (slot) =>
+                                                            slot.id === Number(event.target.value),
+                                                    ) ?? null,
                                             },
                                     )
                                 }
@@ -355,11 +379,16 @@ export function ProjectExamBlocks({
                                 ))}
                             </select>
                         </label>
-                    ) : slots.data?.items.length ? (
+                    ) : defenseSlots.length ? (
                         <p className="text-sm text-app-muted">Свободных слотов пока нет.</p>
                     ) : (
                         <p className="text-sm text-app-muted">
                             Команда будет добавлена в очередь выступлений.
+                        </p>
+                    )}
+                    {chosenSlot && !currentSlot && (
+                        <p role="status" className="text-sm text-app-muted">
+                            Время слота изменилось. Выберите слот заново.
                         </p>
                     )}
                     <div className="flex flex-wrap justify-end gap-2">
@@ -375,26 +404,9 @@ export function ProjectExamBlocks({
                             variant="blue"
                             size="hug36"
                             loading={registration.isPending}
-                            disabled={
-                                !slots.data ||
-                                slots.isError ||
-                                !booking ||
-                                booking.examId !== exam.id ||
-                                !canBook ||
-                                (slots.data.items.length > 0 &&
-                                    !freeSlots.some((slot) => slot.id === booking.slotId))
-                            }
+                            disabled={!canConfirm}
                             onClick={() => {
-                                if (
-                                    !booking ||
-                                    booking.examId !== exam.id ||
-                                    !canBook ||
-                                    !slots.data ||
-                                    slots.isError ||
-                                    (slots.data.items.length > 0 &&
-                                        !freeSlots.some((slot) => slot.id === booking.slotId))
-                                )
-                                    return;
+                                if (!booking || !canConfirm) return;
                                 if (!isExamRegistrationOpen(exam, Date.now())) {
                                     toast.error("Запись на экзамен уже закрылась.");
                                     setBooking(null);

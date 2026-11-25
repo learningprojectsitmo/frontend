@@ -392,9 +392,9 @@ export function ExamPresentation({
                             Сейчас никто не выступает.
                         </p>
                     )}
-                    {(canManage || attempt) && (
+                    {(canManage || attempt || finishLastDefenseAction) && (
                         <div className="mt-auto space-y-2 pt-5">
-                            {canManage && (
+                            {canManage ? (
                                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                                     {backReason ? (
                                         <Tooltip.Root>
@@ -429,6 +429,8 @@ export function ExamPresentation({
                                         </button>
                                     )}
                                 </div>
+                            ) : (
+                                finishLastDefenseAction
                             )}
                             {attempt && (
                                 <p className="text-sm text-app-muted">

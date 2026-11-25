@@ -218,6 +218,21 @@ export const examApi = {
             `${examPath(workspaceId, examId)}/registrations${self ? "/self" : ""}`,
             data,
         ),
+    replaceRegistration: (
+        workspaceId: number,
+        examId: number,
+        registration: Pick<Registration, "id" | "version">,
+        projectId: number,
+        expectedSlot: Pick<ExamSlot, "starts_at" | "ends_at">,
+    ) =>
+        api.post<Registration>(
+            `${examPath(workspaceId, examId)}/registrations/${registration.id}/replace`,
+            {
+                project_id: projectId,
+                expected_version: registration.version,
+                expected_slot: expectedSlot,
+            },
+        ),
     cancelRegistration: (
         workspaceId: number,
         examId: number,
@@ -319,11 +334,13 @@ export const questionApi = {
         typeId: number,
         questions: ProjectTypeQuestions["questions"],
         maxScore: QuestionScale,
+        expected_etag?: string,
     ) =>
         api.put<ProjectTypeQuestions>(
             `/workspaces/${workspaceId}/project-types/${typeId}/questions`,
             {
                 max_score: maxScore,
+                ...(expected_etag && { expected_etag }),
                 questions: questions.map(({ id, position: _position, ...question }) => ({
                     ...(id > 0 ? { id } : {}),
                     ...question,
@@ -332,10 +349,15 @@ export const questionApi = {
             },
         ),
     templates: () => api.get<QuestionTemplate[]>("/assessment/question-templates"),
-    applyTemplate: (workspaceId: number, typeId: number, template_code: QuestionTemplate["code"]) =>
+    applyTemplate: (
+        workspaceId: number,
+        typeId: number,
+        template_code: QuestionTemplate["code"],
+        expected_etag?: string,
+    ) =>
         api.post<ProjectTypeQuestions>(
             `/workspaces/${workspaceId}/project-types/${typeId}/questions/apply-template`,
-            { template_code },
+            { template_code, ...(expected_etag && { expected_etag }) },
         ),
 };
 
@@ -368,10 +390,16 @@ export const useExamSettingsRevision = (workspaceId: number, examId: number, ver
         staleTime: Infinity,
     });
 
-export const useExamSlots = (workspaceId: number, examId: number, enabled = true) =>
+export const useExamSlots = (
+    workspaceId: number,
+    examId: number,
+    enabled = true,
+    refetchInterval?: number,
+) =>
     useQuery({
         queryKey: queryKeys.exams.slots(workspaceId, examId),
         queryFn: () => examApi.slots(workspaceId, examId),
+        refetchInterval,
         enabled: enabled && workspaceId > 0 && examId > 0,
     });
 

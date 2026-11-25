@@ -81,6 +81,24 @@ describe("exam presentation controls", () => {
         expect(card?.textContent).not.toContain("Следующая команда");
     });
 
+    it("shows the allowed finish action without exposing live controls in the archive", async () => {
+        const finish = vi.fn();
+        await render({
+            team,
+            canManage: false,
+            timerSettingsHref: undefined,
+            finishLastDefenseAction: (
+                <button type="button" onClick={finish}>
+                    Завершить текущее выступление
+                </button>
+            ),
+        });
+        await click("Завершить текущее выступление");
+        expect(finish).toHaveBeenCalledOnce();
+        expect(container.querySelector('[aria-label="Приостановить таймер"]')).toBeNull();
+        expect(container.textContent).not.toContain("Следующая команда");
+    });
+
     it("disables Play for the first team until the exam is prepared", async () => {
         const onToggle = vi.fn();
         await render({ attempt: undefined, timer: idleTimer, team, onToggle });

@@ -155,6 +155,10 @@ export function resizeDraftSlots(slots: LocalSlot[], durationMinutes: number): L
         });
 }
 
+export function getSlotInterval({ starts_at, ends_at }: Pick<ExamSlot, "starts_at" | "ends_at">) {
+    return { starts_at, ends_at };
+}
+
 export function canBookExamSlot(current: ExamSlot, selected: ExamSlot) {
     return (
         current.kind !== "break" &&

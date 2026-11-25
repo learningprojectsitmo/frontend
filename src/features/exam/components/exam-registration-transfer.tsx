@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea/textarea";
 import { examApi, getExamErrorMessage, invalidateExam, useExams, useExamSlots } from "@/lib/exams";
 import { useProject } from "@/lib/projects";
 import type { Exam, ExamSlot, Registration } from "@/types/exam";
-import { canBookExamSlot } from "../exam-schedule";
+import { canBookExamSlot, getSlotInterval } from "../exam-schedule";
 import { formatExamDate, isExamRegistrationOpen } from "../exam-display";
 
 const selectTriggerClass =
@@ -48,7 +48,8 @@ export function ExamRegistrationTransfer({
     const exams = useExams(workspaceId, "published");
     const project = useProject(String(registration.project_id));
     const projectType = project.data?.project_type_id;
-    const [targetId, setTargetId] = useState(examId);
+    const sameExamAllowed = !sourceExam.archived_at && !sourceExam.completed_at;
+    const [targetId, setTargetId] = useState(sameExamAllowed ? examId : 0);
     const [selectedSlot, setSelectedSlot] = useState<ExamSlot>();
     const [reason, setReason] = useState("");
     const [pending, setPending] = useState(false);
@@ -58,15 +59,19 @@ export function ExamRegistrationTransfer({
         exams.data?.items.filter(
             (exam) =>
                 exam.id !== examId &&
+                !exam.archived_at &&
+                !exam.completed_at &&
                 projectType != null &&
                 exam.configuration.project_type_ids.includes(projectType) &&
                 (!self || isExamRegistrationOpen(exam, now)),
         ) ?? [];
     const target =
-        targetId === examId ? sourceExam : destinations.find((exam) => exam.id === targetId);
+        targetId === examId && sameExamAllowed
+            ? sourceExam
+            : destinations.find((exam) => exam.id === targetId);
     const validType =
         projectType != null && sourceExam.configuration.project_type_ids.includes(projectType);
-    const slots = useExamSlots(workspaceId, target?.id ?? 0);
+    const slots = useExamSlots(workspaceId, target?.id ?? 0, true, 5000);
     const defenseSlots = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
     const freeSlots = defenseSlots.filter(
         (slot) => slot.is_available && (targetId !== examId || slot.id !== registration.slot_id),
@@ -100,10 +105,7 @@ export function ExamRegistrationTransfer({
                     targetExamId: target.id,
                     self,
                     reason: reason.trim(),
-                    expectedSlot: targetSlot && {
-                        starts_at: targetSlot.starts_at,
-                        ends_at: targetSlot.ends_at,
-                    },
+                    expectedSlot: targetSlot && getSlotInterval(targetSlot),
                 },
             );
             toast.success("Запись перенесена");
@@ -153,7 +155,10 @@ export function ExamRegistrationTransfer({
                                 </span>
                             </SelectTrigger>
                             <SelectContent className={selectContentClass}>
-                                {[sourceExam, ...destinations].map((exam) => (
+                                {(sameExamAllowed
+                                    ? [sourceExam, ...destinations]
+                                    : destinations
+                                ).map((exam) => (
                                     <SelectItem
                                         key={exam.id}
                                         value={String(exam.id)}

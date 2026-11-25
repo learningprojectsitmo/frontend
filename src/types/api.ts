@@ -243,6 +243,7 @@ export type ProjectListItemResponse = {
     tags: string[];
     participants_preview: BackendParticipantPreview[];
     author_id: number;
+    project_type_id?: number | null;
     current_stage_id: number | null;
     current_stage_name: string | null;
 };
