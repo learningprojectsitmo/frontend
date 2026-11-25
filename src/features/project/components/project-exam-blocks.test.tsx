@@ -14,7 +14,7 @@ vi.mock("@/lib/exams", () => ({
     examApi: { queue: vi.fn(async () => ({ items: [] })), register: vi.fn() },
     useExams: vi.fn(),
     useExamSlots: (_workspaceId: number, examId: number) => ({
-        data: examId ? { items: [slot] } : undefined,
+        data: examId ? { items: visibleSlots } : undefined,
     }),
     getExamErrorMessage: vi.fn(),
     invalidateExam: vi.fn(),
@@ -67,6 +67,7 @@ const slot: ExamSlot = {
     is_available: true,
 };
 
+let visibleSlots: ExamSlot[];
 let container: HTMLDivElement;
 let root: Root;
 let client: QueryClient;
@@ -76,6 +77,7 @@ beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
     canManageResults = false;
+    visibleSlots = [slot];
     vi.setSystemTime(now);
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -156,7 +158,65 @@ describe("project exam blocks", () => {
             confirm?.click();
             await vi.advanceTimersByTimeAsync(0);
         });
-        expect(examApi.register).toHaveBeenCalledWith(1, 2, { project_id: 7, slot_id: 8 }, true);
+        expect(examApi.register).toHaveBeenCalledWith(
+            1,
+            2,
+            {
+                project_id: 7,
+                slot_id: 8,
+                expected_slot: { starts_at: slot.starts_at, ends_at: slot.ends_at },
+            },
+            true,
+        );
+    });
+
+    it("registers without a defense slot when the schedule only contains a break", async () => {
+        vi.setSystemTime(new Date("2026-11-18T08:00:00Z"));
+        visibleSlots = [{ ...slot, kind: "break", is_available: false }];
+        await render();
+        await act(async () => {
+            [...container.querySelectorAll("button")]
+                .find((button) => button.textContent === "Запишитесь на экзамен")
+                ?.click();
+        });
+
+        const dialog = document.querySelector('[role="dialog"]');
+        const confirm = [...(dialog?.querySelectorAll("button") ?? [])].find(
+            (button) => button.textContent === "Записать команду",
+        );
+        expect(confirm?.disabled).toBe(false);
+        await act(async () => {
+            confirm?.click();
+            await vi.advanceTimersByTimeAsync(0);
+        });
+        expect(examApi.register).toHaveBeenCalledWith(1, 2, { project_id: 7, slot_id: null }, true);
+    });
+
+    it("requires a new choice when the selected slot moves without changing ID", async () => {
+        vi.setSystemTime(new Date("2026-11-18T08:00:00Z"));
+        await render();
+        await act(async () => {
+            [...container.querySelectorAll("button")]
+                .find((button) => button.textContent === "Запишитесь на экзамен")
+                ?.click();
+        });
+        const dialog = document.querySelector('[role="dialog"]');
+        const confirm = [...(dialog?.querySelectorAll("button") ?? [])].find(
+            (button) => button.textContent === "Записать команду",
+        );
+        await act(async () => {
+            const select = dialog?.querySelector("select");
+            if (!select) throw new Error("Missing slot picker");
+            select.value = String(slot.id);
+            select.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        expect(confirm?.disabled).toBe(false);
+
+        visibleSlots = [{ ...slot, starts_at: "2026-11-18T09:05:02Z" }];
+        await render();
+        expect(confirm?.disabled).toBe(true);
+        expect(dialog?.textContent).toContain("Время слота изменилось");
+        expect(examApi.register).not.toHaveBeenCalled();
     });
 
     it("offers an open exam when another compatible exam is already running", async () => {

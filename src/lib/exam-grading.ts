@@ -82,8 +82,8 @@ export const examGradingApi = {
         api.get<AssessmentForm>(`${attempt(space, id, target)}/assessment`),
     draft: (space: number, id: number, target: number, answers: Answer[]) =>
         api.put<Draft>(`${attempt(space, id, target)}/assessment/draft`, { answers }),
-    submit: (space: number, id: number, target: number) =>
-        api.post<Submission>(`${attempt(space, id, target)}/assessment/submit`, {}),
+    submit: (space: number, id: number, target: number, answers: Answer[]) =>
+        api.post<Submission>(`${attempt(space, id, target)}/assessment/submit`, { answers }),
     registry: async (space: number, id: number) => {
         const items: RegistryItem[] = [];
         while (true) {

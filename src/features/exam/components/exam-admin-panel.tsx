@@ -45,6 +45,7 @@ import { useExamRegistrations, useExamSlots } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
 import {
     formatScheduleTime,
+    getSlotInterval,
     hasEarlierFreeSlots,
     insertScheduleBreak,
     minute,
@@ -160,6 +161,16 @@ export function ExamAdminPanel({
     const [configuration, setConfiguration] = useState<ExamConfiguration>(
         () => existingExam?.configuration ?? { ...defaultConfiguration(), ...initialBasics },
     );
+    const [settingsBaseline, setSettingsBaseline] = useState(existingExam);
+    const [settingsConflict, setSettingsConflict] = useState(false);
+    const [loadingSettings, setLoadingSettings] = useState(false);
+    const settingsStale =
+        settingsConflict ||
+        Boolean(
+            exam &&
+            settingsBaseline &&
+            exam.current_settings_version > settingsBaseline.current_settings_version,
+        );
     const [reason, setReason] = useState("");
     const [saving, setSaving] = useState(false);
     const writeInProgress = useRef(false);
@@ -182,7 +193,6 @@ export function ExamAdminPanel({
     const [assignOpenKey, setAssignOpenKey] = useState<string | null>(null);
     const [projectSearch, setProjectSearch] = useState("");
     const [pendingSlotId, setPendingSlotId] = useState<number | null>(null);
-    const [hiddenRegistrationId, setHiddenRegistrationId] = useState<number | null>(null);
     const [slotScheduleWarning, setSlotScheduleWarning] = useState("");
     const draggedSlotId = useRef<number | null>(null);
     const [questionErrors, setQuestionErrors] = useState<string[]>([]);
@@ -493,17 +503,42 @@ export function ExamAdminPanel({
         setScheduleEdit(null);
     };
 
+    const loadLatestSettings = async () => {
+        if (!exam || writeInProgress.current || loadingSettings) return;
+        setLoadingSettings(true);
+        try {
+            const queryKey = queryKeys.exams.detail(workspaceId, exam.id);
+            await queryClient.cancelQueries({ queryKey });
+            const latest = await examApi.get(workspaceId, exam.id);
+            previousExamStartRef.current = latest.configuration.starts_at;
+            setSlotStart(latest.configuration.starts_at);
+            setConfiguration(latest.configuration);
+            setSettingsBaseline(latest);
+            setSettingsConflict(false);
+            setPendingTiming(null);
+            setReason("");
+            setQuestionErrors([]);
+            queryClient.setQueryData(queryKey, latest);
+        } catch {
+            toast.error("Не удалось загрузить актуальные настройки. Попробуйте ещё раз.");
+        } finally {
+            setLoadingSettings(false);
+        }
+    };
+
     const saveExam = async (action: "save" | "publish", ignoreDurationWarning = false) => {
-        if (writeInProgress.current || pendingTiming) return;
+        if (writeInProgress.current || pendingTiming || settingsStale || loadingSettings) return;
         const publishing = action === "publish";
         const settings = {
             ...configuration,
             description: configuration.description?.trim() || null,
         };
         const configurationChanged =
-            exam &&
+            settingsBaseline &&
             (Object.keys(settings) as Array<keyof ExamConfiguration>).some(
-                (key) => JSON.stringify(exam.configuration[key]) !== JSON.stringify(settings[key]),
+                (key) =>
+                    JSON.stringify(settingsBaseline.configuration[key]) !==
+                    JSON.stringify(settings[key]),
             );
         if (!publishing && exam && !configurationChanged && !scheduleEdit) {
             toast.info("Нет изменений для сохранения");
@@ -557,7 +592,7 @@ export function ExamAdminPanel({
 
         writeInProgress.current = true;
         setSaving(true);
-        let saved = exam;
+        let saved = settingsBaseline ?? exam;
         let stage: "settings" | "slots" | "publish" = "settings";
         try {
             if (publishing && !(await validateQuestions())) {
@@ -568,9 +603,9 @@ export function ExamAdminPanel({
             if (!saved) {
                 saved = await examApi.create(workspaceId, settings);
                 setCreatedExam(saved);
-            } else if (configurationChanged) {
+            } else if (configurationChanged && settingsBaseline) {
                 saved = await examApi.replaceSettings(workspaceId, saved.id, {
-                    expected_version: saved.current_settings_version,
+                    expected_version: settingsBaseline.current_settings_version,
                     reason: reason.trim(),
                     configuration: settings,
                 });
@@ -580,6 +615,7 @@ export function ExamAdminPanel({
             });
             queryClient.setQueryData(queryKeys.exams.detail(workspaceId, saved.id), saved);
             setConfiguration(saved.configuration);
+            setSettingsBaseline(saved);
             if (!existingExam) setCreatedExam(saved);
             setReason("");
             stage = "slots";
@@ -610,7 +646,11 @@ export function ExamAdminPanel({
                 slots: "Не удалось сохранить слоты",
                 publish: "Не удалось опубликовать экзамен",
             };
-            const message = getExamErrorMessage(error) ?? fallback[stage];
+            const message =
+                code === "settings_version_conflict"
+                    ? "Настройки изменились. Загрузите актуальные настройки, чтобы продолжить."
+                    : (getExamErrorMessage(error) ?? fallback[stage]);
+            if (code === "settings_version_conflict") setSettingsConflict(true);
             if (code === "questions_not_ready") {
                 if (await validateQuestions()) setQuestionErrors([message]);
                 setActiveSection("questions");
@@ -738,16 +778,12 @@ export function ExamAdminPanel({
     const assignedRegistrationBySlot = useMemo(() => {
         const result = new Map<number, Registration>();
         for (const registration of registrationsQuery.data?.items ?? []) {
-            if (
-                registration.status === "active" &&
-                registration.slot_id &&
-                registration.id !== hiddenRegistrationId
-            ) {
+            if (registration.status === "active" && registration.slot_id) {
                 result.set(registration.slot_id, registration);
             }
         }
         return result;
-    }, [registrationsQuery.data, hiddenRegistrationId]);
+    }, [registrationsQuery.data]);
 
     const savedSlots = slotsQuery.data?.items ?? [];
     const hasSlotGap = hasEarlierFreeSlots(savedSlots);
@@ -761,10 +797,9 @@ export function ExamAdminPanel({
             new Set(
                 (registrationsQuery.data?.items ?? [])
                     .filter((registration) => registration.status === "active")
-                    .filter((registration) => registration.id !== hiddenRegistrationId)
                     .map((registration) => registration.project_id),
             ),
-        [registrationsQuery.data, hiddenRegistrationId],
+        [registrationsQuery.data],
     );
 
     const sortedLocalSlots = useMemo(
@@ -787,9 +822,12 @@ export function ExamAdminPanel({
 
     const moveTeam = async (fromId: number, toId: number) => {
         const registration = assignedRegistrationBySlot.get(fromId);
+        const targetSlot = savedSlots.find((slot) => slot.id === toId);
         if (
             !exam ||
             !registration ||
+            !targetSlot ||
+            targetSlot.kind === "break" ||
             registration.started_at ||
             assignedRegistrationBySlot.has(toId) ||
             writeInProgress.current
@@ -799,7 +837,17 @@ export function ExamAdminPanel({
         writeInProgress.current = true;
         setPendingSlotId(toId);
         try {
-            const result = await examApi.moveRegistration(workspaceId, exam.id, registration, toId);
+            const result = await examApi.moveRegistration(
+                workspaceId,
+                exam.id,
+                registration,
+                toId,
+                {
+                    targetExamId: exam.id,
+                    reason: "Перенос команды в другой слот",
+                    expectedSlot: getSlotInterval(targetSlot),
+                },
+            );
             cacheRegistration(exam.id, result.target);
             toast.success("Команда перенесена");
         } catch (error) {
@@ -819,59 +867,39 @@ export function ExamAdminPanel({
         if (existing?.started_at || existing?.project_id === projectId) return;
         writeInProgress.current = true;
         setPendingSlotId(slot.id);
-        if (existing) setHiddenRegistrationId(existing.id);
-        let previousRegistrationCancelled = false;
         try {
-            if (existing) {
+            if (existing && projectId) {
+                await examApi.replaceRegistration(
+                    workspaceId,
+                    exam.id,
+                    existing,
+                    projectId,
+                    getSlotInterval(slot),
+                );
+                toast.success("Команда заменена");
+            } else if (existing) {
                 const cancelled = await examApi.cancelRegistration(
                     workspaceId,
                     exam.id,
                     existing.id,
                     existing.version,
-                    projectId ? "Замена команды в слоте" : "Команда снята со слота",
+                    "Команда снята со слота",
                 );
                 cacheRegistration(exam.id, cancelled);
-                previousRegistrationCancelled = true;
-            }
-            if (projectId) {
+                toast.success("Команда снята со слота");
+            } else if (projectId) {
                 const registered = await examApi.register(workspaceId, exam.id, {
                     project_id: projectId,
                     slot_id: slot.id,
+                    expected_slot: getSlotInterval(slot),
                 });
                 cacheRegistration(exam.id, registered);
+                toast.success("Команда назначена");
             }
-            toast.success(
-                projectId
-                    ? existing
-                        ? "Команда заменена"
-                        : "Команда назначена"
-                    : "Команда снята со слота",
-            );
         } catch (error) {
-            let restored = true;
-            if (existing && previousRegistrationCancelled) {
-                try {
-                    const registered = await examApi.register(workspaceId, exam.id, {
-                        project_id: existing.project_id,
-                        slot_id: slot.id,
-                    });
-                    cacheRegistration(exam.id, registered);
-                } catch (rollbackError) {
-                    restored = false;
-                    // eslint-disable-next-line no-console
-                    console.error("Не удалось восстановить команду в слоте", rollbackError);
-                }
-            }
-            // eslint-disable-next-line no-console
-            console.error("Не удалось изменить команду в слоте", error);
-            toast.error(
-                restored
-                    ? (getExamErrorMessage(error) ?? "Не удалось изменить команду в слоте")
-                    : "Не удалось заменить и вернуть прежнюю команду. Проверьте запись в этом слоте.",
-            );
+            toast.error(getExamErrorMessage(error) ?? "Не удалось изменить команду в слоте");
         } finally {
             await invalidateExam(queryClient, workspaceId, exam.id);
-            setHiddenRegistrationId(null);
             writeInProgress.current = false;
             setPendingSlotId(null);
         }
@@ -946,7 +974,12 @@ export function ExamAdminPanel({
                             const availableProjects = (projectsQuery.data?.items ?? [])
                                 .filter(
                                     (item) =>
-                                        !assignedProjectIds.has(item.id) || item.id === project?.id,
+                                        item.project_type_id != null &&
+                                        exam?.configuration.project_type_ids.includes(
+                                            item.project_type_id,
+                                        ) &&
+                                        (!assignedProjectIds.has(item.id) ||
+                                            item.id === project?.id),
                                 )
                                 .filter((item) =>
                                     item.name
@@ -2337,6 +2370,27 @@ export function ExamAdminPanel({
                 </p>
             )}
 
+            {settingsStale && (
+                <div
+                    role="status"
+                    className="flex flex-wrap items-center justify-between gap-2 px-5 pb-3 text-[13px] text-app-text"
+                >
+                    <p>
+                        Настройки экзамена изменились в другом окне. При загрузке актуальной версии
+                        несохранённые правки настроек будут сброшены. Правки расписания останутся в
+                        редакторе.
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="hug36"
+                        disabled={saving}
+                        loading={loadingSettings}
+                        onClick={() => void loadLatestSettings()}
+                    >
+                        Загрузить актуальные настройки
+                    </Button>
+                </div>
+            )}
             <footer className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-gray-200 dark:border-app-border bg-app-surface px-5 py-4">
                 {exam && (
                     <Input
@@ -2361,7 +2415,12 @@ export function ExamAdminPanel({
                     variant="outline"
                     size="hug36"
                     icon={<Save size={16} />}
-                    disabled={pendingSlotId !== null || Boolean(pendingTiming)}
+                    disabled={
+                        pendingSlotId !== null ||
+                        Boolean(pendingTiming) ||
+                        settingsStale ||
+                        loadingSettings
+                    }
                     loading={saving}
                     onClick={() => void saveExam("save")}
                 >
@@ -2377,7 +2436,12 @@ export function ExamAdminPanel({
                                 variant="blue"
                                 size="hug36"
                                 icon={<ShieldCheck size={16} />}
-                                disabled={pendingSlotId !== null || Boolean(pendingTiming)}
+                                disabled={
+                                    pendingSlotId !== null ||
+                                    Boolean(pendingTiming) ||
+                                    settingsStale ||
+                                    loadingSettings
+                                }
                                 loading={saving}
                             >
                                 Опубликовать

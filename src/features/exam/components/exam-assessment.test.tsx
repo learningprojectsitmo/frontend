@@ -231,8 +231,13 @@ describe("assessment window", () => {
             });
             await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce());
         });
-        expect(save).toHaveBeenCalledTimes(2);
-        expect(save.mock.calls[1][3]).toEqual(finalAnswers);
+        expect(save).toHaveBeenCalledOnce();
+        expect(submit).toHaveBeenCalledWith(
+            target.workspaceId,
+            target.examId,
+            target.attemptId,
+            finalAnswers,
+        );
     });
 
     it("allows corrections but disables sending the same grade again", async () => {
@@ -256,13 +261,13 @@ describe("assessment window", () => {
         expect(send?.disabled).toBe(true);
         await act(async () => write(document.querySelector("textarea")!, "Уточнение"));
         await click("Отправить правки");
-        expect(draft).toHaveBeenCalledWith(
+        expect(draft).not.toHaveBeenCalled();
+        expect(submit).toHaveBeenCalledExactlyOnceWith(
             target.workspaceId,
             target.examId,
             target.attemptId,
             answers,
         );
-        expect(submit).toHaveBeenCalledOnce();
     });
 
     it("notifies an admitted assessor once without opening the form", async () => {

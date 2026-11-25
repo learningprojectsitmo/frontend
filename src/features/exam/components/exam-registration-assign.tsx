@@ -21,8 +21,9 @@ import {
 import { getProject, getProjectsList } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
 import { ExamProjectSelect } from "./exam-project-select";
-import type { Exam } from "@/types/exam";
+import type { Exam, ExamSlot } from "@/types/exam";
 import { formatExamDate } from "../exam-display";
+import { canBookExamSlot, getSlotInterval } from "../exam-schedule";
 
 export function ExamRegistrationAssign({
     exam,
@@ -39,7 +40,7 @@ export function ExamRegistrationAssign({
     const client = useQueryClient();
     const [search, setSearch] = useState("");
     const [projectId, setProjectId] = useState(0);
-    const [slotId, setSlotId] = useState(0);
+    const [chosenSlot, setChosenSlot] = useState<ExamSlot>();
     const [selectOpen, setSelectOpen] = useState(false);
     const dialogRef = useRef<HTMLDivElement>(null);
     const exams = useQuery({
@@ -100,7 +101,7 @@ export function ExamRegistrationAssign({
             return { eligible, hasAssigned };
         },
     });
-    const slots = useExamSlots(workspaceId, examId);
+    const slots = useExamSlots(workspaceId, examId, true, 5000);
     const otherAssignedIds = new Set(
         otherQueues.flatMap((query) => query.data?.items.map((item) => item.project_id) ?? []),
     );
@@ -121,19 +122,21 @@ export function ExamRegistrationAssign({
     const candidates = teams.filter((team) => team.name.toLocaleLowerCase().includes(term));
     const defenseSlots = slots.data?.items.filter((slot) => slot.kind !== "break") ?? [];
     const freeSlots = defenseSlots.filter((slot) => slot.is_available);
+    const currentSlot = chosenSlot && freeSlots.find((slot) => canBookExamSlot(slot, chosenSlot));
     const canAssign =
         exam.status === "published" &&
         Boolean(selected) &&
         !loading &&
         !loadFailed &&
         slots.isSuccess &&
-        (defenseSlots.length === 0 || freeSlots.some((slot) => slot.id === slotId));
+        (chosenSlot ? Boolean(currentSlot) : defenseSlots.length === 0);
 
     const assign = useMutation({
         mutationFn: () =>
             examApi.register(workspaceId, examId, {
                 project_id: projectId,
-                slot_id: defenseSlots.length ? slotId : null,
+                slot_id: chosenSlot?.id ?? null,
+                ...(chosenSlot && { expected_slot: getSlotInterval(chosenSlot) }),
             }),
         onSuccess: async () => {
             await invalidateExam(client, workspaceId, examId);
@@ -246,10 +249,15 @@ export function ExamRegistrationAssign({
                                 <label className="grid gap-1 text-sm">
                                     Свободный слот
                                     <select
-                                        value={slotId}
+                                        value={currentSlot?.id ?? 0}
                                         disabled={assign.isPending}
                                         onChange={(event) => {
-                                            setSlotId(Number(event.target.value));
+                                            setChosenSlot(
+                                                freeSlots.find(
+                                                    (slot) =>
+                                                        slot.id === Number(event.target.value),
+                                                ),
+                                            );
                                             assign.reset();
                                         }}
                                         className="rounded-lg border border-app-border bg-app-surface p-2"
@@ -265,6 +273,11 @@ export function ExamRegistrationAssign({
                                     </select>
                                 </label>
                             ))}
+                        {chosenSlot && !currentSlot && (
+                            <p role="status" className="text-sm text-app-muted">
+                                Время слота изменилось. Выберите слот заново.
+                            </p>
+                        )}
                         <div className="flex flex-wrap justify-end gap-2">
                             <Button
                                 type="button"

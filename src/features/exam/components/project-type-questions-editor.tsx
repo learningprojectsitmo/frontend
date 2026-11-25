@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Save, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import type {
     ProjectTypeQuestion,
+    ProjectTypeQuestions,
     QuestionLevel,
     QuestionScale,
     QuestionTemplate,
@@ -40,8 +41,8 @@ const emptyQuestion = (maxScore: QuestionScale): ProjectTypeQuestion => ({
 
 type SaveError = { message: string; questionIndex?: number };
 type PendingChange =
-    | { kind: "scale"; maxScore: QuestionScale }
-    | { kind: "template"; template: QuestionTemplate };
+    | { kind: "scale"; maxScore: QuestionScale; baseline?: ProjectTypeQuestions }
+    | { kind: "template"; template: QuestionTemplate; expectedEtag?: string };
 
 function getQuestionSaveErrors(error: unknown, questions: ProjectTypeQuestion[]): SaveError[] {
     const detail = isAxiosError<{ detail?: unknown }>(error) ? error.response?.data?.detail : null;
@@ -107,12 +108,18 @@ export const ProjectTypeQuestionsEditor = ({
     const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
     const [draftQuestions, setDraftQuestions] = useState<ProjectTypeQuestion[] | null>(null);
     const [draftScale, setDraftScale] = useState<QuestionScale | null>(null);
+    const draftBaseline = useRef<ProjectTypeQuestions>();
+    const [conflict, setConflict] = useState(false);
+    const [loadingCriteria, setLoadingCriteria] = useState(false);
     const [pendingChange, setPendingChange] = useState<PendingChange | null>(null);
     const confirmationDescriptionId = useId();
     const lockKey = queryKeys.projectTypeQuestions.lock(workspaceId, typeId);
     const lock = useQuery<boolean>({ queryKey: lockKey, queryFn: skipToken, gcTime: Infinity });
     const locked = assessmentOpened || lock.data === true;
-    const maxScore = (locked ? null : draftScale) ?? questionsQuery.data?.max_score ?? 5;
+    const maxScore =
+        (locked ? null : (draftScale ?? draftBaseline.current?.max_score)) ??
+        questionsQuery.data?.max_score ??
+        5;
     const questions = (locked ? null : draftQuestions) ?? questionsQuery.data?.questions ?? [];
     const hasCriteria = questions.length > 0 || Boolean(questionsQuery.data?.questions.length);
 
@@ -121,9 +128,18 @@ export const ProjectTypeQuestionsEditor = ({
         queryClient.setQueryData(lockKey, true);
         return true;
     };
-    const setQuestions = (update: (current: ProjectTypeQuestion[]) => ProjectTypeQuestion[]) => {
+    const setQuestions = (
+        update: (current: ProjectTypeQuestion[]) => ProjectTypeQuestion[],
+        baseline = questionsQuery.data,
+    ) => {
         setSaveErrors([]);
-        setDraftQuestions((current) => update(current ?? questionsQuery.data?.questions ?? []));
+        const snapshot = (draftBaseline.current ??= baseline);
+        setDraftQuestions((current) => update(current ?? snapshot?.questions ?? []));
+    };
+    const resetDraft = () => {
+        draftBaseline.current = undefined;
+        setDraftQuestions(null);
+        setDraftScale(null);
     };
     const [templateCode, setTemplateCode] = useState<QuestionTemplate["code"]>();
     const [saving, setSaving] = useState(false);
@@ -138,28 +154,31 @@ export const ProjectTypeQuestionsEditor = ({
         templatesQuery.data?.filter((template) => template.max_score === maxScore) ?? [];
     const selectedTemplate =
         templates.find((template) => template.code === templateCode) ?? templates[0];
-    const busy = saving || applying || locked;
+    const busy = saving || applying || loadingCriteria || locked;
     const questionKey = queryKeys.projectTypeQuestions.detail(workspaceId, typeId);
 
-    const changeScale = (nextScale: QuestionScale) => {
+    const changeScale = (nextScale: QuestionScale, baseline?: ProjectTypeQuestions) => {
         setDraftScale(nextScale);
-        setQuestions((current) =>
-            current.map((question) => ({
-                ...question,
-                levels: scores.slice(0, nextScale).map(
-                    (score) =>
-                        question.levels.find((level) => level.score === score) ?? {
-                            score,
-                            description: "",
-                        },
-                ),
-            })),
+        setQuestions(
+            (current) =>
+                current.map((question) => ({
+                    ...question,
+                    levels: scores.slice(0, nextScale).map(
+                        (score) =>
+                            question.levels.find((level) => level.score === score) ?? {
+                                score,
+                                description: "",
+                            },
+                    ),
+                })),
+            baseline,
         );
     };
 
     const requestScaleChange = (nextScale: QuestionScale) => {
         if (busy || maxScore === nextScale) return;
-        if (hasCriteria) setPendingChange({ kind: "scale", maxScore: nextScale });
+        if (hasCriteria)
+            setPendingChange({ kind: "scale", maxScore: nextScale, baseline: questionsQuery.data });
         else changeScale(nextScale);
     };
 
@@ -213,8 +232,25 @@ export const ProjectTypeQuestionsEditor = ({
         return null;
     };
 
-    const save = async () => {
+    const loadLatestCriteria = async () => {
         if (busy) return;
+        setLoadingCriteria(true);
+        try {
+            await queryClient.cancelQueries({ queryKey: questionKey });
+            const latest = await questionApi.get(workspaceId, typeId);
+            queryClient.setQueryData(questionKey, latest);
+            resetDraft();
+            setSaveErrors([]);
+            setConflict(false);
+        } catch {
+            toast.error("Не удалось загрузить актуальные критерии. Попробуйте ещё раз.");
+        } finally {
+            setLoadingCriteria(false);
+        }
+    };
+
+    const save = async () => {
+        if (busy || conflict) return;
         setSaveErrors([]);
         const error = validate();
         if (error) {
@@ -224,32 +260,39 @@ export const ProjectTypeQuestionsEditor = ({
         setSaving(true);
         try {
             await queryClient.cancelQueries({ queryKey: questionKey });
-            const result = await questionApi.replace(workspaceId, typeId, questions, maxScore);
+            const baseline = draftBaseline.current ?? questionsQuery.data;
+            const result = await questionApi.replace(
+                workspaceId,
+                typeId,
+                questions,
+                maxScore,
+                baseline?.etag,
+            );
             queryClient.setQueryData(questionKey, result);
-            setDraftQuestions(null);
-            setDraftScale(null);
+            resetDraft();
             toast.success(`Критерии типа «${typeName}» сохранены`);
         } catch (requestError) {
-            if (!handleLock(requestError))
+            if (getExamErrorCode(requestError) === "questions_conflict") setConflict(true);
+            else if (!handleLock(requestError))
                 setSaveErrors(getQuestionSaveErrors(requestError, questions));
         } finally {
             setSaving(false);
         }
     };
 
-    const applyTemplate = async (code: QuestionTemplate["code"]) => {
-        if (busy) return;
+    const applyTemplate = async (code: QuestionTemplate["code"], expectedEtag?: string) => {
+        if (busy || conflict) return;
         setSaveErrors([]);
         setApplying(true);
         try {
             await queryClient.cancelQueries({ queryKey: questionKey });
-            const result = await questionApi.applyTemplate(workspaceId, typeId, code);
+            const result = await questionApi.applyTemplate(workspaceId, typeId, code, expectedEtag);
             queryClient.setQueryData(questionKey, result);
-            setDraftQuestions(null);
-            setDraftScale(null);
+            resetDraft();
             toast.success("Шаблон вопросов применён");
         } catch (error) {
-            if (!handleLock(error))
+            if (getExamErrorCode(error) === "questions_conflict") setConflict(true);
+            else if (!handleLock(error))
                 toast.error(getExamErrorMessage(error) ?? "Не удалось применить шаблон");
         } finally {
             setApplying(false);
@@ -257,16 +300,19 @@ export const ProjectTypeQuestionsEditor = ({
     };
 
     const requestTemplate = () => {
-        if (busy || !selectedTemplate) return;
-        if (hasCriteria) setPendingChange({ kind: "template", template: selectedTemplate });
-        else void applyTemplate(selectedTemplate.code);
+        if (busy || conflict || !selectedTemplate) return;
+        const expectedEtag = (draftBaseline.current ?? questionsQuery.data)?.etag;
+        if (hasCriteria)
+            setPendingChange({ kind: "template", template: selectedTemplate, expectedEtag });
+        else void applyTemplate(selectedTemplate.code, expectedEtag);
     };
 
     const confirmChange = () => {
-        if (busy || !pendingChange) return;
+        if (busy || conflict || !pendingChange) return;
         setPendingChange(null);
-        if (pendingChange.kind === "scale") changeScale(pendingChange.maxScore);
-        else void applyTemplate(pendingChange.template.code);
+        if (pendingChange.kind === "scale")
+            changeScale(pendingChange.maxScore, pendingChange.baseline);
+        else void applyTemplate(pendingChange.template.code, pendingChange.expectedEtag);
     };
 
     if (questionsQuery.isLoading) return <Spinner />;
@@ -279,6 +325,25 @@ export const ProjectTypeQuestionsEditor = ({
 
     return (
         <div className="space-y-4">
+            {conflict && !locked && (
+                <div
+                    role="status"
+                    className="space-y-2 rounded-xl border border-app-border p-4 text-[13px] text-app-text"
+                >
+                    <p>
+                        Критерии изменились в другом окне. Загрузка актуальной версии сбросит ваши
+                        несохранённые правки.
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="hug36"
+                        loading={loadingCriteria}
+                        onClick={() => void loadLatestCriteria()}
+                    >
+                        Загрузить актуальные критерии
+                    </Button>
+                </div>
+            )}
             {locked && (
                 <div
                     role="status"
@@ -342,7 +407,7 @@ export const ProjectTypeQuestionsEditor = ({
                                 size="hug36"
                                 icon={<WandSparkles className="size-4" />}
                                 loading={applying}
-                                disabled={busy || !selectedTemplate}
+                                disabled={busy || conflict || !selectedTemplate}
                                 onClick={requestTemplate}
                             >
                                 {hasCriteria ? "Заменить вопросы шаблоном" : "Применить шаблон"}
@@ -453,7 +518,7 @@ export const ProjectTypeQuestionsEditor = ({
                             size="hug36"
                             icon={<Save className="size-4" />}
                             loading={saving}
-                            disabled={busy}
+                            disabled={busy || conflict}
                             onClick={save}
                         >
                             Сохранить вопросы

@@ -5,16 +5,13 @@ import { examGradingApi } from "./exam-grading";
 vi.mock("@/lib/api-client", () => ({ api: { get: vi.fn(), put: vi.fn(), post: vi.fn() } }));
 
 describe("exam grading contracts", () => {
-    it("saves answers to the draft, then submits without client scores or role", async () => {
+    it("sends the selected answers in one request without a preceding draft save", async () => {
         const answers = [{ question_id: 9, score: 5, comment: null }];
-        await examGradingApi.draft(1, 2, 3, answers);
-        await examGradingApi.submit(1, 2, 3);
-        expect(api.put).toHaveBeenCalledWith("/workspaces/1/exams/2/attempts/3/assessment/draft", {
-            answers,
-        });
+        await examGradingApi.submit(1, 2, 3, answers);
+        expect(api.put).not.toHaveBeenCalled();
         expect(api.post).toHaveBeenCalledWith(
             "/workspaces/1/exams/2/attempts/3/assessment/submit",
-            {},
+            { answers },
         );
     });
 

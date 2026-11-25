@@ -79,6 +79,7 @@ export type ProjectTypeQuestion = {
 export type QuestionScale = 3 | 5;
 
 export type ProjectTypeQuestions = {
+    etag?: string;
     project_type_id: number;
     questions: ProjectTypeQuestion[];
     min_score: 1;

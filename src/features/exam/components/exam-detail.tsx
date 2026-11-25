@@ -86,7 +86,7 @@ import {
     statusMeta,
 } from "../exam-display";
 import type { ExamSlot, QueueItem, Registration } from "@/types/exam";
-import { formatScheduleTime } from "../exam-schedule";
+import { formatScheduleTime, getSlotInterval } from "../exam-schedule";
 import {
     ApproximateDefenseTime,
     ExamTimeHint,
@@ -568,7 +568,8 @@ function ExamDetailView({
               : earlierTeams.some((item) => item?.state === "finished")
                 ? "завершённые выступления нельзя возобновить."
                 : "среди предыдущих команд нет отложенных выступлений.";
-    const canFinishLastDefense = isManager && Boolean(activeAttempt) && remainingTeams.length === 0;
+    const canFinishCurrentDefense =
+        isManager && Boolean(activeAttempt) && (exam?.archived_at || remainingTeams.length === 0);
     const assessmentOpen = queueItems.some((item) => isAssessmentOpen(item, serverNow));
     const canCompleteExam =
         queueQuery.isSuccess &&
@@ -647,12 +648,13 @@ function ExamDetailView({
         return "registration_id" in row
             ? sourceId !== row.registration_id && waitingSet.has(row.registration_id)
             : showSchedule &&
+                  row.kind !== "break" &&
                   queueByRegistration.get(sourceId)?.slot_id != null &&
                   !queueBySlot.has(row.id);
     }
 
     const moveToSlot = async (source: QueueItem, slot: ExamSlot) => {
-        if (source.slot_id === null) return;
+        if (source.slot_id === null || slot.kind === "break") return;
         const oldSlotId = source.slot_id;
         const teamsAhead = allTableRows
             .slice(0, allTableRows.indexOf(slot))
@@ -676,6 +678,11 @@ function ExamDetailView({
                     version: source.registration_version,
                 },
                 slot.id,
+                {
+                    targetExamId: examId,
+                    reason: "Перенос команды в другой слот",
+                    expectedSlot: getSlotInterval(slot),
+                },
             );
             moved = result.target;
             if (source.position !== position) {
@@ -833,7 +840,7 @@ function ExamDetailView({
         }
     };
 
-    const finishLastDefense = async () => {
+    const finishCurrentDefense = async () => {
         if (!isManager || !activeAttempt || attemptPending || registrationPending || savingOrder)
             return;
         if (mutationLock.current) return;
@@ -847,7 +854,10 @@ function ExamDetailView({
                 toast.error("Текущая команда изменилась. Проверьте очередь выступлений.");
                 return;
             }
-            if (items.some((item) => item.state === "waiting" || item.state === "postponed")) {
+            if (
+                !exam?.archived_at &&
+                items.some((item) => item.state === "waiting" || item.state === "postponed")
+            ) {
                 toast.error("Очередь изменилась. Проверьте, все ли команды выступили.");
                 return;
             }
@@ -1620,16 +1630,20 @@ function ExamDetailView({
                     onPrevious={() => void switchTeam("previous")}
                     onNext={() => void switchTeam("next")}
                     finishLastDefenseAction={
-                        canFinishLastDefense && activeAttempt ? (
+                        canFinishCurrentDefense && activeAttempt ? (
                             <ConfirmExamAction
                                 key={activeAttempt.id}
-                                label="Завершить выступление последней команды"
+                                label={
+                                    exam.archived_at
+                                        ? "Завершить текущее выступление"
+                                        : "Завершить выступление последней команды"
+                                }
                                 confirmLabel="Завершить выступление"
                                 description="Откроется окно оценивания. Итоги будут доступны для утверждения после закрытия окна."
                                 icon={<Square size={16} />}
                                 pending={attemptPending}
                                 disabled={savingOrder || registrationPending}
-                                onConfirm={finishLastDefense}
+                                onConfirm={finishCurrentDefense}
                             />
                         ) : undefined
                     }
@@ -2176,7 +2190,8 @@ function ExamDetailView({
                                                     item.state === "waiting" ||
                                                     canPlacePostponed ||
                                                     canChangeRegistration
-                                                  : status === "passed" && noShow;
+                                                  : canChangeRegistration ||
+                                                    (status === "passed" && noShow);
                                               const assessmentWindow =
                                                   item.attempt?.assessment_window;
                                               const score =
@@ -2478,60 +2493,61 @@ function ExamDetailView({
                                                                               align="end"
                                                                               className="w-[220px]"
                                                                           >
-                                                                              {(item.state ===
-                                                                                  "running" ||
-                                                                                  item.state ===
-                                                                                      "waiting") && (
-                                                                                  <DropdownMenuItem
-                                                                                      onSelect={() => {
-                                                                                          setPostponeReason(
-                                                                                              "",
-                                                                                          );
-                                                                                          setPostpone(
-                                                                                              {
-                                                                                                  item,
-                                                                                                  title:
-                                                                                                      project?.name ??
-                                                                                                      "Команда",
-                                                                                              },
-                                                                                          );
-                                                                                      }}
-                                                                                  >
-                                                                                      Отложить
-                                                                                  </DropdownMenuItem>
-                                                                              )}
-                                                                              {canPlacePostponed && (
-                                                                                  <>
-                                                                                      {item.position ===
-                                                                                          null && (
+                                                                              {!examOver &&
+                                                                                  (item.state ===
+                                                                                      "running" ||
+                                                                                      item.state ===
+                                                                                          "waiting") && (
+                                                                                      <DropdownMenuItem
+                                                                                          onSelect={() => {
+                                                                                              setPostponeReason(
+                                                                                                  "",
+                                                                                              );
+                                                                                              setPostpone(
+                                                                                                  {
+                                                                                                      item,
+                                                                                                      title:
+                                                                                                          project?.name ??
+                                                                                                          "Команда",
+                                                                                                  },
+                                                                                              );
+                                                                                          }}
+                                                                                      >
+                                                                                          Отложить
+                                                                                      </DropdownMenuItem>
+                                                                                  )}
+                                                                              {!examOver &&
+                                                                                  canPlacePostponed && (
+                                                                                      <>
+                                                                                          {item.position ===
+                                                                                              null && (
+                                                                                              <DropdownMenuItem
+                                                                                                  onSelect={() =>
+                                                                                                      void returnTeam(
+                                                                                                          item,
+                                                                                                          false,
+                                                                                                      )
+                                                                                                  }
+                                                                                              >
+                                                                                                  Вернуть
+                                                                                                  в
+                                                                                                  очередь
+                                                                                              </DropdownMenuItem>
+                                                                                          )}
                                                                                           <DropdownMenuItem
                                                                                               onSelect={() =>
                                                                                                   void returnTeam(
                                                                                                       item,
-                                                                                                      false,
+                                                                                                      true,
                                                                                                   )
                                                                                               }
                                                                                           >
-                                                                                              Вернуть
-                                                                                              в
-                                                                                              очередь
+                                                                                              Поставить
+                                                                                              следующей
                                                                                           </DropdownMenuItem>
-                                                                                      )}
-                                                                                      <DropdownMenuItem
-                                                                                          onSelect={() =>
-                                                                                              void returnTeam(
-                                                                                                  item,
-                                                                                                  true,
-                                                                                              )
-                                                                                          }
-                                                                                      >
-                                                                                          Поставить
-                                                                                          следующей
-                                                                                      </DropdownMenuItem>
-                                                                                  </>
-                                                                              )}
-                                                                              {!examOver &&
-                                                                                  registration &&
+                                                                                      </>
+                                                                                  )}
+                                                                              {registration &&
                                                                                   canChangeRegistration && (
                                                                                       <DropdownMenuItem
                                                                                           onSelect={() =>
@@ -2547,56 +2563,57 @@ function ExamDetailView({
                                                                                           запись
                                                                                       </DropdownMenuItem>
                                                                                   )}
-                                                                              {noShow && (
-                                                                                  <DropdownMenuItem
-                                                                                      className="gap-3"
-                                                                                      onSelect={() =>
-                                                                                          setNoShow(
-                                                                                              item,
-                                                                                          )
-                                                                                      }
-                                                                                  >
-                                                                                      Отменить
-                                                                                      неявку
-                                                                                  </DropdownMenuItem>
-                                                                              )}
-                                                                              {item.state ===
-                                                                                  "waiting" && (
-                                                                                  <DropdownMenuItem
-                                                                                      className="gap-3"
-                                                                                      onSelect={() =>
-                                                                                          setNoShow(
-                                                                                              item,
-                                                                                          )
-                                                                                      }
-                                                                                  >
-                                                                                      Неявка
-                                                                                  </DropdownMenuItem>
-                                                                              )}
-                                                                              {!examOver &&
-                                                                                  canChangeRegistration && (
+                                                                              {noShow &&
+                                                                                  (!examOver ||
+                                                                                      status ===
+                                                                                          "passed") && (
                                                                                       <DropdownMenuItem
-                                                                                          className="gap-3 text-red-600 dark:text-red-300"
+                                                                                          className="gap-3"
                                                                                           onSelect={() =>
-                                                                                              setDeleteRow(
-                                                                                                  {
-                                                                                                      id: item.registration_id,
-                                                                                                      title:
-                                                                                                          project?.name ??
-                                                                                                          "Команда",
-                                                                                                  },
+                                                                                              setNoShow(
+                                                                                                  item,
                                                                                               )
                                                                                           }
                                                                                       >
-                                                                                          <Trash2
-                                                                                              size={
-                                                                                                  16
-                                                                                              }
-                                                                                          />
-                                                                                          Снять с
-                                                                                          экзамена
+                                                                                          Отменить
+                                                                                          неявку
                                                                                       </DropdownMenuItem>
                                                                                   )}
+                                                                              {!examOver &&
+                                                                                  item.state ===
+                                                                                      "waiting" && (
+                                                                                      <DropdownMenuItem
+                                                                                          className="gap-3"
+                                                                                          onSelect={() =>
+                                                                                              setNoShow(
+                                                                                                  item,
+                                                                                              )
+                                                                                          }
+                                                                                      >
+                                                                                          Неявка
+                                                                                      </DropdownMenuItem>
+                                                                                  )}
+                                                                              {canChangeRegistration && (
+                                                                                  <DropdownMenuItem
+                                                                                      className="gap-3 text-red-600 dark:text-red-300"
+                                                                                      onSelect={() =>
+                                                                                          setDeleteRow(
+                                                                                              {
+                                                                                                  id: item.registration_id,
+                                                                                                  title:
+                                                                                                      project?.name ??
+                                                                                                      "Команда",
+                                                                                              },
+                                                                                          )
+                                                                                      }
+                                                                                  >
+                                                                                      <Trash2
+                                                                                          size={16}
+                                                                                      />
+                                                                                      Снять с
+                                                                                      экзамена
+                                                                                  </DropdownMenuItem>
+                                                                              )}
                                                                           </DropdownMenuContent>
                                                                       </DropdownMenuPortal>
                                                                   </DropdownMenu>

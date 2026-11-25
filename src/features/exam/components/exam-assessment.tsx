@@ -251,30 +251,27 @@ function AssessmentContent({
             closeAfterSave?: boolean;
         }) => {
             setError(undefined);
-            const draft = await examGradingApi.draft(workspaceId, examId, attemptId, snapshot);
-            setSaved(snapshot);
-            client.setQueryData<AssessmentForm>(
-                key,
-                (current) =>
-                    current && {
-                        ...current,
-                        draft,
-                    },
-            );
-            return submit ? examGradingApi.submit(workspaceId, examId, attemptId) : null;
+            return submit
+                ? examGradingApi.submit(workspaceId, examId, attemptId, snapshot)
+                : examGradingApi.draft(workspaceId, examId, attemptId, snapshot);
         },
-        onSuccess: (result) => {
-            if (result) {
-                const state = {
-                    version: result.version,
-                    submitted_at: result.submitted_at,
-                    has_unsubmitted_changes: false,
-                };
-                client.setQueryData<AssessmentForm>(
-                    key,
-                    (current) => current && { ...current, submission: state },
-                );
-            }
+        onSuccess: (result, { snapshot }) => {
+            setSaved(snapshot);
+            client.setQueryData<AssessmentForm>(key, (current) => {
+                if (!current) return current;
+                if ("version" in result) {
+                    return {
+                        ...current,
+                        draft: { ...current.draft, answers: result.answers },
+                        submission: {
+                            version: result.version,
+                            submitted_at: result.submitted_at,
+                            has_unsubmitted_changes: false,
+                        },
+                    };
+                }
+                return { ...current, draft: result };
+            });
             return client.invalidateQueries({ queryKey: key });
         },
         onError: (failure) => {

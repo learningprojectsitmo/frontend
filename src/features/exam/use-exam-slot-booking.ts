@@ -1,4 +1,4 @@
-import { canBookExamSlot } from "./exam-schedule";
+import { canBookExamSlot, getSlotInterval } from "./exam-schedule";
 import { useRef, useState } from "react";
 import {
     queryOptions,
@@ -37,7 +37,11 @@ export function useExamSlotBooking(
 ) {
     const user = useUser();
     const client = useQueryClient();
-    const slots = useExamSlots(workspaceId, examId, enabled);
+    const confirming = useRef(false);
+    const [selecting, setSelecting] = useState(false);
+    const [projectId, setProjectId] = useState<number>();
+    const [action, setAction] = useState<BookingAction | null>(null);
+    const slots = useExamSlots(workspaceId, examId, enabled, selecting ? 5000 : undefined);
     const registrations = useExamRegistrations(workspaceId, examId, true, enabled);
     const myProjects = useQuery({
         queryKey: [...queryKeys.profile.createdProjects(), "exam-booking", user.data?.id],
@@ -64,11 +68,6 @@ export function useExamSlotBooking(
                 }),
             ),
     });
-
-    const confirming = useRef(false);
-    const [selecting, setSelecting] = useState(false);
-    const [projectId, setProjectId] = useState<number>();
-    const [action, setAction] = useState<BookingAction | null>(null);
 
     const active = registrations.data?.items.filter((item) => item.status === "active") ?? [];
     const eligible = projects.flatMap(({ data, isSuccess }) =>
@@ -144,10 +143,7 @@ export function useExamSlotBooking(
                           project_id: target.projectId,
                           slot_id: target.slot?.id ?? null,
                           ...(target.slot && {
-                              expected_slot: {
-                                  starts_at: target.slot.starts_at,
-                                  ends_at: target.slot.ends_at,
-                              },
+                              expected_slot: getSlotInterval(target.slot),
                           }),
                       },
                       true,

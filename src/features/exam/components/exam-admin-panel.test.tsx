@@ -21,8 +21,20 @@ vi.mock("@/lib/projects", () => ({
     useProjectsList: () => ({
         data: {
             items: [
-                { id: 101, name: "Первая команда", author_id: 1, participants_preview: [] },
-                { id: 102, name: "Вторая команда", author_id: 1, participants_preview: [] },
+                {
+                    id: 101,
+                    name: "Первая команда",
+                    author_id: 1,
+                    project_type_id: 5,
+                    participants_preview: [],
+                },
+                {
+                    id: 102,
+                    name: "Вторая команда",
+                    author_id: 1,
+                    project_type_id: 5,
+                    participants_preview: [],
+                },
             ],
         },
     }),
@@ -404,6 +416,48 @@ describe("exam form", () => {
         });
     });
 
+    it("blocks a stale settings retry until the editor explicitly loads the new baseline", async () => {
+        const latest = {
+            ...exam,
+            current_settings_version: 4,
+            configuration: { ...exam.configuration, title: "Название из другого окна" },
+        };
+        const replace = vi
+            .spyOn(examApi, "replaceSettings")
+            .mockRejectedValueOnce({
+                isAxiosError: true,
+                response: { data: { detail: { code: "settings_version_conflict" } } },
+            })
+            .mockResolvedValueOnce(latest);
+        vi.spyOn(examApi, "get").mockResolvedValue(latest);
+        await render(exam);
+        fill("#exam-description", "Описание из второго окна");
+        fill('[aria-label="Причина изменения"]', "Описание");
+        await click("Сохранить");
+        await render(latest);
+        await click("Сохранить");
+        expect(replace).toHaveBeenCalledTimes(1);
+        expect(replace.mock.calls[0][2].expected_version).toBe(3);
+        expect(container.querySelector<HTMLTextAreaElement>("#exam-description")?.value).toBe(
+            "Описание из второго окна",
+        );
+
+        await click("Загрузить актуальные настройки");
+        expect(container.querySelector<HTMLInputElement>("#exam-title")?.value).toBe(
+            "Название из другого окна",
+        );
+        fill("#exam-description", "Описание из второго окна");
+        fill('[aria-label="Причина изменения"]', "Описание");
+        await click("Сохранить");
+        expect(replace.mock.calls[1][2]).toMatchObject({
+            expected_version: 4,
+            configuration: {
+                title: "Название из другого окна",
+                description: "Описание из второго окна",
+            },
+        });
+    });
+
     it("does not save an unchanged exam", async () => {
         const replace = vi.spyOn(examApi, "replaceSettings");
         const replaceSlots = vi.spyOn(examApi, "replaceSlots");
@@ -566,27 +620,21 @@ describe("exam form", () => {
         expect(container.textContent).not.toContain("Первая команда");
         expect(container.textContent).toContain("Назначить");
     });
-    it("restores the previous team when its replacement fails", async () => {
+    it("keeps the original assignment when the atomic replacement fails", async () => {
         const published = { ...exam, status: "published" as const };
         client.setQueryData(queryKeys.exams.slots(1, 2), { items: [slot], has_more: false });
         client.setQueryData(queryKeys.exams.registrations(1, 2), { items: [registration] });
-        const restored = { ...registration, id: 12, version: 1 };
         const error = new AxiosError("Request failed");
         Object.assign(error, {
             response: { data: { detail: { code: "project_type_not_allowed" } } },
         });
         vi.spyOn(console, "error").mockImplementation(() => {});
-        vi.spyOn(examApi, "cancelRegistration").mockResolvedValue({
-            ...registration,
-            status: "cancelled",
-        });
-        const register = vi
-            .spyOn(examApi, "register")
-            .mockRejectedValueOnce(error)
-            .mockResolvedValueOnce(restored);
+        const cancel = vi.spyOn(examApi, "cancelRegistration");
+        const register = vi.spyOn(examApi, "register");
+        const replace = vi.spyOn(examApi, "replaceRegistration").mockRejectedValue(error);
         vi.mocked(examApi.slots).mockResolvedValue({ items: [slot], has_more: false });
         vi.mocked(examApi.registrations).mockResolvedValue({
-            items: [restored],
+            items: [registration],
             limit: 100,
             offset: 0,
             has_more: false,
@@ -605,8 +653,12 @@ describe("exam form", () => {
         await click("Заменить");
         await click("Вторая команда");
 
-        expect(register).toHaveBeenNthCalledWith(1, 1, 2, { project_id: 102, slot_id: 3 });
-        expect(register).toHaveBeenNthCalledWith(2, 1, 2, { project_id: 101, slot_id: 3 });
+        expect(replace).toHaveBeenCalledWith(1, 2, registration, 102, {
+            starts_at: slot.starts_at,
+            ends_at: slot.ends_at,
+        });
+        expect(cancel).not.toHaveBeenCalled();
+        expect(register).not.toHaveBeenCalled();
         expect(document.querySelector('[aria-label="Выбор команды"]')).toBeNull();
         expect(container.textContent).toContain("Первая команда");
     });
@@ -618,6 +670,7 @@ describe("exam form", () => {
             min_score: 1 as const,
             max_score: 5 as const,
             questions: [question],
+            etag: "first-etag",
         };
         const narrowed = { ...data, max_score: 3 as const, questions: [criterion(3)] };
         client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
@@ -649,7 +702,7 @@ describe("exam form", () => {
         expect(save).not.toHaveBeenCalled();
 
         await click("Сохранить вопросы");
-        expect(save).toHaveBeenCalledWith(1, 5, [criterion(3)], 3);
+        expect(save).toHaveBeenCalledWith(1, 5, [criterion(3)], 3, data.etag);
         await click("Добавить критерий");
         expect(
             [...container.querySelectorAll("label")].filter((label) =>
@@ -658,12 +711,51 @@ describe("exam form", () => {
         ).toHaveLength(6);
     });
 
+    it("keeps the question snapshot from edit start until a conflict is explicitly reloaded", async () => {
+        const initial = {
+            project_type_id: 5,
+            min_score: 1 as const,
+            max_score: 5 as const,
+            questions: [criterion(5)],
+            etag: "initial-etag",
+        };
+        const latest = {
+            ...initial,
+            etag: "latest-etag",
+            questions: [{ ...criterion(5), text: "Критерий из другого окна" }],
+        };
+        const key = queryKeys.projectTypeQuestions.detail(1, 5);
+        client.setQueryData(key, initial);
+        client.setQueryData(queryKeys.projectTypeQuestions.templates(), []);
+        const save = vi.spyOn(questionApi, "replace").mockRejectedValue({
+            isAxiosError: true,
+            response: { data: { detail: { code: "questions_conflict" } } },
+        });
+        vi.spyOn(questionApi, "get").mockResolvedValue(latest);
+        await renderCriteria();
+        fill('input[placeholder="Название критерия"]', "Локальный критерий");
+        await act(async () => {
+            client.setQueryData(key, latest);
+        });
+
+        await click("Сохранить вопросы");
+        expect(save).toHaveBeenCalledWith(1, 5, expect.any(Array), 5, "initial-etag");
+        await click("Сохранить вопросы");
+        expect(save).toHaveBeenCalledTimes(1);
+        await click("Загрузить актуальные критерии");
+        expect(
+            container.querySelector<HTMLInputElement>('input[placeholder="Название критерия"]')
+                ?.value,
+        ).toBe("Критерий из другого окна");
+    });
+
     it("shows templates for the selected scale and confirms replacing existing criteria", async () => {
         const data = {
             project_type_id: 5,
             min_score: 1 as const,
             max_score: 3 as const,
             questions: [criterion(3)],
+            etag: "first-etag",
         };
         client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
         client.setQueryData(queryKeys.projectTypeQuestions.templates(), [
@@ -685,7 +777,7 @@ describe("exam form", () => {
         await click("Заменить вопросы шаблоном");
         await click("Применить шаблон");
 
-        expect(apply).toHaveBeenCalledWith(1, 5, "project_defense");
+        expect(apply).toHaveBeenCalledWith(1, 5, "project_defense", data.etag);
     });
 
     it.each([3, 5] as const)("preserves question IDs on scale %i", async (scale) => {
@@ -703,6 +795,7 @@ describe("exam form", () => {
             min_score: 1 as const,
             max_score: scale,
             questions: [question],
+            etag: "first-etag",
         };
         client.setQueryData(queryKeys.projectTypeQuestions.detail(1, 5), data);
         client.setQueryData(queryKeys.projectTypeQuestions.templates(), []);
@@ -724,7 +817,7 @@ describe("exam form", () => {
         const save = vi
             .spyOn(questionApi, "replace")
             .mockRejectedValueOnce(invalid)
-            .mockResolvedValue({ ...data, questions: [savedQuestion] });
+            .mockResolvedValue({ ...data, questions: [savedQuestion], etag: "saved-etag" });
         await act(async () => {
             root.render(
                 <QueryClientProvider client={client}>
@@ -742,8 +835,8 @@ describe("exam form", () => {
         expect(container.querySelector('[role="alert"]')).toBeNull();
         await click("Сохранить вопросы");
 
-        expect(save).toHaveBeenNthCalledWith(2, 1, 5, [question], scale);
-        expect(save).toHaveBeenNthCalledWith(3, 1, 5, [savedQuestion], scale);
+        expect(save).toHaveBeenNthCalledWith(2, 1, 5, [question], scale, data.etag);
+        expect(save).toHaveBeenNthCalledWith(3, 1, 5, [savedQuestion], scale, "saved-etag");
 
         const lock = new AxiosError("Request failed");
         Object.assign(lock, { response: { data: { detail: { code: "questions_locked" } } } });
