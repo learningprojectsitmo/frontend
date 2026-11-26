@@ -1,6 +1,13 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import type { Attempt, QueueItem } from "@/types/exam";
-import { getExamAutoStartState, getExamTimer, getExamTransitionTimer } from "./exam-timer";
+import {
+    getExamAutoStartState,
+    getExamTimer,
+    getExamTransitionTimer,
+    readExamAutoStart,
+    writeExamAutoStart,
+} from "./exam-timer";
 
 const start = Date.parse("2026-11-19T12:00:00Z");
 const iso = (time: number) => new Date(time).toISOString();
@@ -96,8 +103,24 @@ describe("automatic start after a transition", () => {
         deadline: start + 60_000,
     };
 
+    const snapshot = (...items: QueueItem[]) => ({ items, eta_stale: false });
+
+    it("restores the explicitly queued transition on a reload of the same exam", () => {
+        const key = "exam-auto-start:11:1";
+        window.sessionStorage.clear();
+        writeExamAutoStart(key, plan);
+        const restored = readExamAutoStart(key);
+        expect(restored).toEqual(plan);
+        expect(readExamAutoStart("exam-auto-start:11:2")).toBeNull();
+        expect(getExamAutoStartState(restored!, snapshot(finished, following), plan.deadline)).toBe(
+            "ready",
+        );
+        writeExamAutoStart(key, null);
+        expect(readExamAutoStart(key)).toBeNull();
+    });
+
     it("waits until the deadline and starts immediately for a zero-minute transition", () => {
-        const items = [finished, following];
+        const items = snapshot(finished, following);
         expect(getExamAutoStartState(plan, items, start + 59_999)).toBe("waiting");
         expect(getExamAutoStartState(plan, items, start + 60_000)).toBe("ready");
         expect(
@@ -105,18 +128,29 @@ describe("automatic start after a transition", () => {
         ).toBe("ready");
     });
 
+    it("does not start or cancel from a queue snapshot the server marked stale", () => {
+        const stale = { items: [], eta_stale: true };
+        expect(getExamAutoStartState(plan, stale, plan.deadline)).toBe("waiting");
+    });
+
     it("cancels when another team becomes next or a different attempt has started", () => {
         expect(
-            getExamAutoStartState(plan, [finished, { ...following, registration_id: 3 }], start),
+            getExamAutoStartState(
+                plan,
+                snapshot(finished, { ...following, registration_id: 3 }),
+                start,
+            ),
         ).toBe("changed");
         const running = { ...following, state: "running", position: null } satisfies QueueItem;
-        expect(getExamAutoStartState(plan, [finished, following, running], start)).toBe("changed");
+        expect(getExamAutoStartState(plan, snapshot(finished, following, running), start)).toBe(
+            "changed",
+        );
         const newer = {
             ...finished,
             attempt: { ...finished.attempt!, id: 11, finished_at: iso(start + 1000) },
         };
-        expect(getExamAutoStartState(plan, [finished, newer, following], start + 60_000)).toBe(
-            "changed",
-        );
+        expect(
+            getExamAutoStartState(plan, snapshot(finished, newer, following), start + 60_000),
+        ).toBe("changed");
     });
 });

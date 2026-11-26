@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { QueueItem } from "@/types/exam";
-import { applyWaitingOrder, getPositionedIds, reconcileExamOrder } from "./exam-queue-order";
+import type { ExamSlot, QueueItem } from "@/types/exam";
+import {
+    applyWaitingOrder,
+    getPositionedIds,
+    interleaveExamBreaks,
+    reconcileExamOrder,
+} from "./exam-queue-order";
 
 function team(
     registration_id: number,
@@ -22,6 +27,70 @@ function team(
         attempt: null,
     };
 }
+
+const scheduleSlot = (id: number, starts_at: string, ends_at: string, kind: ExamSlot["kind"]) =>
+    ({
+        id,
+        workspace_id: 1,
+        exam_id: 1,
+        starts_at,
+        ends_at,
+        kind,
+        is_available: kind !== "break",
+    }) satisfies ExamSlot;
+
+describe("interleaveExamBreaks", () => {
+    const midExamBreak = scheduleSlot(20, "2026-11-19T12:20:00Z", "2026-11-19T12:30:00Z", "break");
+    const lateBreak = scheduleSlot(21, "2026-11-19T13:10:00Z", "2026-11-19T13:20:00Z", "break");
+
+    it("retains scheduled breaks around running and upcoming defenses in the live queue", () => {
+        const running = team(1, "running", null, "2026-11-19T12:10:00Z");
+        const afterBreak = {
+            ...team(2, "waiting", 1),
+            planned_start_at: "2026-11-19T12:30:00Z",
+        };
+        const emptyDefense = scheduleSlot(
+            22,
+            "2026-11-19T12:40:00Z",
+            "2026-11-19T12:50:00Z",
+            "defense",
+        );
+        const compressedForecast = new Map([[2, { eta_at: "2026-11-19T12:19:00Z" }]]);
+
+        expect(
+            interleaveExamBreaks(
+                [running, afterBreak],
+                [lateBreak, emptyDefense, midExamBreak],
+                compressedForecast,
+            ),
+        ).toEqual([running, midExamBreak, afterBreak, lateBreak]);
+    });
+
+    it("uses the next predicted start when an earlier booked team is delayed", () => {
+        const delayed = {
+            ...team(1, "waiting", 1),
+            planned_start_at: "2026-11-19T12:05:00Z",
+        };
+        const nextInQueue = {
+            ...team(2, "waiting", 2),
+            planned_start_at: "2026-11-19T12:00:00Z",
+        };
+        const eta = new Map([[1, { eta_at: "2026-11-19T12:30:00Z" }]]);
+
+        expect(interleaveExamBreaks([delayed, nextInQueue], [midExamBreak], eta)).toEqual([
+            midExamBreak,
+            delayed,
+            nextInQueue,
+        ]);
+    });
+
+    it("shows breaks even when the queue contains no teams", () => {
+        expect(interleaveExamBreaks([], [lateBreak, midExamBreak], new Map())).toEqual([
+            midExamBreak,
+            lateBreak,
+        ]);
+    });
+});
 
 describe("reconcileExamOrder", () => {
     it("keeps the same numbering as the API moves started and finished teams", () => {

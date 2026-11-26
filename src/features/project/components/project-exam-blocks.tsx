@@ -53,7 +53,7 @@ export function ProjectExamBlocks({
     isTeamMember = isProjectAuthor,
 }: Props) {
     const client = useQueryClient();
-    const exams = useExams(workspaceId, "published").data?.items ?? [];
+    const exams = useExams(workspaceId, "published", 30_000).data?.items ?? [];
     const access = useExamWorkspaces(workspaceId, isTeamMember, isTeamMember);
     const projectTypes = useProjectTypes(workspaceId);
     const [now, setNow] = useState(Date.now);
@@ -94,7 +94,7 @@ export function ProjectExamBlocks({
             (a, b) => Date.parse(a.configuration.starts_at) - Date.parse(b.configuration.starts_at),
         );
     const queueFor = (exam: Exam) => queues[exams.indexOf(exam)]?.data;
-    const available = (exam: Exam) => isExamRegistrationOpen(exam, now);
+    const available = (exam: Exam) => isExamRegistrationOpen(exam, now, queueFor(exam));
     const upcoming = byStart.filter((exam) => Date.parse(exam.configuration.starts_at) > now);
     const openExam = upcoming.find((item) => matchesType(item) && available(item));
     const exam =
@@ -212,6 +212,7 @@ export function ProjectExamBlocks({
         access.canSelfRegister;
     const title = {
         upcoming: "Экзамен начнётся через",
+        waiting: "Ожидается начало экзамена",
         running: "Экзамен идёт",
         awaiting_completion: "Ожидается завершение экзамена",
         finished: "Экзамен завершён",
@@ -272,6 +273,7 @@ export function ProjectExamBlocks({
                             className="text-xl font-semibold [overflow-wrap:anywhere]"
                         >
                             {state.status === "running" ||
+                            state.status === "waiting" ||
                             ((state.status === "finished" ||
                                 state.status === "awaiting_completion") &&
                                 registered) ? (

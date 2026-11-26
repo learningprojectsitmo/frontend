@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { api } from "@/lib/api-client";
@@ -81,11 +81,19 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-async function render(removableWorkspaceIds: number[]) {
+function LocationSearch() {
+    return <output>{useLocation().search}</output>;
+}
+
+async function render(
+    removableWorkspaceIds: number[],
+    initialEntry = "/app/exams/manage?workspaceId=4",
+) {
     await act(async () => {
         root.render(
             <QueryClientProvider client={client}>
-                <MemoryRouter>
+                <MemoryRouter initialEntries={[initialEntry]}>
+                    <LocationSearch />
                     <ExamManagementList
                         workspaceId={4}
                         removableWorkspaceIds={removableWorkspaceIds}
@@ -167,6 +175,23 @@ it("moves the published exam from the current list to the archive filter", async
     );
     expect(examLink).toBeDefined();
     expect(examLink?.getAttribute("href")).toBe("/app/exams/view?workspaceId=4&examId=12");
+});
+
+it("restores the archive filter from the URL and retains the selected workspace", async () => {
+    exams = [draft, { ...published, archived_at: "2026-11-24T11:00:00Z" }];
+    await render([4], "/app/exams/manage?workspaceId=4&status=archived");
+    const filter = container.querySelector<HTMLSelectElement>(
+        'select[aria-label="Статус экзамена"]',
+    )!;
+    expect(filter.value).toBe("archived");
+    expect(container.textContent).toContain(title(published));
+    expect(container.textContent).not.toContain(title(draft));
+
+    await act(async () => {
+        filter.value = "all";
+        filter.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(container.querySelector("output")?.textContent).toBe("?workspaceId=4");
 });
 
 it("hides the removal action when the teacher has no administrative rights", async () => {

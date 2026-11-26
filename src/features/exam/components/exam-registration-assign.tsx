@@ -217,8 +217,12 @@ export function ExamRegistrationAssign({
                         </Button>
                     </div>
                 ) : (
-                    <form className="mt-4 grid gap-4" onSubmit={submit}>
-                        <div className="grid gap-1 text-sm" role="group" aria-label="Команда">
+                    <form className="mt-4 grid min-w-0 grid-cols-1 gap-4" onSubmit={submit}>
+                        <div
+                            className="grid min-w-0 grid-cols-1 gap-1 text-sm"
+                            role="group"
+                            aria-label="Команда"
+                        >
                             <span className="font-medium">Команда</span>
                             <ExamProjectSelect
                                 open={selectOpen}
@@ -246,7 +250,7 @@ export function ExamRegistrationAssign({
                                     Команда будет добавлена в очередь без места в расписании.
                                 </p>
                             ) : (
-                                <label className="grid gap-1 text-sm">
+                                <label className="grid min-w-0 grid-cols-1 gap-1 text-sm">
                                     Свободный слот
                                     <select
                                         value={currentSlot?.id ?? 0}
@@ -260,7 +264,7 @@ export function ExamRegistrationAssign({
                                             );
                                             assign.reset();
                                         }}
-                                        className="rounded-lg border border-app-border bg-app-surface p-2"
+                                        className="w-full min-w-0 rounded-lg border border-app-border bg-app-surface p-2"
                                     >
                                         <option value={0} disabled>
                                             Выберите время

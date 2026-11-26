@@ -1,3 +1,4 @@
+import { hasExamStarted } from "@/features/exam/exam-display";
 import type { Exam, ExamQueue } from "@/types/exam";
 
 export function getProjectExamState(
@@ -39,15 +40,10 @@ export function getProjectExamState(
     ) {
         return { status: "awaiting_completion" as const, end: lastFinish };
     }
-    if (now < startsAt) return { status: "upcoming" as const, end: startsAt };
-    if (
-        now < scheduledEnd ||
-        (lastFinish > 0 &&
-            items.some((item) => item.state === "waiting" || item.state === "postponed"))
-    ) {
+    if (hasExamStarted(exam, queue) || lastFinish) {
         return { status: "running" as const, end: scheduledEnd };
     }
-    return { status: "awaiting_completion" as const, end: lastFinish || scheduledEnd };
+    return { status: now < startsAt ? ("upcoming" as const) : ("waiting" as const), end: startsAt };
 }
 
 const pluralRules = new Intl.PluralRules("ru");

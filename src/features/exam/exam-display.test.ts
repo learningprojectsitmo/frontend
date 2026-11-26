@@ -99,6 +99,16 @@ describe("exam schedule display", () => {
 });
 
 describe("exam status", () => {
+    it("reports an explicitly started exam as running even before its planned time and first defense", () => {
+        const startedAt = new Date(start - 60_000).toISOString();
+        expect(getExamStatus({ ...exam, started_at: startedAt }, queue(team), start - 1)).toBe(
+            "running",
+        );
+        expect(getExamStatus(exam, { ...queue(team), started_at: startedAt }, start - 1)).toBe(
+            "running",
+        );
+    });
+
     it("waits for the teacher when the scheduled start arrives or passes", () => {
         expect(getExamStatus(exam, queue(team), start - 1)).toBe("soon");
         expect(getExamStatus(exam, queue(team), start)).toBe("waiting");
@@ -168,6 +178,14 @@ describe("exam status", () => {
 });
 
 describe("exam registration period", () => {
+    it("closes self registration as soon as the organizer starts the exam", () => {
+        const startedAt = new Date(start - 60_000).toISOString();
+        expect(isExamRegistrationOpen({ ...exam, started_at: startedAt }, start - 1)).toBe(false);
+        expect(
+            isExamRegistrationOpen(exam, start - 1, { ...queue(team), started_at: startedAt }),
+        ).toBe(false);
+    });
+
     it("prints the effective registration interval rather than the raw configuration", () => {
         const opensAt = new Date(start - 60_000).toISOString();
         const publishedAt = new Date(start - 30_000).toISOString();

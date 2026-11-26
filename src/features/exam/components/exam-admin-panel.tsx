@@ -28,6 +28,7 @@ import { DatePicker, DatePickerClearButton } from "@/components/ui/date-picker";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -70,6 +71,7 @@ import type { BackendProjectType } from "@/types/api";
 import { ApproximateDefenseTime } from "./approximate-defense-time";
 import { ProjectTypeQuestionsEditor } from "./project-type-questions-editor";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { hasExamStarted } from "../exam-display";
 
 export type ExamBasics = Pick<ExamConfiguration, "title" | "starts_at">;
 
@@ -191,6 +193,11 @@ export function ExamAdminPanel({
     } | null>(null);
     const nextDraftSlotKey = useRef(0);
     const [assignOpenKey, setAssignOpenKey] = useState<string | null>(null);
+    const [replacement, setReplacement] = useState<{
+        slot: LocalSlot;
+        projectId: number;
+        registration: Registration;
+    } | null>(null);
     const [projectSearch, setProjectSearch] = useState("");
     const [pendingSlotId, setPendingSlotId] = useState<number | null>(null);
     const [slotScheduleWarning, setSlotScheduleWarning] = useState("");
@@ -218,6 +225,8 @@ export function ExamAdminPanel({
     );
     const slotsQuery = useExamSlots(workspaceId, exam?.id ?? 0);
     const serverSlots = slotsQuery.data?.items;
+    const scheduleDatesLocked =
+        Boolean(exam?.completed_at || exam?.archived_at) || hasExamStarted(exam);
     const localSlots = useMemo(
         () =>
             scheduleEdit?.rows ??
@@ -278,11 +287,15 @@ export function ExamAdminPanel({
     }, [pendingWorkspaceId]);
 
     useEffect(() => {
-        if (exam?.status === "published") return;
         const previous = new Date(previousExamStartRef.current).getTime();
         const next = new Date(configuration.starts_at).getTime();
         previousExamStartRef.current = configuration.starts_at;
-        if (!Number.isNaN(previous) && !Number.isNaN(next) && previous !== next) {
+        if (
+            !serverSlots?.length &&
+            Number.isFinite(previous) &&
+            Number.isFinite(next) &&
+            previous !== next
+        ) {
             const delta = next - previous;
             setSlotStart((current) => new Date(Date.parse(current) + delta).toISOString());
             setScheduleEdit(
@@ -299,7 +312,7 @@ export function ExamAdminPanel({
             if (draftSlots.length)
                 setSlotScheduleWarning("Несохранённые слоты сдвинуты вместе с экзаменом.");
         }
-    }, [configuration.starts_at, exam?.status, draftSlots.length]);
+    }, [configuration.starts_at, serverSlots?.length, draftSlots.length]);
 
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -550,10 +563,41 @@ export function ExamAdminPanel({
             setActiveSection("main");
             return;
         }
-        const checkSchedule =
-            Boolean(scheduleEdit) ||
-            publishing ||
-            exam?.configuration.starts_at !== configuration.starts_at;
+        const startChanged = Boolean(
+            settingsBaseline &&
+            Date.parse(settingsBaseline.configuration.starts_at) !== Date.parse(settings.starts_at),
+        );
+        const datesChanged =
+            startChanged ||
+            registrationFields.some(
+                ({ key }) =>
+                    settingsBaseline && settingsBaseline.configuration[key] !== settings[key],
+            );
+        if (datesChanged && scheduleDatesLocked) {
+            toast.error("После начала экзамена сроки изменить нельзя.");
+            setActiveSection("main");
+            return;
+        }
+        if (
+            startChanged &&
+            exam?.status === "published" &&
+            Date.parse(settings.starts_at) <= Date.now()
+        ) {
+            toast.error("Выберите новое время начала экзамена в будущем.");
+            setActiveSection("main");
+            return;
+        }
+        if (
+            startChanged &&
+            serverSlots?.some((slot) => Date.parse(slot.starts_at) < Date.parse(settings.starts_at))
+        ) {
+            toast.error(
+                "Начало экзамена должно быть не позже первого сохранённого слота. Сначала скорректируйте расписание.",
+            );
+            setActiveSection("main");
+            return;
+        }
+        const checkSchedule = Boolean(scheduleEdit) || publishing || startChanged;
         const scheduleError =
             checkSchedule && slotScheduleError(localSlots, configuration.starts_at);
         if (scheduleError) {
@@ -859,11 +903,19 @@ export function ExamAdminPanel({
         }
     };
 
-    const changeSlotAssignment = async (slot: LocalSlot, projectId?: number) => {
+    const changeSlotAssignment = async (
+        slot: LocalSlot,
+        projectId?: number,
+        expected?: Registration,
+    ) => {
         if (!exam || !slot.id || slot.kind === "break" || scheduleEdit || writeInProgress.current)
             return;
         const existing = assignedRegistrationBySlot.get(slot.id);
         setAssignOpenKey(null);
+        if (expected && (existing?.id !== expected.id || existing.version !== expected.version)) {
+            toast.error("Запись команды изменилась. Проверьте слот и повторите замену.");
+            return;
+        }
         if (existing?.started_at || existing?.project_id === projectId) return;
         writeInProgress.current = true;
         setPendingSlotId(slot.id);
@@ -906,14 +958,7 @@ export function ExamAdminPanel({
     };
 
     const startsDate = localDate(configuration.starts_at);
-    // Changing the exam date moves unsaved rows. Saved slots have their own editor.
-    const canChangeExamStart =
-        !saving &&
-        exam?.status !== "published" &&
-        !(
-            exam &&
-            (slotsQuery.isLoading || slotsQuery.isError || (slotsQuery.data?.items.length ?? 0) > 0)
-        );
+    const canChangeExamDates = !saving && !scheduleDatesLocked;
 
     const resetAllSlots = () => {
         setScheduleEdit(null);
@@ -1265,9 +1310,25 @@ export function ExamAdminPanel({
                                                         onSearch={setProjectSearch}
                                                         projects={availableProjects}
                                                         selectedId={project?.id}
-                                                        onSelect={(id) =>
-                                                            void changeSlotAssignment(slot, id)
-                                                        }
+                                                        onSelect={(projectId) => {
+                                                            if (
+                                                                registration?.queue_hold &&
+                                                                registration.project_id !==
+                                                                    projectId
+                                                            ) {
+                                                                setAssignOpenKey(null);
+                                                                setReplacement({
+                                                                    slot,
+                                                                    projectId,
+                                                                    registration,
+                                                                });
+                                                            } else {
+                                                                void changeSlotAssignment(
+                                                                    slot,
+                                                                    projectId,
+                                                                );
+                                                            }
+                                                        }}
                                                     />
                                                 )}
                                             {registration &&
@@ -1555,11 +1616,11 @@ export function ExamAdminPanel({
                                 />
                             </div>
                             <div>
-                                <Label>Дата и время начала *</Label>
+                                <Label htmlFor="exam-start-time">Дата и время начала *</Label>
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
                                     <DatePicker
                                         value={startsDate}
-                                        disabled={!canChangeExamStart}
+                                        disabled={!canChangeExamDates}
                                         onChange={(date) => {
                                             const current = startsDate;
                                             date.setHours(
@@ -1573,8 +1634,9 @@ export function ExamAdminPanel({
                                         className="h-10 min-w-[180px] justify-between rounded-[12px] border border-gray-200 dark:border-app-border px-3 text-[13px] hover:border-gray-300 dark:hover:border-slate-500"
                                     />
                                     <Input
+                                        id="exam-start-time"
                                         type="time"
-                                        disabled={!canChangeExamStart}
+                                        disabled={!canChangeExamDates}
                                         value={startsDate.toTimeString().slice(0, 5)}
                                         onChange={(event) => {
                                             if (!event.target.value) return;
@@ -1593,12 +1655,17 @@ export function ExamAdminPanel({
                                         {visibleError("starts_at")}
                                     </p>
                                 )}
-                                {(exam?.status === "published" ||
-                                    (slotsQuery.data?.items.length ?? 0) > 0) && (
+                                {scheduleDatesLocked ? (
                                     <p className="mt-1 text-[12px] text-app-muted">
-                                        Дату и время начала можно изменить до публикации и
-                                        сохранения слотов.
+                                        После начала экзамена сроки изменить нельзя.
                                     </p>
+                                ) : (
+                                    Boolean(serverSlots?.length) && (
+                                        <p className="mt-1 text-[12px] text-app-muted">
+                                            Новое начало должно быть не позже первого сохранённого
+                                            слота. Сохранённые слоты останутся на прежнее время.
+                                        </p>
+                                    )
                                 )}
                             </div>
                             <fieldset className="grid gap-3 md:col-span-2 sm:grid-cols-2">
@@ -1609,7 +1676,7 @@ export function ExamAdminPanel({
                                     const value = configuration[key];
                                     const date = value ? new Date(value) : null;
                                     const error = visibleError(key);
-                                    const disabled = exam?.status === "published";
+                                    const disabled = !canChangeExamDates;
                                     const change = (next: string | null) => {
                                         update(key, next);
                                         touch(key);
@@ -2113,8 +2180,8 @@ export function ExamAdminPanel({
                                 <p className="font-semibold">Как считается оценка</p>
                                 <div className="mt-2 space-y-1.5">
                                     <p>
-                                        За каждый критерий ставят от 1 до 5 баллов. Чтобы узнать
-                                        максимум за лист, умножьте число критериев на 5.
+                                        Максимум листа — сумма максимальных баллов по критериям. Для
+                                        пяти критериев шкала 1–3 даёт 15 баллов, а шкала 1–5 — 25.
                                     </p>
                                     <p>
                                         Средние баллы комиссии, магистрантов и бакалавров объединяют
@@ -2370,6 +2437,42 @@ export function ExamAdminPanel({
                 </p>
             )}
 
+            <Dialog
+                open={replacement !== null}
+                onOpenChange={(open) => !open && setReplacement(null)}
+            >
+                <DialogContent withDescription className="w-[calc(100%-2rem)]">
+                    <DialogHeader>
+                        <DialogTitle>Заменить команду в слоте?</DialogTitle>
+                        <DialogDescription>
+                            {replacement?.registration.queue_hold === "postponed"
+                                ? "Запись отложенной команды будет отменена."
+                                : "Запись команды с неявкой будет отменена."}{" "}
+                            Выбранная команда займёт её слот.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-wrap justify-end gap-2">
+                        <Button variant="outline" size="hug36" onClick={() => setReplacement(null)}>
+                            Оставить запись
+                        </Button>
+                        <Button
+                            variant="blue"
+                            size="hug36"
+                            onClick={() => {
+                                if (!replacement) return;
+                                setReplacement(null);
+                                void changeSlotAssignment(
+                                    replacement.slot,
+                                    replacement.projectId,
+                                    replacement.registration,
+                                );
+                            }}
+                        >
+                            Подтвердить замену
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
             {settingsStale && (
                 <div
                     role="status"

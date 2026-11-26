@@ -119,17 +119,21 @@ const examErrorMessages: Record<string, string> = {
     attempt_not_postponed: "Эту защиту нельзя возобновить из текущего состояния.",
     attempt_paused: "Сначала снимите защиту с паузы.",
     attempt_postponed: "Эта защита отложена.",
+    queue_revision_conflict: "Очередь изменилась. Проверьте, какая команда выступает следующей.",
     queue_position_conflict: "Это место в очереди занято. Обновите очередь и повторите действие.",
-    slot_schedule_conflict: "Начало экзамена должно быть раньше первого сохранённого слота.",
+    slot_schedule_conflict:
+        "Начало экзамена должно быть не позже первого сохранённого слота. Сначала скорректируйте расписание.",
     attempt_running: "Сейчас уже идёт защита.",
     attempt_finished: "Эта защита уже завершена.",
     questions_not_ready: "Нельзя опубликовать: вопросы экзамена не готовы.",
     published_schedule_locked:
-        "После публикации дату начала, период записи и типы проектов изменить нельзя.",
+        "Сроки можно изменить до начала экзамена, а типы проектов — до публикации.",
+    exam_start_must_be_future: "Выберите новое время начала экзамена в будущем.",
     assessment_window_closed: "Время оценивания истекло.",
     assessment_window_open: "Принять итог можно после закрытия оценивания.",
     assessment_window_missing: "Для этой защиты не открывали оценивание.",
     audience_snapshot_unavailable: "Для этой защиты не сохранён список оценщиков.",
+    exam_not_started: "Сначала начните экзамен.",
     exam_queue_unresolved: "Сначала обработайте все команды в очереди.",
     incomplete_sheet: "Выберите балл по каждому критерию.",
     result_version_conflict: "Итог уже изменился. Проверьте новую редакцию.",
@@ -165,6 +169,8 @@ export const examApi = {
         api.put<Exam>(`${examPath(workspaceId, examId)}/settings`, data),
     publish: (workspaceId: number, examId: number, expected_version: number) =>
         api.post<Exam>(`${examPath(workspaceId, examId)}/publish`, { expected_version }),
+    start: (workspaceId: number, examId: number) =>
+        api.post<Exam>(`${examPath(workspaceId, examId)}/start`),
     complete: (workspaceId: number, examId: number) =>
         api.post<Exam>(`${examPath(workspaceId, examId)}/complete`),
     settings: (workspaceId: number, examId: number) =>
@@ -309,7 +315,13 @@ export const examApi = {
         examId: number,
         registration_id: number,
         expected_version: number,
-    ) => api.post<Attempt>(attemptPath(workspaceId, examId), { registration_id, expected_version }),
+        expected_queue_revision?: number,
+    ) =>
+        api.post<Attempt>(attemptPath(workspaceId, examId), {
+            registration_id,
+            expected_version,
+            expected_queue_revision,
+        }),
     commandAttempt: (
         workspaceId: number,
         examId: number,
@@ -317,10 +329,12 @@ export const examApi = {
         action: "questions" | "pause" | "resume" | "finish" | "postpone" | "restart",
         expected_version: number,
         reason?: string,
+        expected_queue_revision?: number,
     ) =>
         api.post<Attempt>(`${attemptPath(workspaceId, examId)}/${attemptId}/${action}`, {
             expected_version,
             ...(reason ? { reason } : {}),
+            expected_queue_revision,
         }),
 };
 
@@ -368,18 +382,20 @@ export const useProjectTypeQuestions = (workspaceId: number, typeId: number, ena
         enabled: enabled && workspaceId > 0 && typeId > 0,
     });
 
-export const useExams = (workspaceId: number, status?: ExamListStatus) =>
+export const useExams = (workspaceId: number, status?: ExamListStatus, refetchInterval?: number) =>
     useQuery({
         queryKey: queryKeys.exams.list(workspaceId, status),
         queryFn: () => examApi.list(workspaceId, status),
         enabled: workspaceId > 0,
+        refetchInterval,
     });
 
-export const useExam = (workspaceId: number, examId: number) =>
+export const useExam = (workspaceId: number, examId: number, refetchInterval?: number) =>
     useQuery({
         queryKey: queryKeys.exams.detail(workspaceId, examId),
         queryFn: () => examApi.get(workspaceId, examId),
         enabled: workspaceId > 0 && examId > 0,
+        refetchInterval,
     });
 
 export const useExamSettingsRevision = (workspaceId: number, examId: number, version?: number) =>
@@ -421,7 +437,7 @@ export const useExamQueue = (workspaceId: number, examId: number, enabled = true
         queryFn: () => examApi.queue(workspaceId, examId),
         structuralSharing: shareExamQueue,
         enabled: enabled && workspaceId > 0 && examId > 0,
-        refetchInterval: live ? false : 5000,
+        refetchInterval: ({ state }) => (!live || state.data?.eta_stale ? 5000 : false),
     });
 
 export const useCurrentAttempt = (workspaceId: number, examId: number, enabled = true) =>

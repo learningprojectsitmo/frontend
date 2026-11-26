@@ -67,6 +67,15 @@ afterEach(() => {
 });
 
 describe("exam presentation controls", () => {
+    it("explains how to end questions early for a team followed by another team", async () => {
+        await render({
+            team,
+            attempt: { ...attempt, status: "questions" },
+            canGoForward: true,
+        });
+        expect(container.textContent).toContain("Завершить вопросы досрочно");
+    });
+
     it("shows the last defense action in the current presentation card", async () => {
         await render({
             team,

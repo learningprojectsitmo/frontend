@@ -14,7 +14,7 @@ type Message =
           stream_seq: number;
           stale: boolean;
           queue: ExamQueue;
-          exam?: Pick<Exam, "status" | "completed_at" | "archived_at">;
+          exam?: Pick<Exam, "status" | "started_at" | "completed_at" | "archived_at">;
       }
     | { type: "heartbeat"; contract_version: number; stream_seq: number; stale: boolean }
     | { type: "error"; code: string };
@@ -114,6 +114,7 @@ export function useExamLive(workspaceId: number, examId: number, enabled: boolea
                         exam &&
                         message.exam &&
                         (exam.status !== message.exam.status ||
+                            (exam.started_at ?? null) !== (message.exam.started_at ?? null) ||
                             (exam.completed_at ?? null) !== (message.exam.completed_at ?? null) ||
                             (exam.archived_at ?? null) !== (message.exam.archived_at ?? null));
                     if (

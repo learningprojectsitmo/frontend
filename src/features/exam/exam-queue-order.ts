@@ -1,4 +1,4 @@
-import type { QueueItem } from "@/types/exam";
+import type { ExamSlot, QueueItem } from "@/types/exam";
 
 export function getPositionedIds(items: QueueItem[]) {
     return items
@@ -18,6 +18,40 @@ export function applyWaitingOrder(order: number[], waitingIds: number[]) {
     const waiting = new Set(waitingIds);
     let index = 0;
     return order.map((id) => (waiting.has(id) ? waitingIds[index++] : id));
+}
+
+export function interleaveExamBreaks(
+    teams: QueueItem[],
+    slots: ExamSlot[],
+    etaByRegistration: ReadonlyMap<number, { eta_at: string }>,
+) {
+    const breaks = slots
+        .filter((slot) => slot.kind === "break")
+        .map((slot) => ({ slot, start: Date.parse(slot.starts_at) }))
+        .sort((a, b) => a.start - b.start);
+    const rows: (QueueItem | ExamSlot)[] = [];
+    let nextBreak = 0;
+    for (const team of teams) {
+        const actualStart = Date.parse(team.started_at ?? team.attempt?.started_at ?? "");
+        const plannedStart = Date.parse(team.planned_start_at ?? "");
+        const estimatedStart = Date.parse(
+            etaByRegistration.get(team.registration_id)?.eta_at ?? "",
+        );
+        // The live projection compresses schedule gaps. A team's booked slot
+        // still anchors it after the breaks that precede that slot.
+        const start =
+            team.position === null && Number.isFinite(actualStart)
+                ? actualStart
+                : Math.max(
+                      Number.isFinite(plannedStart) ? plannedStart : -Infinity,
+                      Number.isFinite(estimatedStart) ? estimatedStart : -Infinity,
+                  );
+        while (nextBreak < breaks.length && breaks[nextBreak].start <= start) {
+            rows.push(breaks[nextBreak++].slot);
+        }
+        rows.push(team);
+    }
+    return [...rows, ...breaks.slice(nextBreak).map(({ slot }) => slot)];
 }
 
 export function reconcileExamOrder(previous: number[], items: QueueItem[]) {
