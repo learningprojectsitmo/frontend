@@ -233,6 +233,7 @@ function AssessmentContent({
     const [error, setError] = useState<string>();
     const [tooltipContainer, setTooltipContainer] = useState<HTMLDivElement | null>(null);
     const errorId = useId();
+    const criteriaStatusId = useId();
     const sendRequested = useRef(false);
     const [closedByServer, setClosedByServer] = useState(false);
     const dirty = answers.some(
@@ -270,9 +271,21 @@ function AssessmentContent({
                         },
                     };
                 }
-                return { ...current, draft: result };
+                return {
+                    ...current,
+                    draft: result,
+                    // The server will compare this draft with the last submission during refresh.
+                    // Until then, allow sending the changes already saved by this write.
+                    submission: current.submission && {
+                        ...current.submission,
+                        has_unsubmitted_changes: true,
+                    },
+                };
             });
-            return client.invalidateQueries({ queryKey: key });
+            // An in-flight draft write must finish before submit. Its form refresh can run in parallel.
+            const refresh = client.invalidateQueries({ queryKey: key });
+            if ("version" in result) return refresh;
+            void refresh;
         },
         onError: (failure) => {
             if (getExamErrorCode(failure) === "assessment_window_closed") setClosedByServer(true);
@@ -298,6 +311,8 @@ function AssessmentContent({
             old.map((answer) => (answer.question_id === id ? { ...answer, ...patch } : answer)),
         );
     };
+    const missing = answers.filter((answer) => answer.score === null);
+    const firstMissing = missing[0];
     const points = answers.reduce((sum, answer) => sum + (answer.score ?? 0), 0);
     const maximum = form.questions.reduce(
         (sum, question) => sum + Math.max(0, ...question.levels.map((level) => level.score)),
@@ -365,7 +380,12 @@ function AssessmentContent({
                     <Tooltip.Provider delay={100}>
                         <div className="grid gap-6">
                             {form.questions.map((question) => (
-                                <fieldset key={question.id} className="min-w-0">
+                                <fieldset
+                                    key={question.id}
+                                    id={`${criteriaStatusId}-${question.id}`}
+                                    tabIndex={-1}
+                                    className="min-w-0"
+                                >
                                     <legend className="break-words text-[18px] font-medium text-[#0A0A0A] dark:text-app-text">
                                         {question.text}
                                     </legend>
@@ -453,6 +473,29 @@ function AssessmentContent({
                         )}
                         <AssessmentCountdown seconds={remainingSeconds} />
                     </div>
+                    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
+                        <p id={criteriaStatusId} role="status" className="text-app-muted">
+                            {answers.length
+                                ? `Оценено ${answers.length - missing.length} из ${answers.length} критериев`
+                                : "Для этого проекта нет критериев оценивания."}
+                            {firstMissing && ". Выберите балл по каждому критерию."}
+                        </p>
+                        {firstMissing && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    document
+                                        .getElementById(
+                                            `${criteriaStatusId}-${firstMissing.question_id}`,
+                                        )
+                                        ?.focus()
+                                }
+                                className="cursor-pointer font-medium text-app-blue hover:underline dark:text-blue-300"
+                            >
+                                К пропущенному критерию
+                            </button>
+                        )}
+                    </div>
                     {error && (
                         <p
                             id={errorId}
@@ -529,7 +572,7 @@ function AssessmentContent({
                             disabled={
                                 lockFields ||
                                 !answers.length ||
-                                answers.some((answer) => answer.score === null) ||
+                                missing.length > 0 ||
                                 Boolean(
                                     submission &&
                                     !isPending &&
@@ -537,6 +580,7 @@ function AssessmentContent({
                                     !submission.has_unsubmitted_changes,
                                 )
                             }
+                            aria-describedby={criteriaStatusId}
                             onClick={submitAssessment}
                             className="cursor-pointer rounded-lg bg-[#155DFC] px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                         >

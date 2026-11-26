@@ -80,6 +80,7 @@ import {
     formatExamTime,
     getExamStatus,
     getQueueTime,
+    hasExamStarted,
     isAssessmentOpen,
     isExamOver,
     shouldShowExamSchedule,
@@ -97,12 +98,15 @@ import {
     getExamAutoStartState,
     getExamTimer,
     getExamTransitionTimer,
+    readExamAutoStart,
+    writeExamAutoStart,
     type ExamAutoStart,
 } from "../exam-timer";
 import {
     applyWaitingOrder,
     getPositionedIds,
     getWaitingIds,
+    interleaveExamBreaks,
     reconcileExamOrder,
 } from "../exam-queue-order";
 import { ExamRegistrationAssign } from "./exam-registration-assign";
@@ -255,6 +259,39 @@ function queueDropKey(row: QueueItem | ExamSlot) {
     return "registration_id" in row ? `team-${row.registration_id}` : `slot-${row.id}`;
 }
 
+function ExamBreakRow({
+    slot,
+    examStart,
+    editing,
+}: {
+    slot: ExamSlot;
+    examStart: string;
+    editing: boolean;
+}) {
+    return (
+        <tr
+            data-queue-row={queueDropKey(slot)}
+            className="border-b border-gray-100 bg-[#F5F6F8] text-app-muted last:border-0 dark:border-app-border dark:bg-app-ghost"
+        >
+            {editing && <td />}
+            <td className="px-6 py-4 text-[13px]">—</td>
+            <th scope="row" className="px-6 py-4 text-[13px] font-medium">
+                Перерыв
+            </th>
+            <td className="px-6 py-4">—</td>
+            <td className="px-6 py-4">—</td>
+            <td className="whitespace-nowrap px-6 py-4 text-[13px] text-app-text">
+                <time dateTime={slot.starts_at}>
+                    {formatScheduleTime(slot.starts_at, examStart)}
+                </time>
+                {" – "}
+                <time dateTime={slot.ends_at}>{formatScheduleTime(slot.ends_at, examStart)}</time>
+            </td>
+            <td />
+        </tr>
+    );
+}
+
 function ExamDetailView({
     workspaceId,
     examId,
@@ -313,12 +350,15 @@ function ExamDetailView({
     const [savingOrder, setSavingOrder] = useState(false);
     const [draggedTeam, setDraggedTeam] = useState<number | null>(null);
     const [dropTarget, setDropTarget] = useState<string | null>(null);
-    const [examPrepared, setExamPrepared] = useState(false);
-    const [autoStart, setAutoStart] = useState<ExamAutoStart | null>(null);
-    const timerPlayButton = useRef<HTMLButtonElement>(null);
-    useEffect(() => {
-        if (examPrepared) timerPlayButton.current?.focus();
-    }, [examPrepared]);
+    const autoStartKey = `exam-auto-start:${workspaceId}:${examId}`;
+    const [autoStart, setAutoStart] = useState(() => readExamAutoStart(autoStartKey));
+    const saveAutoStart = useCallback(
+        (plan: ExamAutoStart | null) => {
+            writeExamAutoStart(autoStartKey, plan);
+            setAutoStart(plan);
+        },
+        [autoStartKey],
+    );
     const queueHeading = useRef<HTMLHeadingElement>(null);
     useEffect(() => {
         if (hash !== "#presentation-queue" || !dataAvailable) return;
@@ -359,7 +399,14 @@ function ExamDetailView({
         !isExamAccessDenied(queueQuery.error) &&
         exam?.status === "published";
     const serverNow = getQueueTime(queueQuery.data, now, queueQuery.dataUpdatedAt);
-    const booking = useExamSlotBooking(workspaceId, examId, exam, serverNow, showBooking);
+    const booking = useExamSlotBooking(
+        workspaceId,
+        examId,
+        exam,
+        serverNow,
+        showBooking,
+        queueQuery.data,
+    );
     const bookingAction = booking.action;
     const freeSlotCount = booking.available.filter((slot) => slot.is_available).length;
 
@@ -367,17 +414,13 @@ function ExamDetailView({
         () => (isExamAccessDenied(queueQuery.error) ? [] : (queueQuery.data?.items ?? [])),
         [queueQuery.data, queueQuery.error],
     );
-    const hasStarted = queueItems.some((item) => item.attempt || item.started_at);
+    const hasStarted = hasExamStarted(exam, queueQuery.data);
     const showSchedule = Boolean(
         queueQuery.data &&
         exam &&
         shouldShowExamSchedule(exam.configuration.starts_at, serverNow, hasStarted),
     );
-    const slotsQuery = useExamSlots(
-        workspaceId,
-        examId,
-        (showSchedule || isManager || showBooking) && Boolean(exam),
-    );
+    const slotsQuery = useExamSlots(workspaceId, examId, dataAvailable);
     const etaByRegistration = useMemo(
         () => new Map(queueQuery.data?.eta.items.map((item) => [item.registration_id, item])),
         [queueQuery.data?.eta.items],
@@ -462,10 +505,9 @@ function ExamDetailView({
     });
 
     const visibleTeams = new Set(rows.map((item) => item.registration_id));
+    const slots = isExamAccessDenied(slotsQuery.error) ? [] : (slotsQuery.data?.items ?? []);
     const scheduledSlots = showSchedule
-        ? [...(slotsQuery.data?.items ?? [])].sort(
-              (a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at),
-          )
+        ? [...slots].sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
         : [];
     const orderedTeams = visibleIds.flatMap((id) => {
         const item = queueByRegistration.get(id);
@@ -474,9 +516,13 @@ function ExamDetailView({
     // Empty slots keep their places in the schedule while team rows follow the queue.
     let teamIndex = 0;
     const scheduleRows = scheduledSlots.map((slot) =>
-        queueBySlot.has(slot.id) ? (orderedTeams[teamIndex++] ?? slot) : slot,
+        slot.kind !== "break" && queueBySlot.has(slot.id)
+            ? (orderedTeams[teamIndex++] ?? slot)
+            : slot,
     );
-    const allTableRows = [...scheduleRows, ...orderedTeams.slice(teamIndex)];
+    const allTableRows = showSchedule
+        ? [...scheduleRows, ...orderedTeams.slice(teamIndex)]
+        : interleaveExamBreaks(orderedTeams, slots, etaByRegistration);
     let defenseNumber = 0;
     const tableRows = allTableRows
         .map((row) => ({
@@ -484,6 +530,11 @@ function ExamDetailView({
             number: "kind" in row && row.kind === "break" ? "—" : ++defenseNumber,
         }))
         .filter(({ row }) => !("registration_id" in row) || visibleTeams.has(row.registration_id));
+    const hasDefenseRows = tableRows.some(
+        ({ row }) => "registration_id" in row || row.kind !== "break",
+    );
+    const bookingRows = booking.inMode && booking.available.length > 0 ? slots : null;
+    let bookingDefenseNumber = 0;
 
     useLayoutEffect(() => {
         const rows = queueBody.current?.querySelectorAll<HTMLTableRowElement>("[data-queue-row]");
@@ -530,7 +581,23 @@ function ExamDetailView({
         !examOver &&
         !currentTeam &&
         Boolean(followingTeam);
-    const canPrepareExam = canStartDefense && !hasStarted && !examPrepared;
+    const canStartExam = isManager && exam?.status === "published" && !examOver && !hasStarted;
+    const startExam = async () => {
+        if (!canStartExam || mutationLock.current) return;
+        mutationLock.current = true;
+        setAttemptPending(true);
+        try {
+            const started = await examApi.start(workspaceId, examId);
+            queryClient.setQueryData(queryKeys.exams.detail(workspaceId, examId), started);
+            toast.success("Экзамен начался");
+        } catch (error) {
+            toast.error(getExamErrorMessage(error) ?? "Не удалось начать экзамен");
+        } finally {
+            await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
+            setAttemptPending(false);
+        }
+    };
     const presentedTeam =
         currentTeam ?? (exam?.status === "published" && !examOver ? followingTeam : undefined);
     const transition =
@@ -542,10 +609,7 @@ function ExamDetailView({
               )
             : null;
     const canPlay =
-        canStartDefense &&
-        (hasStarted || examPrepared) &&
-        !editing &&
-        (!autoStart || Boolean(transition));
+        canStartDefense && hasStarted && !editing && (!autoStart || Boolean(transition));
     const currentIndex = currentTeam ? stableIds.indexOf(currentTeam.registration_id) : -1;
     const earlierTeams =
         currentIndex > 0
@@ -572,6 +636,7 @@ function ExamDetailView({
         isManager && Boolean(activeAttempt) && (exam?.archived_at || remainingTeams.length === 0);
     const assessmentOpen = queueItems.some((item) => isAssessmentOpen(item, serverNow));
     const canCompleteExam =
+        hasStarted &&
         queueQuery.isSuccess &&
         !currentTeam &&
         remainingTeams.length === 0 &&
@@ -584,7 +649,8 @@ function ExamDetailView({
             ? "Экзамен завершится. Открытые окна оценивания будут действовать до своего срока."
             : "Экзамен завершится. Утвердить итоги команд можно в ведомости.";
     const completeExam = async () => {
-        if (!canCompleteExam || attemptPending) return;
+        if (!canCompleteExam || mutationLock.current) return;
+        mutationLock.current = true;
         setAttemptPending(true);
         try {
             const completed = await examApi.complete(workspaceId, examId);
@@ -594,6 +660,7 @@ function ExamDetailView({
             toast.error(getExamErrorMessage(error) ?? "Не удалось завершить экзамен");
         } finally {
             await invalidateExam(queryClient, workspaceId, examId);
+            mutationLock.current = false;
             setAttemptPending(false);
         }
     };
@@ -922,17 +989,15 @@ function ExamDetailView({
                 );
                 const autoState =
                     plan && queue
-                        ? getExamAutoStartState(plan, items, Date.parse(queue.server_now))
+                        ? getExamAutoStartState(plan, queue, Date.parse(queue.server_now))
                         : undefined;
-                if (plan && autoState === "waiting") {
-                    setAutoStart(plan);
-                    return;
-                }
+                if (plan && autoState === "waiting") return;
                 if (
                     items.some((item) => item.state === "running") ||
                     first?.registration_id !== registrationId ||
                     autoState === "changed"
                 ) {
+                    if (plan) saveAutoStart(null);
                     toast.error(
                         "Очередь изменилась. Проверьте, какая команда выступает следующей.",
                     );
@@ -945,6 +1010,8 @@ function ExamDetailView({
                         first.attempt.id,
                         "restart",
                         first.attempt.version,
+                        undefined,
+                        plan ? queue?.queue_revision : undefined,
                     );
                 } else {
                     await examApi.startAttempt(
@@ -952,10 +1019,12 @@ function ExamDetailView({
                         examId,
                         first.registration_id,
                         first.registration_version,
+                        plan ? queue?.queue_revision : undefined,
                     );
                 }
-                if (!plan) setAutoStart(null);
+                saveAutoStart(null);
             } catch (error) {
+                if (plan) saveAutoStart(null);
                 toast.error(getExamErrorMessage(error) ?? "Не удалось начать выступление команды.");
             } finally {
                 await invalidateExam(queryClient, workspaceId, examId);
@@ -963,17 +1032,31 @@ function ExamDetailView({
                 setAttemptPending(false);
             }
         },
-        [queryClient, workspaceId, examId, refetchQueue],
+        [queryClient, workspaceId, examId, refetchQueue, saveAutoStart],
     );
 
     useEffect(() => {
-        if (!autoStart || attemptPending || registrationPending || savingOrder || editing) return;
-        const state = getExamAutoStartState(autoStart, queueItems, serverNow);
-        if (state === "waiting" && isManager && !examOver) return;
-        setAutoStart(null);
-        if (state === "ready" && canStartDefense) {
+        if (
+            !autoStart ||
+            !isManager ||
+            !exam ||
+            !queueQuery.isFetchedAfterMount ||
+            !queueQuery.data ||
+            !queueQuery.isSuccess ||
+            attemptPending ||
+            registrationPending ||
+            savingOrder ||
+            editing
+        )
+            return;
+        const state = getExamAutoStartState(autoStart, queueQuery.data, serverNow);
+        if (!examOver && state === "waiting") return;
+        if (state === "ready" && canStartDefense && hasStarted) {
             void startDefense(autoStart.registrationId, autoStart);
-        } else if (isManager && !currentTeam && !examOver) {
+            return;
+        }
+        saveAutoStart(null);
+        if (!currentTeam && !examOver) {
             toast.info("Очередь изменилась. Следующее выступление нужно запустить вручную.");
         }
     }, [
@@ -982,13 +1065,18 @@ function ExamDetailView({
         registrationPending,
         savingOrder,
         editing,
-        queueItems,
+        queueQuery.data,
         serverNow,
         isManager,
+        exam,
         examOver,
+        hasStarted,
+        queueQuery.isFetchedAfterMount,
+        queueQuery.isSuccess,
         canStartDefense,
         currentTeam,
         startDefense,
+        saveAutoStart,
     ]);
 
     const switchTeam = async (direction: "previous" | "next") => {
@@ -1043,7 +1131,7 @@ function ExamDetailView({
                 const finishedAt = Date.parse(finished.finished_at ?? "");
                 const transitionMinutes = exam.configuration.transition_minutes;
                 if (Number.isFinite(finishedAt)) {
-                    setAutoStart({
+                    saveAutoStart({
                         finishedAttemptId: finished.id,
                         registrationId: destination.registration_id,
                         transitionMinutes,
@@ -1432,7 +1520,7 @@ function ExamDetailView({
 
                     {(!examOver || canRemove) && (
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            {canPrepareExam && (
+                            {canStartExam && (
                                 <Button
                                     variant="outline"
                                     size="hug36"
@@ -1443,44 +1531,49 @@ function ExamDetailView({
                                         registrationPending ||
                                         attemptPending
                                     }
-                                    onClick={() => setExamPrepared(true)}
+                                    onClick={() => void startExam()}
                                 >
                                     Начать экзамен
                                 </Button>
                             )}
-                            {isManager && exam.status === "published" && !examOver && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="hug36"
-                                            icon={<Square size={16} />}
-                                        >
-                                            Завершить экзамен
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="grid w-[calc(100%-2rem)] max-w-[440px] gap-4">
-                                        <DialogHeader>
-                                            <DialogTitle>Завершить экзамен</DialogTitle>
-                                        </DialogHeader>
-                                        <p className="text-sm text-app-muted">{finishExamNotice}</p>
-                                        <div className="flex justify-end">
-                                            <DialogClose asChild>
-                                                <Button variant="outline" size="hug36">
-                                                    Закрыть
-                                                </Button>
-                                            </DialogClose>
+                            {isManager &&
+                                exam.status === "published" &&
+                                hasStarted &&
+                                !examOver && (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
                                             <Button
+                                                variant="outline"
                                                 size="hug36"
-                                                disabled={!canCompleteExam || attemptPending}
-                                                onClick={() => void completeExam()}
+                                                icon={<Square size={16} />}
                                             >
-                                                Подтвердить завершение
+                                                Завершить экзамен
                                             </Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
+                                        </DialogTrigger>
+                                        <DialogContent className="grid w-[calc(100%-2rem)] max-w-[440px] gap-4">
+                                            <DialogHeader>
+                                                <DialogTitle>Завершить экзамен</DialogTitle>
+                                            </DialogHeader>
+                                            <p className="text-sm text-app-muted">
+                                                {finishExamNotice}
+                                            </p>
+                                            <div className="flex justify-end">
+                                                <DialogClose asChild>
+                                                    <Button variant="outline" size="hug36">
+                                                        Закрыть
+                                                    </Button>
+                                                </DialogClose>
+                                                <Button
+                                                    size="hug36"
+                                                    disabled={!canCompleteExam || attemptPending}
+                                                    onClick={() => void completeExam()}
+                                                >
+                                                    Подтвердить завершение
+                                                </Button>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                             {!examOver && exam.configuration.connection_url && (
                                 <Button
                                     variant="dark"
@@ -1598,7 +1691,6 @@ function ExamDetailView({
                         Boolean(activeAttempt && followingTeam)
                     }
                     canStart={canPlay}
-                    playButtonRef={timerPlayButton}
                     inTransition={transition !== null}
                     autoStarting={Boolean(autoStart) && !activeAttempt}
                     idleLabel={
@@ -1793,12 +1885,14 @@ function ExamDetailView({
                         )}
                     </div>
 
-                    {showSchedule && scheduledSlots.length > 0 && exam.status === "published" && (
-                        <p className="mb-4 text-sm text-app-muted">
-                            К плановому времени начала пустые слоты автоматически исчезнут из
-                            таблицы. Время записи команд сохранится.
-                        </p>
-                    )}
+                    {showSchedule &&
+                        scheduledSlots.some((slot) => slot.kind !== "break") &&
+                        exam.status === "published" && (
+                            <p className="mb-4 text-sm text-app-muted">
+                                К плановому времени начала пустые слоты автоматически исчезнут из
+                                таблицы. Время записи команд сохранится.
+                            </p>
+                        )}
 
                     {showBooking && (
                         <div className="mb-4 space-y-3 text-sm text-app-muted" aria-live="polite">
@@ -1865,9 +1959,11 @@ function ExamDetailView({
                                                     Отменить запись
                                                 </Button>
                                             </>
-                                        ) : registration.started_at ? (
+                                        ) : examOver ? (
+                                            <span>Экзамен завершён. Запись закрыта.</span>
+                                        ) : hasStarted ? (
                                             <span>
-                                                Защита уже началась. Отмена записи недоступна.
+                                                Экзамен уже идёт. Изменить запись может организатор.
                                             </span>
                                         ) : !booking.isOpen ? (
                                             <span>
@@ -2064,7 +2160,7 @@ function ExamDetailView({
                                             Команда
                                         </th>
                                         <th className="h-14 px-6 text-[15px] font-semibold">
-                                            Начало защиты
+                                            Время
                                         </th>
                                         <th
                                             scope="col"
@@ -2075,8 +2171,18 @@ function ExamDetailView({
                                     </tr>
                                 </thead>
                                 <tbody ref={queueBody}>
-                                    {booking.inMode && booking.available.length > 0
-                                        ? booking.available.map((slot, index) => {
+                                    {bookingRows
+                                        ? bookingRows.map((slot) => {
+                                              if (slot.kind === "break") {
+                                                  return (
+                                                      <ExamBreakRow
+                                                          key={queueDropKey(slot)}
+                                                          slot={slot}
+                                                          examStart={exam.configuration.starts_at}
+                                                          editing={editing}
+                                                      />
+                                                  );
+                                              }
                                               const item = queueBySlot.get(slot.id);
                                               const project =
                                                   item && projectById.get(item.project_id);
@@ -2085,8 +2191,9 @@ function ExamDetailView({
                                                       key={slot.id}
                                                       className={`border-b border-gray-100 dark:border-app-border last:border-0 ${item?.state === "running" ? "bg-[#155DFC12] dark:bg-blue-400/15" : item?.state === "finished" ? "bg-[#ECFDF3] dark:bg-emerald-950/35" : slot.is_available ? "bg-green-50 dark:bg-green-950/40" : "text-app-muted"}`}
                                                   >
+                                                      {editing && <td />}
                                                       <td className="px-6 py-4 text-[13px]">
-                                                          {index + 1}
+                                                          {++bookingDefenseNumber}
                                                       </td>
                                                       <td className="px-6 py-4 text-[13px]">
                                                           {slot.is_available ? (
@@ -2140,21 +2247,30 @@ function ExamDetailView({
                                           })
                                         : tableRows.map(({ row, number }) => {
                                               if (!("registration_id" in row)) {
-                                                  const isBreak = row.kind === "break";
+                                                  if (row.kind === "break") {
+                                                      return (
+                                                          <ExamBreakRow
+                                                              key={queueDropKey(row)}
+                                                              slot={row}
+                                                              examStart={
+                                                                  exam.configuration.starts_at
+                                                              }
+                                                              editing={editing}
+                                                          />
+                                                      );
+                                                  }
                                                   return (
                                                       <tr
                                                           key={queueDropKey(row)}
                                                           data-queue-row={queueDropKey(row)}
-                                                          {...(isBreak ? {} : dropEvents(row))}
+                                                          {...dropEvents(row)}
                                                           className={`border-b border-gray-100 bg-[#F5F6F8] text-app-muted last:border-0 dark:border-app-border dark:bg-app-ghost [&>td]:transition-colors motion-reduce:[&>td]:transition-none ${dragStyle(row)}`}
                                                       >
                                                           {editing && <td />}
                                                           <td className="px-6 py-4 text-[13px]">
                                                               {number}
                                                           </td>
-                                                          <td className="px-6 py-4">
-                                                              {isBreak ? "Перерыв" : "—"}
-                                                          </td>
+                                                          <td className="px-6 py-4">—</td>
                                                           <td className="px-6 py-4">—</td>
                                                           <td className="px-6 py-4">—</td>
                                                           <td className="px-6 py-4 text-[13px] text-app-text">
@@ -2162,8 +2278,6 @@ function ExamDetailView({
                                                                   row.starts_at,
                                                                   exam.configuration.starts_at,
                                                               )}
-                                                              {isBreak &&
-                                                                  ` – ${formatScheduleTime(row.ends_at, exam.configuration.starts_at)}`}
                                                           </td>
                                                           <td />
                                                       </tr>
@@ -2632,15 +2746,13 @@ function ExamDetailView({
                                     pending={queueQuery.isFetching}
                                 />
                             )}
-                            {!queueQuery.isError &&
-                                (!booking.inMode || booking.available.length === 0) &&
-                                tableRows.length === 0 && (
-                                    <div className="py-12 text-center text-sm text-app-muted">
-                                        {queueQuery.isLoading
-                                            ? "Загружаем список команд…"
-                                            : "Команды не найдены"}
-                                    </div>
-                                )}
+                            {!queueQuery.isError && !bookingRows && !hasDefenseRows && (
+                                <div className="py-12 text-center text-sm text-app-muted">
+                                    {queueQuery.isLoading
+                                        ? "Загружаем список команд…"
+                                        : "Команды не найдены"}
+                                </div>
+                            )}
                         </Tooltip.Provider>
                     </div>
                 </section>

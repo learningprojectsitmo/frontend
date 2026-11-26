@@ -124,6 +124,73 @@ describe("assessment window", () => {
         },
     );
 
+    it("explains why a partial draft cannot be sent and enables sending after the last score", async () => {
+        const questions = Array.from({ length: 5 }, (_, index) => ({
+            ...form.questions[0],
+            id: index + 1,
+            text: `Критерий ${index + 1}`,
+            levels: [
+                { score: 4 as const, description: "" },
+                { score: 5 as const, description: "" },
+            ],
+        }));
+        const draftAnswers = questions.slice(0, 2).map(({ id }) => ({
+            question_id: id,
+            score: 4,
+            comment: null,
+        }));
+        const completed = questions.map(({ id }) => ({
+            question_id: id,
+            score: id <= 2 ? 4 : 5,
+            comment: null,
+        }));
+        vi.mocked(examGradingApi.form).mockResolvedValue({
+            ...form,
+            questions,
+            draft: { answers: draftAnswers, updated_at: closesAt },
+        });
+        const submit = vi.spyOn(examGradingApi, "submit").mockResolvedValue({
+            version: 1,
+            submitted_at: closesAt,
+            total: 23,
+            answers: completed,
+        });
+        await render(assessment(18));
+        await click("Оценить");
+
+        const dialog = document.querySelector('[role="dialog"]')!;
+        const send = [...dialog.querySelectorAll("button")].find(
+            (button) => button.textContent === "Отправить оценку",
+        )!;
+        expect(send.disabled).toBe(true);
+        expect(dialog.textContent).toContain("8 из 25");
+        expect(dialog.textContent).toContain("Оценено 2 из 5 критериев");
+        await click("К пропущенному критерию");
+        expect(document.activeElement?.querySelector("legend")?.textContent).toContain(
+            "Критерий 3",
+        );
+
+        const criteria = Array.from(dialog.querySelectorAll("fieldset"));
+        for (const criterion of criteria.slice(2)) {
+            const highest = [...criterion.querySelectorAll("button")].find(
+                (button) => button.textContent === "5",
+            )!;
+            await act(async () => highest.click());
+        }
+
+        expect(send.disabled).toBe(false);
+        expect(dialog.textContent).toContain("Оценено 5 из 5 критериев");
+        await click("Отправить оценку");
+        await vi.waitFor(() =>
+            expect(submit).toHaveBeenCalledExactlyOnceWith(
+                target.workspaceId,
+                target.examId,
+                target.attemptId,
+                completed,
+            ),
+        );
+    });
+
     it("replaces criteria with the closing message when time runs out", async () => {
         await render(assessment(22));
         await click("Оценить");
@@ -239,6 +306,73 @@ describe("assessment window", () => {
             finalAnswers,
         );
     });
+
+    it.each([
+        { previousVersion: 0, button: "Отправить оценку" },
+        { previousVersion: 1, button: "Отправить правки" },
+    ])(
+        "sends via «$button» without waiting for a draft form refresh",
+        async ({ previousVersion, button }) => {
+            let resolveRefresh: (form: AssessmentForm) => void = () => {};
+            const initial = {
+                ...form,
+                submission: previousVersion
+                    ? {
+                          version: previousVersion,
+                          submitted_at: closesAt,
+                          has_unsubmitted_changes: false,
+                      }
+                    : null,
+            };
+            const answers = [{ ...form.draft.answers[0], comment: "Оценка перед закрытием" }];
+            const latest = {
+                version: previousVersion + 1,
+                submitted_at: closesAt,
+                has_unsubmitted_changes: false,
+            };
+            vi.mocked(examGradingApi.form)
+                .mockResolvedValueOnce(initial)
+                .mockImplementationOnce(
+                    () =>
+                        new Promise((resolve) => {
+                            resolveRefresh = resolve;
+                        }),
+                )
+                .mockResolvedValue({
+                    ...initial,
+                    draft: { answers, updated_at: closesAt },
+                    submission: latest,
+                });
+            const save = vi
+                .spyOn(examGradingApi, "draft")
+                .mockResolvedValue({ answers, updated_at: closesAt });
+            const submit = vi.spyOn(examGradingApi, "submit").mockResolvedValue({
+                ...latest,
+                total: 5,
+                answers,
+            });
+            await render(assessment(5));
+            await click("Оценить");
+            await act(async () => write(document.querySelector("textarea")!, answers[0].comment));
+            await act(async () => {
+                await vi.waitFor(() => expect(save).toHaveBeenCalledOnce(), { timeout: 1500 });
+                await vi.waitFor(() => expect(examGradingApi.form).toHaveBeenCalledTimes(2));
+            });
+
+            try {
+                await click(button);
+                await act(async () => {
+                    await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce());
+                });
+            } finally {
+                await act(async () => resolveRefresh(initial));
+            }
+            await vi.waitFor(async () => {
+                await act(async () => {});
+                expect(document.body.textContent).toContain("Оценка отправлена");
+            });
+        },
+    );
 
     it("allows corrections but disables sending the same grade again", async () => {
         const submitted = {

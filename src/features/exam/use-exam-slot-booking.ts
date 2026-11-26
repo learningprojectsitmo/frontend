@@ -21,7 +21,7 @@ import {
 } from "@/lib/exams";
 import { getCreatedProjects, getProject } from "@/lib/projects";
 import { queryKeys } from "@/lib/query-keys";
-import type { Exam, ExamSlot, Registration } from "@/types/exam";
+import type { Exam, ExamQueue, ExamSlot, Registration } from "@/types/exam";
 import { isExamRegistrationOpen } from "./exam-display";
 
 type BookingAction =
@@ -34,6 +34,7 @@ export function useExamSlotBooking(
     exam: Exam | undefined,
     now: number,
     enabled: boolean,
+    queue?: ExamQueue,
 ) {
     const user = useUser();
     const client = useQueryClient();
@@ -56,7 +57,7 @@ export function useExamSlotBooking(
     });
 
     const exams = useExams(enabled ? workspaceId : 0, "published");
-    const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now));
+    const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now, queue));
     const otherRegistrations = useQueries({
         queries: (enabled && isOpen ? (exams.data?.items ?? []) : [])
             .filter((item) => item.id !== examId)

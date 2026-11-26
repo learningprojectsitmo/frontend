@@ -39,7 +39,10 @@ vi.mock("@/lib/projects", () => ({
         },
     }),
 }));
-vi.mock("@/components/ui/date-picker", () => ({ DatePicker: () => null }));
+vi.mock("@/components/ui/date-picker", () => ({
+    DatePicker: () => null,
+    DatePickerClearButton: () => null,
+}));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() } }));
 
 const startsAt = new Date(2099, 0, 1, 10).toISOString();
@@ -230,6 +233,62 @@ afterEach(() => {
 });
 
 describe("exam form", () => {
+    const published = {
+        ...exam,
+        status: "published" as const,
+        published_at: new Date(2098, 11, 28).toISOString(),
+        configuration: {
+            ...exam.configuration,
+            registration_opens_at: new Date(2098, 11, 29, 9).toISOString(),
+            registration_closes_at: new Date(2098, 11, 31, 8).toISOString(),
+        },
+    };
+
+    it("saves a revised start and registration window for a published exam without rewriting a saved slot", async () => {
+        const revised = {
+            ...published,
+            current_settings_version: 4,
+            configuration: {
+                ...published.configuration,
+                starts_at: new Date(2099, 0, 1, 9, 45).toISOString(),
+                registration_opens_at: new Date(2098, 11, 29, 9, 30).toISOString(),
+                registration_closes_at: new Date(2098, 11, 31, 10, 0).toISOString(),
+            },
+        };
+        vi.mocked(examApi.slots).mockResolvedValue({ items: [slot], has_more: false });
+        const replace = vi.spyOn(examApi, "replaceSettings").mockResolvedValue(revised);
+        const replaceSlots = vi.spyOn(examApi, "replaceSlots");
+        await render(published);
+        expect(
+            [...container.querySelectorAll<HTMLInputElement>("input[type=time]")]
+                .slice(0, 3)
+                .map((input) => input.disabled),
+        ).toEqual([false, false, false]);
+
+        fill("input[type=time]", "09:45");
+        fill("#registration_opens_at", "09:30");
+        fill("#registration_closes_at", "10:00");
+        fill('[aria-label="Причина изменения"]', "Продлили запись");
+        await click("Сохранить");
+
+        expect(replace).toHaveBeenCalledWith(1, 2, {
+            expected_version: 3,
+            reason: "Продлили запись",
+            configuration: revised.configuration,
+        });
+        expect(replaceSlots).not.toHaveBeenCalled();
+    });
+
+    it("locks all scheduling fields as soon as the exam is started, even before the scheduled time", async () => {
+        await render({ ...published, started_at: new Date().toISOString() });
+        expect(
+            [...container.querySelectorAll<HTMLInputElement>("input[type=time]")]
+                .slice(0, 3)
+                .map((input) => input.disabled),
+        ).toEqual([true, true, true]);
+        expect(container.textContent).toContain("После начала экзамена сроки изменить нельзя.");
+    });
+
     it("starts with empty fields on every visit, even with an old local draft", async () => {
         localStorage.setItem("eduflow:exam-draft:1:new", JSON.stringify(exam.configuration));
         await render();
@@ -325,7 +384,7 @@ describe("exam form", () => {
         expect(
             document.querySelector('[role="dialog"]')?.querySelectorAll("tbody tr"),
         ).toHaveLength(3);
-        await click("Close");
+        await click("Закрыть");
         expect(container.textContent).toContain("Окончание: 10:40");
         await click("Сохранить черновик");
         expect(create).toHaveBeenCalledWith(1, saved.configuration);
@@ -615,11 +674,58 @@ describe("exam form", () => {
         await click("Убрать");
         expect(cancel).toHaveBeenCalledWith(1, 2, 4, 7, "Команда снята со слота");
         expect(dialog?.textContent).not.toContain("Первая команда");
-        await click("Close");
+        await click("Закрыть");
         expect(container.querySelector("table")).toBeTruthy();
         expect(container.textContent).not.toContain("Первая команда");
         expect(container.textContent).toContain("Назначить");
     });
+    it.each(["postponed", "no_show"] as const)(
+        "confirms replacement and cancellation of a team on hold (%s)",
+        async (queue_hold) => {
+            const held = { ...registration, queue_hold };
+            vi.mocked(examApi.slots).mockResolvedValue({ items: [slot], has_more: false });
+            vi.mocked(examApi.registrations).mockResolvedValue({
+                items: [held],
+                limit: 100,
+                offset: 0,
+                has_more: false,
+            });
+            const replace = vi
+                .spyOn(examApi, "replaceRegistration")
+                .mockResolvedValue(registration);
+            await render({ ...exam, status: "published" });
+            await click("Очередь выступлений");
+            await click("Заменить");
+            await click("Вторая команда");
+            expect(replace).not.toHaveBeenCalled();
+            expect(document.querySelector("[role=dialog]")?.textContent).toContain(
+                "будет отменена",
+            );
+            const confirm = (label: string) =>
+                act(async () => {
+                    [...document.querySelectorAll<HTMLButtonElement>("[role=dialog] button")]
+                        .find((button) => button.textContent === label)
+                        ?.click();
+                });
+            await confirm("Оставить запись");
+            expect(replace).not.toHaveBeenCalled();
+            await click("Заменить");
+            await click("Вторая команда");
+            await confirm("Подтвердить замену");
+            expect(replace).toHaveBeenCalledExactlyOnceWith(1, 2, held, 102, {
+                starts_at: slot.starts_at,
+                ends_at: slot.ends_at,
+            });
+        },
+    );
+
+    it("explains the maximum of both assessment scales", async () => {
+        await render(exam);
+        await click("Оценивание");
+        expect(container.textContent).toContain("шкала 1–3 даёт 15");
+        expect(container.textContent).toContain("шкала 1–5 — 25");
+    });
+
     it("keeps the original assignment when the atomic replacement fails", async () => {
         const published = { ...exam, status: "published" as const };
         client.setQueryData(queryKeys.exams.slots(1, 2), { items: [slot], has_more: false });

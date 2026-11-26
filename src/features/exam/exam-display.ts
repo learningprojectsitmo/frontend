@@ -39,6 +39,16 @@ export function shouldShowExamSchedule(startsAt: string, serverNow: number, hasS
     return !hasStarted && serverNow < Date.parse(startsAt);
 }
 
+export function hasExamStarted(exam: Exam | undefined, queue?: ExamQueue) {
+    return Boolean(
+        exam?.started_at ||
+        queue?.started_at ||
+        queue?.items.some(
+            (item) => item.state === "running" || item.started_at || item.attempt?.started_at,
+        ),
+    );
+}
+
 export function getExamStatus(
     exam: Exam,
     queue: ExamQueue | undefined,
@@ -49,9 +59,8 @@ export function getExamStatus(
 
     if (exam.completed_at || exam.archived_at) return "finished";
 
-    const items = queue?.items ?? [];
     const serverNow = receivedAt === undefined ? now : getQueueTime(queue, now, receivedAt);
-    if (items.some((item) => item.state === "running" || item.attempt?.started_at)) {
+    if (hasExamStarted(exam, queue)) {
         return "running";
     }
     const startsAt = Date.parse(exam.configuration.starts_at);
@@ -73,7 +82,7 @@ export const statusMeta: Record<ExamStatus, { label: string; className: string }
     },
     soon: { label: "Скоро", className: "bg-app-badge-amber text-app-badge-amber-fg" },
     running: {
-        label: "Идёт",
+        label: "В процессе",
         className: "bg-[--status-completed-bg] text-green-800 dark:text-green-300",
     },
     draft: {
@@ -146,7 +155,10 @@ export function getExamRegistrationWindow(exam: Exam) {
                 ? Date.parse(exam.configuration.registration_opens_at)
                 : -Infinity,
         ),
-        closes: getRegistrationDeadline(exam.configuration),
+        closes: Math.min(
+            getRegistrationDeadline(exam.configuration),
+            exam.started_at ? Date.parse(exam.started_at) : Infinity,
+        ),
     };
 }
 
@@ -157,12 +169,13 @@ export function formatExamRegistrationWindow(exam: Exam) {
     return `Запись с ${formatExamDate(new Date(opens).toISOString())} до ${formatExamDate(new Date(closes).toISOString())}.`;
 }
 
-export function isExamRegistrationOpen(exam: Exam, now: number) {
+export function isExamRegistrationOpen(exam: Exam, now: number, queue?: ExamQueue) {
     const { opens, closes } = getExamRegistrationWindow(exam);
     return (
         exam.status === "published" &&
         !exam.completed_at &&
         !exam.archived_at &&
+        !hasExamStarted(exam, queue) &&
         opens <= now &&
         now < closes
     );

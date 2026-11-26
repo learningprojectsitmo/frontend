@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { isAxiosError } from "axios";
 import { Tooltip } from "@base-ui/react/tooltip";
 import {
@@ -32,13 +32,13 @@ import { formatExamDate } from "../exam-display";
 import { getExamProjectLeader, useExamProjects } from "../use-exam-projects";
 
 const states = { undecided: "На утверждении", accepted: "Утверждён", published: "Опубликован" };
-const scoreText = (score?: string | number | null) =>
-    score == null ? "—" : Number(score).toFixed(2);
 const tooltipRoles = ["member", "manager", "teacher"] as const;
-const tooltipScore = new Intl.NumberFormat("ru-RU", {
+const scoreFormat = new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
 });
+const scoreText = (score?: string | number | null) =>
+    score == null ? "—" : scoreFormat.format(Number(score));
 const tooltipWeight = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 const fieldClass = "rounded-lg border border-app-border bg-app-surface p-2 text-sm text-app-text";
 
@@ -132,7 +132,7 @@ export function ExamScore({
                                             <span className="mb-0.5 block text-[13px] font-semibold leading-4 text-[#0A0A0A] dark:text-app-text">
                                                 {group?.average == null
                                                     ? "—"
-                                                    : tooltipScore.format(Number(group.average))}
+                                                    : scoreText(group.average)}
                                             </span>
                                             <span className="block text-[11px] leading-4 text-[#4A5565] dark:text-slate-300">
                                                 {roleTitles[role]}
@@ -528,6 +528,11 @@ export function ExamResultDialog({
     const client = useQueryClient();
     const [reason, setReason] = useState("");
     const [manual, setManual] = useState("");
+    const [decisionKind, setDecisionKind] = useState<"calculated" | "manual">("calculated");
+    const decisionKindId = useId();
+    const reasonId = useId();
+    const reasonHintId = `${reasonId}-hint`;
+    const participationId = useId();
     const result = useQuery({
         queryKey: [...prefix, "result", attemptId],
         queryFn: () => examGradingApi.result(workspaceId, examId, attemptId),
@@ -559,7 +564,7 @@ export function ExamResultDialog({
             examGradingApi.decide(workspaceId, examId, attemptId, action, {
                 expected_version: version,
                 ...(action !== "publish" && reason.trim() ? { reason: reason.trim() } : {}),
-                ...(action === "manual" ? { final_score: manual.replace(",", ".") } : {}),
+                ...(action === "manual" ? { final_score: manual.trim().replace(",", ".") } : {}),
             }),
         onSuccess: async () => {
             setReason("");
@@ -580,13 +585,15 @@ export function ExamResultDialog({
         !windowOpen &&
         !mutation.isPending &&
         Boolean(preliminary);
-    const numeric = manual.replace(",", ".");
-    const canManual =
-        canDecide &&
-        Boolean(reason.trim()) &&
-        /^\d+(?:\.\d{1,2})?$/.test(numeric) &&
-        Number(numeric) <= max;
+    const calculatedScore = preliminary?.score;
+    const isManual = calculatedScore == null || decisionKind === "manual";
+    const reasonRequired = isManual || version > 0;
+    const numeric = manual.trim().replace(",", ".");
+    const validManual = /^\d+(?:\.\d{1,2})?$/.test(numeric) && Number(numeric) <= max;
+    const canSave =
+        canDecide && (!reasonRequired || Boolean(reason.trim())) && (!isManual || validManual);
     const participants = participation.isSuccess ? participation.data : null;
+    const sheetMax = preliminary?.snapshot.sheet_max ?? edition?.snapshot.sheet_max;
 
     return (
         <Dialog
@@ -610,26 +617,47 @@ export function ExamResultDialog({
                         {result.isError && <p role="alert">{getGradingError(result.error)}</p>}
                         {result.isPending && <p role="status">Загружаем результаты…</p>}
                         <div className="grid grid-cols-2 gap-3 rounded-xl bg-app-ghost p-4">
-                            <span>
-                                Расчётный балл{" "}
-                                <strong className="block text-xl">
-                                    {scoreText(preliminary?.score)}
-                                </strong>
-                            </span>
-                            <span>
-                                Принятый итог{" "}
-                                <strong className="block text-xl">
-                                    {scoreText(edition?.final_score)}
-                                </strong>
-                            </span>
-                            {preliminary && (
-                                <span className="text-app-muted">Максимум {scoreText(max)}</span>
-                            )}
-                            {edition && (
-                                <span className="text-app-muted">
-                                    Редакция {version} ·{" "}
-                                    {edition.published_at ? "Опубликован" : "Принят"}
-                                </span>
+                            <div>
+                                <h3>Расчётный балл</h3>
+                                <p className="tabular-nums">
+                                    <strong className="text-xl">
+                                        {scoreText(calculatedScore)}
+                                    </strong>
+                                    {preliminary && (
+                                        <span className="text-app-muted"> из {scoreText(max)}</span>
+                                    )}
+                                </p>
+                            </div>
+                            <div>
+                                <h3>Утверждённый итог</h3>
+                                <p className="tabular-nums">
+                                    <strong className="text-xl">
+                                        {scoreText(edition?.final_score)}
+                                    </strong>
+                                    {edition && (
+                                        <span className="text-app-muted">
+                                            {" "}
+                                            из {scoreText(edition.snapshot.max_score)} ·{" "}
+                                            {edition.kind === "manual"
+                                                ? "Установлен вручную"
+                                                : "По расчёту"}
+                                        </span>
+                                    )}
+                                </p>
+                                {edition && (
+                                    <p className="text-app-muted">
+                                        Редакция {version} ·{" "}
+                                        {edition.published_at ? "Опубликован" : "Принят"}
+                                    </p>
+                                )}
+                            </div>
+                            {edition?.reason && (
+                                <div className="col-span-2 min-w-0">
+                                    <h3 className="font-medium">Причина решения</h3>
+                                    <p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-app-muted">
+                                        {edition.reason}
+                                    </p>
+                                </div>
                             )}
                             {preliminary && (
                                 <div className="col-span-2 border-t border-app-border pt-3">
@@ -650,7 +678,7 @@ export function ExamResultDialog({
                                                     <dd className="font-semibold tabular-nums">
                                                         {group?.average == null
                                                             ? "Нет оценок"
-                                                            : `${tooltipScore.format(Number(group.average))} / ${preliminary.snapshot.sheet_max}`}
+                                                            : `${scoreText(group.average)} / ${preliminary.snapshot.sheet_max}`}
                                                     </dd>
                                                     {group && (
                                                         <dd className="text-xs text-app-muted">
@@ -672,46 +700,105 @@ export function ExamResultDialog({
                             <p>Принять итог можно после закрытия оценивания.</p>
                         ) : (
                             result.isSuccess && (
-                                <div className="grid gap-2">
-                                    <label className="grid gap-1">
-                                        Причина решения
-                                        <textarea
-                                            value={reason}
-                                            maxLength={1000}
-                                            onChange={(event) => setReason(event.target.value)}
-                                            className={fieldClass}
-                                        />
-                                    </label>
-                                    <label className="grid gap-1">
-                                        Ручной балл
-                                        <input
-                                            inputMode="decimal"
-                                            value={manual}
-                                            onChange={(event) => setManual(event.target.value)}
-                                            className={fieldClass}
-                                        />
-                                    </label>
+                                <div className="grid gap-3">
+                                    {preliminary && (
+                                        <>
+                                            <fieldset
+                                                className="flex flex-wrap gap-x-4 gap-y-2"
+                                                disabled={mutation.isPending}
+                                            >
+                                                <legend className="mb-2 font-medium">
+                                                    Способ утверждения итога
+                                                </legend>
+                                                {calculatedScore != null && (
+                                                    <label className="flex items-center gap-2">
+                                                        <input
+                                                            type="radio"
+                                                            name={decisionKindId}
+                                                            value="calculated"
+                                                            checked={!isManual}
+                                                            onChange={() =>
+                                                                setDecisionKind("calculated")
+                                                            }
+                                                        />
+                                                        По расчёту
+                                                    </label>
+                                                )}
+                                                <label className="flex items-center gap-2">
+                                                    <input
+                                                        type="radio"
+                                                        name={decisionKindId}
+                                                        value="manual"
+                                                        checked={isManual}
+                                                        onChange={() => setDecisionKind("manual")}
+                                                    />
+                                                    Вручную
+                                                </label>
+                                            </fieldset>
+                                            {isManual && (
+                                                <label className="grid gap-1">
+                                                    Ручной балл от 0 до {scoreText(max)}
+                                                    <input
+                                                        inputMode="decimal"
+                                                        value={manual}
+                                                        disabled={mutation.isPending}
+                                                        aria-invalid={Boolean(
+                                                            manual && !validManual,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            setManual(event.target.value)
+                                                        }
+                                                        className={fieldClass}
+                                                    />
+                                                </label>
+                                            )}
+                                            <div className="grid gap-1">
+                                                <label htmlFor={reasonId}>
+                                                    {isManual
+                                                        ? "Причина решения (обязательно)"
+                                                        : reasonRequired
+                                                          ? "Укажите причину решения"
+                                                          : "Причина решения (необязательно)"}
+                                                </label>
+                                                {isManual && (
+                                                    <p id={reasonHintId} className="text-app-muted">
+                                                        Укажите причину выставления оценки вручную
+                                                    </p>
+                                                )}
+                                                <textarea
+                                                    id={reasonId}
+                                                    aria-describedby={
+                                                        isManual ? reasonHintId : undefined
+                                                    }
+                                                    value={reason}
+                                                    required={reasonRequired}
+                                                    disabled={mutation.isPending}
+                                                    maxLength={1000}
+                                                    onChange={(event) =>
+                                                        setReason(event.target.value)
+                                                    }
+                                                    className={fieldClass}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                     <div className="flex flex-wrap gap-2">
-                                        <Button
-                                            variant="blue"
-                                            size="hug36"
-                                            disabled={
-                                                !canDecide ||
-                                                preliminary?.score == null ||
-                                                (version > 0 && !reason.trim())
-                                            }
-                                            onClick={() => mutation.mutate("accept")}
-                                        >
-                                            Утвердить расчёт
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="hug36"
-                                            disabled={!canManual}
-                                            onClick={() => mutation.mutate("manual")}
-                                        >
-                                            Установить вручную
-                                        </Button>
+                                        {preliminary && (
+                                            <Button
+                                                variant="blue"
+                                                size="hug36"
+                                                disabled={!canSave}
+                                                onClick={() =>
+                                                    mutation.mutate(isManual ? "manual" : "accept")
+                                                }
+                                            >
+                                                {isManual
+                                                    ? validManual
+                                                        ? `Сохранить итог ${scoreText(numeric)}`
+                                                        : "Сохранить ручной итог"
+                                                    : `Утвердить расчёт ${scoreText(calculatedScore)}`}
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="outline"
                                             size="hug36"
@@ -753,10 +840,13 @@ export function ExamResultDialog({
                                 </ul>
                             )}
                         </details>
-                        <details className="rounded-lg border border-app-border p-3">
-                            <summary className="cursor-pointer font-medium">
-                                Участие в оценивании
-                            </summary>
+                        <section
+                            className="rounded-lg border border-app-border p-3"
+                            aria-labelledby={participationId}
+                        >
+                            <h3 id={participationId} className="font-medium">
+                                Баллы проверяющих
+                            </h3>
                             {participation.isError ? (
                                 <p>{getGradingError(participation.error)}</p>
                             ) : participants ? (
@@ -773,24 +863,46 @@ export function ExamResultDialog({
                                     <ul className="mt-2 divide-y divide-app-border">
                                         {participants.items.map((row) => (
                                             <li key={row.user_id} className="py-2">
-                                                {row.name} · {roleTitles[row.role]} ·{" "}
-                                                {row.status === "excluded"
-                                                    ? row.exclusion_reason ===
-                                                      "manager_of_defending_team"
-                                                        ? "Исключён: руководитель команды"
-                                                        : "Исключён: участник команды"
-                                                    : row.submission
-                                                      ? `Отправил ${row.submission.total} баллов · ${formatExamDate(row.submission.submitted_at)}`
-                                                      : "Не отправил"}
+                                                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                                                    <div className="min-w-0 [overflow-wrap:anywhere]">
+                                                        <p className="font-medium">{row.name}</p>
+                                                        <p className="text-xs text-app-muted">
+                                                            {roleTitles[row.role]}
+                                                        </p>
+                                                    </div>
+                                                    {row.submission ? (
+                                                        <strong className="whitespace-nowrap tabular-nums">
+                                                            {row.submission.total}
+                                                            {sheetMax
+                                                                ? ` из ${sheetMax}`
+                                                                : " баллов"}
+                                                        </strong>
+                                                    ) : (
+                                                        <span className="text-xs text-app-muted">
+                                                            {row.status === "excluded"
+                                                                ? row.exclusion_reason ===
+                                                                  "manager_of_defending_team"
+                                                                    ? "Исключён · руководитель команды"
+                                                                    : "Исключён · участник команды"
+                                                                : "Оценка не отправлена"}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {row.submission && (
-                                                    <details className="mt-1 text-app-muted">
+                                                    <details className="mt-1 text-xs text-app-muted">
                                                         <summary className="cursor-pointer">
-                                                            Последняя отправленная оценка
+                                                            Отправленная оценка ·{" "}
+                                                            {formatExamDate(
+                                                                row.submission.submitted_at,
+                                                            )}
                                                         </summary>
-                                                        <ol className="list-decimal pl-5">
+                                                        <ol className="mt-1 list-decimal pl-5">
                                                             {row.submission.answers.map(
                                                                 (answer) => (
-                                                                    <li key={answer.question_id}>
+                                                                    <li
+                                                                        key={answer.question_id}
+                                                                        className="[overflow-wrap:anywhere]"
+                                                                    >
                                                                         {answer.score} баллов
                                                                         {answer.comment
                                                                             ? ` · ${answer.comment}`
@@ -808,7 +920,7 @@ export function ExamResultDialog({
                             ) : (
                                 <p>Загружаем участие…</p>
                             )}
-                        </details>
+                        </section>
                     </div>
                 )}
             </DialogContent>

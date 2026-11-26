@@ -117,7 +117,7 @@ async function render(isTeamMember = true) {
 }
 
 describe("project exam blocks", () => {
-    it("switches from the countdown to the exam link at the start", async () => {
+    it("switches from the countdown to waiting for the organizer at the planned time", async () => {
         await render();
         expect(container.textContent).toContain("00:00:02");
         expect(container.querySelector("h2 a")).toBeNull();
@@ -127,9 +127,22 @@ describe("project exam blocks", () => {
             await vi.advanceTimersByTimeAsync(2_000);
         });
 
-        expect(container.textContent).toContain("Экзамен идёт");
-        expect(container.querySelector("h2 a")?.textContent).toBe("Экзамен идёт");
+        expect(container.textContent).toContain("Ожидается начало экзамена");
+        expect(container.querySelector("h2 a")?.textContent).toBe("Ожидается начало экзамена");
         expect(container.querySelector('a[href*="examId=2"]')).toBeTruthy();
+    });
+
+    it("shows the exam in progress when its actual start arrived ahead of schedule", async () => {
+        const startedExam: Exam = {
+            ...exam,
+            started_at: new Date(Date.parse(start) - 3000).toISOString(),
+        };
+        vi.mocked(useExams).mockReturnValue({ data: { items: [startedExam] } } as ReturnType<
+            typeof useExams
+        >);
+        await render();
+        expect(container.querySelector("h2 a")?.textContent).toBe("Экзамен идёт");
+        expect(container.textContent).not.toContain("Запишитесь на экзамен");
     });
 
     it("requires a free slot before submitting the team registration", async () => {

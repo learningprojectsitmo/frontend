@@ -37,12 +37,14 @@ export function ExamProjectSelect({
                         type="button"
                         variant="outline"
                         size="hug36"
-                        className="max-w-full justify-start"
+                        className="w-full min-w-0 max-w-full justify-start"
                     />
                 }
                 disabled={disabled}
             >
-                <span className="truncate">{label}</span>
+                <span className="min-w-0 truncate" title={label}>
+                    {label}
+                </span>
             </Popover.Trigger>
             <Popover.Portal container={container}>
                 <Popover.Positioner
@@ -83,9 +85,11 @@ export function ExamProjectSelect({
                                         className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-app-ghost"
                                         onClick={() => onSelect(project.id)}
                                     >
-                                        <span>{project.name}</span>
+                                        <span className="min-w-0 [overflow-wrap:anywhere]">
+                                            {project.name}
+                                        </span>
                                         {project.id === selectedId && (
-                                            <span className="text-[11px] text-app-muted">
+                                            <span className="shrink-0 text-[11px] text-app-muted">
                                                 выбрана
                                             </span>
                                         )}

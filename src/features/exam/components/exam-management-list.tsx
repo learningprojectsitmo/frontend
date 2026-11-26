@@ -1,9 +1,8 @@
 import { ExamErrorState } from "@/features/exam/components/exam-error-state";
 import { queryKeys } from "@/lib/query-keys";
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useQueries } from "@tanstack/react-query";
-import { Link } from "react-router";
 import { Ellipsis, List, Plus, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import { Tabs } from "@/components/ui/tabs/tabs";
 import { paths } from "@/config/paths";
 import { useUser } from "@/lib/auth";
 import { examApi, useExams } from "@/lib/exams";
-import type { Exam, ExamListStatus } from "@/types/exam";
+import type { Exam } from "@/types/exam";
 
 import { formatExamDate } from "../exam-display";
 import { ExamRemovalDialog, examRemovalLabel } from "./exam-removal-dialog";
@@ -36,7 +35,10 @@ export function ExamManagementList({
 }) {
     const navigate = useNavigate();
     const { data: user } = useUser();
-    const [status, setStatus] = useState<ExamListStatus | "all">("all");
+    const [params, setParams] = useSearchParams();
+    const filter = params.get("status");
+    const status =
+        filter === "archived" || filter === "draft" || filter === "published" ? filter : "all";
     const archive = status === "archived" ? status : undefined;
     const selectedQuery = useExams(workspaceId, archive);
     const allQueries = useQueries({
@@ -107,9 +109,12 @@ export function ExamManagementList({
                         aria-label="Статус экзамена"
                         className="h-10 cursor-pointer rounded-[12px] border border-gray-200 dark:border-app-border bg-app-surface px-3 text-[13px]"
                         value={status}
-                        onChange={(event) =>
-                            setStatus(event.target.value as ExamListStatus | "all")
-                        }
+                        onChange={(event) => {
+                            const next = new URLSearchParams(params);
+                            if (event.target.value === "all") next.delete("status");
+                            else next.set("status", event.target.value);
+                            setParams(next, { replace: true });
+                        }}
                     >
                         <option value="all">Все статусы</option>
                         <option value="draft">Черновики</option>

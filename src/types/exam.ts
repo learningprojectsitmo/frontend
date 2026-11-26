@@ -36,6 +36,7 @@ export type Exam = {
     created_at: string;
     published_by: number | null;
     published_at: string | null;
+    started_at?: string | null;
     completed_at?: string | null;
     archived_at?: string | null;
 };
@@ -177,6 +178,7 @@ export type QueueItem = {
 };
 
 export type ExamQueue = {
+    started_at?: string | null;
     queue_revision: number;
     server_now: string;
     settings_version: number;

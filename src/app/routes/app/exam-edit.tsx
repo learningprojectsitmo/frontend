@@ -17,7 +17,7 @@ export default function ExamEditRoute() {
     const initialSection = params.get("section") === "queue" ? "queue" : "main";
     const access = useExamWorkspaces(workspaceId);
     const projectTypes = useProjectTypes(workspaceId, access.canManage);
-    const exam = useExam(workspaceId, access.canManage ? examId : 0);
+    const exam = useExam(workspaceId, access.canManage ? examId : 0, 5000);
     const workspaceName =
         access.spaces.find((item) => item.id === workspaceId)?.title ??
         `Пространство ${workspaceId}`;

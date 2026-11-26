@@ -1,6 +1,6 @@
 import { Popover } from "@base-ui/react/popover";
 import { Tooltip } from "@base-ui/react/tooltip";
-import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -289,7 +289,6 @@ type ExamPresentationProps = {
     previousUnavailable?: string;
     canGoForward: boolean;
     canStart: boolean;
-    playButtonRef?: Ref<HTMLButtonElement>;
     autoStarting?: boolean;
     inTransition: boolean;
     idleLabel?: string;
@@ -312,7 +311,6 @@ export function ExamPresentation({
     previousUnavailable,
     canGoForward,
     canStart,
-    playButtonRef,
     autoStarting,
     inTransition,
     idleLabel,
@@ -434,8 +432,12 @@ export function ExamPresentation({
                             )}
                             {attempt && (
                                 <p className="text-sm text-app-muted">
-                                    {canGoForward
-                                        ? "Оценивание откроется, когда ведущий завершит выступление или нажмёт «Следующая команда»."
+                                    {canManage && attempt.status === "questions"
+                                        ? canGoForward
+                                            ? "Завершить вопросы досрочно можно кнопкой «Следующая команда»."
+                                            : finishLastDefenseAction
+                                              ? "Завершить вопросы досрочно можно кнопкой «Завершить выступление последней команды»."
+                                              : "Оценивание откроется после завершения выступления."
                                         : "Оценивание откроется после завершения выступления."}
                                 </p>
                             )}
@@ -477,7 +479,6 @@ export function ExamPresentation({
                         <div className="mt-auto flex items-center justify-between gap-2">
                             <button
                                 type="button"
-                                ref={playButtonRef}
                                 className={cn(
                                     timerControlClass,
                                     inTransition &&

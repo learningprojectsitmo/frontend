@@ -1,4 +1,4 @@
-import type { Attempt, ExamConfiguration, QueueItem } from "@/types/exam";
+import type { Attempt, ExamConfiguration, ExamQueue, QueueItem } from "@/types/exam";
 
 export function getExamTimer(
     attempt: Attempt | null | undefined,
@@ -30,6 +30,34 @@ export type ExamAutoStart = {
     transitionMinutes: number;
 };
 
+export function readExamAutoStart(key: string): ExamAutoStart | null {
+    try {
+        const raw = window.sessionStorage.getItem(key);
+        if (!raw) return null;
+        const plan = JSON.parse(raw) as Partial<ExamAutoStart> | null;
+        if (
+            plan &&
+            Number.isSafeInteger(plan.finishedAttemptId) &&
+            Number.isSafeInteger(plan.registrationId) &&
+            Number.isFinite(plan.deadline) &&
+            Number.isFinite(plan.transitionMinutes)
+        )
+            return plan as ExamAutoStart;
+    } catch {
+        // A blocked session store must not interrupt the running exam.
+    }
+    return null;
+}
+
+export function writeExamAutoStart(key: string, plan: ExamAutoStart | null) {
+    try {
+        if (plan) window.sessionStorage.setItem(key, JSON.stringify(plan));
+        else window.sessionStorage.removeItem(key);
+    } catch {
+        // The transition can still run in memory for this page.
+    }
+}
+
 function latestAttempt(items: readonly QueueItem[]) {
     let latest: Attempt | undefined;
     let time = -Infinity;
@@ -48,9 +76,10 @@ function latestAttempt(items: readonly QueueItem[]) {
 
 export function getExamAutoStartState(
     plan: ExamAutoStart,
-    items: readonly QueueItem[],
+    { items, eta_stale }: Pick<ExamQueue, "items" | "eta_stale">,
     serverNow: number,
 ) {
+    if (eta_stale) return "waiting";
     const latest = latestAttempt(items).attempt;
     if (
         items.some((item) => item.state === "running") ||
