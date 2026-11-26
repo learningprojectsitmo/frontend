@@ -76,9 +76,10 @@ export const WikiTab = ({ projectId, isAuthor, isTeacher }: WikiTabProps) => {
         }
     }, [tree, selectedId]);
 
-    const canEditPage = Boolean(
-        page && canModerate && (page.author?.id === user?.id || isAuthor || isTeacher),
-    );
+    // Бэкенд разрешает автору страницы править её, даже если он не лид проекта
+    // и не teacher/админ (wiki_service._can_edit). Повторяем это условие, чтобы
+    // участник видел кнопку на своей странице; итоговую проверку делает сервер.
+    const canEditPage = Boolean(page && (canModerate || page.author?.id === user?.id));
     const canChangeVisibility = canModerate;
 
     if (treeQuery.isLoading) {
