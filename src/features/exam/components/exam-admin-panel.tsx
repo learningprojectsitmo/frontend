@@ -1332,7 +1332,6 @@ export function ExamAdminPanel({
                                                     />
                                                 )}
                                             {registration &&
-                                                !exam?.completed_at &&
                                                 !registration.started_at &&
                                                 slot.id && (
                                                     <Button
