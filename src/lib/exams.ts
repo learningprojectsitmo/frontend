@@ -113,6 +113,7 @@ const examErrorMessages: Record<string, string> = {
     registration_not_queued: "Команда уже вне очереди.",
     queue_position_out_of_range:
         "Очередь изменилась. Проверьте порядок команд и повторите действие.",
+    defense_waiting_for_schedule: "Следующее выступление пока не помещается в расписание.",
     another_defense_active: "Сначала завершите текущую защиту.",
     attempt_version_conflict:
         "Состояние защиты изменилось. Обновите страницу и повторите действие.",

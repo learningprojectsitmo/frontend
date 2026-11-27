@@ -464,7 +464,7 @@ export function ExamPresentation({
                         <p className="mb-4 text-center text-sm text-app-muted" role="status">
                             {inTransition
                                 ? "Выступление начнётся автоматически после перехода."
-                                : "Запускаем следующее выступление…"}
+                                : "Ожидаем доступного времени для следующего выступления."}
                         </p>
                     ) : (
                         canManage &&

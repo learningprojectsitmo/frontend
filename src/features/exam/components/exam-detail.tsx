@@ -58,6 +58,7 @@ import {
 import { useExamWorkspaces } from "../use-exam-workspaces";
 import {
     examApi,
+    getExamErrorCode,
     getExamErrorMessage,
     isExamAccessDenied,
     invalidateExam,
@@ -977,6 +978,7 @@ function ExamDetailView({
                 }
                 saveAutoStart(null);
             } catch (error) {
+                if (plan && getExamErrorCode(error) === "defense_waiting_for_schedule") return;
                 if (plan) saveAutoStart(null);
                 toast.error(getExamErrorMessage(error) ?? "Не удалось начать выступление команды.");
             } finally {
@@ -1842,8 +1844,9 @@ function ExamDetailView({
                         scheduledSlots.some((slot) => slot.kind !== "break") &&
                         exam.status === "published" && (
                             <p className="mb-4 text-sm text-app-muted">
-                                К плановому времени начала пустые слоты автоматически исчезнут из
-                                таблицы. Время записи команд сохранится.
+                                Пустые слоты скроются при запуске экзамена или в плановое время
+                                начала. Прогноз выступлений сдвигается внутри блоков, а перерывы
+                                остаются по расписанию.
                             </p>
                         )}
 
