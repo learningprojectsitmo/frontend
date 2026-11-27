@@ -1,12 +1,6 @@
 import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useEffect, useState } from "react";
-import {
-    queryOptions,
-    useMutation,
-    useQueries,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { queryOptions, useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,9 +17,9 @@ import { canBookExamSlot, getSlotInterval } from "@/features/exam/exam-schedule"
 import { useExamWorkspaces } from "@/features/exam/use-exam-workspaces";
 import {
     examApi,
-    getExamErrorCode,
     getExamErrorMessage,
     invalidateExam,
+    useExamBlockedProjects,
     useExams,
     useExamSlots,
 } from "@/lib/exams";
@@ -58,10 +52,6 @@ export function ProjectExamBlocks({
     const projectTypes = useProjectTypes(workspaceId);
     const [now, setNow] = useState(Date.now);
     const [booking, setBooking] = useState<{ examId: number; slot: ExamSlot | null } | null>(null);
-    const checkingBookings =
-        isProjectAuthor &&
-        access.canSelfRegister &&
-        exams.some((exam) => isExamRegistrationOpen(exam, now));
     const queues = useQueries({
         queries: exams.map((exam) =>
             queryOptions({
@@ -70,7 +60,6 @@ export function ProjectExamBlocks({
                 structuralSharing: shareExamQueue,
                 staleTime: 30_000,
                 refetchInterval: (query) =>
-                    checkingBookings ||
                     Date.parse(exam.configuration.starts_at) > Date.now() ||
                     query.state.data?.items.some(
                         (item) =>
@@ -83,9 +72,6 @@ export function ProjectExamBlocks({
             }),
         ),
     });
-    const registered = exams.find((_, index) =>
-        queues[index]?.data?.items.some((item) => item.project_id === projectId),
-    );
     const matchesType = (exam: Exam) =>
         projectTypeId !== null && exam.configuration.project_type_ids.includes(projectTypeId);
     const byStart = exams
@@ -94,12 +80,28 @@ export function ProjectExamBlocks({
             (a, b) => Date.parse(a.configuration.starts_at) - Date.parse(b.configuration.starts_at),
         );
     const queueFor = (exam: Exam) => queues[exams.indexOf(exam)]?.data;
+    const hasRegistration = (exam: Exam) =>
+        queueFor(exam)?.items.some((item) => item.project_id === projectId);
+    const registeredExams = byStart.filter(hasRegistration);
+    const registered = registeredExams.find((exam) => !exam.completed_at) ?? registeredExams.at(-1);
     const available = (exam: Exam) => isExamRegistrationOpen(exam, now, queueFor(exam));
     const upcoming = byStart.filter((exam) => Date.parse(exam.configuration.starts_at) > now);
     const openExam = upcoming.find((item) => matchesType(item) && available(item));
+    const canSelfRegister = isProjectAuthor && access.canSelfRegister;
+    const availability = useExamBlockedProjects(
+        workspaceId,
+        openExam?.id ?? 0,
+        true,
+        canSelfRegister,
+    );
+    const canBook =
+        canSelfRegister &&
+        !!openExam &&
+        availability.isSuccess &&
+        !availability.data.includes(projectId);
     const exam =
+        (canBook ? openExam : undefined) ??
         registered ??
-        (isProjectAuthor && access.canSelfRegister ? openExam : undefined) ??
         byStart.find(
             (item) =>
                 matchesType(item) &&
@@ -111,24 +113,32 @@ export function ProjectExamBlocks({
         upcoming[0] ??
         byStart.at(-1);
 
-    const defense = exam
-        ? queueFor(exam)?.items.find(
-              (item) => item.project_id === projectId && item.state === "finished",
-          )?.attempt
-        : null;
-    const canReadGrade = isTeamMember && access.canManageResults && Boolean(exam && defense);
-    const grades = useQuery({
-        queryKey: [...gradingKey(workspaceId, exam?.id ?? 0), "editions", defense?.id ?? 0],
-        queryFn: () => examGradingApi.editions(workspaceId, exam?.id ?? 0, defense?.id ?? 0),
-        enabled: canReadGrade,
-        retry: false,
-        staleTime: 30_000,
-        refetchInterval: canReadGrade ? 30_000 : false,
+    const finishedDefenses = registeredExams.flatMap((exam) => {
+        const attempt = queueFor(exam)?.items.find(
+            (item) => item.project_id === projectId && item.state === "finished",
+        )?.attempt;
+        return attempt ? [{ exam, attempt }] : [];
     });
-    const grade =
-        canReadGrade && grades.isSuccess
-            ? grades.data.items.filter((item) => item.published_at).at(-1)
-            : undefined;
+    const grades = useQueries({
+        queries:
+            isTeamMember && access.canManageResults
+                ? finishedDefenses.map(({ exam, attempt }) =>
+                      queryOptions({
+                          queryKey: [...gradingKey(workspaceId, exam.id), "editions", attempt.id],
+                          queryFn: () => examGradingApi.editions(workspaceId, exam.id, attempt.id),
+                          select: ({ items }) => items.filter((item) => item.published_at).at(-1),
+                          retry: false,
+                          staleTime: 30_000,
+                          refetchInterval: 30_000,
+                      }),
+                  )
+                : [],
+    });
+    const publishedGrade = grades
+        .flatMap(({ data }, index) =>
+            data ? [{ grade: data, exam: finishedDefenses[index].exam }] : [],
+        )
+        .at(-1);
 
     const slots = useExamSlots(
         workspaceId,
@@ -147,7 +157,10 @@ export function ProjectExamBlocks({
           )
         : null;
     const ticking =
-        (exam && access.canSelfRegister && now < getRegistrationDeadline(exam.configuration)) ||
+        (canSelfRegister &&
+            upcoming.some(
+                (item) => matchesType(item) && now < getRegistrationDeadline(item.configuration),
+            )) ||
         state?.status === "upcoming" ||
         (state?.status === "running" && now < state.end);
     const examId = exam?.id;
@@ -181,14 +194,7 @@ export function ProjectExamBlocks({
                 getExamErrorMessage(error) ??
                     "Не удалось записать команду. Проверьте доступность записи и попробуйте ещё раз.",
             );
-            await Promise.all([
-                invalidateExam(client, workspaceId, targetId),
-                ...(getExamErrorCode(error) === "project_already_registered"
-                    ? queues.flatMap((query, index) =>
-                          exams[index]?.id === targetId ? [] : [query.refetch()],
-                      )
-                    : []),
-            ]);
+            await invalidateExam(client, workspaceId, targetId);
             setBooking(null);
         },
     });
@@ -202,14 +208,6 @@ export function ProjectExamBlocks({
         .filter((type) => exam.configuration.project_type_ids.includes(type.id))
         .map((type) => type.name)
         .join(", ");
-    const bookingVerified = queues.every((query) => query.isSuccess);
-    const canBook =
-        isProjectAuthor &&
-        bookingVerified &&
-        !registered &&
-        matchesType(exam) &&
-        available(exam) &&
-        access.canSelfRegister;
     const title = {
         upcoming: "Экзамен начнётся через",
         waiting: "Ожидается начало экзамена",
@@ -237,7 +235,7 @@ export function ProjectExamBlocks({
 
     return (
         <section className={showCountdown ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
-            {grade && (
+            {publishedGrade && (
                 <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-app-border bg-app-surface p-5 lg:col-span-full">
                     <div className="flex min-w-0 items-center gap-3">
                         <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-app-badge-blue text-app-blue dark:text-blue-300">
@@ -246,17 +244,20 @@ export function ProjectExamBlocks({
                         <div className="min-w-0">
                             <h2 className="font-semibold text-app-text">Опубликованная оценка</h2>
                             <p className="break-words text-sm text-app-muted">
-                                {exam.configuration.title}
+                                {publishedGrade.exam.configuration.title}
                             </p>
                         </div>
                     </div>
                     <div className="text-right tabular-nums text-app-text">
                         <strong className="text-2xl">
-                            {Number(grade.final_score).toLocaleString("ru-RU")}
+                            {Number(publishedGrade.grade.final_score).toLocaleString("ru-RU")}
                         </strong>
                         <span className="text-sm text-app-muted">
                             {" "}
-                            из {Number(grade.snapshot.max_score).toLocaleString("ru-RU")}
+                            из{" "}
+                            {Number(publishedGrade.grade.snapshot.max_score).toLocaleString(
+                                "ru-RU",
+                            )}
                         </span>
                     </div>
                 </div>

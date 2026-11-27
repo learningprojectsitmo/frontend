@@ -2792,7 +2792,6 @@ function ExamDetailView({
             {isManager && assignOpen && exam.status === "published" && !examOver && (
                 <ExamRegistrationAssign
                     exam={exam}
-                    assignedIds={new Set(queueItems.map((item) => item.project_id))}
                     onClose={() => setAssignOpen(false)}
                     onQueue={() => {
                         setAssignOpen(false);

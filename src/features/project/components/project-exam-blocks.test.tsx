@@ -5,7 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { gradingKey } from "@/lib/exam-grading";
-import { examApi, useExams } from "@/lib/exams";
+import { examApi, useExamBlockedProjects, useExams } from "@/lib/exams";
 import type { Exam, ExamSlot } from "@/types/exam";
 import { ProjectExamBlocks } from "./project-exam-blocks";
 import { formatExamCountdown } from "./project-exam-display";
@@ -13,6 +13,7 @@ import { formatExamCountdown } from "./project-exam-display";
 vi.mock("@/lib/exams", () => ({
     examApi: { queue: vi.fn(async () => ({ items: [] })), register: vi.fn() },
     useExams: vi.fn(),
+    useExamBlockedProjects: vi.fn(),
     useExamSlots: (_workspaceId: number, examId: number) => ({
         data: examId ? { items: visibleSlots } : undefined,
     }),
@@ -85,6 +86,10 @@ beforeEach(() => {
     client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
     vi.mocked(useExams).mockReturnValue({ data: { items: [exam] } } as ReturnType<typeof useExams>);
     vi.mocked(examApi.register).mockReset();
+    vi.mocked(useExamBlockedProjects).mockReturnValue({
+        data: [] as number[],
+        isSuccess: true,
+    } as ReturnType<typeof useExamBlockedProjects>);
 });
 
 afterEach(() => {
@@ -267,6 +272,10 @@ describe("project exam blocks", () => {
     });
 
     it("prefers a registered exam even if its project type changed", async () => {
+        vi.mocked(useExamBlockedProjects).mockReturnValue({
+            data: [7],
+            isSuccess: true,
+        } as ReturnType<typeof useExamBlockedProjects>);
         const bookedExam = {
             ...exam,
             id: 3,
@@ -283,7 +292,11 @@ describe("project exam blocks", () => {
         expect(container.textContent).not.toContain("Запишитесь на экзамен");
     });
 
-    it("shows the registration interval and hides booking after a defense at another exam", async () => {
+    it("hides booking after a defense at an unfinished exam when the server reports a block", async () => {
+        vi.mocked(useExamBlockedProjects).mockReturnValue({
+            data: [7],
+            isSuccess: true,
+        } as ReturnType<typeof useExamBlockedProjects>);
         const pastExam: Exam = {
             ...exam,
             id: 3,
@@ -300,6 +313,62 @@ describe("project exam blocks", () => {
         await render();
         expect(container.textContent).toContain("Запись с");
         expect(container.textContent).not.toContain("Запишитесь на экзамен");
+    });
+
+    it("offers the next exam after completion and keeps the previous published grade visible", async () => {
+        const past: Exam = {
+            ...exam,
+            id: 3,
+            started_at: "2026-11-17T09:00:00Z",
+            completed_at: "2026-11-17T10:00:00Z",
+            configuration: {
+                ...exam.configuration,
+                title: "Прежняя защита",
+                starts_at: "2026-11-17T09:00:00Z",
+            },
+        };
+        const next = {
+            ...exam,
+            configuration: {
+                ...exam.configuration,
+                registration_opens_at: "2026-11-18T09:00:01Z",
+            },
+        };
+        vi.mocked(useExams).mockReturnValue({ data: { items: [next, past] } } as ReturnType<
+            typeof useExams
+        >);
+        client.setQueryData(["exams", "queue", "1", "3"], {
+            items: [{ project_id: 7, state: "finished", attempt: { id: 17 } }],
+        });
+        client.setQueryData([...gradingKey(1, 3), "editions", 17], {
+            items: [
+                {
+                    published_at: past.completed_at,
+                    final_score: "22.00",
+                    snapshot: { max_score: "25.00" },
+                },
+            ],
+        });
+        canManageResults = true;
+        await render();
+        expect(container.textContent).not.toContain("Запишитесь на экзамен");
+        expect(container.textContent).toContain("22 из 25");
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(1_000);
+        });
+        expect(container.textContent).toContain("Запишитесь на экзамен");
+        expect(useExamBlockedProjects).toHaveBeenCalledWith(1, 2, true, true);
+        expect(container.querySelector('a[href*="examId=2"]')).toBeTruthy();
+        client.setQueryData(["exams", "queue", "1", "2"], {
+            items: [{ project_id: 7, state: "finished", attempt: { id: 18 } }],
+        });
+        client.setQueryData([...gradingKey(1, 2), "editions", 18], { items: [] });
+        vi.mocked(useExams).mockReturnValue({
+            data: { items: [{ ...next, completed_at: new Date(Date.now()).toISOString() }, past] },
+        } as ReturnType<typeof useExams>);
+        await render();
+        expect(container.textContent).toContain("Прежняя защита");
+        expect(container.textContent).toContain("22 из 25");
     });
 
     it("shows only published grades to project members with results access", async () => {

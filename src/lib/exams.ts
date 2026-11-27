@@ -203,6 +203,10 @@ export const examApi = {
             slots: (Pick<ExamSlot, "starts_at" | "ends_at" | "kind"> & { id?: number })[];
         },
     ) => api.put<ExamSlot[]>(`${examPath(workspaceId, examId)}/slots`, data),
+    blockedProjects: (workspaceId: number, examId: number, self: boolean) =>
+        api.get<number[]>(`${examPath(workspaceId, examId)}/registrations/blocked-projects`, {
+            params: { self_only: self },
+        }),
     registrations: (workspaceId: number, examId: number, self = false) =>
         fetchAllPages((offset) =>
             api.get<RegistrationListResponse>(
@@ -419,6 +423,20 @@ export const useExamSlots = (
         enabled: enabled && workspaceId > 0 && examId > 0,
     });
 
+export const useExamBlockedProjects = (
+    workspaceId: number,
+    examId: number,
+    self: boolean,
+    enabled = true,
+) =>
+    useQuery({
+        queryKey: queryKeys.exams.blockedProjects(workspaceId, examId, self),
+        queryFn: () => examApi.blockedProjects(workspaceId, examId, self),
+        enabled: enabled && workspaceId > 0 && examId > 0,
+        refetchOnMount: "always",
+        refetchInterval: 15_000,
+    });
+
 export const useExamRegistrations = (
     workspaceId: number,
     examId: number,
@@ -453,6 +471,7 @@ export const invalidateExam = async (client: QueryClient, workspaceId: number, e
         client.invalidateQueries({ queryKey: queryKeys.exams.list(workspaceId).slice(0, 3) }),
         client.invalidateQueries({ queryKey: queryKeys.exams.detail(workspaceId, examId) }),
         client.invalidateQueries({ queryKey: queryKeys.exams.settings(workspaceId, examId) }),
+        client.invalidateQueries({ queryKey: queryKeys.exams.blockedProjects(workspaceId) }),
         client.invalidateQueries({ queryKey: queryKeys.exams.slots(workspaceId, examId) }),
         client.invalidateQueries({
             queryKey: queryKeys.exams.registrations(workspaceId, examId).slice(0, 4),

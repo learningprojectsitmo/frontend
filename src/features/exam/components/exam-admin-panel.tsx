@@ -42,7 +42,7 @@ import {
     invalidateExam,
     questionApi,
 } from "@/lib/exams";
-import { useExamRegistrations, useExamSlots } from "@/lib/exams";
+import { useExamBlockedProjects, useExamRegistrations, useExamSlots } from "@/lib/exams";
 import { queryKeys } from "@/lib/query-keys";
 import {
     formatScheduleTime,
@@ -244,6 +244,15 @@ export function ExamAdminPanel({
     const stageSchedule = (rows: LocalSlot[]) =>
         setScheduleEdit((edit) => ({ base: edit?.base ?? serverSlots ?? [], rows }));
     const registrationsQuery = useExamRegistrations(workspaceId, exam?.id ?? 0);
+    const canAssignProjects =
+        exam?.status === "published" && !exam.completed_at && !exam.archived_at;
+    const availability = useExamBlockedProjects(
+        workspaceId,
+        exam?.id ?? 0,
+        false,
+        canAssignProjects,
+    );
+    const blockedProjectIds = new Set(availability.data);
     const projectsQuery = useProjectsList(String(workspaceId), { page: 1, limit: 100 });
     const projectById = useExamProjects(
         projectsQuery.data?.items ?? [],
@@ -836,16 +845,6 @@ export function ExamAdminPanel({
         return registration ? [{ slot, registration }] : [];
     });
 
-    const assignedProjectIds = useMemo(
-        () =>
-            new Set(
-                (registrationsQuery.data?.items ?? [])
-                    .filter((registration) => registration.status === "active")
-                    .map((registration) => registration.project_id),
-            ),
-        [registrationsQuery.data],
-    );
-
     const sortedLocalSlots = useMemo(
         () =>
             localSlots
@@ -1023,7 +1022,7 @@ export function ExamAdminPanel({
                                         exam?.configuration.project_type_ids.includes(
                                             item.project_type_id,
                                         ) &&
-                                        (!assignedProjectIds.has(item.id) ||
+                                        (!blockedProjectIds.has(item.id) ||
                                             item.id === project?.id),
                                 )
                                 .filter((item) =>
@@ -1278,7 +1277,7 @@ export function ExamAdminPanel({
                                     <td className="px-3 py-3">
                                         <div className="flex w-max max-w-[144px] flex-wrap justify-end gap-1 sm:max-w-none">
                                             {!isBreak &&
-                                                exam?.status === "published" &&
+                                                canAssignProjects &&
                                                 slot.id &&
                                                 !registration?.started_at && (
                                                     <ExamProjectSelect
@@ -1299,7 +1298,8 @@ export function ExamAdminPanel({
                                                         disabled={
                                                             pendingSlotId !== null ||
                                                             saving ||
-                                                            Boolean(scheduleEdit)
+                                                            Boolean(scheduleEdit) ||
+                                                            !availability.isSuccess
                                                         }
                                                         container={
                                                             queueExpanded
@@ -1332,6 +1332,7 @@ export function ExamAdminPanel({
                                                     />
                                                 )}
                                             {registration &&
+                                                !exam?.completed_at &&
                                                 !registration.started_at &&
                                                 slot.id && (
                                                     <Button
