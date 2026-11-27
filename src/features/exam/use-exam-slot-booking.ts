@@ -1,12 +1,6 @@
 import { canBookExamSlot, getSlotInterval } from "./exam-schedule";
 import { useRef, useState } from "react";
-import {
-    queryOptions,
-    useMutation,
-    useQueries,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useUser } from "@/lib/auth";
@@ -15,8 +9,8 @@ import {
     getExamErrorCode,
     getExamErrorMessage,
     invalidateExam,
+    useExamBlockedProjects,
     useExamRegistrations,
-    useExams,
     useExamSlots,
 } from "@/lib/exams";
 import { getCreatedProjects, getProject } from "@/lib/projects";
@@ -56,19 +50,8 @@ export function useExamSlotBooking(
         })),
     });
 
-    const exams = useExams(enabled ? workspaceId : 0, "published");
     const isOpen = Boolean(exam && isExamRegistrationOpen(exam, now, queue));
-    const otherRegistrations = useQueries({
-        queries: (enabled && isOpen ? (exams.data?.items ?? []) : [])
-            .filter((item) => item.id !== examId)
-            .map((item) =>
-                queryOptions({
-                    queryKey: queryKeys.exams.registrations(workspaceId, item.id, true),
-                    queryFn: () => examApi.registrations(workspaceId, item.id, true),
-                    refetchInterval: 15_000,
-                }),
-            ),
-    });
+    const availability = useExamBlockedProjects(workspaceId, examId, true, enabled && isOpen);
 
     const active = registrations.data?.items.filter((item) => item.status === "active") ?? [];
     const eligible = projects.flatMap(({ data, isSuccess }) =>
@@ -81,33 +64,22 @@ export function useExamSlotBooking(
             ? [data]
             : [],
     );
-    const otherBookedIds = new Set(
-        otherRegistrations
-            .flatMap((query) => query.data?.items ?? [])
-            .filter((registration) => registration.status === "active" || registration.started_at)
-            .map((registration) => registration.project_id),
-    );
-    const bookedIds = new Set(
-        (registrations.data?.items ?? [])
-            .filter((registration) => registration.status === "active" || registration.started_at)
-            .map((registration) => registration.project_id),
-    );
-    const bookableProjects = eligible.filter(
-        (project) => !bookedIds.has(project.id) && !otherBookedIds.has(project.id),
-    );
+    const blockedIds = new Set(availability.data);
+    const currentIds = new Set(active.map((registration) => registration.project_id));
+    const bookableProjects = eligible.filter((project) => !blockedIds.has(project.id));
     const selected =
         bookableProjects.find((project) => project.id === projectId) ?? bookableProjects[0];
     const loading =
         slots.isPending ||
         registrations.isPending ||
         myProjects.isPending ||
-        (isOpen && (exams.isPending || otherRegistrations.some((query) => query.isPending))) ||
+        (isOpen && availability.isPending) ||
         projects.some((query) => query.isPending);
     const error =
         slots.isError ||
         registrations.isError ||
         myProjects.isError ||
-        (isOpen && (exams.isError || otherRegistrations.some((query) => query.isError))) ||
+        (isOpen && availability.isError) ||
         (eligible.length === 0 && projects.some((query) => query.isError));
     const canBook = enabled && isOpen && !loading && !error && Boolean(selected);
     const canCancel = (registration: Registration) =>
@@ -177,12 +149,7 @@ export function useExamSlotBooking(
                               ? "Не удалось записаться на защиту. Попробуйте ещё раз."
                               : "Не удалось отменить запись. Попробуйте ещё раз.")),
             );
-            await Promise.all([
-                invalidateExam(client, workspaceId, examId),
-                ...(getExamErrorCode(failure) === "project_already_registered"
-                    ? otherRegistrations.map((query) => query.refetch())
-                    : []),
-            ]);
+            await invalidateExam(client, workspaceId, examId);
             setAction(null);
         },
     });
@@ -192,7 +159,9 @@ export function useExamSlotBooking(
         available,
         eligible,
         bookableProjects,
-        hasOtherBooking: eligible.some((project) => otherBookedIds.has(project.id)),
+        hasOtherBooking: eligible.some(
+            (project) => blockedIds.has(project.id) && !currentIds.has(project.id),
+        ),
         selected,
         isOpen,
         loading,

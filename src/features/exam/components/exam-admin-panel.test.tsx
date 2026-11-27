@@ -210,6 +210,7 @@ beforeEach(() => {
     onSaved.mockReset();
     vi.spyOn(examApi, "get").mockResolvedValue(exam);
     vi.spyOn(examApi, "slots").mockResolvedValue({ items: [], has_more: false });
+    vi.spyOn(examApi, "blockedProjects").mockResolvedValue([]);
     vi.spyOn(examApi, "registrations").mockResolvedValue({
         items: [],
         limit: 100,
@@ -726,13 +727,13 @@ describe("exam form", () => {
         expect(container.textContent).toContain("шкала 1–5 — 25");
     });
 
-    it("keeps the original assignment when the atomic replacement fails", async () => {
+    it("keeps the original assignment and refreshes blocked projects after a replacement conflict", async () => {
         const published = { ...exam, status: "published" as const };
         client.setQueryData(queryKeys.exams.slots(1, 2), { items: [slot], has_more: false });
         client.setQueryData(queryKeys.exams.registrations(1, 2), { items: [registration] });
         const error = new AxiosError("Request failed");
         Object.assign(error, {
-            response: { data: { detail: { code: "project_type_not_allowed" } } },
+            response: { data: { detail: { code: "project_already_registered" } } },
         });
         vi.spyOn(console, "error").mockImplementation(() => {});
         const cancel = vi.spyOn(examApi, "cancelRegistration");
@@ -746,6 +747,9 @@ describe("exam form", () => {
             has_more: false,
         });
 
+        vi.mocked(examApi.blockedProjects)
+            .mockResolvedValueOnce([101])
+            .mockResolvedValue([101, 102]);
         await render(published);
         await click("Очередь выступлений");
         await click("Заменить");
@@ -767,6 +771,11 @@ describe("exam form", () => {
         expect(register).not.toHaveBeenCalled();
         expect(document.querySelector('[aria-label="Выбор команды"]')).toBeNull();
         expect(container.textContent).toContain("Первая команда");
+        expect(examApi.blockedProjects).toHaveBeenCalledTimes(2);
+        await click("Заменить");
+        expect(document.querySelector('[aria-label="Выбор команды"]')?.textContent).not.toContain(
+            "Вторая команда",
+        );
     });
 
     it("asks before removing levels and saves the selected scale with retained IDs", async () => {

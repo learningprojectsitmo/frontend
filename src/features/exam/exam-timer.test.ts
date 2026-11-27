@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import type { Attempt, QueueItem } from "@/types/exam";
+import type { Attempt, ExamQueue, QueueItem } from "@/types/exam";
 import {
     getExamAutoStartState,
     getExamTimer,
@@ -103,7 +103,24 @@ describe("automatic start after a transition", () => {
         deadline: start + 60_000,
     };
 
-    const snapshot = (...items: QueueItem[]) => ({ items, eta_stale: false });
+    const snapshot = (...items: QueueItem[]): Pick<ExamQueue, "items" | "eta_stale" | "eta"> => ({
+        items,
+        eta_stale: false,
+        eta: {
+            current: null,
+            items: [
+                {
+                    registration_id: following.registration_id,
+                    position: 1,
+                    state: "waiting",
+                    eta_at: iso(start),
+                    eta_seconds: 0,
+                    certainty: "certain",
+                    reason: null,
+                },
+            ],
+        },
+    });
 
     it("restores the explicitly queued transition on a reload of the same exam", () => {
         const key = "exam-auto-start:11:1";
@@ -128,8 +145,19 @@ describe("automatic start after a transition", () => {
         ).toBe("ready");
     });
 
+    it("waits until the server's forecast after a scheduled break", () => {
+        const breakEnd = start + 20 * 60_000;
+        const queue = snapshot(finished, following);
+        queue.eta.items[0].eta_at = iso(breakEnd);
+        expect(getExamAutoStartState(plan, queue, plan.deadline)).toBe("waiting");
+        expect(getExamAutoStartState(plan, queue, breakEnd)).toBe("ready");
+
+        queue.eta.items = [];
+        expect(getExamAutoStartState(plan, queue, breakEnd)).toBe("waiting");
+    });
+
     it("does not start or cancel from a queue snapshot the server marked stale", () => {
-        const stale = { items: [], eta_stale: true };
+        const stale = { ...snapshot(), eta_stale: true };
         expect(getExamAutoStartState(plan, stale, plan.deadline)).toBe("waiting");
     });
 

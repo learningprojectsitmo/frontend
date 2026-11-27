@@ -1,25 +1,17 @@
-import { shareExamQueue } from "@/features/exam/exam-queue-snapshot";
 import { useRef, useState, type FormEvent } from "react";
-import {
-    queryOptions,
-    useMutation,
-    useQueries,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog/dialog";
 import {
     examApi,
-    getExamErrorCode,
     getExamErrorMessage,
     invalidateExam,
+    useExamBlockedProjects,
     useExamSlots,
 } from "@/lib/exams";
 import { getProject, getProjectsList } from "@/lib/projects";
-import { queryKeys } from "@/lib/query-keys";
 import { ExamProjectSelect } from "./exam-project-select";
 import type { Exam, ExamSlot } from "@/types/exam";
 import { formatExamDate } from "../exam-display";
@@ -27,12 +19,10 @@ import { canBookExamSlot, getSlotInterval } from "../exam-schedule";
 
 export function ExamRegistrationAssign({
     exam,
-    assignedIds,
     onQueue,
     onClose,
 }: {
     exam: Exam;
-    assignedIds: ReadonlySet<number>;
     onQueue: () => void;
     onClose: () => void;
 }) {
@@ -43,44 +33,23 @@ export function ExamRegistrationAssign({
     const [chosenSlot, setChosenSlot] = useState<ExamSlot>();
     const [selectOpen, setSelectOpen] = useState(false);
     const dialogRef = useRef<HTMLDivElement>(null);
-    const exams = useQuery({
-        queryKey: queryKeys.exams.list(workspaceId, "published"),
-        queryFn: () => examApi.list(workspaceId, "published"),
-        refetchOnMount: "always",
-    });
-    const otherQueues = useQueries({
-        queries: (exams.data?.items ?? [])
-            .filter((item) => item.id !== examId)
-            .map((item) =>
-                queryOptions({
-                    queryKey: queryKeys.exams.queue(workspaceId, item.id),
-                    queryFn: () => examApi.queue(workspaceId, item.id),
-                    structuralSharing: shareExamQueue,
-                    refetchOnMount: "always",
-                    refetchInterval: 15_000,
-                }),
-            ),
-    });
+    const availability = useExamBlockedProjects(workspaceId, examId, false);
     const projects = useQuery({
         queryKey: [
             "exam-assignment-projects",
             workspaceId,
             examId,
             exam.configuration.project_type_ids,
-            [...assignedIds].sort((a, b) => a - b),
         ],
         queryFn: async () => {
             const eligible = [];
-            let hasAssigned = false;
             for (let page = 1, totalPages = 1; page <= totalPages; page++) {
                 const list = await getProjectsList(String(workspaceId), { page, limit: 100 });
                 totalPages = list.total_pages;
-                const unassigned = list.items.filter((item) => !assignedIds.has(item.id));
-                hasAssigned ||= unassigned.length < list.items.length;
-                // The project list omits project_type_id, so check unassigned projects in batches.
-                for (let offset = 0; offset < unassigned.length; offset += 8) {
+                // The project list omits project_type_id, so read project details in batches.
+                for (let offset = 0; offset < list.items.length; offset += 8) {
                     const details = await Promise.all(
-                        unassigned
+                        list.items
                             .slice(offset, offset + 8)
                             .map((item) => getProject(String(item.id))),
                     );
@@ -98,25 +67,15 @@ export function ExamRegistrationAssign({
                     );
                 }
             }
-            return { eligible, hasAssigned };
+            return eligible;
         },
     });
     const slots = useExamSlots(workspaceId, examId, true, 5000);
-    const otherAssignedIds = new Set(
-        otherQueues.flatMap((query) => query.data?.items.map((item) => item.project_id) ?? []),
-    );
-    const eligible = projects.data?.eligible ?? [];
-    const teams = eligible.filter((project) => !otherAssignedIds.has(project.id));
-    const loading =
-        projects.isPending ||
-        slots.isPending ||
-        !exams.isFetchedAfterMount ||
-        otherQueues.some((query) => !query.isFetchedAfterMount);
-    const loadFailed =
-        projects.isError ||
-        slots.isError ||
-        exams.isError ||
-        otherQueues.some((query) => query.isError);
+    const blockedIds = new Set(availability.data);
+    const eligible = projects.data ?? [];
+    const teams = eligible.filter((project) => !blockedIds.has(project.id));
+    const loading = projects.isPending || slots.isPending || !availability.isFetchedAfterMount;
+    const loadFailed = projects.isError || slots.isError || availability.isError;
     const selected = teams.find((team) => team.id === projectId);
     const term = search.trim().toLocaleLowerCase();
     const candidates = teams.filter((team) => team.name.toLocaleLowerCase().includes(term));
@@ -143,14 +102,7 @@ export function ExamRegistrationAssign({
             toast.success("Команда назначена");
             onClose();
         },
-        onError: async (failure) => {
-            await Promise.all([
-                invalidateExam(client, workspaceId, examId),
-                ...(getExamErrorCode(failure) === "project_already_registered"
-                    ? otherQueues.map((query) => query.refetch())
-                    : []),
-            ]);
-        },
+        onError: () => invalidateExam(client, workspaceId, examId),
     });
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -188,9 +140,8 @@ export function ExamRegistrationAssign({
                             onClick={() =>
                                 void Promise.all([
                                     projects.refetch(),
-                                    exams.refetch(),
+                                    availability.refetch(),
                                     slots.refetch(),
-                                    ...otherQueues.map((query) => query.refetch()),
                                 ])
                             }
                         >
@@ -208,9 +159,7 @@ export function ExamRegistrationAssign({
                                 ? "Свободных слотов нет."
                                 : eligible.length
                                   ? "Все подходящие команды уже записаны на экзамен."
-                                  : projects.data?.hasAssigned
-                                    ? "Все команды уже назначены"
-                                    : "В пространстве нет команд подходящего типа."}
+                                  : "В пространстве нет команд подходящего типа."}
                         </p>
                         <Button type="button" variant="outline" size="hug36" onClick={onQueue}>
                             Перейти к очереди выступлений

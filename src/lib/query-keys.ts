@@ -191,6 +191,10 @@ export const queryKeys = {
                 String(examId),
                 self ? "self" : "all",
             ] as const,
+        blockedProjects: (workspaceId: string | number, examId?: number, self = false) =>
+            examId === undefined
+                ? (["exams", "blockedProjects", String(workspaceId)] as const)
+                : (["exams", "blockedProjects", String(workspaceId), examId, self] as const),
         queue: (workspaceId: string | number, examId: string | number) =>
             ["exams", "queue", String(workspaceId), String(examId)] as const,
         currentAttempt: (workspaceId: string | number, examId: string | number) =>

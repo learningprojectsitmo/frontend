@@ -76,7 +76,7 @@ function latestAttempt(items: readonly QueueItem[]) {
 
 export function getExamAutoStartState(
     plan: ExamAutoStart,
-    { items, eta_stale }: Pick<ExamQueue, "items" | "eta_stale">,
+    { items, eta_stale, eta }: Pick<ExamQueue, "items" | "eta_stale" | "eta">,
     serverNow: number,
 ) {
     if (eta_stale) return "waiting";
@@ -93,7 +93,9 @@ export function getExamAutoStartState(
         )
     )
         return "changed";
-    return serverNow >= plan.deadline ? "ready" : "waiting";
+    const forecast = eta.items.find((item) => item.registration_id === plan.registrationId);
+    const earliestStart = forecast ? Date.parse(forecast.eta_at) : Infinity;
+    return serverNow >= Math.max(plan.deadline, earliestStart) ? "ready" : "waiting";
 }
 
 export function getExamTransitionTimer(

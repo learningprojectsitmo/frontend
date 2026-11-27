@@ -58,6 +58,7 @@ import {
 import { useExamWorkspaces } from "../use-exam-workspaces";
 import {
     examApi,
+    getExamErrorCode,
     getExamErrorMessage,
     isExamAccessDenied,
     invalidateExam,
@@ -110,6 +111,7 @@ import {
     reconcileExamOrder,
 } from "../exam-queue-order";
 import { ExamRegistrationAssign } from "./exam-registration-assign";
+import { ExamTeamPreview } from "./exam-team-preview";
 import { ExamRegistrationTransfer } from "./exam-registration-transfer";
 import { examGradingApi, gradingKey, getGradingError, type RegistryItem } from "@/lib/exam-grading";
 import { useExamLive } from "../use-exam-live";
@@ -183,54 +185,6 @@ function formatCreatedDate(value: string) {
         month: "long",
     });
     return `${dayMonth}, ${date.getFullYear()}`;
-}
-
-function ParticipantsTooltip({ names }: { names: string[] }) {
-    if (names.length === 0) return null;
-
-    return (
-        <Tooltip.Root>
-            <Tooltip.Trigger
-                aria-label="Участники команды"
-                className="flex cursor-pointer items-center"
-            >
-                {names.slice(0, 3).map((name, index) => (
-                    <span
-                        key={index}
-                        className="flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-200 dark:bg-app-border text-[10px] font-semibold text-gray-700 dark:text-slate-200"
-                        style={{ marginLeft: index > 0 ? -8 : 0 }}
-                    >
-                        {name
-                            .trim()
-                            .split(/\s+/)
-                            .slice(0, 2)
-                            .map((part) => part[0])
-                            .join("")
-                            .toUpperCase()}
-                    </span>
-                ))}
-                {names.length > 3 && (
-                    <span className="-ml-2 flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-gray-100 dark:bg-app-ghost text-[10px] text-gray-600 dark:text-app-muted">
-                        +{names.length - 3}
-                    </span>
-                )}
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-                <Tooltip.Positioner
-                    positionMethod="fixed"
-                    sideOffset={8}
-                    collisionPadding={8}
-                    className="z-[500]"
-                >
-                    <Tooltip.Popup className="max-h-[var(--available-height)] w-[220px] max-w-[var(--available-width)] overflow-auto break-words rounded-xl border border-gray-200 dark:border-app-border bg-app-surface p-3 text-[12px] leading-5 text-gray-700 dark:text-slate-200 shadow-lg">
-                        {names.map((name, index) => (
-                            <div key={index}>{name}</div>
-                        ))}
-                    </Tooltip.Popup>
-                </Tooltip.Positioner>
-            </Tooltip.Portal>
-        </Tooltip.Root>
-    );
 }
 
 export function ExamDetail({ organizerOnly = false }: { organizerOnly?: boolean } = {}) {
@@ -1024,6 +978,7 @@ function ExamDetailView({
                 }
                 saveAutoStart(null);
             } catch (error) {
+                if (plan && getExamErrorCode(error) === "defense_waiting_for_schedule") return;
                 if (plan) saveAutoStart(null);
                 toast.error(getExamErrorMessage(error) ?? "Не удалось начать выступление команды.");
             } finally {
@@ -1889,8 +1844,9 @@ function ExamDetailView({
                         scheduledSlots.some((slot) => slot.kind !== "break") &&
                         exam.status === "published" && (
                             <p className="mb-4 text-sm text-app-muted">
-                                К плановому времени начала пустые слоты автоматически исчезнут из
-                                таблицы. Время записи команд сохранится.
+                                Пустые слоты скроются при запуске экзамена или в плановое время
+                                начала. Прогноз выступлений сдвигается внутри блоков, а перерывы
+                                остаются по расписанию.
                             </p>
                         )}
 
@@ -2210,13 +2166,7 @@ function ExamDetailView({
                                                           {getExamProjectLeader(project) ?? "—"}
                                                       </td>
                                                       <td className="px-6 py-4">
-                                                          <ParticipantsTooltip
-                                                              names={
-                                                                  project?.participants_preview.map(
-                                                                      (member) => member.full_name,
-                                                                  ) ?? []
-                                                              }
-                                                          />
+                                                          <ExamTeamPreview project={project} />
                                                       </td>
                                                       <td className="px-6 py-4 text-[13px]">
                                                           <ApproximateDefenseTime
@@ -2447,13 +2397,7 @@ function ExamDetailView({
                                                           </span>
                                                       </td>
                                                       <td className="px-6 py-4">
-                                                          <ParticipantsTooltip
-                                                              names={
-                                                                  project?.participants_preview.map(
-                                                                      (member) => member.full_name,
-                                                                  ) ?? []
-                                                              }
-                                                          />
+                                                          <ExamTeamPreview project={project} />
                                                       </td>
                                                       <td className="px-6 py-4 text-[13px] text-gray-600 dark:text-slate-300">
                                                           {eta && hasOrderChanges ? (
@@ -2792,7 +2736,6 @@ function ExamDetailView({
             {isManager && assignOpen && exam.status === "published" && !examOver && (
                 <ExamRegistrationAssign
                     exam={exam}
-                    assignedIds={new Set(queueItems.map((item) => item.project_id))}
                     onClose={() => setAssignOpen(false)}
                     onQueue={() => {
                         setAssignOpen(false);
