@@ -84,6 +84,167 @@
     background: rgb(154 124 74 / 70%);
 }
 
+/* ─── Ёлочка ───────────────────────────────────────────────────────────── */
+
+/*
+ * Слот фиксирован, а сторона зависит от ширины экрана:
+ *  - телефон — левый низ, над нижней навигацией (справа снизу живут тосты
+ *    sonner, они всегда выше и перекрывали бы ёлку);
+ *  - десктоп — правый низ (слева стоят сайдбары пространств).
+ * Отступ снизу повторяет приём из halloween.css: 64px — высота мобильной
+ * навигации плюс запас, env() — «чубчик»/жест на iPhone.
+ */
+.holiday-decor__tree-slot {
+    position: fixed;
+    left: 12px;
+    bottom: calc(64px + env(safe-area-inset-bottom) + 8px);
+    z-index: 100;
+    width: clamp(84px, 24vw, 108px);
+    pointer-events: none;
+}
+
+.holiday-decor__tree {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    /* Без этого тап ждёт ~300 мс двойного зума; none ставить нельзя —
+       тогда ёлка начнёт глушить скролл страницы. */
+    touch-action: manipulation;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 8px 14px rgb(18 44 28 / 18%));
+    animation: holiday-tree-sway 7.5s ease-in-out infinite;
+}
+
+.holiday-decor__tree-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.holiday-decor__tree-stop-top {
+    stop-color: #3aa664;
+}
+
+.holiday-decor__tree-stop-bottom {
+    stop-color: #1f6b3d;
+}
+
+.holiday-decor__tree-drift {
+    fill: rgb(255 255 255 / 92%);
+}
+
+.holiday-decor__tree-trunk {
+    fill: #7b4b2a;
+}
+
+.holiday-decor__tree-snow {
+    fill: rgb(255 255 255 / 88%);
+}
+
+.holiday-decor__tree-cord {
+    stroke: rgb(245 197 66 / 75%);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+}
+
+.holiday-decor__tree-bulb {
+    filter: drop-shadow(0 0 3px currentColor);
+    animation: holiday-tree-twinkle 2.6s ease-in-out infinite;
+    animation-delay: var(--holiday-delay, 0s);
+}
+
+.holiday-decor__tree-ornament {
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 22%));
+}
+
+.holiday-decor__tree-star {
+    fill: #ffd666;
+    animation: holiday-tree-star-pulse 3.2s ease-in-out infinite;
+}
+
+/* Вспышка висит на группе, а не на лампочках: иначе она заменила бы их
+   собственное мерцание и после вспышки гирлянда замирала бы. */
+.holiday-decor__tree-bulbs--flash {
+    animation: holiday-tree-flash 520ms ease-out 2;
+}
+
+/*
+ * Дубль правила для reduced-motion: JS узнаёт о настройке через matchMedia и
+ * выключает волну, но анимации гасим и здесь — на случай, если проп придёт
+ * из теста или его забудут прокинуть.
+ */
+.holiday-decor__tree-slot--static .holiday-decor__tree,
+.holiday-decor__tree-slot--static .holiday-decor__tree-bulb,
+.holiday-decor__tree-slot--static .holiday-decor__tree-star,
+.holiday-decor__tree-slot--static .holiday-decor__tree-bulbs--flash {
+    animation: none;
+}
+
+.holiday-decor__tree-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.holiday-decor__tree-particle {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 0 4px rgb(255 255 255 / 85%);
+    animation: holiday-tree-burst 750ms ease-out forwards;
+    animation-delay: var(--holiday-delay, 0ms);
+}
+
+.holiday-decor__tree-greeting {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 10px);
+    width: max-content;
+    /* На узком экране пузырь не должен уезжать за край и накрывать звезду. */
+    max-width: min(260px, calc(100vw - 32px));
+    margin: 0;
+    padding: 10px 14px;
+    border: 1px solid rgb(15 23 42 / 8%);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgb(15 23 42 / 16%);
+    color: #1f2937;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+}
+
+@media (min-width: 1024px) {
+    .holiday-decor__tree-slot {
+        left: auto;
+        right: 16px;
+        bottom: 12px;
+        width: 132px;
+    }
+
+    .holiday-decor__tree-greeting {
+        right: 0;
+        left: auto;
+    }
+}
+
+/* Ландшафт на телефоне: по высоте ёлка съела бы половину экрана. */
+@media (max-height: 520px) {
+    .holiday-decor__tree-slot {
+        display: none;
+    }
+}
+
 /* ─── Анимации ─────────────────────────────────────────────────────────── */
 
 @keyframes holiday-garland-twinkle {
@@ -110,6 +271,89 @@
     }
 }
 
+@keyframes holiday-tree-sway {
+    0%,
+    100% {
+        transform: rotate(-1.1deg);
+    }
+
+    50% {
+        transform: rotate(1.1deg);
+    }
+}
+
+@keyframes holiday-tree-twinkle {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+@keyframes holiday-tree-star-pulse {
+    0%,
+    100% {
+        opacity: 0.85;
+        filter: drop-shadow(0 0 4px rgb(255 214 102 / 65%));
+    }
+
+    50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 10px rgb(255 214 102 / 95%));
+    }
+}
+
+@keyframes holiday-tree-flash {
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+
+    40% {
+        filter: brightness(1.9) saturate(1.3);
+    }
+}
+
+@keyframes holiday-tree-burst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.5);
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--holiday-dx, 0px)), var(--holiday-dy, 0px)) scale(1);
+    }
+}
+
+/* ─── Тёмная тема ──────────────────────────────────────────────────────── */
+
+.dark .holiday-decor__tree-stop-top {
+    stop-color: #2f8f57;
+}
+
+.dark .holiday-decor__tree-stop-bottom {
+    stop-color: #17502d;
+}
+
+.dark .holiday-decor__tree-snow,
+.dark .holiday-decor__tree-drift {
+    fill: rgb(226 240 255 / 82%);
+}
+
+.dark .holiday-decor__tree-greeting {
+    border-color: rgb(255 255 255 / 12%);
+    background: #1f2937;
+    color: #f3f4f6;
+}
+
 /*
  * В проекте не было ни одного блока prefers-reduced-motion: системная
  * настройка ОС уважается только здесь. Мигание и покачивание
@@ -117,7 +361,17 @@
  */
 @media (prefers-reduced-motion: reduce) {
     .holiday-decor__garland-bulb,
-    .holiday-decor__ornament {
+    .holiday-decor__ornament,
+    .holiday-decor__tree,
+    .holiday-decor__tree-bulb,
+    .holiday-decor__tree-star,
+    .holiday-decor__tree-bulbs--flash,
+    .holiday-decor__tree-particle {
         animation: none;
+    }
+
+    /* Волна — чистый декор: без движения она просто мусор в разметке. */
+    .holiday-decor__tree-particles {
+        display: none;
     }
 }

@@ -614,6 +614,7 @@ export type SpaceSettingsFull = {
  */
 export type AppSettingsPublic = {
     new_year_decorations_enabled: boolean;
+    new_year_tree_enabled: boolean;
     halloween_decorations_enabled: boolean;
 };
 
