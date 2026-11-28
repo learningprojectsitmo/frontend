@@ -71,7 +71,7 @@ export const Faq = ({ as }: { as?: "h1" | "h2" }) => {
                         className={cn(
                             "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                             category === "all"
-                                ? "border-gray-900 bg-gray-900 text-white"
+                                ? "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
                                 : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900",
                         )}
                     >
@@ -86,7 +86,7 @@ export const Faq = ({ as }: { as?: "h1" | "h2" }) => {
                             className={cn(
                                 "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                                 category === item.id
-                                    ? "border-gray-900 bg-gray-900 text-white"
+                                    ? "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
                                     : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900",
                             )}
                         >
