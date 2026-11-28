@@ -153,19 +153,92 @@ export const AUDIENCE: AudienceCard[] = [
     },
 ];
 
+export type FaqCategory = "general" | "projects" | "grading" | "data";
+
 export type FaqItem = {
     questionKey: string;
     answerKey: string;
+    category: FaqCategory;
 };
 
+export const FAQ_CATEGORIES: { id: FaqCategory; titleKey: string }[] = [
+    { id: "general", titleKey: "landing.faq.categories.general" },
+    { id: "projects", titleKey: "landing.faq.categories.projects" },
+    { id: "grading", titleKey: "landing.faq.categories.grading" },
+    { id: "data", titleKey: "landing.faq.categories.data" },
+];
+
 export const FAQ: FaqItem[] = [
-    { questionKey: "landing.faq.items.0.question", answerKey: "landing.faq.items.0.answer" },
-    { questionKey: "landing.faq.items.1.question", answerKey: "landing.faq.items.1.answer" },
-    { questionKey: "landing.faq.items.2.question", answerKey: "landing.faq.items.2.answer" },
-    { questionKey: "landing.faq.items.3.question", answerKey: "landing.faq.items.3.answer" },
-    { questionKey: "landing.faq.items.4.question", answerKey: "landing.faq.items.4.answer" },
-    { questionKey: "landing.faq.items.5.question", answerKey: "landing.faq.items.5.answer" },
-    { questionKey: "landing.faq.items.6.question", answerKey: "landing.faq.items.6.answer" },
+    {
+        questionKey: "landing.faq.items.0.question",
+        answerKey: "landing.faq.items.0.answer",
+        category: "general",
+    },
+    {
+        questionKey: "landing.faq.items.1.question",
+        answerKey: "landing.faq.items.1.answer",
+        category: "general",
+    },
+    {
+        questionKey: "landing.faq.items.2.question",
+        answerKey: "landing.faq.items.2.answer",
+        category: "general",
+    },
+    {
+        questionKey: "landing.faq.items.3.question",
+        answerKey: "landing.faq.items.3.answer",
+        category: "projects",
+    },
+    {
+        questionKey: "landing.faq.items.4.question",
+        answerKey: "landing.faq.items.4.answer",
+        category: "projects",
+    },
+    {
+        questionKey: "landing.faq.items.5.question",
+        answerKey: "landing.faq.items.5.answer",
+        category: "projects",
+    },
+    {
+        questionKey: "landing.faq.items.6.question",
+        answerKey: "landing.faq.items.6.answer",
+        category: "projects",
+    },
+    {
+        questionKey: "landing.faq.items.7.question",
+        answerKey: "landing.faq.items.7.answer",
+        category: "grading",
+    },
+    {
+        questionKey: "landing.faq.items.8.question",
+        answerKey: "landing.faq.items.8.answer",
+        category: "grading",
+    },
+    {
+        questionKey: "landing.faq.items.9.question",
+        answerKey: "landing.faq.items.9.answer",
+        category: "grading",
+    },
+    {
+        questionKey: "landing.faq.items.10.question",
+        answerKey: "landing.faq.items.10.answer",
+        category: "grading",
+    },
+    {
+        questionKey: "landing.faq.items.11.question",
+        answerKey: "landing.faq.items.11.answer",
+        category: "data",
+    },
+    {
+        questionKey: "landing.faq.items.12.question",
+        answerKey: "landing.faq.items.12.answer",
+        category: "data",
+    },
+    {
+        questionKey: "landing.faq.items.13.question",
+        answerKey: "landing.faq.items.13.answer",
+        category: "data",
+    },
 ];
 
 export type NavLink = {

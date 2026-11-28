@@ -2197,7 +2197,7 @@ const SpaceRoute = () => {
                                 )}
                             </header>
                         </section>
-                        <div className="min-h-[400px] overflow-x-auto">
+                        <div className="min-h-[400px] overflow-x-auto rounded-2xl bg-[hsl(216,22%,95%)] bg-[radial-gradient(#e5e7eb_2px,transparent_1px)] [background-size:16px_16px] p-4 dark:bg-[#0b1226] dark:bg-[radial-gradient(#2a3448_2px,transparent_1px)]">
                             <div className="min-w-min">
                                 <KanbanBoard {...boardData} />
                             </div>
