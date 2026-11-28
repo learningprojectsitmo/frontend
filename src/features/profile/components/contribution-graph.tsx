@@ -160,7 +160,8 @@ export function sumInWindow(
     const end = toKey(window.end);
     const today = toKey(startOfUtcDay(now));
     return summary.reduce(
-        (acc, day) => acc + (day.date >= start && day.date <= end && day.date <= today ? day.count : 0),
+        (acc, day) =>
+            acc + (day.date >= start && day.date <= end && day.date <= today ? day.count : 0),
         0,
     );
 }

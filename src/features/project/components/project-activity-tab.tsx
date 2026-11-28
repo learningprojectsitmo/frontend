@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { ActivityFeed } from "@/features/profile/components/activity-feed";
 import { ActivityPagination } from "@/features/profile/components/activity-pagination";
-import { ContributionGraph, type GraphMode } from "@/features/profile/components/contribution-graph";
+import {
+    ContributionGraph,
+    type GraphMode,
+} from "@/features/profile/components/contribution-graph";
 import { ActivityDayFilter } from "@/features/profile/components/activity-day-filter";
 import { ACTIVITY_PAGE_SIZE, useProjectActivity } from "@/features/profile/api/use-activity";
 

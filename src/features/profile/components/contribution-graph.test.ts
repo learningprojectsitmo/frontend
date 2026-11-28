@@ -253,7 +253,11 @@ describe("buildGraph: rolling (профиль)", () => {
         // Ключи строятся в UTC: локальный вечер 26-го в UTC+3 относится к 26-му UTC-дню
         const { weeks } = buildGraph([{ date: "2026-09-26", count: 7 }], "2026-09-26", now);
 
-        expect(keys(weeks).flat().filter((k) => k === "2026-09-26")).toHaveLength(1);
+        expect(
+            keys(weeks)
+                .flat()
+                .filter((k) => k === "2026-09-26"),
+        ).toHaveLength(1);
         expect(weeks.flat().find((d) => d.key === "2026-09-26")?.count).toBe(7);
     });
 });
