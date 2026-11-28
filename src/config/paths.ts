@@ -3,6 +3,29 @@ export const paths = {
         path: "/",
         getHref: () => "/",
     },
+    // Публичные страницы про продукт: на них ведут пункты меню лендинга.
+    landing: {
+        features: {
+            path: "/features",
+            getHref: () => "/features",
+        },
+        assessment: {
+            path: "/assessment",
+            getHref: () => "/assessment",
+        },
+        howItWorks: {
+            path: "/how-it-works",
+            getHref: () => "/how-it-works",
+        },
+        audience: {
+            path: "/audience",
+            getHref: () => "/audience",
+        },
+        faq: {
+            path: "/faq",
+            getHref: () => "/faq",
+        },
+    },
     legal: {
         privacy: {
             path: "/privacy",

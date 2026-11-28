@@ -9,12 +9,13 @@ import { Section, SectionHeading } from "../ui/section";
 
 const STEP_ICONS: IconName[] = ["calendar", "clock", "exam", "check-mark"];
 
-export const Assessment = () => {
+export const Assessment = ({ as }: { as?: "h1" | "h2" }) => {
     const { t } = useTranslation();
 
     return (
         <Section id="assessment" tone="surface" className="py-20">
             <SectionHeading
+                as={as}
                 badge={t("landing.assessment.badge")}
                 title={t("landing.assessment.title")}
                 subtitle={t("landing.assessment.subtitle")}

@@ -10,12 +10,12 @@ import { Section, SectionHeading } from "../ui/section";
  * разбирается поисковиками. Зависимость @radix-ui/react-accordion ради шести
  * вопросов не тянем.
  */
-export const Faq = () => {
+export const Faq = ({ as }: { as?: "h1" | "h2" }) => {
     const { t } = useTranslation();
 
     return (
         <Section id="faq" tone="muted" className="py-20">
-            <SectionHeading title={t("landing.faq.title")} />
+            <SectionHeading as={as} title={t("landing.faq.title")} />
 
             <div className="mx-auto flex max-w-3xl flex-col gap-3">
                 {FAQ.map((item) => (

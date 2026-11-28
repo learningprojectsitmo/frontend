@@ -104,6 +104,37 @@ const en = {
                 ru: "Русский",
                 en: "English",
             },
+            breadcrumb: {
+                label: "Breadcrumb",
+                home: "Home",
+            },
+            pages: {
+                features: {
+                    title: "EduFlow features",
+                    description:
+                        "Spaces, projects, a kanban board with WIP limits, specifications, wiki, roles and access rights — everything a team needs.",
+                },
+                assessment: {
+                    title: "Exams and defense grading",
+                    description:
+                        "Exams with defense sign-up, queue and timers, criteria-based grading with role weights, result approval and a statement.",
+                },
+                howItWorks: {
+                    title: "How EduFlow works",
+                    description:
+                        "Three steps: create a space, add projects and a team, and work on the board. No complex setup.",
+                },
+                audience: {
+                    title: "Who EduFlow is for",
+                    description:
+                        "For team leads, student teams, research groups, product teams and hackathon organisers.",
+                },
+                faq: {
+                    title: "EduFlow FAQ",
+                    description:
+                        "How much EduFlow costs, where data is stored, how a defense grade is calculated and other common questions.",
+                },
+            },
             hero: {
                 badge: "Free · Data hosted in Russia",
                 titleTop: "Twenty projects.",
@@ -368,10 +399,43 @@ const en = {
                             "A weighted score by role, a manual adjustment with a reason, published results and a statement export to CSV.",
                     },
                 ],
-                mockupLabel: "Defense grading form and team result",
+                mockupLabel: "Defense assessment page: queue, scoring form and team result",
                 mockup: {
-                    title: "Defense · Atlas team",
-                    queue: "Queue: 3 of 8",
+                    window: "eduflow.app/app/exams",
+                    breadcrumb: "Exams / Project defense",
+                    examTitle: "Project defense",
+                    examSubtitle: "Project management · Year 3",
+                    examStatus: "Live",
+                    date: "Apr 18, 10:00",
+                    queueTitle: "Presentation order",
+                    queueCount: "8 teams",
+                    queue: [
+                        {
+                            name: "Atlas team",
+                            time: "10:00",
+                            status: "Now",
+                            state: "current",
+                        },
+                        {
+                            name: "Vector team",
+                            time: "10:15",
+                            status: "Waiting",
+                            state: "waiting",
+                        },
+                        {
+                            name: "Quarta team",
+                            time: "10:30",
+                            status: "Waiting",
+                            state: "waiting",
+                        },
+                        {
+                            name: "Polaris team",
+                            time: "09:45",
+                            status: "Finished",
+                            state: "done",
+                        },
+                    ],
+                    assessmentTitle: "Team assessment",
                     countdown: "Closes in 4:32",
                     hint: "Score the team against the criteria below",
                     criteria: [
@@ -385,7 +449,7 @@ const en = {
                     resultTitle: "Team result",
                     score: "23.65",
                     maxScore: "of 25",
-                    status: "Published",
+                    resultStatus: "Published",
                     roleScores: [
                         { role: "Teachers", weight: "60%", score: "4.80" },
                         { role: "Managers", weight: "30%", score: "4.60" },

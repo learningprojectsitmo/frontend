@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/ui/icons/icons.types";
+import { paths } from "@/config/paths";
 
 /**
  * Структура секций лендинга. Тексты намеренно не хранятся здесь — только
@@ -168,14 +169,14 @@ export const FAQ: FaqItem[] = [
 ];
 
 export type NavLink = {
-    anchor: string;
+    href: string;
     labelKey: string;
 };
 
 export const NAV_LINKS: NavLink[] = [
-    { anchor: "features", labelKey: "landing.nav.features" },
-    { anchor: "assessment", labelKey: "landing.nav.assessment" },
-    { anchor: "how-it-works", labelKey: "landing.nav.howItWorks" },
-    { anchor: "audience", labelKey: "landing.nav.audience" },
-    { anchor: "faq", labelKey: "landing.nav.faq" },
+    { href: paths.landing.features.getHref(), labelKey: "landing.nav.features" },
+    { href: paths.landing.assessment.getHref(), labelKey: "landing.nav.assessment" },
+    { href: paths.landing.howItWorks.getHref(), labelKey: "landing.nav.howItWorks" },
+    { href: paths.landing.audience.getHref(), labelKey: "landing.nav.audience" },
+    { href: paths.landing.faq.getHref(), labelKey: "landing.nav.faq" },
 ];

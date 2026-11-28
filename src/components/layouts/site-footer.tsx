@@ -7,29 +7,22 @@ import { useCookieConsent } from "@/features/privacy/cookie-consent-provider";
 import { cn } from "@/lib/utils";
 
 interface SiteFooterProps {
-    /**
-     * `landing` — ссылки-якоря на секции самой страницы.
-     * `app`     — те же ссылки, но уже с лендинга (в приложении якорей нет).
-     * Текст и вёрстка в обоих вариантах идентичны.
-     */
-    variant?: "landing" | "app";
     className?: string;
 }
 
 const SECTION_LINKS = [
-    { hash: "features", labelKey: "landing.nav.features" },
-    { hash: "how-it-works", labelKey: "landing.nav.howItWorks" },
-    { hash: "faq", labelKey: "landing.nav.faq" },
+    { href: paths.landing.features.getHref(), labelKey: "landing.nav.features" },
+    { href: paths.landing.assessment.getHref(), labelKey: "landing.nav.assessment" },
+    { href: paths.landing.howItWorks.getHref(), labelKey: "landing.nav.howItWorks" },
+    { href: paths.landing.audience.getHref(), labelKey: "landing.nav.audience" },
+    { href: paths.landing.faq.getHref(), labelKey: "landing.nav.faq" },
 ] as const;
 
 const linkClass = "break-words text-sm text-gray-500 transition-colors hover:text-gray-900";
 
-export const SiteFooter = ({ variant = "landing", className }: SiteFooterProps) => {
+export const SiteFooter = ({ className }: SiteFooterProps) => {
     const { t } = useTranslation();
     const { openSettings } = useCookieConsent();
-
-    const sectionHref = (hash: string) =>
-        variant === "landing" ? `#${hash}` : `${paths.home.getHref()}#${hash}`;
 
     return (
         <footer className={cn("border-t border-gray-200 bg-gray-50", className)}>
@@ -52,17 +45,11 @@ export const SiteFooter = ({ variant = "landing", className }: SiteFooterProps) 
                         <span className="text-sm font-semibold text-gray-900">
                             {t("landing.footer.product")}
                         </span>
-                        {SECTION_LINKS.map(({ hash, labelKey }) =>
-                            variant === "landing" ? (
-                                <a key={hash} href={`#${hash}`} className={linkClass}>
-                                    {t(labelKey)}
-                                </a>
-                            ) : (
-                                <Link key={hash} to={sectionHref(hash)} className={linkClass}>
-                                    {t(labelKey)}
-                                </Link>
-                            ),
-                        )}
+                        {SECTION_LINKS.map(({ href, labelKey }) => (
+                            <Link key={href} to={href} className={linkClass}>
+                                {t(labelKey)}
+                            </Link>
+                        ))}
                     </div>
 
                     <div className="flex flex-col gap-3">

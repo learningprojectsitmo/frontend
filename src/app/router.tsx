@@ -42,6 +42,31 @@ export const createAppRouter = (queryClient: QueryClient) =>
             hydrateFallbackElement: <LoadingFallback />, // Добавить
         },
         {
+            path: paths.landing.features.path,
+            lazy: () => import("./routes/landing/features").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.landing.assessment.path,
+            lazy: () => import("./routes/landing/assessment").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.landing.howItWorks.path,
+            lazy: () => import("./routes/landing/how-it-works").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.landing.audience.path,
+            lazy: () => import("./routes/landing/audience").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
+            path: paths.landing.faq.path,
+            lazy: () => import("./routes/landing/faq").then(convert(queryClient)),
+            hydrateFallbackElement: <LoadingFallback />,
+        },
+        {
             path: paths.auth.createAcc.path,
             lazy: () => import("./routes/auth/create-acc").then(convert(queryClient)),
             hydrateFallbackElement: <LoadingFallback />, // Добавить

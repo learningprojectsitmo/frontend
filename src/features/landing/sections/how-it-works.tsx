@@ -7,12 +7,13 @@ import { Section, SectionHeading } from "../ui/section";
 
 const STEP_ICONS = ["project", "members", "list"] as const;
 
-export const HowItWorks = () => {
+export const HowItWorks = ({ as }: { as?: "h1" | "h2" }) => {
     const { t } = useTranslation();
 
     return (
         <Section id="how-it-works" tone="plain" className="py-20">
             <SectionHeading
+                as={as}
                 title={t("landing.howItWorks.title")}
                 subtitle={t("landing.howItWorks.subtitle")}
             />
