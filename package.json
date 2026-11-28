@@ -52,17 +52,17 @@
         "@tiptap/react": "^3.31.3",
         "@tiptap/starter-kit": "^3.31.3",
         "@tiptap/suggestion": "^3.31.3",
-        "axios": "^1.6.8",
+        "axios": "^1.20.0",
         "camelcase-keys": "^10.0.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.11",
         "framer-motion": "^12.29.0",
         "globals": "^17.1.0",
-        "i18next": "^26.3.1",
+        "i18next": "^26.3.4",
         "lowlight": "^3.3.0",
         "lucide-react": "^0.577.0",
-        "nanoid": "^5.0.7",
+        "nanoid": "^5.1.16",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-error-boundary": "^4.0.13",
@@ -70,11 +70,11 @@
         "react-hook-form": "^7.71.1",
         "react-i18next": "^17.0.8",
         "react-query-auth": "^2.4.3",
-        "react-router": "^7.0.2",
+        "react-router": "^7.18.2",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.6.0",
         "tailwindcss-animate": "^1.0.7",
-        "zod": "^3.25.76",
+        "zod": "^4.6.6",
         "zustand": "^4.5.2"
     },
     "devDependencies": {
@@ -101,10 +101,10 @@
         "tailwindcss": "^3.4.19",
         "typescript": "~5.4.5",
         "typescript-eslint": "^8.21.0",
-        "vite": "^7.2.6",
+        "vite": "^7.3.7",
         "vite-plugin-svgr": "^4.5.0",
         "vite-tsconfig-paths": "^4.3.2",
-        "vitest": "^4.0.18"
+        "vitest": "^4.1.12"
     },
     "lint-staged": {
         "*.+(ts|tsx)": [
@@ -113,6 +113,18 @@
         ]
     },
     "overrides": {
-        "use-sync-external-store": "1.2.2"
+        "use-sync-external-store": "1.2.2",
+        "brace-expansion@1": "1.1.21",
+        "brace-expansion@2": "2.1.7",
+        "brace-expansion@5": "5.0.12",
+        "browserslist": "4.28.7",
+        "js-yaml@3": "3.15.2",
+        "js-yaml@4": "4.3.2",
+        "nanoid@3": "3.3.18",
+        "postcss": "8.5.23",
+        "postcss-selector-parser": "6.1.5",
+        "source-map-js": "1.2.2",
+        "svgo": "3.3.5",
+        "ws": "8.21.0"
     }
 }
