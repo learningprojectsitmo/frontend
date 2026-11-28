@@ -25,9 +25,20 @@ const MONTH_LABELS = [
 const WEEK_DAYS = 7;
 /** Минимум колонок, который месяц должен занимать, чтобы быть подписанным. */
 const MIN_MONTH_COLS = 2;
-/** На сколько недель вперёд от начала сетки тянется окно. */
-const WEEKS_FORWARD = 52;
+/** Длина скользящего окна профиля: 52 недели, как в GitHub. */
+const ROLLING_DAYS = 364;
 const DAY_MS = 86_400_000;
+
+/**
+ * Окно графика.
+ * - `rolling` — последние 12 месяцев (профиль по умолчанию);
+ * - `year` — календарный год 01.01–31.12 (выбор года в сайдбаре);
+ * - `from` — год от указанной даты (проект: от дня создания).
+ */
+export type GraphMode =
+    | { kind: "rolling" }
+    | { kind: "year"; year: number }
+    | { kind: "from"; start: string };
 
 type GraphDay = {
     key: string;
@@ -35,8 +46,10 @@ type GraphDay = {
     level: number;
     /** День после сегодняшнего: активности быть ещё не могло. */
     isFuture: boolean;
-    /** День до динамической первой даты: активности там быть не может. */
+    /** День до начала окна (до регистрации / создания проекта / 1 января). */
     isBeforeWindow: boolean;
+    /** День после конца окна (для календарного года — следующий год). */
+    isAfterWindow: boolean;
 };
 
 type Graph = {
@@ -46,6 +59,9 @@ type Graph = {
     total: number;
     /** Динамическая первая дата активности, "YYYY-MM-DD"; null — неизвестна. */
     firstAt: string | null;
+    /** Границы окна, "YYYY-MM-DD" — для подписи диапазона. */
+    windowStart: string;
+    windowEnd: string;
     /** Метки дней недели по строкам — зависят от дня начала сетки. */
     weekdays: string[];
 };
@@ -76,29 +92,44 @@ function parseDay(value: string): Date | null {
 }
 
 /**
- * Начало сетки — понедельник недели, в которую попало 1-е число текущего
- * месяца. Отсюда две вещи сразу: колонка равна неделе и всегда начинается с
- * понедельника, а окно уходит вперёд, так что сегодняшний день стоит в начале
- * полосы, а не в её хвосте.
- *
- * Отступать назад от 1-го числа, а не начинать ровно с него, обязательно: при
- * старте со вторника строки съезжают на день и подписи «Пн…Вс» перестают
- * совпадать с ячейками.
+ * Понедельник недели, в которую попадает `date`. Колонка графика — неделя,
+ * и всегда начинается с понедельника: иначе строки съезжают на день и
+ * подписи «Пн…Вс» перестают совпадать с ячейками.
  */
-export function resolveGridStart(today: Date): Date {
-    const first = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
-    // getUTCDay: вс=0, пн=1…сб=6. Сдвиг в понедельничную систему отсчёта.
-    const shift = (first.getUTCDay() + WEEK_DAYS - 1) % WEEK_DAYS;
-    return new Date(first.getTime() - shift * DAY_MS);
+export function mondayOf(date: Date): Date {
+    const shift = (date.getUTCDay() + WEEK_DAYS - 1) % WEEK_DAYS;
+    return new Date(date.getTime() - shift * DAY_MS);
+}
+
+/** Воскресенье недели, в которую попадает `date`. */
+export function sundayOf(date: Date): Date {
+    const shift = (WEEK_DAYS - date.getUTCDay()) % WEEK_DAYS;
+    return new Date(date.getTime() + shift * DAY_MS);
 }
 
 /**
- * Конец сетки — воскресенье последней недели окна. Окно всегда целое число
- * недель, поэтому последняя колонка заполнена целиком и сетка не выглядит
- * обрезанной.
+ * Границы окна в зависимости от режима.
+ *
+ * Год от даты (`from`): если дата неразборчива, откатываемся к скользящему
+ * окну — график не должен исчезать из-за битого `since`.
  */
-export function resolveGridEnd(gridStart: Date): Date {
-    return new Date(gridStart.getTime() + (WEEKS_FORWARD * WEEK_DAYS - 1) * DAY_MS);
+export function resolveWindow(mode: GraphMode, now = new Date()): { start: Date; end: Date } {
+    const today = startOfUtcDay(now);
+    if (mode.kind === "year") {
+        return {
+            start: new Date(Date.UTC(mode.year, 0, 1)),
+            end: new Date(Date.UTC(mode.year, 11, 31)),
+        };
+    }
+    if (mode.kind === "from") {
+        const start = parseDay(mode.start);
+        if (start) {
+            const end = new Date(start);
+            end.setUTCFullYear(end.getUTCFullYear() + 1);
+            return { start, end: new Date(end.getTime() - DAY_MS) };
+        }
+    }
+    return { start: new Date(today.getTime() - ROLLING_DAYS * DAY_MS), end: today };
 }
 
 /**
@@ -118,33 +149,56 @@ export function resolveFirstAt(since: string | null, today: Date): string | null
     return parsed && parsed <= today ? toKey(parsed) : null;
 }
 
-export function buildGraph(summary: ActivityDay[], since: string | null, now = new Date()): Graph {
+/** Сумма действий внутри окна — для подписи заголовка рядом с графиком. */
+export function sumInWindow(
+    summary: ActivityDay[],
+    mode: GraphMode = { kind: "rolling" },
+    now = new Date(),
+): number {
+    const window = resolveWindow(mode, now);
+    const start = toKey(window.start);
+    const end = toKey(window.end);
+    const today = toKey(startOfUtcDay(now));
+    return summary.reduce(
+        (acc, day) => acc + (day.date >= start && day.date <= end && day.date <= today ? day.count : 0),
+        0,
+    );
+}
+
+export function buildGraph(
+    summary: ActivityDay[],
+    since: string | null,
+    now = new Date(),
+    mode: GraphMode = { kind: "rolling" },
+): Graph {
     const counts = new Map(summary.map((d) => [d.date, d.count]));
     const today = startOfUtcDay(now);
-    // Сетка — год недель от понедельника текущего месяца: сегодня стоит в
-    // начале полосы, а месяцы дальше заполнены будущими днями. Обрезать по
-    // today нельзя — тогда полоса обрывалась бы на середине, то есть ровно
-    // там, где у графика не должно быть ни начала, ни конца.
-    const gridStart = resolveGridStart(today);
-    const gridEnd = resolveGridEnd(gridStart);
-    // Динамическая первая дата: начало собственного окна активности.
+    const window = resolveWindow(mode, today);
+    // Сетка всегда целое число недель: от понедельника недели начала окна до
+    // воскресенья недели его конца. Дни соседних недель за пределами окна
+    // рисуются пустыми, чтобы полоса не выглядела обрезанной.
+    const gridStart = mondayOf(window.start);
+    const gridEnd = sundayOf(window.end);
+    // Динамическая первая дата — для подписи «Активность с …».
     const firstAt = resolveFirstAt(since, today);
-    const windowStart = (firstAt ? parseDay(firstAt) : null) ?? gridStart;
 
     const days: GraphDay[] = [];
     const cursor = new Date(gridStart);
     while (cursor <= gridEnd) {
         const key = toKey(cursor);
-        // До первой даты активности данных быть не может — принудительно
-        // обнуляем, чтобы подпись «с …» не расходилась с картинкой.
-        const isBeforeWindow = cursor < windowStart;
+        const isBeforeWindow = cursor < window.start;
+        const isAfterWindow = cursor > window.end;
         const isFuture = cursor > today;
+        // До окна и после него данных быть не может — принудительно обнуляем,
+        // чтобы подпись диапазона не расходилась с картинкой.
+        const isOutside = isBeforeWindow || isAfterWindow || isFuture;
         days.push({
             key,
-            count: isBeforeWindow || isFuture ? 0 : (counts.get(key) ?? 0),
+            count: isOutside ? 0 : (counts.get(key) ?? 0),
             level: 0,
             isFuture,
             isBeforeWindow,
+            isAfterWindow,
         });
         cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
@@ -174,9 +228,8 @@ export function buildGraph(summary: ActivityDay[], since: string | null, now = n
         const year = month === 0 ? ` ${String(date.getUTCFullYear()).slice(2)}` : "";
         months.push({ label: `${MONTH_LABELS[month]}${year}`, col });
     });
-    // Месяц подписываем, только если он занимает хотя бы пару колонок. Сетка
-    // начинается с понедельника недели 1-го числа, поэтому на первом столбце
-    // месяц может лежать единственным днём (31.08) — подпись над одной
+    // Месяц подписываем, только если он занимает хотя бы пару колонок. На
+    // границе окна месяц может лежать единственным днём — подпись над одной
     // колонкой ничего не сообщает и только шумит.
     const visibleMonths = months.filter(
         (m, i) => (months[i + 1]?.col ?? weeks.length) - m.col >= MIN_MONTH_COLS,
@@ -187,9 +240,13 @@ export function buildGraph(summary: ActivityDay[], since: string | null, now = n
         months: visibleMonths,
         total: days.reduce((acc, d) => acc + d.count, 0),
         firstAt,
+        windowStart: toKey(window.start),
+        windowEnd: toKey(window.end),
         weekdays: weekdayLabels(gridStart),
     };
 }
+
+const ROLLING_MODE: GraphMode = { kind: "rolling" };
 
 export function ContributionGraph({
     summary,
@@ -197,6 +254,7 @@ export function ContributionGraph({
     loading,
     onDayClick,
     selectedDay,
+    mode = ROLLING_MODE,
 }: {
     summary: ActivityDay[];
     since: string | null;
@@ -205,10 +263,12 @@ export function ContributionGraph({
     onDayClick?: (day: string) => void;
     /** Подсвеченный день — равен выбранному в ленте. */
     selectedDay?: string | null;
+    /** Окно графика; по умолчанию последние 12 месяцев. */
+    mode?: GraphMode;
 }) {
-    const { weeks, months, total, firstAt, weekdays } = useMemo(
-        () => buildGraph(summary, since),
-        [summary, since],
+    const { weeks, months, total, firstAt, windowStart, windowEnd, weekdays } = useMemo(
+        () => buildGraph(summary, since, new Date(), mode),
+        [summary, since, mode],
     );
 
     if (loading) {
@@ -253,10 +313,13 @@ export function ContributionGraph({
                                 const day = week[di];
                                 if (!day) return <div key={`${wi}-p-${di}`} className="flex-1" />;
                                 // Кликабельны только дни, где активность уже
-                                // могла быть: до первой даты фильтр бессмыслен,
+                                // могла быть: до начала окна фильтр бессмыслен,
                                 // в будущем его и подавно.
                                 const clickable =
-                                    Boolean(onDayClick) && !day.isBeforeWindow && !day.isFuture;
+                                    Boolean(onDayClick) &&
+                                    !day.isBeforeWindow &&
+                                    !day.isAfterWindow &&
+                                    !day.isFuture;
                                 const isSelected = selectedDay === day.key;
                                 return (
                                     <button
@@ -268,11 +331,13 @@ export function ContributionGraph({
                                         title={
                                             day.isFuture
                                                 ? `Ещё не наступило · ${day.key}`
-                                                : day.isBeforeWindow
-                                                  ? `Активность ещё не началась · ${day.key}`
-                                                  : day.count > 0
-                                                    ? `${day.count} ${pluralize(day.count)} · ${day.key}`
-                                                    : `Нет действий · ${day.key}`
+                                                : day.isAfterWindow
+                                                  ? `Вне выбранного окна · ${day.key}`
+                                                  : day.isBeforeWindow
+                                                    ? `Активность ещё не началась · ${day.key}`
+                                                    : day.count > 0
+                                                      ? `${day.count} ${pluralize(day.count)} · ${day.key}`
+                                                      : `Нет действий · ${day.key}`
                                         }
                                         className={
                                             "flex-1 aspect-square rounded-[2px] min-w-[14px] " +
@@ -282,9 +347,12 @@ export function ContributionGraph({
                                             (isSelected ? " ring-2 ring-[#2563EB]" : "")
                                         }
                                         style={{
-                                            backgroundColor: day.isFuture
-                                                ? FUTURE_COLOR
-                                                : COLORS[day.level],
+                                            backgroundColor:
+                                                day.isBeforeWindow || day.isAfterWindow
+                                                    ? "transparent"
+                                                    : day.isFuture
+                                                      ? FUTURE_COLOR
+                                                      : COLORS[day.level],
                                         }}
                                     />
                                 );
@@ -318,6 +386,11 @@ export function ContributionGraph({
                 {firstAt && (
                     <span className="ml-2 text-gray-400 whitespace-nowrap">
                         Активность с {formatDay(firstAt)}
+                    </span>
+                )}
+                {mode.kind !== "rolling" && (
+                    <span className="ml-2 text-gray-400 whitespace-nowrap">
+                        Окно: {formatDay(windowStart)} – {formatDay(windowEnd)}
                     </span>
                 )}
             </div>

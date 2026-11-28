@@ -53,10 +53,10 @@ export const queryKeys = {
         spaces: () => ["profile", "spaces"] as const,
         createdProjects: () => ["profile", "created-projects"] as const,
         projects: () => ["profile", "projects"] as const,
-        // day — выбранный день графика; попадает в ключ, чтобы лента и общая
-        // лента не путались в кэше.
-        activity: (page = 1, limit?: number, day?: string | null) =>
-            compact(["profile", "activity", page, limit, day] as const),
+        // day — выбранный день графика, year — выбранный год; попадают в ключ,
+        // чтобы ленты разных фильтров не путались в кэше.
+        activity: (page = 1, limit?: number, day?: string | null, year?: number | null) =>
+            compact(["profile", "activity", page, limit, day, year] as const),
     },
 
     project: {

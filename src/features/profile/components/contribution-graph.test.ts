@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
     buildGraph,
+    mondayOf,
     resolveFirstAt,
-    resolveGridEnd,
-    resolveGridStart,
+    resolveWindow,
+    sumInWindow,
+    sundayOf,
     weekdayLabels,
 } from "./contribution-graph";
-
-const DAY = 86_400_000;
 
 function utc(y: number, m: number, d: number): Date {
     return new Date(Date.UTC(y, m - 1, d));
@@ -17,103 +17,64 @@ function keys(weeks: { key: string }[][]): string[][] {
     return weeks.map((w) => w.map((d) => d.key));
 }
 
-describe("resolveGridStart", () => {
-    it("начинает с понедельника недели, где лежит 1-е число месяца", () => {
-        // Сегодня 26.09.2026, 1 сентября — вторник, поэтому сетка начинается
-        // с понедельника 31 августа: колонка должна быть полной неделей.
-        expect(
-            resolveGridStart(utc(2026, 9, 26))
-                .toISOString()
-                .slice(0, 10),
-        ).toBe("2026-08-31");
+function iso(date: Date): string {
+    return date.toISOString().slice(0, 10);
+}
+
+describe("mondayOf / sundayOf", () => {
+    it("возвращает границы недели для любого дня", () => {
+        // 26.09.2026 — суббота: неделя 21–27 сентября.
+        expect(iso(mondayOf(utc(2026, 9, 26)))).toBe("2026-09-21");
+        expect(iso(sundayOf(utc(2026, 9, 26)))).toBe("2026-09-27");
     });
 
-    it("отступает назад, а не вперёд, с любого дня недели", () => {
-        // Якорь — 1-е число месяца, и оно может попасть на любой день недели.
-        // Понедельник ищется только назад от него, иначе первая колонка
-        // оказалась бы обрезанной.
-        //   01.08.2026 — сб → пн 27.07
-        //   01.09.2026 — вт → пн 31.08
-        //   01.02.2026 — вс → пн 26.01
-        const cases = [
-            [[2026, 8, 15], "2026-07-27"],
-            [[2026, 9, 26], "2026-08-31"],
-            [[2026, 2, 14], "2026-01-26"],
-        ] as const;
-
-        for (const [[y, m, d], expected] of cases) {
-            expect(
-                resolveGridStart(utc(y, m, d))
-                    .toISOString()
-                    .slice(0, 10),
-            ).toBe(expected);
-        }
+    it("не сдвигает понедельник и воскресенье", () => {
+        expect(iso(mondayOf(utc(2026, 9, 21)))).toBe("2026-09-21");
+        expect(iso(sundayOf(utc(2026, 9, 27)))).toBe("2026-09-27");
     });
 
-    it("всегда начинается с понедельника", () => {
-        for (const [y, m, d] of [
-            [2026, 9, 26],
-            [2026, 1, 15],
-            [2026, 3, 1],
-            [2026, 12, 31],
-            [2027, 2, 14],
-            [2028, 2, 10],
-        ] as const) {
-            expect(resolveGridStart(utc(y, m, d)).getUTCDay()).toBe(1);
-        }
-    });
-
-    it("не отрывается от начала месяца больше чем на неделю", () => {
-        for (const [y, m, d] of [
-            [2026, 9, 26],
-            [2026, 3, 1],
-            [2027, 2, 14],
-        ] as const) {
-            const first = new Date(Date.UTC(y, m - 1, 1));
-            const start = resolveGridStart(utc(y, m, d));
-            const back = Math.round((first.getTime() - start.getTime()) / DAY);
-
-            expect(back).toBeGreaterThanOrEqual(0);
-            expect(back).toBeLessThanOrEqual(6);
-        }
+    it("переходит через границу года", () => {
+        expect(iso(mondayOf(utc(2027, 1, 1)))).toBe("2026-12-28");
+        expect(iso(sundayOf(utc(2025, 12, 31)))).toBe("2026-01-04");
     });
 });
 
-describe("resolveGridEnd", () => {
-    it("закрывает окно воскресеньем ровно через 52 недели", () => {
-        const start = resolveGridStart(utc(2026, 9, 26));
-        const end = resolveGridEnd(start);
+describe("resolveWindow", () => {
+    const now = utc(2026, 9, 26);
 
-        expect(end.toISOString().slice(0, 10)).toBe("2027-08-29");
-        expect(end.getUTCDay()).toBe(0);
-        expect((end.getTime() - start.getTime()) / DAY + 1).toBe(364);
+    it("rolling — последние 12 месяцев, заканчиваясь сегодняшним днём", () => {
+        const { start, end } = resolveWindow({ kind: "rolling" }, now);
+
+        expect(iso(start)).toBe("2025-09-27");
+        expect(iso(end)).toBe("2026-09-26");
     });
 
-    it("не схлопывается на переходе через границу года", () => {
-        const start = resolveGridStart(utc(2026, 1, 15));
-        const end = resolveGridEnd(start);
+    it("year — календарный год 1 января – 31 декабря", () => {
+        const { start, end } = resolveWindow({ kind: "year", year: 2025 }, now);
 
-        // Декабрь 2025 → декабрь 2026: окно всегда одно и то же по длине.
-        expect(start.toISOString().slice(0, 10)).toBe("2025-12-29");
-        expect(end.toISOString().slice(0, 10)).toBe("2026-12-27");
-        expect((end.getTime() - start.getTime()) / DAY + 1).toBe(364);
+        expect(iso(start)).toBe("2025-01-01");
+        expect(iso(end)).toBe("2025-12-31");
     });
 
-    it("даёт одинаковую длину окна в любой месяц, включая високосный февраль", () => {
-        // Длина задаётся неделями, а не месяцами, поэтому 29 февраля ничего
-        // не ломает: окно всегда 52 полные колонки.
-        for (const [y, m, d] of [
-            [2026, 9, 26],
-            [2027, 2, 14],
-            [2028, 2, 10],
-            [2028, 3, 1],
-        ] as const) {
-            const start = resolveGridStart(utc(y, m, d));
-            const end = resolveGridEnd(start);
-            expect((end.getTime() - start.getTime()) / DAY + 1).toBe(364);
-            expect(start.getUTCDay()).toBe(1);
-            expect(end.getUTCDay()).toBe(0);
-        }
+    it("from — ровно год от указанной даты", () => {
+        const { start, end } = resolveWindow({ kind: "from", start: "2025-09-01" }, now);
+
+        expect(iso(start)).toBe("2025-09-01");
+        expect(iso(end)).toBe("2026-08-31");
+    });
+
+    it("from — год от 29 февраля заканчивается 28-го в невисокосном году", () => {
+        const { start, end } = resolveWindow({ kind: "from", start: "2024-02-29" }, now);
+
+        expect(iso(start)).toBe("2024-02-29");
+        expect(iso(end)).toBe("2025-02-28");
+    });
+
+    it("from с мусорной датой откатывается к rolling", () => {
+        const { start, end } = resolveWindow({ kind: "from", start: "не дата" }, now);
+
+        expect(iso(start)).toBe("2025-09-27");
+        expect(iso(end)).toBe("2026-09-26");
     });
 });
 
@@ -123,14 +84,14 @@ describe("weekdayLabels", () => {
     });
 
     it("не зависит от даты: сетка всегда начинается с понедельника", () => {
-        // Окно якорится на понедельнике, поэтому разворот подписей всегда
-        // один и тот же — иначе строки разъезжаются с ячейками.
+        // Колонка равна неделе и всегда начинается с понедельника, поэтому
+        // разворот подписей всегда один и тот же — иначе строки разъезжаются.
         for (const [y, m, d] of [
             [2026, 9, 26],
             [2026, 1, 15],
             [2027, 2, 14],
         ] as const) {
-            expect(weekdayLabels(resolveGridStart(utc(y, m, d)))).toEqual([
+            expect(weekdayLabels(mondayOf(utc(y, m, d)))).toEqual([
                 "Пн",
                 "Вт",
                 "Ср",
@@ -143,9 +104,7 @@ describe("weekdayLabels", () => {
     });
 
     it("подписывает все семь дней, без пропусков", () => {
-        // Раньше подписывались только Пн/Ср/Пт, и по пустым строкам было
-        // нельзя понять, какой день где стоит.
-        const labels = weekdayLabels(resolveGridStart(utc(2026, 9, 26)));
+        const labels = weekdayLabels(mondayOf(utc(2026, 9, 26)));
 
         expect(labels).toHaveLength(7);
         expect(labels.every((l) => l.length > 0)).toBe(true);
@@ -164,124 +123,74 @@ describe("resolveFirstAt", () => {
     });
 });
 
-describe("buildGraph", () => {
+describe("buildGraph: rolling (профиль)", () => {
     const now = utc(2026, 9, 26);
 
-    it("оканчивается концом окна, а сегодня внутри", () => {
-        const { weeks } = buildGraph([], "2026-09-20", now);
-        const flat = weeks.flat();
+    it("покрывает 53 недели от понедельника до воскресенья", () => {
+        const { weeks, windowStart, windowEnd } = buildGraph([], "2026-09-20", now);
 
-        expect(flat.at(-1)?.key).toBe("2027-08-29");
-        expect(flat.some((d) => d.key > "2027-08-29")).toBe(false);
-        // Сегодня — не последний день сетки: дальше идут будущие дни.
-        expect(flat.find((d) => d.key === "2026-09-26")).toBeDefined();
-        expect(flat.at(-1)?.isFuture).toBe(true);
+        expect(windowStart).toBe("2025-09-27");
+        expect(windowEnd).toBe("2026-09-26");
+        expect(weeks).toHaveLength(53);
+        expect(weeks.flat()).toHaveLength(53 * 7);
+        expect(weeks.every((w) => w.length === 7)).toBe(true);
+        expect(weeks[0][0].key).toBe("2025-09-22");
+        expect(weeks.at(-1)!.at(-1)!.key).toBe("2026-09-27");
     });
 
-    it("помечает дни после сегодняшнего как будущие", () => {
+    it("сегодня стоит в предпоследней колонке, а завтра — единственный будущий день", () => {
         const { weeks } = buildGraph([], "2026-09-20", now);
         const flat = weeks.flat();
 
         expect(flat.find((d) => d.key === "2026-09-26")?.isFuture).toBe(false);
         expect(flat.find((d) => d.key === "2026-09-27")?.isFuture).toBe(true);
-        expect(flat.every((d) => (d.key <= "2026-09-26" ? !d.isFuture : d.isFuture))).toBe(true);
+        expect(flat.filter((d) => d.isFuture).map((d) => d.key)).toEqual(["2026-09-27"]);
     });
 
-    it("обнуляет активность из будущего, даже если бэкенд её прислал", () => {
-        // Иначе будущая ячейка красилась бы по счётчику, которого ещё нет.
+    it("помечает дни до начала окна пустыми, а не выкидывает их", () => {
+        const { weeks } = buildGraph([], "2026-09-20", now);
+        const flat = weeks.flat();
+
+        // Первая неделя начинается раньше окна: 22–26 сентября 2025.
+        const before = flat.filter((d) => d.key < "2025-09-27");
+        expect(before.map((d) => d.key)).toEqual([
+            "2025-09-22",
+            "2025-09-23",
+            "2025-09-24",
+            "2025-09-25",
+            "2025-09-26",
+        ]);
+        expect(before.every((d) => d.isBeforeWindow && d.count === 0)).toBe(true);
+    });
+
+    it("обнуляет активность из будущего и за пределами окна", () => {
         const { weeks, total } = buildGraph(
             [
+                { date: "2025-09-26", count: 99 },
                 { date: "2026-09-26", count: 2 },
                 { date: "2026-09-27", count: 50 },
-                { date: "2027-01-01", count: 50 },
             ],
             "2026-09-20",
             now,
         );
         const flat = weeks.flat();
 
+        expect(flat.find((d) => d.key === "2025-09-26")?.count).toBe(0);
         expect(flat.find((d) => d.key === "2026-09-27")?.count).toBe(0);
-        expect(flat.find((d) => d.key === "2027-01-01")?.count).toBe(0);
-        expect(flat.find((d) => d.key === "2026-09-27")?.level).toBe(0);
         expect(total).toBe(2);
     });
 
     it("не даёт будущим дням исказить максимум интенсивности", () => {
-        // 50 в будущем не должны поймать и 3 действия сегодняшнего дня.
         const { weeks } = buildGraph(
             [
                 { date: "2026-09-26", count: 3 },
-                { date: "2026-10-01", count: 50 },
+                { date: "2026-09-27", count: 50 },
             ],
             "2026-09-20",
             now,
         );
 
         expect(weeks.flat().find((d) => d.key === "2026-09-26")?.level).toBe(4);
-    });
-
-    it("помечает дни до первой даты как пустые, а не выкидывает их", () => {
-        const { weeks } = buildGraph([], "2026-09-20", now);
-        const flat = weeks.flat();
-
-        // Колонки до первой даты есть — сетка всегда шириной в год, — но они
-        // не могут содержать действий, иначе подпись «Активность с …» врёт.
-        expect(flat.length).toBeGreaterThan(300);
-        const before = flat.filter((d) => d.key < "2026-09-20");
-        expect(before.length).toBeGreaterThan(0);
-        expect(before.every((d) => d.isBeforeWindow && d.count === 0)).toBe(true);
-        expect(flat.filter((d) => d.key >= "2026-09-20").every((d) => !d.isBeforeWindow)).toBe(
-            true,
-        );
-    });
-
-    it("заполняет все колонки целиком, без обрезанного хвоста", () => {
-        // Окно — целое число недель, поэтому ни одна колонка не короче семи
-        // ячеек и последняя неделя не выглядит обрезанной.
-        const { weeks } = buildGraph([], "2026-09-20", now);
-
-        expect(weeks.every((w) => w.length === 7)).toBe(true);
-        expect(keys(weeks).at(-1)).toEqual([
-            "2027-08-23",
-            "2027-08-24",
-            "2027-08-25",
-            "2027-08-26",
-            "2027-08-27",
-            "2027-08-28",
-            "2027-08-29",
-        ]);
-    });
-
-    it("рисует сетку шириной в год даже для аккаунта двухдневной давности", () => {
-        const { weeks } = buildGraph([], "2026-09-26", now);
-
-        // Раньше здесь было 5 колонок, и виджет выглядел как обрывок.
-        // Сетка идёт с 31.08.2026 по 29.08.2027 — 364 дня, 52 недели.
-        expect(weeks.length).toBe(52);
-        expect(weeks.flat()).toHaveLength(364);
-    });
-
-    it("начинает колонки с понедельника и подписывает месяцы по всей сетке", () => {
-        const { weeks, months } = buildGraph([], "2026-09-26", now);
-
-        // 1 сентября 2026 — вторник, поэтому неделя начинается 31 августа.
-        expect(weeks[0][0].key).toBe("2026-08-31");
-        // «Авг» на первом столбце не подписываем: там лежит один день.
-        expect(months[0]).toEqual({ label: "Сен", col: 1 });
-    });
-
-    it("не подписывает месяц, который уместился в одну колонку", () => {
-        const { weeks, months } = buildGraph([], "2026-09-26", now);
-
-        // Подпись допустима, только если за ней хотя бы пара колонок: иначе
-        // она висит над обрезком в один-два дня и врёт о ширине месяца.
-        for (let i = 0; i < months.length; i++) {
-            const next = months[i + 1]?.col ?? weeks.length;
-            expect(next - months[i].col).toBeGreaterThanOrEqual(2);
-        }
-        // «Авг» остаётся один раз — в августе 2027, а не в однодневном хвосте.
-        expect(months.filter((m) => m.label === "Авг")).toHaveLength(1);
-        expect(months.at(-1)).toEqual({ label: "Авг", col: 48 });
     });
 
     it("кладёт каждый день на строку его дня недели", () => {
@@ -291,101 +200,21 @@ describe("buildGraph", () => {
         const row = weeks[col].findIndex((d) => d.key === "2026-09-26");
 
         expect(row).toBe(5);
-        expect(weekdayLabels(resolveGridStart(utc(2026, 9, 26)))[row]).toBe("Сб");
+        expect(weekdayLabels(mondayOf(now))[row]).toBe("Сб");
     });
 
-    it("подписывает текущий месяц один раз, а год — в январе", () => {
-        const { months } = buildGraph([], "2026-09-26", now);
+    it("подписывает январь с годом и не подписывает обрезки месяцев", () => {
+        const { weeks, months } = buildGraph([], "2026-09-26", now);
 
-        // Окно начинается с сентября, поэтому «Сен» не должен повторяться
-        // в конце, как было при взгляде назад.
-        expect(months.filter((m) => m.label === "Сен")).toHaveLength(1);
-        expect(months.some((m) => m.label === "Янв 27")).toBe(true);
-        expect(months.some((m) => m.label === "Авг")).toBe(true);
-    });
-
-    it("подписывает год только в январе", () => {
-        const { months } = buildGraph([], "2026-01-05", utc(2026, 3, 1));
-
-        // Подписи идут по всей сетке, а не от даты регистрации. Сетка при
-        // today=01.03.2026 стартует с 23.02, и февраль занимает ровно одну
-        // колонку, поэтому первая подпись — «Мар», а не «Фев».
-        expect(months[0]).toEqual({ label: "Мар", col: 1 });
-        expect(months.at(-1)).toEqual({ label: "Фев", col: 49 });
-        expect(months.some((m) => m.label === "Янв 27")).toBe(true);
-        expect(months.some((m) => m.label === "Фев")).toBe(true);
-        expect(months.every((m) => !/Янв 26/.test(m.label))).toBe(true);
-    });
-
-    it("подставляет счётчики из summary по ключу дня", () => {
-        const { weeks } = buildGraph(
-            [
-                { date: "2026-09-21", count: 4 },
-                { date: "2026-09-26", count: 1 },
-            ],
-            "2026-09-20",
-            now,
-        );
-        const flat = weeks.flat();
-
-        expect(flat.find((d) => d.key === "2026-09-21")?.count).toBe(4);
-        expect(flat.find((d) => d.key === "2026-09-26")?.count).toBe(1);
-        expect(flat.find((d) => d.key === "2026-09-22")?.count).toBe(0);
-    });
-
-    it("раскладывает интенсивность по 4 уровням", () => {
-        const summary = [
-            { date: "2026-09-20", count: 1 },
-            { date: "2026-09-21", count: 3 },
-            { date: "2026-09-22", count: 6 },
-            { date: "2026-09-23", count: 8 },
-        ];
-        const { weeks } = buildGraph(summary, "2026-09-20", now);
-        const flat = weeks.flat();
-        const level = (key: string) => flat.find((d) => d.key === key)?.level;
-
-        expect(level("2026-09-20")).toBe(1);
-        expect(level("2026-09-21")).toBe(2);
-        expect(level("2026-09-22")).toBe(3);
-        expect(level("2026-09-23")).toBe(4);
-    });
-
-    it("покрывает ровно одну колонку на каждый отрезок в 7 дней", () => {
-        const { weeks } = buildGraph([], "2026-09-01", now);
-
-        for (const week of weeks) {
-            expect(week.length).toBeLessThanOrEqual(7);
+        for (let i = 0; i < months.length; i++) {
+            const next = months[i + 1]?.col ?? weeks.length;
+            expect(next - months[i].col).toBeGreaterThanOrEqual(2);
         }
-    });
-
-    it("считает дни без дырок между началом и концом окна", () => {
-        const { weeks } = buildGraph([], "2026-09-06", now);
-        const flat = weeks.flat();
-        const gridStart = resolveGridStart(now);
-        const gridEnd = resolveGridEnd(gridStart);
-        const expected = Math.floor((gridEnd.getTime() - gridStart.getTime()) / DAY) + 1;
-
-        expect(flat).toHaveLength(expected);
-        expect(flat[0].key).toBe("2026-08-31");
-        expect(flat.at(-1)!.key).toBe("2027-08-29");
-        // Ни дырок, ни повторов: каждая дата в окне встречается ровно один раз.
-        expect(new Set(flat.map((d) => d.key)).size).toBe(flat.length);
-    });
-
-    it("учитывает активность за весь день, а не до текущего часа", () => {
-        // Ключи строятся в UTC: локальный вечер 26-го в UTC+3 относится к 26-му UTC-дню
-        const { weeks } = buildGraph([{ date: "2026-09-26", count: 7 }], "2026-09-26", now);
-
-        expect(
-            keys(weeks)
-                .flat()
-                .filter((k) => k === "2026-09-26"),
-        ).toHaveLength(1);
-        expect(weeks.flat().find((d) => d.key === "2026-09-26")?.count).toBe(7);
+        expect(months.some((m) => m.label === "Янв 26")).toBe(true);
+        expect(months.some((m) => m.label === "Сен")).toBe(true);
     });
 
     it("считает total только по окну, игнорируя более старые дни", () => {
-        // Аккаунт зарегистрирован в 2024, но окно ограничено годом.
         const summary = [
             { date: "2024-03-11", count: 500 },
             { date: "2026-09-25", count: 3 },
@@ -420,38 +249,151 @@ describe("buildGraph", () => {
         expect(buildGraph([], "2027-01-01", now).firstAt).toBeNull();
     });
 
-    it("обнуляет данные раньше первой даты, даже если бэкенд их прислал", () => {
-        // Старый ответ API мог бы содержать дни до окна активности — они не
-        // рисуются, иначе подпись «Активность с …» противоречила бы картинке.
-        const { weeks, total } = buildGraph(
-            [
-                { date: "2026-09-10", count: 99 },
-                { date: "2026-09-25", count: 2 },
-            ],
-            "2026-09-24",
-            now,
-        );
-        const flat = weeks.flat();
+    it("учитывает активность за весь день, а не до текущего часа", () => {
+        // Ключи строятся в UTC: локальный вечер 26-го в UTC+3 относится к 26-му UTC-дню
+        const { weeks } = buildGraph([{ date: "2026-09-26", count: 7 }], "2026-09-26", now);
 
-        expect(flat.find((d) => d.key === "2026-09-10")?.count).toBe(0);
-        expect(flat.find((d) => d.key === "2026-09-10")?.isBeforeWindow).toBe(true);
-        expect(total).toBe(2);
+        expect(keys(weeks).flat().filter((k) => k === "2026-09-26")).toHaveLength(1);
+        expect(weeks.flat().find((d) => d.key === "2026-09-26")?.count).toBe(7);
+    });
+});
+
+describe("sumInWindow", () => {
+    const now = utc(2026, 9, 26);
+
+    it("для rolling считает только последние 12 месяцев", () => {
+        const summary = [
+            { date: "2025-09-26", count: 99 },
+            { date: "2025-09-27", count: 2 },
+            { date: "2026-09-26", count: 3 },
+            { date: "2026-09-27", count: 99 },
+        ];
+
+        expect(sumInWindow(summary, { kind: "rolling" }, now)).toBe(5);
     });
 
-    it("не рисует дни, которые вообще вне окна", () => {
-        // Окно начинается 01.09.2026, поэтому прошлый год на картинке не места.
+    it("для года считает дни этого года и не считает будущие", () => {
+        const summary = [
+            { date: "2025-12-31", count: 99 },
+            { date: "2026-01-01", count: 4 },
+            { date: "2026-09-20", count: 1 },
+            { date: "2026-12-31", count: 99 },
+            { date: "2027-01-01", count: 99 },
+        ];
+
+        expect(sumInWindow(summary, { kind: "year", year: 2026 }, now)).toBe(5);
+    });
+
+    it("совпадает с total из buildGraph", () => {
+        const summary = [
+            { date: "2026-09-01", count: 2 },
+            { date: "2026-09-02", count: 5 },
+            { date: "2026-09-26", count: 1 },
+        ];
+        const mode = { kind: "rolling" } as const;
+
+        expect(sumInWindow(summary, mode, now)).toBe(buildGraph(summary, null, now, mode).total);
+    });
+});
+
+describe("buildGraph: year (выбранный год)", () => {
+    const now = utc(2026, 9, 26);
+    const mode = { kind: "year", year: 2026 } as const;
+
+    it("окно — календарный год, сетка выровнена по неделям", () => {
+        const { weeks, windowStart, windowEnd } = buildGraph([], "2024-03-11", now, mode);
+
+        expect(windowStart).toBe("2026-01-01");
+        expect(windowEnd).toBe("2026-12-31");
+        // 01.01.2026 — четверг, поэтому неделя начинается 29.12.2025.
+        expect(weeks[0][0].key).toBe("2025-12-29");
+        expect(weeks.at(-1)!.at(-1)!.key).toBe("2027-01-03");
+        expect(weeks).toHaveLength(53);
+    });
+
+    it("помечает дни соседних лет вне окна и не считает их", () => {
         const { weeks, total } = buildGraph(
             [
-                { date: "2025-10-01", count: 99 },
-                { date: "2026-09-26", count: 4 },
+                { date: "2025-12-31", count: 99 },
+                { date: "2026-06-15", count: 4 },
+                { date: "2027-01-01", count: 99 },
             ],
             "2024-03-11",
             now,
+            mode,
         );
         const flat = weeks.flat();
 
-        expect(flat.find((d) => d.key === "2025-10-01")).toBeUndefined();
-        expect(flat[0].key).toBe("2026-08-31");
+        expect(flat.find((d) => d.key === "2025-12-31")?.isBeforeWindow).toBe(true);
+        expect(flat.find((d) => d.key === "2025-12-31")?.count).toBe(0);
+        expect(flat.find((d) => d.key === "2027-01-01")?.isAfterWindow).toBe(true);
+        expect(flat.find((d) => d.key === "2027-01-01")?.count).toBe(0);
+        expect(flat.find((d) => d.key === "2026-06-15")?.count).toBe(4);
         expect(total).toBe(4);
+    });
+
+    it("будущие дни текущего года остаются будущими", () => {
+        const { weeks } = buildGraph([], "2024-03-11", now, mode);
+        const flat = weeks.flat();
+
+        expect(flat.find((d) => d.key === "2026-09-26")?.isFuture).toBe(false);
+        expect(flat.find((d) => d.key === "2026-09-27")?.isFuture).toBe(true);
+        expect(flat.find((d) => d.key === "2026-12-31")?.isFuture).toBe(true);
+    });
+
+    it("для прошедшего года вся полоса заполнена, будущих дней нет", () => {
+        const { weeks } = buildGraph([], "2024-03-11", now, { kind: "year", year: 2025 });
+
+        expect(weeks.flat().some((d) => d.isFuture)).toBe(false);
+        expect(weeks.length).toBe(53);
+    });
+});
+
+describe("buildGraph: from (учебный год проекта)", () => {
+    const now = utc(2026, 9, 26);
+    const mode = { kind: "from", start: "2025-09-01" } as const;
+
+    it("окно — год от даты создания проекта", () => {
+        const { weeks, windowStart, windowEnd } = buildGraph([], "2025-09-01", now, mode);
+
+        expect(windowStart).toBe("2025-09-01");
+        expect(windowEnd).toBe("2026-08-31");
+        // 01.09.2025 — понедельник, 31.08.2026 — понедельник.
+        expect(weeks[0][0].key).toBe("2025-09-01");
+        expect(weeks.at(-1)!.at(-1)!.key).toBe("2026-09-06");
+        expect(weeks).toHaveLength(53);
+    });
+
+    it("активность после конца учебного года не попадает в график", () => {
+        const { weeks, total } = buildGraph(
+            [
+                { date: "2025-10-01", count: 3 },
+                { date: "2026-09-10", count: 99 },
+            ],
+            "2025-09-01",
+            now,
+            mode,
+        );
+        const flat = weeks.flat();
+
+        expect(flat.find((d) => d.key === "2025-10-01")?.count).toBe(3);
+        // 10.09.2026 вообще не попадает в сетку: она кончается 06.09.2026.
+        expect(flat.find((d) => d.key === "2026-09-10")).toBeUndefined();
+        // Хвост первой недели после 31.08.2026 нарисован, но пустой.
+        expect(flat.find((d) => d.key === "2026-09-01")?.isAfterWindow).toBe(true);
+        expect(flat.find((d) => d.key === "2026-09-01")?.count).toBe(0);
+        expect(total).toBe(3);
+    });
+
+    it("для свежего проекта будущие дни идут после сегодняшнего", () => {
+        const { weeks } = buildGraph([], "2026-09-26", now, {
+            kind: "from",
+            start: "2026-09-26",
+        });
+        const flat = weeks.flat();
+
+        expect(flat.find((d) => d.key === "2026-09-26")?.isFuture).toBe(false);
+        expect(flat.find((d) => d.key === "2026-09-27")?.isFuture).toBe(true);
+        expect(flat.filter((d) => d.isFuture).length).toBeGreaterThan(300);
     });
 });

@@ -13,15 +13,21 @@ export function useActivityFor(
     page = 1,
     limit = ACTIVITY_PAGE_SIZE,
     day: string | null = null,
+    year: number | null = null,
 ) {
     const path = userId ? `/profile/${userId}/activity` : "/profile/activity";
     return useQuery({
         queryKey: userId
-            ? [...queryKeys.profile.byIdActivity(userId), page, limit, day]
-            : queryKeys.profile.activity(page, limit, day),
+            ? [...queryKeys.profile.byIdActivity(userId), page, limit, day, year]
+            : queryKeys.profile.activity(page, limit, day, year),
         queryFn: async () => {
             const data: ActivityResponse = await api.get(path, {
-                params: { page, limit, day: day ?? undefined },
+                params: {
+                    page,
+                    limit,
+                    day: day ?? undefined,
+                    year: year ?? undefined,
+                },
             });
             return data;
         },
