@@ -3,7 +3,15 @@ import { describe, expect, it } from "vitest";
 import en from "@/i18n/en";
 import ru from "@/i18n/ru";
 
-import { AUDIENCE, FAQ, FEATURE_GROUPS, NAV_LINKS, PROBLEMS, STEPS } from "./content";
+import {
+    AUDIENCE,
+    ASSESSMENT_STEPS,
+    FAQ,
+    FEATURE_GROUPS,
+    NAV_LINKS,
+    PROBLEMS,
+    STEPS,
+} from "./content";
 
 type Dict = Record<string, unknown>;
 
@@ -42,6 +50,10 @@ const STATIC_KEYS = [
     "landing.features.title",
     "landing.features.subtitle",
     "landing.features.kanbanLabel",
+    "landing.assessment.badge",
+    "landing.assessment.title",
+    "landing.assessment.subtitle",
+    "landing.assessment.mockupLabel",
     "landing.audience.title",
     "landing.audience.subtitle",
     "landing.faq.title",
@@ -61,6 +73,7 @@ const DYNAMIC_KEYS = [
     ...STEPS.flatMap((step) => [step.titleKey, step.descriptionKey]),
     ...PROBLEMS.flatMap((problem) => [problem.titleKey, problem.descriptionKey]),
     ...FEATURE_GROUPS.flatMap((group) => [group.titleKey, ...group.itemKeys]),
+    ...ASSESSMENT_STEPS.flatMap((step) => [step.titleKey, step.descriptionKey]),
     ...AUDIENCE.flatMap((item) => [item.titleKey, item.descriptionKey]),
     ...FAQ.flatMap((item) => [item.questionKey, item.answerKey]),
 ];

@@ -25,6 +25,8 @@ export const Section = ({ id, tone = "plain", className, children }: SectionProp
 type SectionHeadingProps = {
     title: string;
     subtitle?: string;
+    /** Небольшой бейдж над заголовком, например «Новое». */
+    badge?: string;
     /** `center` для секций-«высказываний», `left` для длинных списков. */
     align?: "center" | "left";
     className?: string;
@@ -33,6 +35,7 @@ type SectionHeadingProps = {
 export const SectionHeading = ({
     title,
     subtitle,
+    badge,
     align = "center",
     className,
 }: SectionHeadingProps) => (
@@ -43,6 +46,11 @@ export const SectionHeading = ({
             className,
         )}
     >
+        {badge ? (
+            <span className="mb-3 inline-flex items-center rounded-full border border-gray-200 bg-app-surface px-3 py-1 text-xs font-medium text-gray-600">
+                {badge}
+            </span>
+        ) : null}
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 motion-reduce:animate-none">
             {title}
         </h2>

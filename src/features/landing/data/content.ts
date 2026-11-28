@@ -42,6 +42,40 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
             "landing.features.groups.2.items.3",
         ],
     },
+    {
+        icon: "exam",
+        titleKey: "landing.features.groups.3.title",
+        itemKeys: [
+            "landing.features.groups.3.items.0",
+            "landing.features.groups.3.items.1",
+            "landing.features.groups.3.items.2",
+            "landing.features.groups.3.items.3",
+        ],
+    },
+];
+
+export type AssessmentStep = {
+    titleKey: string;
+    descriptionKey: string;
+};
+
+export const ASSESSMENT_STEPS: AssessmentStep[] = [
+    {
+        titleKey: "landing.assessment.steps.0.title",
+        descriptionKey: "landing.assessment.steps.0.description",
+    },
+    {
+        titleKey: "landing.assessment.steps.1.title",
+        descriptionKey: "landing.assessment.steps.1.description",
+    },
+    {
+        titleKey: "landing.assessment.steps.2.title",
+        descriptionKey: "landing.assessment.steps.2.description",
+    },
+    {
+        titleKey: "landing.assessment.steps.3.title",
+        descriptionKey: "landing.assessment.steps.3.description",
+    },
 ];
 
 export type StepCard = {
@@ -140,6 +174,7 @@ export type NavLink = {
 
 export const NAV_LINKS: NavLink[] = [
     { anchor: "features", labelKey: "landing.nav.features" },
+    { anchor: "assessment", labelKey: "landing.nav.assessment" },
     { anchor: "how-it-works", labelKey: "landing.nav.howItWorks" },
     { anchor: "audience", labelKey: "landing.nav.audience" },
     { anchor: "faq", labelKey: "landing.nav.faq" },

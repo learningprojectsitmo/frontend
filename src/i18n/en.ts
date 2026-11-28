@@ -82,12 +82,13 @@ const en = {
         },
         landing: {
             meta: {
-                title: "Every project in one list",
+                title: "Projects, teams and defense grading",
                 description:
-                    "EduFlow brings your projects, teams and tasks together: one list filtered by stage, member and due date, a kanban board with WIP limits, and a full change history. Free.",
+                    "EduFlow brings your projects, teams and tasks together: one filtered list, a kanban board with WIP limits, project defenses with slot booking, criteria-based grading and a results statement. Free.",
             },
             nav: {
                 features: "Features",
+                assessment: "Grading",
                 howItWorks: "How it works",
                 audience: "Who it is for",
                 faq: "FAQ",
@@ -327,8 +328,70 @@ const en = {
                             "Change history and action audit",
                         ],
                     },
+                    {
+                        title: "Defenses and grading",
+                        icon: "exam",
+                        items: [
+                            "Exams with a date, project types and criteria",
+                            "Team sign-up for defense slots and slot management",
+                            "Defense queue with timers and ETA",
+                            "Criteria-based grading, role weights and a results statement",
+                        ],
+                    },
                 ],
                 kanbanLabel: "Kanban board with columns and WIP limits",
+            },
+            assessment: {
+                badge: "New",
+                title: "Exams and grading — from sign-up to the statement",
+                subtitle:
+                    "Teams book a defense slot, the host runs the queue and timers, and teachers, managers and participants score against criteria. The service calculates a weighted result, and the organiser approves and publishes it.",
+                steps: [
+                    {
+                        title: "Sign-up and slots",
+                        description:
+                            "Teams book a defense slot themselves or through the organiser. Slots can be moved or cancelled, and every booking stays in the exam history.",
+                    },
+                    {
+                        title: "Queue and timers",
+                        description:
+                            "A defense queue with estimated times: presentation, questions, transition and grading each run on their own timer.",
+                    },
+                    {
+                        title: "Grading",
+                        description:
+                            "Criteria come from the project type: a 1–3 or 1–5 scale and a comment for every score. Drafts save automatically and the window closes at the deadline.",
+                    },
+                    {
+                        title: "Results and statement",
+                        description:
+                            "A weighted score by role, a manual adjustment with a reason, published results and a statement export to CSV.",
+                    },
+                ],
+                mockupLabel: "Defense grading form and team result",
+                mockup: {
+                    title: "Defense · Atlas team",
+                    queue: "Queue: 3 of 8",
+                    countdown: "Closes in 4:32",
+                    hint: "Score the team against the criteria below",
+                    criteria: [
+                        { title: "Relevance of the topic", score: 5 },
+                        { title: "Quality of the solution", score: 4 },
+                        { title: "Presentation and answers", score: 4 },
+                    ],
+                    comment: "Comment",
+                    points: "Criteria score: 13 of 15",
+                    submit: "Submit score",
+                    resultTitle: "Team result",
+                    score: "23.65",
+                    maxScore: "of 25",
+                    status: "Published",
+                    roleScores: [
+                        { role: "Teachers", weight: "60%", score: "4.80" },
+                        { role: "Managers", weight: "30%", score: "4.60" },
+                        { role: "Participants", weight: "10%", score: "4.70" },
+                    ],
+                },
             },
             audience: {
                 title: "Who it is built for",
@@ -362,7 +425,7 @@ const en = {
                         icon: "calendar",
                         title: "Hackathon organisers",
                         description:
-                            "One project per hackathon: teams on the board, roles for the jury and participants, deadlines and reminders.",
+                            "One project per hackathon: teams on the board, jury and participant roles, defense sign-up and criteria-based grading.",
                     },
                 ],
             },
@@ -395,7 +458,11 @@ const en = {
                     },
                     {
                         question: "Can we run a hackathon on EduFlow?",
-                        answer: "Yes — it works well for running the event itself. Create a project for the hackathon, give each team its own board with deadlines, participants roles, and the jury read-only access. Rules and schedule fit in the project wiki, and deadline reminders arrive as notifications. There is no built-in registration form, submission review or automatic scoring — applications are handled on the hackathon's side.",
+                        answer: "Yes — it works well for running the event itself. Create a project for the hackathon, give each team its own board with deadlines, participants roles, and the jury read-only access. Rules and schedule fit in the project wiki, and deadline reminders arrive as notifications. For the defenses, use exams: teams book slots, the host runs the queue and timers, and the jury scores projects against criteria. Results are collected in a statement and can be exported as CSV.",
+                    },
+                    {
+                        question: "How is the final grade calculated?",
+                        answer: "Each role — teachers, managers and participants — scores the team against the criteria. The service averages each group and combines them using the configured weights. The organiser can approve the calculated result, adjust it manually with a reason, and publish it. Results appear in the exam statement and can be exported as CSV.",
                     },
                 ],
             },

@@ -6,6 +6,7 @@ import { paths } from "@/config/paths";
 import { useUser } from "@/lib/auth";
 
 import { FAQ } from "./data/content";
+import { Assessment } from "./sections/assessment";
 import { Audience } from "./sections/audience";
 import { Faq } from "./sections/faq";
 import { Features } from "./sections/features";
@@ -69,6 +70,7 @@ export const LandingPage = () => {
                     <Problems />
                     <HowItWorks />
                     <Features />
+                    <Assessment />
                     <Audience />
                     <Faq />
                     <FinalCta isLoggedIn={isLoggedIn} />
