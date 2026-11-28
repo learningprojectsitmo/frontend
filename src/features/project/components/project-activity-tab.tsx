@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityFeed } from "@/features/profile/components/activity-feed";
 import { ActivityPagination } from "@/features/profile/components/activity-pagination";
-import { ContributionGraph } from "@/features/profile/components/contribution-graph";
+import {
+    ContributionGraph,
+    type GraphMode,
+} from "@/features/profile/components/contribution-graph";
 import { ActivityDayFilter } from "@/features/profile/components/activity-day-filter";
 import { ACTIVITY_PAGE_SIZE, useProjectActivity } from "@/features/profile/api/use-activity";
 
@@ -13,6 +16,12 @@ export function ProjectActivityTab({ projectId }: { projectId: number }) {
         page,
         ACTIVITY_PAGE_SIZE,
         day,
+    );
+
+    // Проект показывает учебный год от дня создания: since — это created_at.
+    const mode = useMemo<GraphMode>(
+        () => ({ kind: "from", start: data?.since ?? "" }),
+        [data?.since],
     );
 
     const totalPages = data?.total_pages ?? 0;
@@ -34,6 +43,7 @@ export function ProjectActivityTab({ projectId }: { projectId: number }) {
                     loading={isLoading}
                     onDayClick={selectDay}
                     selectedDay={day}
+                    mode={mode}
                 />
             </div>
 
