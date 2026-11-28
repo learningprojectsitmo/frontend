@@ -165,7 +165,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                             {displayUsers.map((user, index) => (
                                 <div
                                     key={index}
-                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white text-[11px] font-semibold text-gray-900"
+                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-app-surface text-[11px] font-semibold text-gray-900"
                                     style={{ marginLeft: index > 0 ? "-8px" : "0" }}
                                     title={user.name}
                                 >
@@ -179,7 +179,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
                             ))}
                             {remainingCount > 0 && (
                                 <div
-                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white text-[11px] font-semibold text-gray-500"
+                                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center border-2 border-app-surface text-[11px] font-semibold text-gray-500"
                                     style={{ marginLeft: "-8px" }}
                                 >
                                     +{remainingCount}

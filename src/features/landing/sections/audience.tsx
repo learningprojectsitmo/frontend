@@ -5,12 +5,13 @@ import { Icon } from "@/components/ui/icons";
 import { AUDIENCE } from "../data/content";
 import { Section, SectionHeading } from "../ui/section";
 
-export const Audience = () => {
+export const Audience = ({ as }: { as?: "h1" | "h2" }) => {
     const { t } = useTranslation();
 
     return (
         <Section id="audience" tone="plain" className="py-20">
             <SectionHeading
+                as={as}
                 title={t("landing.audience.title")}
                 subtitle={t("landing.audience.subtitle")}
             />

@@ -6,17 +6,18 @@ import { FEATURE_GROUPS } from "../data/content";
 import { KanbanMockup } from "../mockups/kanban-mockup";
 import { Section, SectionHeading } from "../ui/section";
 
-export const Features = () => {
+export const Features = ({ as }: { as?: "h1" | "h2" }) => {
     const { t } = useTranslation();
 
     return (
         <Section id="features" tone="muted" className="py-20">
             <SectionHeading
+                as={as}
                 title={t("landing.features.title")}
                 subtitle={t("landing.features.subtitle")}
             />
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                 {FEATURE_GROUPS.map((group) => (
                     <div
                         key={group.titleKey}

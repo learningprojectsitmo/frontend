@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 import { Menu, Moon, Sun, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,11 @@ import { LanguageSwitcher } from "../language-switcher";
 type HeaderProps = {
     isLoggedIn: boolean;
 };
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `text-sm transition-colors ${
+        isActive ? "font-semibold text-gray-900" : "text-gray-600 hover:text-gray-900"
+    }`;
 
 export const Header = ({ isLoggedIn }: HeaderProps) => {
     const { t } = useTranslation();
@@ -38,13 +43,9 @@ export const Header = ({ isLoggedIn }: HeaderProps) => {
 
                 <nav className="hidden items-center gap-7 lg:flex">
                     {NAV_LINKS.map((link) => (
-                        <a
-                            key={link.anchor}
-                            href={`#${link.anchor}`}
-                            className="text-sm text-gray-600 transition-colors hover:text-gray-900"
-                        >
+                        <NavLink key={link.href} to={link.href} className={navLinkClass}>
                             {t(link.labelKey)}
-                        </a>
+                        </NavLink>
                     ))}
                 </nav>
 
@@ -107,14 +108,14 @@ export const Header = ({ isLoggedIn }: HeaderProps) => {
                 <div className="border-t border-gray-200 bg-app-surface px-6 py-4 lg:hidden">
                     <nav className="flex flex-col gap-3">
                         {NAV_LINKS.map((link) => (
-                            <a
-                                key={link.anchor}
-                                href={`#${link.anchor}`}
+                            <NavLink
+                                key={link.href}
+                                to={link.href}
                                 onClick={() => setMenuOpen(false)}
-                                className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                                className={navLinkClass}
                             >
                                 {t(link.labelKey)}
-                            </a>
+                            </NavLink>
                         ))}
                     </nav>
                     <div className="mt-4 flex items-center gap-2">

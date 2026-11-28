@@ -82,12 +82,13 @@ const en = {
         },
         landing: {
             meta: {
-                title: "Every project in one list",
+                title: "Projects, teams and defense grading",
                 description:
-                    "EduFlow brings your projects, teams and tasks together: one list filtered by stage, member and due date, a kanban board with WIP limits, and a full change history. Free.",
+                    "EduFlow brings your projects, teams and tasks together: one filtered list, a kanban board with WIP limits, project defenses with slot booking, criteria-based grading and a results statement. Free.",
             },
             nav: {
                 features: "Features",
+                assessment: "Grading",
                 howItWorks: "How it works",
                 audience: "Who it is for",
                 faq: "FAQ",
@@ -103,6 +104,37 @@ const en = {
                 ru: "Русский",
                 en: "English",
             },
+            breadcrumb: {
+                label: "Breadcrumb",
+                home: "Home",
+            },
+            pages: {
+                features: {
+                    title: "EduFlow features",
+                    description:
+                        "Spaces, projects, a kanban board with WIP limits, specifications, wiki, roles and access rights — everything a team needs.",
+                },
+                assessment: {
+                    title: "Exams and defense grading",
+                    description:
+                        "Exams with defense sign-up, queue and timers, criteria-based grading with role weights, result approval and a statement.",
+                },
+                howItWorks: {
+                    title: "How EduFlow works",
+                    description:
+                        "Three steps: create a space, add projects and a team, and work on the board. No complex setup.",
+                },
+                audience: {
+                    title: "Who EduFlow is for",
+                    description:
+                        "For team leads, student teams, research groups, product teams and hackathon organisers.",
+                },
+                faq: {
+                    title: "EduFlow FAQ",
+                    description:
+                        "How much EduFlow costs, where data is stored, how a defense grade is calculated and other common questions.",
+                },
+            },
             hero: {
                 badge: "Free · Data hosted in Russia",
                 titleTop: "Twenty projects.",
@@ -112,20 +144,27 @@ const en = {
                 primaryCta: "Try it for free",
                 secondaryCta: "Log in",
                 note: "Sign up in 30 seconds. No card required, no limit on the number of projects.",
-                mockupLabel: "Single project list with filters",
+                mockupLabel: "Space page with the project list",
             },
             mockup: {
-                search: "search projects",
-                filters: ["My stage", "Tag", "Assignee", "Deadline"],
-                totalProjects_one: "{{count}} project",
-                totalProjects_other: "{{count}} projects",
+                search: "Search projects",
                 progressLabel: "Progress",
-                membersLabel_one: "{{count}} member",
-                membersLabel_other: "{{count}} members",
-                boardFilter: "Filters",
-                wip: "{{current}}/{{limit}}",
+                membersLabel: "members",
+                filterLabel: "Filters",
+                gridLabel: "Cards",
+                listLabel: "List",
+                projectsTitle: "Projects",
                 daysLeft_one: "{{count}} d.",
                 daysLeft_other: "{{count}} d.",
+                space: {
+                    breadcrumb: "All spaces / Project management",
+                    title: "Project management",
+                    description: "Projects for planning, organising and controlling project work",
+                    projectsCount: "8 projects",
+                    membersCount: "24 members",
+                    createProject: "Create project",
+                    exams: "Space exams",
+                },
                 projects: [
                     {
                         title: "University Hackathon 2026",
@@ -134,7 +173,7 @@ const en = {
                         tag: "planned",
                         status: "Planned",
                         progress: 15,
-                        date: "Apr 18",
+                        date: "Deadline: April 18, 2026",
                         stage: "Preparation",
                         tags: ["Hackathon", "University"],
                         members: 4,
@@ -147,7 +186,7 @@ const en = {
                         tag: "in_progress",
                         status: "In progress",
                         progress: 55,
-                        date: "Feb 12",
+                        date: "Deadline: February 12, 2026",
                         stage: "Design",
                         tags: ["Design", "Website"],
                         members: 3,
@@ -160,7 +199,7 @@ const en = {
                         tag: "review",
                         status: "In review",
                         progress: 85,
-                        date: "Feb 28",
+                        date: "Deadline: February 28, 2026",
                         stage: "Development",
                         tags: ["Mobile", "Backend"],
                         members: 5,
@@ -178,21 +217,23 @@ const en = {
                         tag: "completed",
                         status: "Completed",
                         progress: 100,
-                        date: "Feb 5",
+                        date: "Deadline: February 5, 2026",
                         stage: "Launch",
                         tags: ["API"],
                         members: 2,
                         people: ["Timur Safin", "Igor Novikov"],
                     },
                 ],
-                board: {
-                    project: "University Hackathon 2026",
-                    stage: "Preparation",
+                kanban: {
+                    breadcrumb: "Projects / University Hackathon 2026 / Kanban",
+                    columnsCount: "Total columns: {{count}}",
+                    filterLabel: "All tasks",
+                    quickAdd: "Add task...",
+                    addColumn: "Add column",
                     columns: [
                         {
                             name: "Kanban",
                             color: "blue",
-                            wip: 5,
                             tasks: [
                                 {
                                     title: "Collect application requirements",
@@ -217,7 +258,6 @@ const en = {
                         {
                             name: "In progress",
                             color: "yellow",
-                            wip: 3,
                             tasks: [
                                 {
                                     title: "Team registration form",
@@ -238,7 +278,6 @@ const en = {
                         {
                             name: "Done",
                             color: "green",
-                            wip: null,
                             tasks: [
                                 {
                                     title: "Roles and access for the jury",
@@ -327,8 +366,148 @@ const en = {
                             "Change history and action audit",
                         ],
                     },
+                    {
+                        title: "Defenses and grading",
+                        icon: "exam",
+                        items: [
+                            "Exams with a date, project types and criteria",
+                            "Team sign-up for defense slots and slot management",
+                            "Defense queue with timers and ETA",
+                            "Criteria-based grading, role weights and a results statement",
+                        ],
+                    },
                 ],
-                kanbanLabel: "Kanban board with columns and WIP limits",
+                kanbanLabel: "Project kanban board with columns and tasks",
+            },
+            assessment: {
+                badge: "New",
+                title: "Exams and grading — from sign-up to the statement",
+                subtitle:
+                    "Teams book a defense slot, the host runs the queue and timers, and teachers, managers and participants score against criteria. The service calculates a weighted result, and the organiser approves and publishes it.",
+                steps: [
+                    {
+                        title: "Sign-up and slots",
+                        description:
+                            "Teams book a defense slot themselves or through the organiser. Slots can be moved or cancelled, and every booking stays in the exam history.",
+                    },
+                    {
+                        title: "Queue and timers",
+                        description:
+                            "A defense queue with estimated times: presentation, questions, transition and grading each run on their own timer.",
+                    },
+                    {
+                        title: "Grading",
+                        description:
+                            "Criteria come from the project type: a 1–3 or 1–5 scale and a comment for every score. Drafts save automatically and the window closes at the deadline.",
+                    },
+                    {
+                        title: "Results and statement",
+                        description:
+                            "A weighted score by role, a manual adjustment with a reason, published results and a statement export to CSV.",
+                    },
+                ],
+                mockupLabel: "Exam page with the presentation queue and grading",
+                mockup: {
+                    window: "eduflow.app/app/exams",
+                    tag: "Course project",
+                    breadcrumb: "All spaces / Exams / Project defense",
+                    examTitle: "Course project defense",
+                    examStatus: "Live",
+                    startExam: "Start exam",
+                    connect: "Join",
+                    discipline: "Exam for students of «Project management · Year 3»",
+                    period: "Defense period Apr 18, 10:00 — 12:30",
+                    spaceMeta: "Space «Project management» · Created Apr 12",
+                    descriptionTitle: "Exam description",
+                    description: "A check of students' preparation and project work.",
+                    upcomingTitle: "Preparing to present",
+                    teamNumber: "1",
+                    projectName: "IT test case",
+                    projectDescription: "An automatic test-checking service with explanations.",
+                    leaderLabel: "Supervisor:",
+                    leader: "Elena Sokolova",
+                    teamLabel: "Team:",
+                    team: "Ivan Petrov, Maria Lebedeva, Oleg Smirnov",
+                    previous: "Previous team",
+                    next: "Next team",
+                    timerTitle: "Timer",
+                    timerDuration: "Stage duration 07:00",
+                    timerValue: "07:00",
+                    timerStatus: "Waiting to start",
+                    forecastTitle: "Estimated finish",
+                    forecastCurrentLabel: "Team finish",
+                    forecastQueueLabel: "Queue finish",
+                    forecastCurrent: "12:30",
+                    forecastQueue: "19:44",
+                    queueTitle: "Presentation order",
+                    assign: "Assign team",
+                    search: "Search teams",
+                    filter: "All teams",
+                    tableHeaders: ["#", "Project", "Supervisor", "Team", "Time", "Score"],
+                    rows: [
+                        {
+                            number: "1",
+                            project: "IT test case",
+                            source: "Assigned by organiser",
+                            leader: "Elena Sokolova",
+                            team: ["ES", "ML", "AS"],
+                            time: "12:00",
+                            slot: "12:00",
+                            score: "23.65",
+                            state: "score",
+                        },
+                        {
+                            number: "2",
+                            project: "Multilingual case",
+                            source: "Booked by the team",
+                            leader: "Viktor Maksimov",
+                            team: ["VM", "EK", "DL"],
+                            time: "12:20",
+                            slot: "12:20",
+                            score: "Score",
+                            state: "action",
+                        },
+                        {
+                            number: "3",
+                            project: "Solution generation ideas",
+                            source: "Assigned by organiser",
+                            leader: "Vladislav Zotov",
+                            team: ["VZ", "AS", "AK"],
+                            time: "12:45",
+                            slot: "12:30",
+                            score: "",
+                            state: "waiting",
+                        },
+                        {
+                            number: "—",
+                            project: "Break",
+                            source: "",
+                            leader: "—",
+                            team: [],
+                            time: "14:20–15:00",
+                            slot: "",
+                            score: "",
+                            state: "break",
+                        },
+                        {
+                            number: "4",
+                            project: "Smart cart",
+                            source: "Booked by the team",
+                            leader: "Roman Tkachenko",
+                            team: ["RT", "AK", "IM"],
+                            time: "13:00",
+                            slot: "12:50",
+                            score: "",
+                            state: "waiting",
+                        },
+                    ],
+                    statement: "Exam statement",
+                    toastTitle: "Score the team in the table",
+                    toastCountdown: "Closes in 4:32",
+                    scoreAction: "Score",
+                    scorePending: "Closes in 4:32",
+                    slotLabel: "Slot",
+                },
             },
             audience: {
                 title: "Who it is built for",
@@ -362,40 +541,83 @@ const en = {
                         icon: "calendar",
                         title: "Hackathon organisers",
                         description:
-                            "One project per hackathon: teams on the board, roles for the jury and participants, deadlines and reminders.",
+                            "One project per hackathon: teams on the board, jury and participant roles, defense sign-up and criteria-based grading.",
                     },
                 ],
             },
             faq: {
                 title: "Frequently asked questions",
+                subtitle: "About pricing, data, teams, boards and defense grading.",
+                searchLabel: "Search questions",
+                searchPlaceholder: "Find a question…",
+                all: "All",
+                emptyTitle: "Nothing found",
+                emptyDescription: "Try a different query or category.",
+                ctaTitle: "Still have a question?",
+                ctaDescription: "Create an account and see how EduFlow works with your projects.",
+                ctaButton: "Try it for free",
+                categories: {
+                    general: "General",
+                    projects: "Projects and teams",
+                    grading: "Exams and grading",
+                    data: "Data and access",
+                },
                 items: [
                     {
+                        question: "What is EduFlow?",
+                        answer: "EduFlow is a workspace for project work: one list of projects, teams, a kanban board, specifications, wiki and exams with grading in one place.",
+                    },
+                    {
                         question: "How much does EduFlow cost?",
-                        answer: "The service is free. There are no plans to pay for and no limit on the number of projects.",
+                        answer: "The service is free. There are no plans to pay for and no limit on the number of projects or members.",
+                    },
+                    {
+                        question: "Can I work without a team?",
+                        answer: "Yes. You can create a project and run the board alone, and invite members later.",
+                    },
+                    {
+                        question: "What are spaces for?",
+                        answer: "A space groups projects by field or interest: a study group, a work unit, a hackathon. Projects, members and access settings live inside it.",
+                    },
+                    {
+                        question: "How do I invite members?",
+                        answer: "Send an invitation link or accept an application to the project. Roles and access rights are assigned at the project level.",
+                    },
+                    {
+                        question: "What can I track on the board?",
+                        answer: "Tasks with priorities, deadlines, tags, subtasks and assignees. Cards drag between columns, and WIP limits keep a stage from being overloaded.",
+                    },
+                    {
+                        question: "Where do requirements and rules live?",
+                        answer: "A specification with requirement groups and approval sits next to the project. Rules, regulations and notes fit in the project wiki.",
+                    },
+                    {
+                        question: "Can we run a hackathon or project defense?",
+                        answer: "Yes. Defenses use exams: teams book slots, the host runs the queue and timers, and the jury scores projects against criteria. Results are collected in a statement and can be exported as CSV.",
+                    },
+                    {
+                        question: "How is the final grade calculated?",
+                        answer: "Teachers, managers and participants score against the criteria. The service averages each group and combines them using the configured weights. The organiser approves the calculated result or adjusts it manually with a reason and publishes it.",
+                    },
+                    {
+                        question: "Who can score a team?",
+                        answer: "Teachers and space admins score every team. Managers and participants score other teams but not their own — that exclusion is fixed when the grading window opens.",
+                    },
+                    {
+                        question: "What happens after a defense?",
+                        answer: "A grading window opens with a criteria form. Answers save to a draft, and after submission and the window closes the organiser can approve and publish the result.",
                     },
                     {
                         question: "Where is the data stored?",
                         answer: "The data is hosted on a server in Russia.",
                     },
                     {
-                        question: "Is there a limit on the number of projects?",
-                        answer: "There is no hard limit. Lists are paginated, so opening twenty projects is as easy as opening two.",
+                        question: "How do roles and access rights work?",
+                        answer: "Roles and rights are assigned at the space and project level: who can view, edit and manage. This limits access to settings, the board and grading.",
                     },
                     {
-                        question: "Can I work without a team?",
-                        answer: "Yes. You can create a project and work on the board alone, and add members later.",
-                    },
-                    {
-                        question: "What are spaces for?",
-                        answer: "A space groups projects that share an interest or a field. It acts as a container: projects, members and access settings live inside it.",
-                    },
-                    {
-                        question: "Does the service show a summary across all projects?",
-                        answer: "Not yet — there is no portfolio-wide KPI dashboard. What there is: a single filtered list of projects, notifications from every project, and a change history for each project.",
-                    },
-                    {
-                        question: "Can we run a hackathon on EduFlow?",
-                        answer: "Yes — it works well for running the event itself. Create a project for the hackathon, give each team its own board with deadlines, participants roles, and the jury read-only access. Rules and schedule fit in the project wiki, and deadline reminders arrive as notifications. There is no built-in registration form, submission review or automatic scoring — applications are handled on the hackathon's side.",
+                        question: "Is there a change history?",
+                        answer: "Yes. Each project keeps changes and an action audit, and notifications collect events from every project.",
                     },
                 ],
             },

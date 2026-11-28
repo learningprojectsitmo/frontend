@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 
 import { Head } from "@/components/seo";
 import { paths } from "@/config/paths";
-import { useUser } from "@/lib/auth";
 
 import { FAQ } from "./data/content";
+import { Assessment } from "./sections/assessment";
 import { Audience } from "./sections/audience";
 import { Faq } from "./sections/faq";
 import { Features } from "./sections/features";
@@ -15,11 +15,11 @@ import { Header } from "./sections/header";
 import { Hero } from "./sections/hero";
 import { HowItWorks } from "./sections/how-it-works";
 import { Problems } from "./sections/problems";
+import { useLandingAuth } from "./use-landing-auth";
 
 export const LandingPage = () => {
     const { t } = useTranslation();
-    const { data: user, isLoading } = useUser();
-    const isLoggedIn = !isLoading && Boolean(user);
+    const isLoggedIn = useLandingAuth();
 
     const jsonLd = useMemo(
         () => ({
@@ -69,6 +69,7 @@ export const LandingPage = () => {
                     <Problems />
                     <HowItWorks />
                     <Features />
+                    <Assessment />
                     <Audience />
                     <Faq />
                     <FinalCta isLoggedIn={isLoggedIn} />
