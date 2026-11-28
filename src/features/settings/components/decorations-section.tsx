@@ -25,6 +25,7 @@ export const DecorationsSection = () => {
 
     const adminEnabled =
         settings?.new_year_decorations_enabled === true ||
+        settings?.new_year_tree_enabled === true ||
         settings?.halloween_decorations_enabled === true;
 
     const [localChecked, setLocalChecked] = useState(user?.show_decorations !== false);
